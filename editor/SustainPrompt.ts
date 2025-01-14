@@ -35,7 +35,7 @@ export class SustainPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._typeSelect.value = Config.sustainTypeNames[instrument.stringSustainType];
 
         setTimeout(() => this._cancelButton.focus());

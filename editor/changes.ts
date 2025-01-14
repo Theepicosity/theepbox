@@ -24,7 +24,7 @@ export function discardInvalidPatternInstruments(instruments: number[], song: So
     instruments.length = 0;
     instruments.push(...uniqueInstruments);
     for (let i: number = 0; i < instruments.length; i++) {
-        if (instruments[i] >= song.channels[channelIndex].instruments.length) {
+        if (instruments[i] >= song.instruments.length) {
             instruments.splice(i, 1);
             i--;
         }
@@ -427,10 +427,6 @@ export class ChangeMoveAndOverflowNotes extends ChangeGroup {
             newChannel.octave = oldChannel.octave;
             newChannel.name = oldChannel.name;
 
-            for (const instrument of oldChannel.instruments) {
-                newChannel.instruments.push(instrument);
-            }
-
             const oldPartsPerBar: number = Config.partsPerBeat * doc.song.beatsPerBar;
             const newPartsPerBar: number = Config.partsPerBeat * newBeatsPerBar;
             let currentBar: number = -1;
@@ -567,7 +563,7 @@ class ChangePins extends UndoableChange {
 export class ChangeCustomizeInstrument extends Change {
     constructor(doc: SongDocument) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.preset != instrument.type) {
             instrument.preset = instrument.type;
             doc.notifier.changed();
@@ -579,7 +575,7 @@ export class ChangeCustomizeInstrument extends Change {
 export class ChangeCustomWave extends Change {
     constructor(doc: SongDocument, newArray: Float32Array) {
         super();
-        const oldArray: Float32Array = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()].customChipWave;
+        const oldArray: Float32Array = doc.song.instruments[doc.getCurrentInstrument()].customChipWave;
         var comparisonResult: boolean = true;
         for (let i: number = 0; i < oldArray.length; i++) {
             if (oldArray[i] != newArray[i]) {
@@ -588,7 +584,7 @@ export class ChangeCustomWave extends Change {
             }
         }
         if (comparisonResult == false) {
-            let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+            let instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
             for (let i: number = 0; i < newArray.length; i++) {
                 instrument.customChipWave[i] = newArray[i];
             }
@@ -620,8 +616,8 @@ export class ChangeCustomAlgorythmorFeedback extends Change {
     constructor(doc: SongDocument, newArray: number[][], carry: number, mode: string) {
         super();
         if (mode == "algorithm") {
-            const oldArray: number[][] = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()].customAlgorithm.modulatedBy;
-            const oldCarriercount: number = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()].customAlgorithm.carrierCount;
+            const oldArray: number[][] = doc.song.instruments[doc.getCurrentInstrument()].customAlgorithm.modulatedBy;
+            const oldCarriercount: number = doc.song.instruments[doc.getCurrentInstrument()].customAlgorithm.carrierCount;
             var comparisonResult: boolean = true;
             if (carry != oldCarriercount) {
                 comparisonResult = false;
@@ -641,7 +637,7 @@ export class ChangeCustomAlgorythmorFeedback extends Change {
                 }
             }
             if (comparisonResult == false) {
-                let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+                let instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
 
                 instrument.customAlgorithm.set(carry, newArray);
 
@@ -650,7 +646,7 @@ export class ChangeCustomAlgorythmorFeedback extends Change {
                 this._didSomething();
             }
         } else if (mode == "feedback") {
-            const oldArray: number[][] = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()].customFeedbackType.indices;
+            const oldArray: number[][] = doc.song.instruments[doc.getCurrentInstrument()].customFeedbackType.indices;
             var comparisonResult: boolean = true;
             for (let i: number = 0; i < oldArray.length; i++) {
                 if (oldArray[i].length != newArray[i].length) {
@@ -667,7 +663,7 @@ export class ChangeCustomAlgorythmorFeedback extends Change {
             }
 
             if (!comparisonResult) {
-                let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+                let instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
 
                 instrument.customFeedbackType.set(newArray);
 
@@ -682,7 +678,7 @@ export class ChangeCustomAlgorythmorFeedback extends Change {
 export class ChangePreset extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.preset;
         if (oldValue != newValue) {
             const preset1: Preset | null = EditorConfig.instrumentToPreset(newValue);
@@ -772,7 +768,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
         }
 
         const isNoise: boolean = doc.song.getChannelIsNoise(doc.channel);
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         instrument.effects = 1 << EffectType.panning; // disable all existing effects except panning, which should always be on.
         instrument.aliases = false;
         instrument.envelopeCount = 0;
@@ -1609,7 +1605,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
 export class ChangeTransition extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.transition;
         if (oldValue != newValue) {
             this._didSomething();
@@ -1623,7 +1619,7 @@ export class ChangeTransition extends Change {
 export class ChangeToggleEffects extends Change {
     constructor(doc: SongDocument, toggleFlag: number, useInstrument: Instrument | null) {
         super();
-        let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        let instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (useInstrument != null)
             instrument = useInstrument;
         const oldValue: number = instrument.effects;
@@ -1798,8 +1794,8 @@ export class ChangeChannelOrder extends Change {
         // Update mods for each channel
         selectionMax = Math.max(selectionMax, selectionMin);
         for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
+            for (let instrumentIdx: number = 0; instrumentIdx < doc.song.instruments.length; instrumentIdx++) {
+                let instrument: Instrument = doc.song.instruments[instrumentIdx];
                 for (let i: number = 0; i < Config.modCount; i++) {
                     if (instrument.modChannels[i] >= selectionMin && instrument.modChannels[i] <= selectionMax) {
                         instrument.modChannels[i] += offset;
@@ -1856,7 +1852,6 @@ export class ChangeChannelCount extends Change {
                             } else {
                                 instrument.setTypeAndReset(InstrumentType.mod, isNoise, isMod);
                             }
-                            newChannels[channelIndex].instruments[j] = instrument;
                         }
                         for (let j: number = 0; j < doc.song.patternsPerChannel; j++) {
                             newChannels[channelIndex].patterns[j] = new Pattern();
@@ -1886,10 +1881,10 @@ export class ChangeChannelCount extends Change {
 
             // Determine if any mod instruments now refer to an invalid channel. Unset them if so
             for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-                for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
+                for (let instrumentIdx: number = 0; instrumentIdx < doc.song.instruments.length; instrumentIdx++) {
                     for (let mod: number = 0; mod < Config.modCount; mod++) {
 
-                        let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
+                        let instrument: Instrument = doc.song.instruments[instrumentIdx];
                         let modChannel: number = instrument.modChannels[mod];
 
                         // Boundary checking
@@ -1942,8 +1937,8 @@ export class ChangeRemoveChannel extends ChangeGroup {
 
         // Update modulators - if a higher index was removed, shift down
         for (let modChannel: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; modChannel < doc.song.channels.length; modChannel++) {
-            for (let instrumentIndex: number = 0; instrumentIndex < doc.song.channels[modChannel].instruments.length; instrumentIndex++) {
-                const modInstrument: Instrument = doc.song.channels[modChannel].instruments[instrumentIndex];
+            for (let instrumentIndex: number = 0; instrumentIndex < doc.song.modInstruments.length; instrumentIndex++) {
+                const modInstrument: Instrument = doc.song.modInstruments[instrumentIndex];
                 for (let mod: number = 0; mod < Config.modCount; mod++) {
                     if (modInstrument.modChannels[mod] >= minIndex && modInstrument.modChannels[mod] <= oldMax) {
                         this.append(new ChangeModChannel(doc, mod, 0, modInstrument));
@@ -2011,7 +2006,7 @@ export class ChangeChannelBar extends Change {
 export class ChangeUnison extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.unison;
         if (oldValue != newValue) {
             instrument.unison = newValue;
@@ -2030,7 +2025,7 @@ export class ChangeUnison extends Change {
 export class ChangeUnisonVoices extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevUnison: number = instrument.unison;
         if (oldValue != newValue || prevUnison != Config.unisons.length) {
             instrument.unisonVoices = newValue;
@@ -2045,7 +2040,7 @@ export class ChangeUnisonVoices extends Change {
 export class ChangeUnisonSpread extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevUnison: number = instrument.unison;
         if (oldValue != newValue || prevUnison != Config.unisons.length) {
             instrument.unisonSpread = newValue;
@@ -2060,7 +2055,7 @@ export class ChangeUnisonSpread extends Change {
 export class ChangeUnisonOffset extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevUnison: number = instrument.unison;
         if (oldValue != newValue || prevUnison != Config.unisons.length) {
             instrument.unisonOffset = newValue;
@@ -2075,7 +2070,7 @@ export class ChangeUnisonOffset extends Change {
 export class ChangeUnisonExpression extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevUnison: number = instrument.unison;
         if (oldValue != newValue || prevUnison != Config.unisons.length) {
             instrument.unisonExpression = newValue;
@@ -2090,7 +2085,7 @@ export class ChangeUnisonExpression extends Change {
 export class ChangeUnisonSign extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevUnison: number = instrument.unison;
         if (oldValue != newValue || prevUnison != Config.unisons.length) {
             instrument.unisonSign = newValue;
@@ -2105,7 +2100,7 @@ export class ChangeUnisonSign extends Change {
 export class ChangeChord extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.chord;
         if (oldValue != newValue) {
             this._didSomething();
@@ -2119,7 +2114,7 @@ export class ChangeChord extends Change {
 export class ChangeVibrato extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.vibrato;
         if (oldValue != newValue) {
             instrument.vibrato = newValue;
@@ -2137,7 +2132,7 @@ export class ChangeVibrato extends Change {
 export class ChangeVibratoDepth extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevVibrato: number = instrument.vibrato;
         doc.synth.unsetMod(Config.modulators.dictionary["vibrato depth"].index, doc.channel, doc.getCurrentInstrument());
 
@@ -2155,7 +2150,7 @@ export class ChangeVibratoDepth extends Change {
 export class ChangeEnvelopeSpeed extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         doc.synth.unsetMod(Config.modulators.dictionary["envelope speed"].index, doc.channel, doc.getCurrentInstrument());
 
         doc.notifier.changed();
@@ -2171,7 +2166,7 @@ export class ChangeEnvelopeSpeed extends Change {
 export class ChangeVibratoSpeed extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevVibrato: number = instrument.vibrato;
         doc.synth.unsetMod(Config.modulators.dictionary["vibrato speed"].index, doc.channel, doc.getCurrentInstrument());
 
@@ -2189,7 +2184,7 @@ export class ChangeVibratoSpeed extends Change {
 export class ChangeVibratoDelay extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevVibrato: number = instrument.vibrato;
         doc.synth.unsetMod(Config.modulators.dictionary["vibrato delay"].index, doc.channel, doc.getCurrentInstrument());
 
@@ -2207,7 +2202,7 @@ export class ChangeVibratoDelay extends Change {
 export class ChangeVibratoType extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.vibratoType;
         let prevVibrato: number = instrument.vibrato;
 
@@ -2225,7 +2220,7 @@ export class ChangeVibratoType extends Change {
 export class ChangeArpeggioSpeed extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         instrument.arpeggioSpeed = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["arp speed"].index, doc.channel, doc.getCurrentInstrument());
 
@@ -2240,7 +2235,7 @@ export class ChangeArpeggioSpeed extends Change {
 export class ChangeFastTwoNoteArp extends Change {
     constructor(doc: SongDocument, newValue: boolean) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue = instrument.fastTwoNoteArp;
 
         doc.notifier.changed();
@@ -2255,7 +2250,7 @@ export class ChangeFastTwoNoteArp extends Change {
 export class ChangeClicklessTransition extends Change {
     constructor(doc: SongDocument, newValue: boolean) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue = instrument.clicklessTransition;
 
         doc.notifier.changed();
@@ -2270,7 +2265,7 @@ export class ChangeClicklessTransition extends Change {
 export class ChangeAliasing extends Change {
     constructor(doc: SongDocument, newValue: boolean) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue = instrument.aliases;
 
         doc.notifier.changed();
@@ -2285,7 +2280,7 @@ export class ChangeAliasing extends Change {
 export class ChangeDiscreteEnvelope extends Change {
     constructor(doc: SongDocument, newValue: boolean) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue = instrument.discreteEnvelope;
 
         doc.notifier.changed();
@@ -2334,7 +2329,7 @@ export class ChangeAdditive extends Change {
 export class ChangeDrumsetEnvelope extends Change {
     constructor(doc: SongDocument, drumIndex: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.drumsetEnvelopes[drumIndex];
         if (oldValue != newValue) {
             instrument.drumsetEnvelopes[drumIndex] = newValue;
@@ -2349,7 +2344,7 @@ class ChangeInstrumentSlider extends Change {
     protected _instrument: Instrument;
     constructor(private _doc: SongDocument) {
         super();
-        this._instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
     }
 
     public commit(): void {
@@ -2470,7 +2465,7 @@ export class ChangeStringSustain extends ChangeInstrumentSlider {
 export class ChangeStringSustainType extends Change {
     constructor(doc: SongDocument, newValue: SustainType) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: SustainType = instrument.stringSustainType;
         if (oldValue != newValue) {
             instrument.stringSustainType = newValue;
@@ -2615,7 +2610,7 @@ export class ChangeFilterAddPoint extends UndoableChange {
     constructor(doc: SongDocument, filterSettings: FilterSettings, point: FilterControlPoint, index: number, isNoteFilter: boolean, deletion: boolean = false) {
         super(deletion);
         this._doc = doc;
-        this._instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._instrumentNextPreset = deletion ? this._instrument.preset : this._instrument.type;
         this._instrumentPrevPreset = deletion ? this._instrument.type : this._instrument.preset;
         this._filterSettings = filterSettings;
@@ -2760,7 +2755,7 @@ export class ChangeFilterMovePoint extends UndoableChange {
     constructor(doc: SongDocument, point: FilterControlPoint, oldFreq: number, newFreq: number, oldGain: number, newGain: number, useNoteFilter: boolean, pointIndex: number) {
         super(false);
         this._doc = doc;
-        this._instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._instrumentNextPreset = this._instrument.type;
         this._instrumentPrevPreset = this._instrument.preset;
         this._point = point;
@@ -2850,7 +2845,7 @@ export class ChangeFilterSettings extends UndoableChange {
     constructor(doc: SongDocument, settings: FilterSettings, oldSettings: FilterSettings, useNoteFilter: boolean, subFilters: (FilterSettings | null)[] | null = null, oldSubFilters: (FilterSettings | null)[] | null = null) {
         super(false);
         this._doc = doc;
-        this._instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._instrumentNextPreset = this._instrument.type;
         this._instrumentPrevPreset = this._instrument.preset;
         this._oldSettings = oldSettings;
@@ -2918,7 +2913,7 @@ export class ChangeFadeInOut extends UndoableChange {
     constructor(doc: SongDocument, fadeIn: number, fadeOut: number) {
         super(false);
         this._doc = doc;
-        this._instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._instrumentNextPreset = this._instrument.type;
         this._instrumentPrevPreset = this._instrument.preset;
         this._oldFadeIn = this._instrument.fadeIn;
@@ -2947,7 +2942,7 @@ export class ChangeFadeInOut extends UndoableChange {
 export class ChangeAlgorithm extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.algorithm;
         if (oldValue != newValue) {
             instrument.algorithm = newValue;
@@ -2961,7 +2956,7 @@ export class ChangeAlgorithm extends Change {
 export class ChangeFeedbackType extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.feedbackType;
         if (oldValue != newValue) {
             instrument.feedbackType = newValue;
@@ -2976,7 +2971,7 @@ export class ChangeFeedbackType extends Change {
 export class Change6OpAlgorithm extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.algorithm6Op;
         if (oldValue != newValue) {
             instrument.algorithm6Op = newValue;
@@ -2993,7 +2988,7 @@ export class Change6OpAlgorithm extends Change {
 export class Change6OpFeedbackType extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.feedbackType6Op;
         if (oldValue != newValue) {
             instrument.feedbackType6Op = newValue;
@@ -3010,7 +3005,7 @@ export class Change6OpFeedbackType extends Change {
 export class ChangeOperatorWaveform extends Change {
     constructor(doc: SongDocument, operatorIndex: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.operators[operatorIndex].waveform;
         if (oldValue != newValue) {
             instrument.operators[operatorIndex].waveform = newValue;
@@ -3024,7 +3019,7 @@ export class ChangeOperatorWaveform extends Change {
 export class ChangeOperatorPulseWidth extends Change {
     constructor(doc: SongDocument, operatorIndex: number, oldValue: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         instrument.operators[operatorIndex].pulseWidth = newValue;
         doc.notifier.changed();
         if (oldValue != newValue) {
@@ -3037,7 +3032,7 @@ export class ChangeOperatorPulseWidth extends Change {
 export class ChangeOperatorFrequency extends Change {
     constructor(doc: SongDocument, operatorIndex: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.operators[operatorIndex].frequency;
         if (oldValue != newValue) {
             instrument.operators[operatorIndex].frequency = newValue;
@@ -3075,11 +3070,10 @@ export class ChangeFeedbackAmplitude extends ChangeInstrumentSlider {
 export class ChangeAddChannelInstrument extends Change {
     constructor(doc: SongDocument) {
         super();
-        const channel: Channel = doc.song.channels[doc.channel];
         const isNoise: boolean = doc.song.getChannelIsNoise(doc.channel);
         const isMod: boolean = doc.song.getChannelIsMod(doc.channel);
         const maxInstruments: number = doc.song.getMaxInstrumentsPerChannel();
-        if (channel.instruments.length >= maxInstruments) return;
+        if (doc.song.instruments.length >= maxInstruments) return;
         const presetValue: number = pickRandomPresetValue(isNoise);
         const preset: Preset = EditorConfig.valueToPreset(presetValue)!;
         const instrument: Instrument = new Instrument(isNoise, isMod);
@@ -3087,21 +3081,21 @@ export class ChangeAddChannelInstrument extends Change {
         instrument.preset = presetValue;
         instrument.effects |= 1 << EffectType.panning;
         instrument.volume = 0;
-        channel.instruments.push(instrument);
+        doc.song.instruments.push(instrument);
         if (!isMod) { // Mod channels lose information when changing set instrument
-            doc.viewedInstrument[doc.channel] = channel.instruments.length - 1;
+            doc.viewedInstrument = doc.song.instruments.length - 1;
         }
 
         // Determine if any mod instruments were setting 'all' or 'active'. If so, bump indices since there is now a new instrument in the list.
         for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            for (let instrumentIndex: number = 0; instrumentIndex < doc.song.channels[channelIndex].instruments.length; instrumentIndex++) {
+            for (let instrumentIndex: number = 0; instrumentIndex < doc.song.instruments.length; instrumentIndex++) {
                 for (let mod: number = 0; mod < Config.modCount; mod++) {
 
-                    let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIndex];
+                    let instrument: Instrument = doc.song.instruments[instrumentIndex];
                     let modInstrument: number = instrument.modInstruments[mod];
                     let modChannel: number = instrument.modChannels[mod];
 
-                    if (modChannel == doc.channel && modInstrument >= doc.song.channels[modChannel].instruments.length - 1) {
+                    if (modChannel == doc.channel && modInstrument >= doc.song.modInstruments.length - 1) {
                         //BUGFIX FROM JUMMBOX
                         instrument.modInstruments[mod]++;
                     }
@@ -3120,9 +3114,9 @@ export class ChangeRemoveChannelInstrument extends Change {
     constructor(doc: SongDocument) {
         super();
         const channel: Channel = doc.song.channels[doc.channel];
-        if (channel.instruments.length <= Config.instrumentCountMin) return;
+        if (doc.song.instruments.length <= Config.instrumentCountMin) return;
         const removedIndex: number = doc.viewedInstrument[doc.channel];
-        channel.instruments.splice(removedIndex, 1);
+        doc.song.instruments.splice(removedIndex, 1);
         if (doc.song.patternInstruments) {
             for (const pattern of channel.patterns) {
                 for (let i: number = 0; i < pattern.instruments.length; i++) {
@@ -3141,10 +3135,10 @@ export class ChangeRemoveChannelInstrument extends Change {
 
         // Determine if any mod instruments now refer to an invalid instrument number. Unset them if so
         for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
+            for (let instrumentIdx: number = 0; instrumentIdx < doc.song.instruments.length; instrumentIdx++) {
                 for (let mod: number = 0; mod < Config.modCount; mod++) {
 
-                    let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
+                    let instrument: Instrument = doc.song.instruments[instrumentIdx];
                     let modInstrument: number = instrument.modInstruments[mod];
                     let modChannel: number = instrument.modChannels[mod];
 
@@ -3172,10 +3166,10 @@ export class ChangeRemoveChannelInstrument extends Change {
 export class ChangeViewInstrument extends Change {
     constructor(doc: SongDocument, index: number) {
         super();
-        if (doc.viewedInstrument[doc.channel] != index) {
-            doc.viewedInstrument[doc.channel] = index;
+        if (doc.viewedInstrument != index) {
+            doc.viewedInstrument = index;
             if (doc.channel >= doc.song.pitchChannelCount + doc.song.noiseChannelCount)
-                doc.recentPatternInstruments[doc.channel] = [index];
+                doc.recentPatternInstruments = [index];
             doc.notifier.changed();
             this._didSomething();
         }
@@ -3193,17 +3187,17 @@ export class ChangeInstrumentsFlags extends Change {
 
         for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
             const channel: Channel = doc.song.channels[channelIndex];
-            if (channel.instruments.length > doc.song.getMaxInstrumentsPerChannel()) {
-                channel.instruments.length = doc.song.getMaxInstrumentsPerChannel();
+            if (doc.song.instruments.length > doc.song.getMaxInstrumentsPerChannel()) {
+                doc.song.instruments.length = doc.song.getMaxInstrumentsPerChannel();
             }
             for (let j: number = 0; j < doc.song.patternsPerChannel; j++) {
                 const pattern: Pattern = channel.patterns[j];
                 if (!oldPatternInstruments && newPatternInstruments) {
                     // patternInstruments was enabled, set up pattern instruments as appropriate.
-                    for (let i: number = 0; i < channel.instruments.length; i++) {
+                    for (let i: number = 0; i < doc.song.instruments.length; i++) {
                         pattern.instruments[i] = i;
                     }
-                    pattern.instruments.length = channel.instruments.length;
+                    pattern.instruments.length = doc.song.instruments.length;
                 }
                 discardInvalidPatternInstruments(pattern.instruments, doc.song, channelIndex);
             }
@@ -3358,7 +3352,7 @@ export class ChangeAppendInstrument extends ChangeGroup {
         super();
         let newInstrument: Instrument = new Instrument(instrument["isDrum"], instrument["isMod"])
         newInstrument.fromJsonObject(instrument, instrument["isDrum"], instrument["isMod"], false, false);
-        channel.instruments.push(newInstrument);
+        doc.song.instruments.push(newInstrument);
         this._didSomething();
         doc.notifier.changed();
     }
@@ -3380,7 +3374,7 @@ export class ChangeSetPatternInstruments extends Change {
 export class ChangeModChannel extends Change {
     constructor(doc: SongDocument, mod: number, index: number, useInstrument?: Instrument) {
         super();
-        let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        let instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (useInstrument != undefined)
             instrument = useInstrument;
 
@@ -3400,7 +3394,7 @@ export class ChangeModInstrument extends Change {
     constructor(doc: SongDocument, mod: number, tgtInstrument: number) {
         super();
 
-        let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        let instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
 
         if (instrument.modInstruments[mod] != tgtInstrument) {
             instrument.modInstruments[mod] = tgtInstrument;
@@ -3415,27 +3409,27 @@ export class ChangeModSetting extends Change {
     constructor(doc: SongDocument, mod: number, text: string) {
         super();
 
-        let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        let instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
 
         // Populate all instruments that could be targeted by this mod setting.
         let tgtChannel: number = instrument.modChannels[mod];
         let usedInstruments: Instrument[] = [];
         if (tgtChannel >= 0) { // Ignore song/none.
-            if (instrument.modInstruments[mod] == doc.song.channels[tgtChannel].instruments.length) {
+            if (instrument.modInstruments[mod] == doc.song.instruments.length) {
                 // All - Populate list of all instruments
-                usedInstruments = usedInstruments.concat(doc.song.channels[tgtChannel].instruments);
-            } else if (instrument.modInstruments[mod] > doc.song.channels[tgtChannel].instruments.length) {
+                usedInstruments = usedInstruments.concat(doc.song.instruments);
+            } else if (instrument.modInstruments[mod] > doc.song.instruments.length) {
                 // Active - Populate list of only used instruments
                 let tgtPattern: Pattern | null = doc.song.getPattern(tgtChannel, doc.bar);
                 if (tgtPattern != null) {
                     for (let i: number = 0; i < tgtPattern.instruments.length; i++) {
-                        usedInstruments.push(doc.song.channels[tgtChannel].instruments[tgtPattern.instruments[i]]);
+                        usedInstruments.push(doc.song.instruments[tgtPattern.instruments[i]]);
                     }
                 }
             }
             else {
                 // Single instrument used.
-                usedInstruments.push(doc.song.channels[tgtChannel].instruments[instrument.modInstruments[mod]]);
+                usedInstruments.push(doc.song.instruments[instrument.modInstruments[mod]]);
             }
         }
 
@@ -3485,7 +3479,7 @@ export class ChangeModFilter extends Change {
     constructor(doc: SongDocument, mod: number, type: number) {
         super();
 
-        let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        let instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
 
         if (instrument.modFilterTypes[mod] != type) {
 
@@ -3520,7 +3514,7 @@ export class ChangeModEnvelope extends Change {
     constructor(doc: SongDocument, mod: number, envelope: number) {
         super();
 
-        let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        let instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
 
         if (instrument.modEnvelopeNumbers[mod] != envelope) {
 
@@ -4037,7 +4031,7 @@ export function pickRandomPresetValue(isNoise: boolean): number {
 
 export function setDefaultInstruments(song: Song): void {
     for (let channelIndex: number = 0; channelIndex < song.channels.length; channelIndex++) {
-        for (const instrument of song.channels[channelIndex].instruments) {
+        for (const instrument of song.instruments) {
             const isNoise: boolean = song.getChannelIsNoise(channelIndex);
             const isMod: boolean = song.getChannelIsMod(channelIndex);
             const presetValue: number = (channelIndex == song.pitchChannelCount) ? EditorConfig.nameToPresetValue(Math.random() > 0.5 ? "chip noise" : "standard drumset")! : pickRandomPresetValue(isNoise);
@@ -4156,8 +4150,8 @@ export class ChangeReplacePatterns extends ChangeGroup {
             }
             channel.bars.length = song.barCount;
 
-            if (channel.instruments.length > song.getMaxInstrumentsPerChannel()) {
-                channel.instruments.length = song.getMaxInstrumentsPerChannel();
+            if (song.instruments.length > song.getMaxInstrumentsPerChannel()) {
+                song.instruments.length = song.getMaxInstrumentsPerChannel();
             }
 
             for (const pattern of channel.patterns) {
@@ -4855,7 +4849,7 @@ export class ChangePatternScale extends Change {
 export class ChangeVolume extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()].volume = newValue;
+        doc.song.instruments[doc.getCurrentInstrument()].volume = newValue;
         // Not used currently as mod is implemented as multiplicative.
         //doc.synth.unsetMod(ModSetting.mstInsVolume, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
@@ -4895,7 +4889,7 @@ export class ChangeChannelName extends Change {
 export class ChangePan extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()].pan = newValue;
+        doc.song.instruments[doc.getCurrentInstrument()].pan = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["pan"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
@@ -4905,7 +4899,7 @@ export class ChangePan extends Change {
 export class ChangePanDelay extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
-        doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()].panDelay = newValue;
+        doc.song.instruments[doc.getCurrentInstrument()].panDelay = newValue;
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -4914,7 +4908,7 @@ export class ChangePanDelay extends Change {
 export class ChangePanMode extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()].panMode = newValue;
+        doc.song.instruments[doc.getCurrentInstrument()].panMode = newValue;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4977,7 +4971,7 @@ export class ChangeSizeBend extends UndoableChange {
 export class ChangeChipWave extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.chipWave != newValue) {
             instrument.chipWave = newValue;
             // advloop addition
@@ -4999,7 +4993,7 @@ export class ChangeChipWave extends Change {
 export class ChangeChipWaveUseAdvancedLoopControls extends Change {
     constructor(doc: SongDocument, newValue: boolean) {
         super();
-        const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.isUsingAdvancedLoopControls != newValue) {
             instrument.isUsingAdvancedLoopControls = newValue;
             instrument.chipWaveLoopStart = 0;
@@ -5016,7 +5010,7 @@ export class ChangeChipWaveUseAdvancedLoopControls extends Change {
 export class ChangeChipWaveLoopMode extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.chipWaveLoopMode != newValue) {
             instrument.isUsingAdvancedLoopControls = true;
             instrument.chipWaveLoopMode = newValue;
@@ -5029,7 +5023,7 @@ export class ChangeChipWaveLoopMode extends Change {
 export class ChangeChipWaveLoopStart extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.chipWaveLoopStart != newValue) {
             instrument.isUsingAdvancedLoopControls = true;
             instrument.chipWaveLoopStart = newValue;
@@ -5042,7 +5036,7 @@ export class ChangeChipWaveLoopStart extends Change {
 export class ChangeChipWaveLoopEnd extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.chipWaveLoopEnd != newValue) {
             instrument.isUsingAdvancedLoopControls = true;
             instrument.chipWaveLoopEnd = newValue;
@@ -5056,7 +5050,7 @@ export class ChangeChipWaveLoopEnd extends Change {
 export class ChangeChipWaveStartOffset extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.chipWaveStartOffset != newValue) {
             instrument.isUsingAdvancedLoopControls = true;
             instrument.chipWaveStartOffset = newValue;
@@ -5069,7 +5063,7 @@ export class ChangeChipWaveStartOffset extends Change {
 export class ChangeChipWavePlayBackwards extends Change {
     constructor(doc: SongDocument, newValue: boolean) {
         super();
-        const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.chipWavePlayBackwards != newValue) {
             instrument.isUsingAdvancedLoopControls = true;
             instrument.chipWavePlayBackwards = newValue;
@@ -5084,7 +5078,7 @@ export class ChangeChipWavePlayBackwards extends Change {
 export class ChangeChipWaveInStereo extends Change {
     constructor(doc: SongDocument, newValue: boolean) {
         super();
-        const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.chipWaveInStereo != newValue) {
             instrument.chipWaveInStereo = newValue;
             instrument.preset = instrument.type;
@@ -5096,7 +5090,7 @@ export class ChangeChipWaveInStereo extends Change {
 export class ChangeNoiseWave extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         if (instrument.chipNoise != newValue) {
             instrument.chipNoise = newValue;
             instrument.preset = instrument.type;
@@ -5109,7 +5103,7 @@ export class ChangeNoiseWave extends Change {
 export class ChangeAddEnvelope extends Change {
     constructor(doc: SongDocument) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         instrument.addEnvelope(0, 0, 0, true, 0, instrument.isNoiseInstrument ? Config.drumCount : Config.maxPitch, false, 1, 0);
         instrument.preset = instrument.type;
         doc.notifier.changed();
@@ -5120,7 +5114,7 @@ export class ChangeAddEnvelope extends Change {
 export class ChangeRemoveEnvelope extends Change {
     constructor(doc: SongDocument, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         instrument.envelopeCount--;
         for (let i: number = index; i < instrument.envelopeCount; i++) {
             instrument.envelopes[i].target = instrument.envelopes[i + 1].target;
@@ -5146,7 +5140,7 @@ export class ChangeRemoveEnvelope extends Change {
 export class ChangeSetEnvelopeTarget extends Change {
     constructor(doc: SongDocument, envelopeIndex: number, target: number, targetIndex: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldTarget: number = instrument.envelopes[envelopeIndex].target;
         const oldIndex: number = instrument.envelopes[envelopeIndex].index;
         if (oldTarget != target || oldIndex != targetIndex) {
@@ -5162,7 +5156,7 @@ export class ChangeSetEnvelopeTarget extends Change {
 export class ChangeSetEnvelopeType extends Change {
     constructor(doc: SongDocument, envelopeIndex: number, newValue: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: number = instrument.envelopes[envelopeIndex].envelope;
         if (oldValue != newValue) {
             instrument.envelopes[envelopeIndex].envelope = newValue;
@@ -5176,7 +5170,7 @@ export class ChangeSetEnvelopeType extends Change {
 export class ChangeEnvelopePitchStart extends Change {
     constructor(doc: SongDocument, startNote: number, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldStartNote: number = instrument.envelopes[index].pitchEnvelopeStart;
         if (oldStartNote != startNote) {
             instrument.envelopes[index].pitchEnvelopeStart = startNote;
@@ -5190,7 +5184,7 @@ export class ChangeEnvelopePitchStart extends Change {
 export class ChangeEnvelopePitchEnd extends Change {
     constructor(doc: SongDocument, endNote: number, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldEndNote: number = instrument.envelopes[index].pitchEnvelopeEnd;
         if (oldEndNote != endNote) {
             instrument.envelopes[index].pitchEnvelopeEnd = endNote;
@@ -5204,7 +5198,7 @@ export class ChangeEnvelopePitchEnd extends Change {
 export class ChangeEnvelopeInverse extends Change {
     constructor(doc: SongDocument, value: boolean, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldValue: boolean = instrument.envelopes[index].inverse;
         if (oldValue != value) {
             instrument.envelopes[index].inverse = value;
@@ -5218,7 +5212,7 @@ export class ChangeEnvelopeInverse extends Change {
 export class ChangePerEnvelopeSpeed extends Change {
     constructor(doc: SongDocument, speed: number, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldSpeed: number = instrument.envelopes[index].perEnvelopeSpeed;
         if (oldSpeed != speed) {
             instrument.envelopes[index].perEnvelopeSpeed = speed;
@@ -5232,7 +5226,7 @@ export class ChangePerEnvelopeSpeed extends Change {
 export class ChangeEnvelopeLowerBound extends Change {
     constructor(doc: SongDocument, bound: number, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldBound: number = instrument.envelopes[index].perEnvelopeLowerBound;
         if (oldBound != bound) {
             bound = bound > Config.perEnvelopeBoundMax ? Config.perEnvelopeBoundMax : bound < Config.perEnvelopeBoundMin ? Config.perEnvelopeBoundMin : Math.round(bound * 10) != bound * 10 ? Config.perEnvelopeBoundMin : bound;
@@ -5247,7 +5241,7 @@ export class ChangeEnvelopeLowerBound extends Change {
 export class ChangeEnvelopeUpperBound extends Change {
     constructor(doc: SongDocument, bound: number, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldBound: number = instrument.envelopes[index].perEnvelopeUpperBound;
         if (oldBound != bound) {
             bound = bound > Config.perEnvelopeBoundMax ? Config.perEnvelopeBoundMax : bound < Config.perEnvelopeBoundMin ? Config.perEnvelopeBoundMin : Math.round(bound * 10) != bound * 10 ? Config.perEnvelopeBoundMin : bound;
@@ -5262,7 +5256,7 @@ export class ChangeEnvelopeUpperBound extends Change {
 export class ChangeRandomEnvelopeSteps extends Change {
     constructor(doc: SongDocument, steps: number, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldSteps: number = instrument.envelopes[index].steps;
         if (oldSteps != steps) {
             steps = steps > 64 ? 64 : steps < 1 ? 2 : Math.round(steps) != steps ? 2 : steps;
@@ -5277,7 +5271,7 @@ export class ChangeRandomEnvelopeSteps extends Change {
 export class ChangeRandomEnvelopeSeed extends Change {
     constructor(doc: SongDocument, seed: number, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldSeed: number = instrument.envelopes[index].seed;
         if (oldSeed != seed) {
             seed = seed > 64 ? 64 : seed < 1 ? 2 : Math.round(seed) != seed ? 2 : seed;
@@ -5292,7 +5286,7 @@ export class ChangeRandomEnvelopeSeed extends Change {
 export class PasteEnvelope extends Change {
     constructor(doc: SongDocument, envelope: any, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         instrument.envelopes[index].fromJsonObject(envelope, "slarmoosbox");
         
         
@@ -5305,7 +5299,7 @@ export class PasteEnvelope extends Change {
 export class ChangeSetEnvelopeWaveform extends Change {
     constructor(doc: SongDocument, waveform: any, index: number) {
         super();
-        const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+        const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         const oldWaveform: number = instrument.envelopes[index].waveform;
         waveform = parseInt(waveform + ""); //make sure waveform isn't a string
         if (oldWaveform != waveform) {

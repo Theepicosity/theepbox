@@ -49,7 +49,7 @@ import { SpectrumEditor, SpectrumEditorPrompt } from "./SpectrumEditor";
 import { CustomThemePrompt } from "./CustomThemePrompt";
 import { ThemePrompt } from "./ThemePrompt";
 import { TipPrompt } from "./TipPrompt";
-import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeDiscreteEnvelope, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangePanMode, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeChipWaveInStereo, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback } from "./changes";
+import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeDiscreteEnvelope, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeChipWaveInStereo, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback } from "./changes";
 
 import { TrackEditor } from "./TrackEditor";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
@@ -210,7 +210,7 @@ class CustomChipCanvas {
     }
 
     public redrawCanvas(): void {
-        const chipData: Float32Array = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].customChipWave;
+        const chipData: Float32Array = this._doc.song.instruments[this._doc.getCurrentInstrument()].customChipWave;
         const renderColor: string = ColorConfig.getComputedChannelColor(this._doc.song, this._doc.channel).primaryNote;
 
         // Check if the data has changed from the last render.
@@ -315,7 +315,7 @@ class CustomChipCanvas {
             this.lastY = y;
 
             // Preview - update integral used for sound synthesis based on new array, not actual stored array. When mouse is released, real update will happen.
-            let instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+            let instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
 
             let sum: number = 0.0;
             for (let i: number = 0; i < this.newArray.length; i++) {
@@ -436,7 +436,7 @@ class CustomAlgorythmCanvas {
             this.inverseModulation = [[], [], [], [], [], []];
             this.lookUpArray = [[], [], [], [], [], []];
 
-            var oldMods = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].customAlgorithm;
+            var oldMods = this._doc.song.instruments[this._doc.getCurrentInstrument()].customAlgorithm;
             this.carriers = oldMods.carrierCount;
             for (let i: number = 0; i < oldMods.modulatedBy.length; i++) {
                 for (let o: number = 0; o < oldMods.modulatedBy[i].length; o++) {
@@ -448,7 +448,7 @@ class CustomAlgorythmCanvas {
                 this.feedback = [[], [], [], [], [], []];
                 this.inverseFeedback = [[], [], [], [], [], []];
 
-                var oldfeed = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].customFeedbackType.indices;
+                var oldfeed = this._doc.song.instruments[this._doc.getCurrentInstrument()].customFeedbackType.indices;
                 for (let i: number = 0; i < oldfeed.length; i++) {
                     for (let o: number = 0; o < oldfeed[i].length; o++) {
                         this.inverseFeedback[oldfeed[i][o] - 1].push(i + 1);
@@ -1715,16 +1715,16 @@ export class SongEditor {
 
         sampleLoadEvents.addEventListener("sampleloaded", this._updateSampleLoadingBar.bind(this));
 
-        this._instrumentVolumeSliderInputBox.addEventListener("input", () => { this._doc.record(new ChangeVolume(this._doc, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].volume, Math.min(25.0, Math.max(-25.0, Math.round(+this._instrumentVolumeSliderInputBox.value))))) });
-        this._panSliderInputBox.addEventListener("input", () => { this._doc.record(new ChangePan(this._doc, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].pan, Math.min(100.0, Math.max(0.0, Math.round(+this._panSliderInputBox.value))))) });
-        this._pwmSliderInputBox.addEventListener("input", () => { this._doc.record(new ChangePulseWidth(this._doc, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].pulseWidth, Math.min(Config.pulseWidthRange, Math.max(1.0, Math.round(+this._pwmSliderInputBox.value))))) });
-        this._detuneSliderInputBox.addEventListener("input", () => { this._doc.record(new ChangeDetune(this._doc, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].detune, Math.min(Config.detuneMax - Config.detuneCenter, Math.max(Config.detuneMin - Config.detuneCenter, Math.round(+this._detuneSliderInputBox.value))))) });
+        this._instrumentVolumeSliderInputBox.addEventListener("input", () => { this._doc.record(new ChangeVolume(this._doc, this._doc.song.instruments[this._doc.getCurrentInstrument()].volume, Math.min(25.0, Math.max(-25.0, Math.round(+this._instrumentVolumeSliderInputBox.value))))) });
+        this._panSliderInputBox.addEventListener("input", () => { this._doc.record(new ChangePan(this._doc, this._doc.song.instruments[this._doc.getCurrentInstrument()].pan, Math.min(100.0, Math.max(0.0, Math.round(+this._panSliderInputBox.value))))) });
+        this._pwmSliderInputBox.addEventListener("input", () => { this._doc.record(new ChangePulseWidth(this._doc, this._doc.song.instruments[this._doc.getCurrentInstrument()].pulseWidth, Math.min(Config.pulseWidthRange, Math.max(1.0, Math.round(+this._pwmSliderInputBox.value))))) });
+        this._detuneSliderInputBox.addEventListener("input", () => { this._doc.record(new ChangeDetune(this._doc, this._doc.song.instruments[this._doc.getCurrentInstrument()].detune, Math.min(Config.detuneMax - Config.detuneCenter, Math.max(Config.detuneMin - Config.detuneCenter, Math.round(+this._detuneSliderInputBox.value))))) });
 
-        this._unisonVoicesInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonVoices(this._doc, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].unisonVoices, Math.min(Config.unisonVoicesMax, Math.max(Config.unisonVoicesMin, Math.round(+this._unisonVoicesInputBox.value))))) });
-        this._unisonSpreadInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonSpread(this._doc, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].unisonSpread, Math.min(Config.unisonSpreadMax, Math.max(Config.unisonSpreadMin, +this._unisonSpreadInputBox.value)))) });
-        this._unisonOffsetInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonOffset(this._doc, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].unisonOffset, Math.min(Config.unisonOffsetMax, Math.max(Config.unisonOffsetMin, +this._unisonOffsetInputBox.value)))) });
-        this._unisonExpressionInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonExpression(this._doc, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].unisonExpression, Math.min(Config.unisonExpressionMax, Math.max(Config.unisonExpressionMin, +this._unisonExpressionInputBox.value)))) });
-        this._unisonSignInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonSign(this._doc, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].unisonSign, Math.min(Config.unisonSignMax, Math.max(Config.unisonSignMin, +this._unisonSignInputBox.value)))) });
+        this._unisonVoicesInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonVoices(this._doc, this._doc.song.instruments[this._doc.getCurrentInstrument()].unisonVoices, Math.min(Config.unisonVoicesMax, Math.max(Config.unisonVoicesMin, Math.round(+this._unisonVoicesInputBox.value))))) });
+        this._unisonSpreadInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonSpread(this._doc, this._doc.song.instruments[this._doc.getCurrentInstrument()].unisonSpread, Math.min(Config.unisonSpreadMax, Math.max(Config.unisonSpreadMin, +this._unisonSpreadInputBox.value)))) });
+        this._unisonOffsetInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonOffset(this._doc, this._doc.song.instruments[this._doc.getCurrentInstrument()].unisonOffset, Math.min(Config.unisonOffsetMax, Math.max(Config.unisonOffsetMin, +this._unisonOffsetInputBox.value)))) });
+        this._unisonExpressionInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonExpression(this._doc, this._doc.song.instruments[this._doc.getCurrentInstrument()].unisonExpression, Math.min(Config.unisonExpressionMax, Math.max(Config.unisonExpressionMin, +this._unisonExpressionInputBox.value)))) });
+        this._unisonSignInputBox.addEventListener("input", () => { this._doc.record(new ChangeUnisonSign(this._doc, this._doc.song.instruments[this._doc.getCurrentInstrument()].unisonSign, Math.min(Config.unisonSignMax, Math.max(Config.unisonSignMin, +this._unisonSignInputBox.value)))) });
 
         this._customWaveDraw.addEventListener("input", () => { this._doc.record(new ChangeCustomWave(this._doc, this._customWaveDrawCanvas.newArray)) });
         this._twoNoteArpBox.addEventListener("input", () => { this._doc.record(new ChangeFastTwoNoteArp(this._doc, this._twoNoteArpBox.checked)) });
@@ -1838,7 +1838,7 @@ export class SongEditor {
         }
 
         if (target.textContent == "▼") {
-            let instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+            let instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
             target.textContent = "▲";
             if (dropdown == DropdownID.EnvelopeSettings) {
                 group.style.display = "flex";
@@ -2234,11 +2234,8 @@ export class SongEditor {
         const trackBounds: DOMRect = this._trackVisibleArea.getBoundingClientRect();
         this._doc.trackVisibleBars = Math.floor((trackBounds.right - trackBounds.left - (prefs.enableChannelMuting ? 32 : 0)) / this._doc.getBarWidth());
         this._doc.trackVisibleChannels = Math.floor((trackBounds.bottom - trackBounds.top - 30) / ChannelRow.patternHeight);
-        for (let i: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; i < this._doc.song.channels.length; i++) {
-            const channel: Channel = this._doc.song.channels[i];
-            for (let j: number = 0; j < channel.instruments.length; j++) {
-                this._doc.synth.determineInvalidModulators(channel.instruments[j]);
-            }
+        for (let j: number = 0; j < this._doc.song.instruments.length; j++) {
+            this._doc.synth.determineInvalidModulators(this._doc.song.instruments[j]);
         }
         this._barScrollBar.render();
         this._trackEditor.render();
@@ -2361,7 +2358,7 @@ export class SongEditor {
 
         const channel: Channel = this._doc.song.channels[this._doc.channel];
         const instrumentIndex: number = this._doc.getCurrentInstrument();
-        const instrument: Instrument = channel.instruments[instrumentIndex];
+        const instrument: Instrument = this._doc.song.instruments[instrumentIndex];
         const wasActive: boolean = this.mainLayer.contains(document.activeElement);
         const activeElement: Element | null = document.activeElement;
         const colors: ChannelColors = ColorConfig.getChannelColor(this._doc.song, this._doc.channel);
@@ -2967,12 +2964,12 @@ export class SongEditor {
 
             for (let mod: number = 0; mod < Config.modCount; mod++) {
 
-                let instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+                let instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
                 let modChannel: number = Math.max(0, instrument.modChannels[mod]);
                 let modInstrument: number = instrument.modInstruments[mod];
 
                 // Boundary checking
-                if (modInstrument >= this._doc.song.channels[modChannel].instruments.length + 2 || (modInstrument > 0 && this._doc.song.channels[modChannel].instruments.length <= 1)) {
+                if (modInstrument >= this._doc.song.modInstruments.length + 2 || (modInstrument > 0 && this._doc.song.modInstruments.length <= 1)) {
                     modInstrument = 0;
                     instrument.modInstruments[mod] = 0;
                 }
@@ -3013,10 +3010,10 @@ export class SongEditor {
                 let channel: Channel = this._doc.song.channels[modChannel];
 
                 // Build options for modulator instruments (make sure it has the right number).
-                if (this._modInstrumentBoxes[mod].children.length != channel.instruments.length + 2) {
+                if (this._modInstrumentBoxes[mod].children.length != this._doc.song.instruments.length + 2) {
                     while (this._modInstrumentBoxes[mod].firstChild) this._modInstrumentBoxes[mod].remove(0);
                     const instrumentList: string[] = [];
-                    for (let i: number = 0; i < channel.instruments.length; i++) {
+                    for (let i: number = 0; i < this._doc.song.instruments.length; i++) {
                         instrumentList.push("" + i + 1);
                     }
                     instrumentList.push("all");
@@ -3029,7 +3026,7 @@ export class SongEditor {
 
                     let usedInstruments: number[] = channel.patterns[channel.bars[this._doc.bar] - 1].instruments;
 
-                    for (let i: number = 0; i < channel.instruments.length; i++) {
+                    for (let i: number = 0; i < this._doc.song.instruments.length; i++) {
 
                         if (usedInstruments.includes(i)) {
                             this._modInstrumentBoxes[mod].options[i].label = "🢒" + (i + 1);
@@ -3040,7 +3037,7 @@ export class SongEditor {
                     }
                 }
                 else {
-                    for (let i: number = 0; i < channel.instruments.length; i++) {
+                    for (let i: number = 0; i < this._doc.song.instruments.length; i++) {
                         this._modInstrumentBoxes[mod].options[i].label = "" + (i + 1);
                     }
                 }
@@ -3104,8 +3101,8 @@ export class SongEditor {
                             allInstrumentEchoes: boolean = true,
                             allInstrumentReverbs: boolean = true;
                         let instrumentCandidates: number[] = [];
-                        if (modInstrument >= channel.instruments.length) {
-                            for (let i: number = 0; i < channel.instruments.length; i++) {
+                        if (modInstrument >= this._doc.song.instruments.length) {
+                            for (let i: number = 0; i < this._doc.song.instruments.length; i++) {
                                 instrumentCandidates.push(i);
                             }
                         } else {
@@ -3114,35 +3111,35 @@ export class SongEditor {
                         for (let i: number = 0; i < instrumentCandidates.length; i++) {
                             let instrumentIndex = instrumentCandidates[i];
 
-                            if (!tgtInstrumentTypes.includes(channel.instruments[instrumentIndex].type))
-                                tgtInstrumentTypes.push(channel.instruments[instrumentIndex].type);
-                            if (channel.instruments[instrumentIndex].eqFilterType)
+                            if (!tgtInstrumentTypes.includes(this._doc.song.instruments[instrumentIndex].type))
+                                tgtInstrumentTypes.push(this._doc.song.instruments[instrumentIndex].type);
+                            if (this._doc.song.instruments[instrumentIndex].eqFilterType)
                                 anyInstrumentSimpleEQ = true;
                             else
                                 anyInstrumentAdvancedEQ = true;
-                            if (effectsIncludeChord(channel.instruments[instrumentIndex].effects) && channel.instruments[instrumentIndex].getChord().arpeggiates) {
+                            if (effectsIncludeChord(this._doc.song.instruments[instrumentIndex].effects) && this._doc.song.instruments[instrumentIndex].getChord().arpeggiates) {
                                 anyInstrumentArps = true;
                             }
-                            if (effectsIncludePitchShift(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludePitchShift(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentPitchShifts = true;
                             } else {
                                 allInstrumentPitchShifts = false;
                             }
-                            if (effectsIncludeDetune(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludeDetune(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentDetunes = true;
                             }
                             else {
                                 allInstrumentDetunes = false;
                             }
-                            if (effectsIncludeVibrato(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludeVibrato(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentVibratos = true;
                             }
                             else {
                                 allInstrumentVibratos = false;
                             }
-                            if (effectsIncludeEQFilter(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludeEQFilter(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentNoteFilters = true;
-                                if (channel.instruments[instrumentIndex].eqFilterType)
+                                if (this._doc.song.instruments[instrumentIndex].eqFilterType)
                                     anyInstrumentSimpleNote = true;
                                 else
                                     anyInstrumentAdvancedNote = true;
@@ -3150,43 +3147,43 @@ export class SongEditor {
                             else {
                                 allInstrumentNoteFilters = false;
                             }
-                            if (effectsIncludeDistortion(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludeDistortion(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentDistorts = true;
                             }
                             else {
                                 allInstrumentDistorts = false;
                             }
-                            if (effectsIncludeBitcrusher(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludeBitcrusher(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentBitcrushes = true;
                             }
                             else {
                                 allInstrumentBitcrushes = false;
                             }
-                            if (effectsIncludePanning(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludePanning(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentPans = true;
                             }
                             else {
                                 allInstrumentPans = false;
                             }
-                            if (effectsIncludeChorus(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludeChorus(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentChorus = true;
                             }
                             else {
                                 allInstrumentChorus = false;
                             }
-                            if (effectsIncludeEcho(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludeEcho(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentEchoes = true;
                             }
                             else {
                                 allInstrumentEchoes = false;
                             }
-                            if (effectsIncludeReverb(channel.instruments[instrumentIndex].effects)) {
+                            if (effectsIncludeReverb(this._doc.song.instruments[instrumentIndex].effects)) {
                                 anyInstrumentReverbs = true;
                             }
                             else {
                                 allInstrumentReverbs = false;
                             }
-                            if (channel.instruments[instrumentIndex].envelopes.length > 0) {
+                            if (this._doc.song.instruments[instrumentIndex].envelopes.length > 0) {
                                 anyInstrumentHasEnvelopes = true;
                             }
 
@@ -3360,9 +3357,9 @@ export class SongEditor {
                     this._modTargetIndicators[mod].classList.remove("modTarget");
 
                 } else {
-                    ((this._modInstrumentBoxes[mod].parentElement) as HTMLDivElement).style.display = (channel.instruments.length > 1) ? "" : "none";
-                    $("#modInstrumentText" + mod).get(0)!.style.display = (channel.instruments.length > 1) ? "" : "none";
-                    $("#modChannelText" + mod).get(0)!.innerText = (channel.instruments.length > 1) ? "Ch:" : "Channel:";
+                    ((this._modInstrumentBoxes[mod].parentElement) as HTMLDivElement).style.display = (this._doc.song.instruments.length > 1) ? "" : "none";
+                    $("#modInstrumentText" + mod).get(0)!.style.display = (this._doc.song.instruments.length > 1) ? "" : "none";
+                    $("#modChannelText" + mod).get(0)!.innerText = (this._doc.song.instruments.length > 1) ? "Ch:" : "Channel:";
                     $("#modSettingText" + mod).get(0)!.style.display = "";
                     ((this._modSetBoxes[mod].parentElement) as HTMLDivElement).style.display = "";
 
@@ -3379,19 +3376,18 @@ export class SongEditor {
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
 
                     let useInstrument: number = instrument.modInstruments[mod];
-                    let modChannel: Channel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod])];
                     let tmpCount: number = -1;
-                    if (useInstrument >= modChannel.instruments.length) {
+                    if (useInstrument >= this._doc.song.modInstruments.length) {
                         // Use greatest number of dots among all instruments if setting is 'all' or 'active'. If it won't have an effect on one, no worry.
-                        for (let i: number = 0; i < modChannel.instruments.length; i++) {
+                        for (let i: number = 0; i < this._doc.song.modInstruments.length; i++) {
                             if (filterType == "post eq") {
-                                if (modChannel.instruments[i].eqFilter.controlPointCount > tmpCount) {
-                                    tmpCount = modChannel.instruments[i].eqFilter.controlPointCount;
+                                if (this._doc.song.modInstruments[i].eqFilter.controlPointCount > tmpCount) {
+                                    tmpCount = this._doc.song.modInstruments[i].eqFilter.controlPointCount;
                                     useInstrument = i;
                                 }
                             } else {
-                                if (modChannel.instruments[i].noteFilter.controlPointCount > tmpCount) {
-                                    tmpCount = modChannel.instruments[i].noteFilter.controlPointCount;
+                                if (this._doc.song.modInstruments[i].noteFilter.controlPointCount > tmpCount) {
+                                    tmpCount = this._doc.song.modInstruments[i].noteFilter.controlPointCount;
                                     useInstrument = i;
                                 }
                             }
@@ -3400,10 +3396,10 @@ export class SongEditor {
 
                     // Build options for modulator filters (make sure it has the right number of filter dots).
                     let dotCount: number = (filterType == "post eq")
-                        ? channel.instruments[useInstrument].getLargestControlPointCount(false)
-                        : channel.instruments[useInstrument].getLargestControlPointCount(true);
+                        ? this._doc.song.instruments[useInstrument].getLargestControlPointCount(false)
+                        : this._doc.song.instruments[useInstrument].getLargestControlPointCount(true);
 
-                    const isSimple: boolean = useSongEq ? false : (filterType == "post eq" ? channel.instruments[useInstrument].eqFilterType : channel.instruments[useInstrument].noteFilterType);
+                    const isSimple: boolean = useSongEq ? false : (filterType == "post eq" ? this._doc.song.instruments[useInstrument].eqFilterType : this._doc.song.instruments[useInstrument].noteFilterType);
                     if (isSimple)
                         dotCount = 0;
                     if (useSongEq) {
@@ -3463,12 +3459,11 @@ export class SongEditor {
                     $("#modFilterText" + mod).get(0)!.style.display = "none";
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
 
-                    let modChannel: Channel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod])];
                     let envCount: number = -1;
                     // Use greatest envelope count among all instruments if setting is 'all' or 'active'. If it won't have an effect on one, no worry.
-                    for (let i: number = 0; i < modChannel.instruments.length; i++) {
-                        if (modChannel.instruments[i].envelopeCount > envCount) {
-                            envCount = modChannel.instruments[i].envelopeCount;
+                    for (let i: number = 0; i < this._doc.song.modInstruments.length; i++) {
+                        if (this._doc.song.modInstruments[i].envelopeCount > envCount) {
+                            envCount = this._doc.song.modInstruments[i].envelopeCount;
                         }
                     }
 
@@ -3618,30 +3613,30 @@ export class SongEditor {
             this._instrumentsButtonBar.style.setProperty("--background-color-dim", colors.secondaryChannel);
 
             const maxInstrumentsPerChannel = this._doc.song.getMaxInstrumentsPerChannel();
-            while (this._instrumentButtons.length < channel.instruments.length) {
+            while (this._instrumentButtons.length < this._doc.song.instruments.length) {
                 const instrumentButton: HTMLButtonElement = button(String(this._instrumentButtons.length + 1));
                 this._instrumentButtons.push(instrumentButton);
                 this._instrumentsButtonBar.insertBefore(instrumentButton, this._instrumentRemoveButton);
             }
-            for (let i: number = this._renderedInstrumentCount; i < channel.instruments.length; i++) {
+            for (let i: number = this._renderedInstrumentCount; i < this._doc.song.instruments.length; i++) {
                 this._instrumentButtons[i].style.display = "";
             }
-            for (let i: number = channel.instruments.length; i < this._renderedInstrumentCount; i++) {
+            for (let i: number = this._doc.song.instruments.length; i < this._renderedInstrumentCount; i++) {
                 this._instrumentButtons[i].style.display = "none";
             }
-            this._renderedInstrumentCount = channel.instruments.length;
+            this._renderedInstrumentCount = this._doc.song.instruments.length;
             while (this._instrumentButtons.length > maxInstrumentsPerChannel) {
                 this._instrumentsButtonBar.removeChild(this._instrumentButtons.pop()!);
             }
 
-            this._instrumentRemoveButton.style.display = (channel.instruments.length > Config.instrumentCountMin) ? "" : "none";
-            this._instrumentAddButton.style.display = (channel.instruments.length < maxInstrumentsPerChannel) ? "" : "none";
-            if (channel.instruments.length < maxInstrumentsPerChannel) {
+            this._instrumentRemoveButton.style.display = (this._doc.song.instruments.length > Config.instrumentCountMin) ? "" : "none";
+            this._instrumentAddButton.style.display = (this._doc.song.instruments.length < maxInstrumentsPerChannel) ? "" : "none";
+            if (this._doc.song.instruments.length < maxInstrumentsPerChannel) {
                 this._instrumentRemoveButton.classList.remove("last-button");
             } else {
                 this._instrumentRemoveButton.classList.add("last-button");
             }
-            if (channel.instruments.length > 1) {
+            if (this._doc.song.instruments.length > 1) {
                 if (this._highlightedInstrumentIndex != instrumentIndex) {
                     const oldButton: HTMLButtonElement = this._instrumentButtons[this._highlightedInstrumentIndex];
                     if (oldButton != null) oldButton.classList.remove("selected-instrument");
@@ -3657,7 +3652,7 @@ export class SongEditor {
 
             if (this._doc.song.layeredInstruments && this._doc.song.patternInstruments && (this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)) {
                 //const pattern: Pattern | null = this._doc.getCurrentPattern();
-                for (let i: number = 0; i < channel.instruments.length; i++) {
+                for (let i: number = 0; i < this._doc.song.instruments.length; i++) {
                     if (this._doc.recentPatternInstruments[this._doc.channel].indexOf(i) != -1) {
                         this._instrumentButtons[i].classList.remove("deactivated");
                     } else {
@@ -3666,20 +3661,20 @@ export class SongEditor {
                 }
                 this._deactivatedInstruments = true;
             } else if (this._deactivatedInstruments || (this._doc.channel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)) {
-                for (let i: number = 0; i < channel.instruments.length; i++) {
+                for (let i: number = 0; i < this._doc.song.instruments.length; i++) {
 
                     this._instrumentButtons[i].classList.remove("deactivated");
                 }
                 this._deactivatedInstruments = false;
             }
 
-            if ((this._doc.song.layeredInstruments && this._doc.song.patternInstruments) && channel.instruments.length > 1 && (this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)) {
-                for (let i: number = 0; i < channel.instruments.length; i++) {
+            if ((this._doc.song.layeredInstruments && this._doc.song.patternInstruments) && this._doc.song.instruments.length > 1 && (this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)) {
+                for (let i: number = 0; i < this._doc.song.instruments.length; i++) {
                     this._instrumentButtons[i].classList.remove("no-underline");
                 }
             }
             else {
-                for (let i: number = 0; i < channel.instruments.length; i++) {
+                for (let i: number = 0; i < this._doc.song.instruments.length; i++) {
                     this._instrumentButtons[i].classList.add("no-underline");
                 }
             }
@@ -3779,12 +3774,14 @@ export class SongEditor {
                 const modChannel: Channel = this._doc.song.channels[modChannelIdx];
                 const patternIdx = modChannel.bars[this._doc.bar];
                 if (patternIdx > 0) {
-                    const modInstrumentIdx: number = modChannel.patterns[patternIdx - 1].instruments[0];
-                    const modInstrument: Instrument = modChannel.instruments[modInstrumentIdx];
+                    //const modInstrumentIdx: number = modChannel.patterns[patternIdx - 1].instruments[0];
+                    //const modInstrument: Instrument = this._doc.song.modInstruments[modInstrumentIdx];
                     for (let mod: number = 0; mod < Config.modCount; mod++) {
-                        if (modInstrument.modChannels[mod] == channelIndex && (modInstrument.modInstruments[mod] == instrumentIndex || modInstrument.modInstruments[mod] >= channel.instruments.length)) {
+                        /*
+                        if (modInstrument.modChannels[mod] == channelIndex && (modInstrument.modInstruments[mod] == instrumentIndex)) {
                             modUsed = true;
                         }
+                        */
                     }
                 }
             }
@@ -4141,12 +4138,12 @@ export class SongEditor {
             case 69: // e (+shift: eq filter settings)
                 if (canPlayNotes) break;
                 if (event.shiftKey) {
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+                    const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
                     if (!instrument.noteFilterType && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
                         this._openPrompt("customNoteFilterSettings");
                 } else if (event.altKey) {
                     //open / close all envelope dropdowns
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+                    const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
                     const isAllOpen: boolean = this.envelopeEditor.openExtraSettingsDropdowns.every((x) => { return x == true })
                     for (let i = 0; i < instrument.envelopeCount; i++) {
                         if (isAllOpen) this.envelopeEditor.openExtraSettingsDropdowns[i] = false;
@@ -4181,7 +4178,7 @@ export class SongEditor {
                     event.preventDefault();
                 } else if (event.altKey) {
                     //open / close all fm dropdowns
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+                    const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
                     const operatorCount: number = instrument.type == InstrumentType.fm ? 4 : 6;
                     let isAllOpen: boolean = true;
                     for (let i = 0; i < operatorCount; i++) {
@@ -4280,7 +4277,7 @@ export class SongEditor {
                 const group: ChangeGroup = new ChangeGroup();
 
                 if (event.shiftKey) {
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+                    const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
                     if (effectsIncludeEQFilter(instrument.effects) && !instrument.noteFilterType && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
                         this._openPrompt("customEQFilterSettings");
                     break;
@@ -4429,7 +4426,7 @@ export class SongEditor {
                 if (canPlayNotes) break;
                 if (needControlForShortcuts == (event.ctrlKey || event.metaKey) && event.shiftKey) {
                     // Copy the current instrument as a preset to the clipboard.
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+                    const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
                     const instrumentObject: any = instrument.toJsonObject();
                     delete instrumentObject["preset"];
                     // Volume and the panning effect are not included in presets.
@@ -4817,8 +4814,7 @@ export class SongEditor {
     }
 
     private _copyInstrument = (): void => {
-        const channel: Channel = this._doc.song.channels[this._doc.channel];
-        const instrument: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         const instrumentCopy: any = instrument.toJsonObject();
         instrumentCopy["isDrum"] = this._doc.song.getChannelIsNoise(this._doc.channel);
         instrumentCopy["isMod"] = this._doc.song.getChannelIsMod(this._doc.channel);
@@ -4827,8 +4823,7 @@ export class SongEditor {
     }
 
     private _pasteInstrument = (): void => {
-        const channel: Channel = this._doc.song.channels[this._doc.channel];
-        const instrument: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         const instrumentCopy: any = JSON.parse(String(window.localStorage.getItem("instrumentCopy")));
         if (instrumentCopy != null && instrumentCopy["isDrum"] == this._doc.song.getChannelIsNoise(this._doc.channel) && instrumentCopy["isMod"] == this._doc.song.getChannelIsMod(this._doc.channel)) {
             this._doc.record(new ChangePasteInstrument(this._doc, instrument, instrumentCopy));
@@ -4845,16 +4840,14 @@ export class SongEditor {
     };
 
     private _switchEQFilterType(toSimple: boolean) {
-        const channel: Channel = this._doc.song.channels[this._doc.channel];
-        const instrument: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         if (instrument.eqFilterType != toSimple) {
             this._doc.record(new ChangeEQFilterType(this._doc, instrument, toSimple));
         }
     }
 
     private _switchNoteFilterType(toSimple: boolean) {
-        const channel: Channel = this._doc.song.channels[this._doc.channel];
-        const instrument: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         if (instrument.noteFilterType != toSimple) {
             this._doc.record(new ChangeNoteFilterType(this._doc, instrument, toSimple));
         }
@@ -4998,7 +4991,7 @@ export class SongEditor {
 
     private _whenSetModChannel = (mod: number): void => {
 
-        let instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        let instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         let previouslyUnset: boolean = (instrument.modulators[mod] == 0 || Config.modulators[instrument.modulators[mod]].forSong);
 
         this._doc.selection.setModChannel(mod, this._modChannelBoxes[mod].selectedIndex);
@@ -5006,7 +4999,7 @@ export class SongEditor {
         const modChannel: number = Math.max(0, instrument.modChannels[mod]);
 
         // Check if setting was 'song' or 'none' and is changing to a channel number, in which case suggested instrument to mod will auto-set to the current one.
-        if (this._doc.song.channels[modChannel].instruments.length > 1 && previouslyUnset && this._modChannelBoxes[mod].selectedIndex >= 2) {
+        if (this._doc.song.modInstruments.length > 1 && previouslyUnset && this._modChannelBoxes[mod].selectedIndex >= 2) {
             if (this._doc.song.channels[modChannel].bars[this._doc.bar] > 0) {
                 this._doc.selection.setModInstrument(mod, this._doc.song.channels[modChannel].patterns[this._doc.song.channels[modChannel].bars[this._doc.bar] - 1].instruments[0]);
             }
@@ -5032,10 +5025,10 @@ export class SongEditor {
                 // A setting is invalid (not in instrument's effects). It will be the first index. Allow it, but mark it as red.
                 this._modSetBoxes[mod].selectedOptions.item(0)!.style.setProperty("color", "red");
                 this._modSetBoxes[mod].classList.add("invalidSetting");
-                this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].invalidModulators[mod] = true;
+                this._doc.song.instruments[this._doc.getCurrentInstrument()].invalidModulators[mod] = true;
             } else {
                 this._modSetBoxes[mod].classList.remove("invalidSetting");
-                this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].invalidModulators[mod] = false;
+                this._doc.song.instruments[this._doc.getCurrentInstrument()].invalidModulators[mod] = false;
             }
         }
         if (!invalidIndex) // Invalid index means a set is actually not occurring, just the same index and a warning.
@@ -5061,9 +5054,9 @@ export class SongEditor {
                 const patternIdx = modChannel.bars[this._doc.bar];
                 if (patternIdx > 0) {
                     const modInstrumentIdx: number = modChannel.patterns[patternIdx - 1].instruments[0];
-                    const modInstrument: Instrument = modChannel.instruments[modInstrumentIdx];
+                    const modInstrument: Instrument = this._doc.song.modInstruments[modInstrumentIdx];
                     for (let mod: number = 0; mod < Config.modCount; mod++) {
-                        if (modInstrument.modChannels[mod] == channelIndex && (modInstrument.modInstruments[mod] == instrumentIndex || modInstrument.modInstruments[mod] >= this._doc.song.channels[channelIndex].instruments.length)) {
+                        if (modInstrument.modChannels[mod] == channelIndex && (modInstrument.modInstruments[mod] == instrumentIndex || modInstrument.modInstruments[mod] >= this._doc.song.instruments.length)) {
                             this._doc.selection.setChannelBar(modChannelIdx, this._doc.bar);
                             return;
                         }
@@ -5101,8 +5094,7 @@ export class SongEditor {
         this._doc.record(new ChangeChipWaveLoopEnd(this._doc, parseInt(this._chipWaveLoopEndStepper.value) | 0));
     }
     private _whenSetChipWaveLoopEndToEnd = (): void => {
-        const channel = this._doc.song.channels[this._doc.channel];
-        const instrument = channel.instruments[this._doc.getCurrentInstrument()];
+        const instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         const chipWave = Config.rawRawChipWaves[instrument.chipWave];
         const chipWaveLength = chipWave.samples.length;
         this._doc.record(new ChangeChipWaveLoopEnd(this._doc, chipWaveLength - 1));
@@ -5128,7 +5120,7 @@ export class SongEditor {
     }
 
     private _whenSetEffects = (): void => {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         const oldValue: number = instrument.effects;
         const toggleFlag: number = Config.effectOrder[this._effectsSelect.selectedIndex - 1];
         this._doc.record(new ChangeToggleEffects(this._doc, toggleFlag, null));

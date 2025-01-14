@@ -490,7 +490,7 @@ export class ExportPrompt implements Prompt {
         let midiChannelCounter: number = 0;
         let foundADrumset: boolean = false;
         for (let channel: number = 0; channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channel++) {
-            if (!foundADrumset && this._doc.song.channels[channel].instruments[0].type == InstrumentType.drumset) {
+            if (!foundADrumset && this._doc.song.instruments[0].type == InstrumentType.drumset) {
                 tracks.push({ isMeta: false, channel: channel, midiChannel: 9, isNoise: true, isDrumset: true });
                 foundADrumset = true; // There can only be one drumset channel, and it's always channel 9 (seen as 10 in most UIs). :/
             } else {
@@ -606,7 +606,7 @@ export class ExportPrompt implements Prompt {
 
                 let prevInstrumentIndex: number = -1;
                 function writeInstrumentSettings(instrumentIndex: number): void {
-                    const instrument: Instrument = song.channels[channel].instruments[instrumentIndex];
+                    const instrument: Instrument = song.instruments[instrumentIndex];
                     const preset: Preset | null = EditorConfig.valueToPreset(instrument.preset);
 
                     if (prevInstrumentIndex != instrumentIndex) {
@@ -682,7 +682,7 @@ export class ExportPrompt implements Prompt {
                     if (pattern != null) {
 
                         const instrumentIndex: number = pattern.instruments[0]; // Don't bother trying to export multiple instruments per pattern to midi, just pick the first one.
-                        const instrument: Instrument = song.channels[channel].instruments[instrumentIndex];
+                        const instrument: Instrument = song.instruments[instrumentIndex];
                         const preset: Preset | null = EditorConfig.valueToPreset(instrument.preset);
                         writeInstrumentSettings(instrumentIndex);
 

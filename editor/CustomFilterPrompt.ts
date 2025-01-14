@@ -124,8 +124,8 @@ export class CustomFilterPrompt implements Prompt {
         const filterCopy: any = this.forSong
             ? this._doc.song.eqFilter.toJsonObject()
             : this._useNoteFilter
-            ? this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].noteFilter.toJsonObject()
-            : this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].eqFilter.toJsonObject();
+            ? this._doc.song.instruments[this._doc.getCurrentInstrument()].noteFilter.toJsonObject()
+            : this._doc.song.instruments[this._doc.getCurrentInstrument()].eqFilter.toJsonObject();
         window.localStorage.setItem("filterCopy", JSON.stringify(filterCopy));
     }
 

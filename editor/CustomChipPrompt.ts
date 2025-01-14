@@ -58,7 +58,7 @@ export class CustomChipPromptCanvas {
         let col: string = ColorConfig.getChannelColor(this._doc.song, this._doc.channel).primaryNote;
 
         for (let i: number = 0; i <= 64; i++) {
-            let val: number = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].customChipWave[i];
+            let val: number = this._doc.song.instruments[this._doc.getCurrentInstrument()].customChipWave[i];
             this.chipData[i] = val;
             this.startingChipData[i] = val;
             this._blocks.appendChild(SVG.rect({ fill: col, x: (i * this._editorWidth / 64), y: (val + 24) * (this._editorHeight / 49), width: this._editorWidth / 64, height: this._editorHeight / 49 }));

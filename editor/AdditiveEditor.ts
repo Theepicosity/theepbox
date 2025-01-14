@@ -43,7 +43,7 @@ export class AdditiveEditor {
     private _current: AdditiveWave;
 
     constructor(private _doc: SongDocument) {
-        this._instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._initial = this._instrument.additiveWave;
         this._current = this._initial;
         for (let i: number = 1; i <= Config.additiveControlPoints; i = i * 2) {
@@ -87,7 +87,7 @@ export class AdditiveEditor {
                 existingChild.remove();
                 this._waveTypeButtons[buttonIndex].appendChild(this._getShape(this._current.waveTypes[buttonIndex], buttonIndex));
             }
-            const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+            const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
             this._doc.record(new ChangeAdditive(this._doc, instrument, this._current));
         }
     }
@@ -192,7 +192,7 @@ export class AdditiveEditor {
     }
 
     private _updateAdditive(freq: number, amp: number) {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
 
         if (freq != this._freqPrev) {
             const slope: number = (amp - this._ampPrev) / (freq - this._freqPrev);
@@ -218,7 +218,7 @@ export class AdditiveEditor {
     }
 
     public setAdditiveWave(additive: AdditiveWave) {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._current = additive;
         this._doc.record(new ChangeAdditive(this._doc, instrument, this._current));
         this.render();
@@ -242,24 +242,24 @@ export class AdditiveEditor {
     }
 
     public saveSettings() {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._doc.record(new ChangeAdditive(this._doc, instrument, this._current));
     }
 
     public resetToInitial() {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._doc.record(new ChangeAdditive(this._doc, instrument, this._initial));
     }
 
     public rerenderWave() {
-        this._instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._initial = this._instrument.additiveWave;
         this._current = this._initial;
         this.render();
     }
 
     public render(): void {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         const additiveWave: AdditiveWave = instrument.additiveWave; 
         const controlPointToHeight = (point: number): number => {
             return (1 - (point / Config.additiveMax)) * this._editorHeight;

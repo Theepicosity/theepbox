@@ -143,13 +143,13 @@ export class Selection {
             this.instrumentDigits += digit;
             var parsed = parseInt(this.instrumentDigits);
             //var pattern: Pattern | null = this._doc.getCurrentPattern();
-            if (parsed != 0 && parsed <= this._doc.song.channels[this._doc.channel].instruments.length) {
+            if (parsed != 0 && parsed <= this._doc.song.instruments.length) {
                 this.selectInstrument(parsed - 1);
                 return;
             }
             this.instrumentDigits = digit;
             parsed = parseInt(this.instrumentDigits);
-            if (parsed != 0 && parsed <= this._doc.song.channels[this._doc.channel].instruments.length) {
+            if (parsed != 0 && parsed <= this._doc.song.instruments.length) {
                 this.selectInstrument(parsed - 1);
                 return;
             }
@@ -699,7 +699,7 @@ export class Selection {
 
             const currentChannel = this._doc.song.channels[this.boxSelectionChannel];
             const bar: number = currentChannel.bars[this._doc.bar] - 1;
-            const modInstrument = (bar >= 0) ? currentChannel.instruments[currentChannel.patterns[bar].instruments[0]] : currentChannel.instruments[this._doc.viewedInstrument[this.boxSelectionChannel]];
+            const modInstrument = (bar >= 0) ? this._doc.song.instruments[currentChannel.patterns[bar].instruments[0]] : this._doc.song.instruments[this._doc.viewedInstrument[this.boxSelectionChannel]];
             const soloPattern: boolean[] = [];
             let matchesSoloPattern: boolean = !invert;
 

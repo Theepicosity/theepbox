@@ -184,7 +184,7 @@ export class EnvelopeEditor {
 			this._doc.record(new ChangeRemoveEnvelope(this._doc, deleteButtonIndex));
 			this.extraSettingsDropdownGroups[deleteButtonIndex].style.display = "none";
 		} else if (envelopeCopyButtonIndex != -1) {
-			const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+			const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
 			window.localStorage.setItem("envelopeCopy", JSON.stringify(instrument.envelopes[envelopeCopyButtonIndex].toJsonObject()));
 		} else if (envelopePasteButtonIndex != -1) {
 			const envelopeCopy: any = window.localStorage.getItem("envelopeCopy");
@@ -279,7 +279,7 @@ export class EnvelopeEditor {
 	}
 
 	public rerenderExtraSettings(index: number = 0) { //probably not the best solution, but very reliable and easy
-		const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+		const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
 		for (let i = index; i < Config.maxEnvelopeCount; i++) {
 			if (i >= instrument.envelopeCount) {
 				if (this.extraSettingsDropdowns[i]) { //make sure is not null so that we don't get an error
@@ -423,7 +423,7 @@ export class EnvelopeEditor {
 	}
 
 	public render(): void {
-		const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+		const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
 
 		for (let envelopeIndex: number = this._rows.length; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
 			const targetSelect: HTMLSelectElement = HTML.select();
@@ -539,7 +539,7 @@ export class EnvelopeEditor {
 			const extraPitchSettingsGroup: HTMLDivElement = HTML.div({ class: "editor-controls", style: "flex-direction:column; align-items:center;" }, pitchStartNoteWrapper, pitchEndNoteWrapper);
 			extraPitchSettingsGroup.style.display = "none";
 			
-			const extraSettingsDropdown: HTMLButtonElement = HTML.button({ style: "margin-left:0em; margin-right: 0.3em; height:1.5em; width: 10px; padding: 0px; font-size: 8px;", onclick: () => { const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()]; this._extraSettingsDropdown(DropdownID.EnvelopeSettings, envelopeIndex, Config.newEnvelopes[instrument.envelopes[envelopeIndex].envelope].name); } }, "▼");
+			const extraSettingsDropdown: HTMLButtonElement = HTML.button({ style: "margin-left:0em; margin-right: 0.3em; height:1.5em; width: 10px; padding: 0px; font-size: 8px;", onclick: () => { const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()]; this._extraSettingsDropdown(DropdownID.EnvelopeSettings, envelopeIndex, Config.newEnvelopes[instrument.envelopes[envelopeIndex].envelope].name); } }, "▼");
 			extraSettingsDropdown.style.display = "inline";
 
 			const extraRandomSettingsGroup: HTMLDivElement = HTML.div({ class: "editor-controls", style: "flex-direction:column; align-items:center;" }, randomTypeSelectWrapper, randomStepsWrapper, randomSeedWrapper);

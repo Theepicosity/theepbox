@@ -5,7 +5,6 @@ import { SongDocument } from "./SongDocument";
 // import { SongEditor } from "./SongEditor";
 import { Prompt } from "./Prompt";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { Channel } from "../synth/Channel";
 import { Instrument } from "../synth/Instrument";
 
 const { button, div, h2, input, label, br } = HTML;
@@ -54,8 +53,7 @@ export class InstrumentExportPrompt implements Prompt {
         this._exportMultipleBox.checked ? this._export_multiple() : this._export_single()
     }
     public _export_multiple = (): void => {
-        const channel: Channel = this._doc.song.channels[this._doc.channel];
-        const instruments: Instrument[] = channel.instruments.map((instrument) => {
+        const instruments: Instrument[] = this._doc.song.instruments.map((instrument) => {
             const instrumentCopy: any = instrument.toJsonObject();
             instrumentCopy["isDrum"] = this._doc.song.getChannelIsNoise(this._doc.channel);
             return instrumentCopy;
@@ -73,8 +71,7 @@ export class InstrumentExportPrompt implements Prompt {
         this._close();
     }
     public _export_single = (): void => {
-        const channel: Channel = this._doc.song.channels[this._doc.channel];
-        const instrument: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         const instrumentCopy: any = instrument.toJsonObject();
         instrumentCopy["isDrum"] = this._doc.song.getChannelIsNoise(this._doc.channel);
 

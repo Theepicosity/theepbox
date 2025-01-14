@@ -100,7 +100,7 @@ export class InstrumentImportPrompt implements Prompt {
 
     public _import_multiple = (file: any): void => {
         const channel: Channel = this._doc.song.channels[this._doc.channel];
-        const currentInstrum: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
+        const currentInstrum: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         switch (this._importStrategySelect.value) {
             case "replace":
                 // console.log("multi replace");
@@ -124,7 +124,7 @@ export class InstrumentImportPrompt implements Prompt {
                 // console.log("multi all");
                 window.localStorage.setItem("instrumentImportStrategy", this._importStrategySelect.value);
                 //Delete all instruments then add these ones
-                channel.instruments.length = 0;
+                this._doc.song.instruments.length = 0;
                 for (let insturm of file) {
                     if (!this._validate_instrument_limit(channel)) {
                         alert("Max instruments reached! Some instruments were not imported.");
@@ -132,7 +132,7 @@ export class InstrumentImportPrompt implements Prompt {
                     }
                     this._doc.record(new ChangeAppendInstrument(this._doc, channel, insturm));
                 }
-                this._doc.record(new ChangeViewInstrument(this._doc, channel.instruments.length - 1))
+                this._doc.record(new ChangeViewInstrument(this._doc, this._doc.song.instruments.length - 1))
                 this._doc.prompt = null;
                 this._doc.notifier.changed();
                 return;
@@ -147,7 +147,7 @@ export class InstrumentImportPrompt implements Prompt {
                     }
                     this._doc.record(new ChangeAppendInstrument(this._doc, channel, insturm));
                 }
-                this._doc.record(new ChangeViewInstrument(this._doc, channel.instruments.length - 1))
+                this._doc.record(new ChangeViewInstrument(this._doc, this._doc.song.instruments.length - 1))
                 this._doc.prompt = null;
                 this._doc.notifier.changed();
                 return;
@@ -156,7 +156,7 @@ export class InstrumentImportPrompt implements Prompt {
     }
 
     public _validate_instrument_limit = (channel: Channel): boolean => {
-        if (this._doc.song.getMaxInstrumentsPerChannel() <= channel.instruments.length) {
+        if (this._doc.song.getMaxInstrumentsPerChannel() <= this._doc.song.instruments.length) {
             return false;
         }
         return true;
@@ -164,7 +164,7 @@ export class InstrumentImportPrompt implements Prompt {
 
     public _import_single = (file: any): void => {
         const channel: Channel = this._doc.song.channels[this._doc.channel];
-        const currentInstrum: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
+        const currentInstrum: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         switch (this._importStrategySelect.value) {
             case "replace":
                 //Replace the current instrument with this one
@@ -179,8 +179,8 @@ export class InstrumentImportPrompt implements Prompt {
                 //Delete all instruments then add this one
                 // console.log("single all");
                 window.localStorage.setItem("instrumentImportStrategy", this._importStrategySelect.value);
-                channel.instruments.length = 1;
-                const firstInstrum = channel.instruments[0];
+                this._doc.song.instruments.length = 1;
+                const firstInstrum = this._doc.song.instruments[0];
                 this._doc.record(new ChangePasteInstrument(this._doc, firstInstrum, file));
                 this._doc.record(new ChangeViewInstrument(this._doc, 0))
                 this._doc.prompt = null;
@@ -192,7 +192,7 @@ export class InstrumentImportPrompt implements Prompt {
                 // console.log("single append");
                 window.localStorage.setItem("instrumentImportStrategy", this._importStrategySelect.value);
                 this._doc.record(new ChangeAppendInstrument(this._doc, channel, file));
-                this._doc.record(new ChangeViewInstrument(this._doc, channel.instruments.length - 1))
+                this._doc.record(new ChangeViewInstrument(this._doc, this._doc.song.instruments.length - 1))
                 this._doc.prompt = null;
                 this._doc.notifier.changed();
                 return;

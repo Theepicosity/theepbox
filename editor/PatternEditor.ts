@@ -1,7 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 import { getLocalStorageItem, Chord, Transition, Config } from "../synth/SynthConfig";
-import { Channel } from "../synth/Channel";
 import { Instrument } from "../synth/Instrument";
 import { FilterSettings, FilterControlPoint } from "../synth/Filter";
 import { NotePin, Note, makeNotePin, Pattern } from "../synth/Pattern";
@@ -325,7 +324,7 @@ export class PatternEditor {
                     this.modDragValueLabel.style.setProperty("display", "");
                     const mod: number = Math.max(0, Config.modCount - 1 - this._cursor.curNote.pitches[0]);
 
-                    let setting: number = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[mod];
+                    let setting: number = this._doc.song.instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[mod];
 
                     let presValue: number = this._cursor.curNote.pins[pinIdx].size + Config.modulators[setting].convertRealFactor;
 
@@ -742,11 +741,11 @@ export class PatternEditor {
         const currentPart: number = (realPart < timeQuantum / 2) ? 0 : Math.ceil(realPart / timeQuantum) * timeQuantum;
 
         // For a given setting and a given channel, find the instrument and mod number that influences the setting.
-        function getMatchingInstrumentAndMod(applyToMod: number, modChannel: Channel, modInsIndex?: number | undefined, modFilterIndex?: number | undefined): number[] {
+        function getMatchingInstrumentAndMod(applyToMod: number, modInstruments: Instrument[], modInsIndex?: number | undefined, modFilterIndex?: number | undefined): number[] {
             let startIndex: number = (modInsIndex == undefined) ? 0 : modInsIndex;
-            let endIndex: number = (modInsIndex == undefined) ? modChannel.instruments.length - 1 : modInsIndex;
+            let endIndex: number = (modInsIndex == undefined) ? modInstruments.length - 1 : modInsIndex;
             for (let instrumentIndex: number = startIndex; instrumentIndex <= endIndex; instrumentIndex++) {
-                let instrument: Instrument = modChannel.instruments[instrumentIndex];
+                let instrument: Instrument = modInstruments[instrumentIndex];
                 for (let mod: number = 0; mod < Config.modCount; mod++) {
                     // Non-song application
                     if (instrument.modulators[mod] == applyToMod && !Config.modulators[instrument.modulators[mod]].forSong && (instrument.modChannels[mod] == thisRef._doc.channel)) {
@@ -754,7 +753,7 @@ export class PatternEditor {
                         // For "active" target it doesn't check if the instrument is active, allowing write to other active instruments from an inactive one. Should be fine since audibly while writing you'll hear what you'd expect -
                         // the current channel's active instruments being modulated, which is what most people would expect even if editing an inactive instrument.
                         if (thisRef._doc.getCurrentInstrument() == instrument.modInstruments[mod]
-                            || instrument.modInstruments[mod] >= thisRef._doc.song.channels[thisRef._doc.channel].instruments.length) {
+                            || instrument.modInstruments[mod] >= thisRef._doc.song.instruments.length) {
                             // If it's an eq/note filter target, one additional step is performed to see if it matches the right modFilterType.
                             if (modFilterIndex != undefined && (applyToMod == Config.modulators.dictionary["eq filter"].index || applyToMod == Config.modulators.dictionary["note filter"].index)) {
                                 if (instrument.modFilterTypes[mod] == modFilterIndex)
@@ -859,7 +858,7 @@ export class PatternEditor {
 
         const sequence: ChangeSequence = new ChangeSequence();
 
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         let applyToMods: number[] = [];
         let applyToFilterTargets: number[] = [];
         let applyValues: number[] = [];
@@ -1268,7 +1267,6 @@ export class PatternEditor {
             let usedModIndices: number[] = [];
 
             for (let channelIndex: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
-                const channel: Channel = this._doc.song.channels[channelIndex];
                 let pattern: Pattern | null = this._doc.song.getPattern(channelIndex, currentBar);
                 let useInstrumentIndex: number = 0;
                 let useModIndex: number = 0;
@@ -1277,9 +1275,9 @@ export class PatternEditor {
                     // Hunt for instrument matching this setting and swap to it.
                     var rtn;
                     if (applyToFilterTargets.length > applyIndex)
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, undefined, applyToFilterTargets[applyIndex]);
+                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modInstruments, undefined, applyToFilterTargets[applyIndex]);
                     else
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel);
+                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modInstruments);
                     useInstrumentIndex = rtn[0];
                     useModIndex = rtn[1];
 
@@ -1298,9 +1296,9 @@ export class PatternEditor {
                 else {
                     var rtn;
                     if (applyToFilterTargets.length > applyIndex)
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, pattern.instruments[0], applyToFilterTargets[applyIndex]);
+                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modInstruments, pattern.instruments[0], applyToFilterTargets[applyIndex]);
                     else
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, pattern.instruments[0]);
+                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modInstruments, pattern.instruments[0]);
                     useInstrumentIndex = rtn[0];
                     useModIndex = rtn[1];
 
@@ -1317,7 +1315,7 @@ export class PatternEditor {
                     // Note these as needing modification, but continue on until all channels are checked.
                     usedPatterns.push(pattern!);
                     usedInstrumentIndices.push(useInstrumentIndex);
-                    usedInstruments.push(channel.instruments[useInstrumentIndex]);
+                    usedInstruments.push(this._doc.song.instruments[useInstrumentIndex]);
                     usedModIndices.push(useModIndex);
                 }
             }
@@ -1325,7 +1323,6 @@ export class PatternEditor {
             // If the setting wasn't found in any channel or instruments, add it to the first unused slot in any channel.
             if (usedInstrumentIndices.length == 0) {
                 for (let channelIndex: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
-                    const channel: Channel = this._doc.song.channels[channelIndex];
                     let pattern: Pattern | null = this._doc.song.getPattern(channelIndex, currentBar);
                     let useInstrument: number = -1;
                     // If there's a pattern for this channel in this bar, it only makes sense to add the new slot in that instrument somewhere or give up and move to the next.
@@ -1334,9 +1331,9 @@ export class PatternEditor {
                     }
                     // No pattern for this channel, so check through all the instruments for a free slot, and add a pattern if there's a free one.
                     else {
-                        for (let instrumentIndex: number = 0; instrumentIndex < channel.instruments.length; instrumentIndex++) {
+                        for (let instrumentIndex: number = 0; instrumentIndex < this._doc.song.instruments.length; instrumentIndex++) {
                             for (let mod: number = 0; mod < Config.modCount; mod++) {
-                                if (channel.instruments[instrumentIndex].modulators[mod] == Config.modulators.dictionary["none"].index) {
+                                if (this._doc.song.instruments[instrumentIndex].modulators[mod] == Config.modulators.dictionary["none"].index) {
                                     useInstrument = instrumentIndex;
 
                                     sequence.append(new ChangeEnsurePatternExists(this._doc, channelIndex, currentBar));
@@ -1346,7 +1343,7 @@ export class PatternEditor {
                                     pattern.instruments[0] = instrumentIndex;
 
                                     mod = Config.modCount;
-                                    instrumentIndex = channel.instruments.length;
+                                    instrumentIndex = this._doc.song.instruments.length;
                                     channelIndex = this._doc.song.getChannelCount();
 
                                     changedPatterns = true;
@@ -1357,7 +1354,7 @@ export class PatternEditor {
 
                     // Found a suitable instrument to use, now add the setting
                     if (useInstrument != -1) {
-                        let instrument: Instrument = channel.instruments[useInstrument];
+                        let instrument: Instrument = this._doc.song.instruments[useInstrument];
                         for (let mod: number = 0; mod < Config.modCount; mod++) {
                             if (instrument.modulators[mod] == Config.modulators.dictionary["none"].index) {
                                 instrument.modulators[mod] = applyToMods[applyIndex];
@@ -1367,10 +1364,10 @@ export class PatternEditor {
                                 else {
                                     instrument.modChannels[mod] = this._doc.channel;
                                     
-                                    if (this._doc.song.channels[this._doc.channel].instruments.length > 1) {
+                                    if (this._doc.song.instruments.length > 1) {
                                         // Ctrl key or Shift key: set the new mod target to "active" modulation for the most flexibility, if there's more than one instrument in the channel.
                                         if (!this.controlMode || !this.shiftMode)
-                                            instrument.modInstruments[mod] = this._doc.song.channels[this._doc.channel].instruments.length + 1;
+                                            instrument.modInstruments[mod] = this._doc.song.instruments.length + 1;
                                         // Control+Shift key: Set the new mod target to the currently viewed instrument only.
                                         else
                                             instrument.modInstruments[mod] = this._doc.getCurrentInstrument();
@@ -1426,19 +1423,7 @@ export class PatternEditor {
                         // Instrument doesn't matter for song, just push a random index to run the modsynth once
                         usedNewInstrumentIndices.push(0);
                     } else {
-                        // All
-                        if (usedInstrument.modInstruments[usedModIndices[i]] == this._doc.synth.song!.channels[usedInstrument.modChannels[usedModIndices[i]]].instruments.length) {
-                            for (let k: number = 0; k < this._doc.synth.song!.channels[usedInstrument.modChannels[usedModIndices[i]]].instruments.length; k++) {
-                                usedNewInstrumentIndices.push(k);
-                            }
-                        }
-                        // Active
-                        else if (usedInstrument.modInstruments[usedModIndices[i]] > this._doc.synth.song!.channels[usedInstrument.modChannels[usedModIndices[i]]].instruments.length) {
-                            if (this._doc.synth.song!.getPattern(usedInstrument.modChannels[usedModIndices[i]], currentBar) != null)
-                                usedNewInstrumentIndices = this._doc.synth.song!.getPattern(usedInstrument.modChannels[usedModIndices[i]], currentBar)!.instruments;
-                        } else {
-                            usedNewInstrumentIndices.push(usedInstrument.modInstruments[usedModIndices[i]]);
-                        }
+                        usedNewInstrumentIndices.push(usedInstrument.modInstruments[usedModIndices[i]]);
                     }
 
                     for (let instrumentIndex: number = 0; instrumentIndex < usedNewInstrumentIndices.length; instrumentIndex++) {
@@ -2502,7 +2487,7 @@ export class PatternEditor {
         }
 
         if (this._pattern != null) {
-            const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)];
+            const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument(this._barOffset)];
             const chord: Chord = instrument.getChord();
             const transition: Transition = instrument.getTransition();
             const displayNumberedChords: boolean = chord.customInterval || chord.arpeggiates || chord.strumParts > 0 || transition.slides;
@@ -2589,7 +2574,7 @@ export class PatternEditor {
                     this.modDragValueLabel.style.setProperty("pointer-events", "none");
                     this.modDragValueLabel.setAttribute("contenteditable", "false");
                     this.modDragValueLabel.style.setProperty("color", "#FFFFFF");
-                    let setting: number = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[Config.modCount - 1 - note.pitches[0]];
+                    let setting: number = this._doc.song.instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[Config.modCount - 1 - note.pitches[0]];
                     let presValue: number = this._dragSize + Config.modulators[setting].convertRealFactor;
 
                     // This is me being too lazy to fiddle with the css to get it to align center.

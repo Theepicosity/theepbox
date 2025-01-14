@@ -4,7 +4,6 @@ import { Config } from "../synth/SynthConfig";
 import { isMobile } from "./EditorConfig";
 import { Synth } from "../synth/synth";
 import { Pattern } from "../synth/Pattern";
-import { Channel } from "../synth/Channel";
 import { Song } from "../synth/Song";
 import { SongRecovery, generateUid, errorAlert } from "./SongRecovery";
 import { ColorConfig } from "./ColorConfig";
@@ -40,7 +39,7 @@ export class SongDocument {
     public bar: number = 0;
     public recalcChannelNames: boolean;
     public recentPatternInstruments: number[][] = [];
-    public viewedInstrument: number[] = [];
+    public viewedInstrument: number = 0;
     public recordingModulators: boolean = false;
     public continuingModRecordingChange: ChangeHoldingModRecording | null = null;
 
@@ -107,8 +106,7 @@ export class SongDocument {
 
         this.bar = state.bar | 0;
         this.channel = state.channel | 0;
-        for (let i: number = 0; i <= this.channel; i++) this.viewedInstrument[i] = 0;
-        this.viewedInstrument[this.channel] = state.instrument | 0;
+        this.viewedInstrument = state.instrument | 0;
         this._recoveryUid = state.recoveryUid;
         //this.barScrollPos = Math.max(0, this.bar - (this.trackVisibleBars - 6));
         this.prompt = state.prompt;
@@ -225,7 +223,7 @@ export class SongDocument {
 			// The user changed the hash directly.
 			this._sequenceNumber++;
 			this._resetSongRecoveryUid();
-			const state: HistoryState = {canUndo: true, sequenceNumber: this._sequenceNumber, bar: this.bar, channel: this.channel, instrument: this.viewedInstrument[this.channel], recoveryUid: this._recoveryUid, prompt: null, selection: this.selection.toJSON()};
+			const state: HistoryState = {canUndo: true, sequenceNumber: this._sequenceNumber, bar: this.bar, channel: this.channel, instrument: this.viewedInstrument, recoveryUid: this._recoveryUid, prompt: null, selection: this.selection.toJSON()};
 			try {
 				new ChangeSong(this, this._getHash());
 			} catch (error) {
@@ -253,7 +251,7 @@ export class SongDocument {
 			
 		this.bar = state.bar;
 		this.channel = state.channel;
-		this.viewedInstrument[this.channel] = state.instrument;
+		this.viewedInstrument = state.instrument;
 		this._sequenceNumber = state.sequenceNumber;
 		this.prompt = state.prompt;
 		try {
@@ -298,28 +296,19 @@ export class SongDocument {
                         this.recentPatternInstruments[i] = pattern.instruments.concat();
                     }
                 } else {
-                    const channel: Channel = this.song.channels[this.channel];
-                    for (let j: number = 0; j < channel.instruments.length; j++) {
+                    for (let j: number = 0; j < this.song.instruments.length; j++) {
                         this.recentPatternInstruments[i][j] = j;
                     }
-                    this.recentPatternInstruments[i].length = channel.instruments.length;
+                    this.recentPatternInstruments[i].length = this.song.instruments.length;
                 }
             }
             discardInvalidPatternInstruments(this.recentPatternInstruments[i], this.song, i);
         }
 
-        for (let i: number = this.viewedInstrument.length; i < channelCount; i++) {
-            this.viewedInstrument[i] = 0;
-        }
-        this.viewedInstrument.length = channelCount;
-        for (let i: number = 0; i < channelCount; i++) {
-            if (this.song.patternInstruments && !this.song.layeredInstruments && i == this.channel) {
-                const pattern: Pattern | null = this.song.getPattern(this.channel, this.bar);
-                if (pattern != null) {
-                    this.viewedInstrument[i] = pattern.instruments[0];
-                }
-            }
-            this.viewedInstrument[i] = Math.min(this.viewedInstrument[i] | 0, this.song.channels[i].instruments.length - 1);
+        this.viewedInstrument = 0;
+        const pattern: Pattern | null = this.getCurrentPattern();
+        if (pattern != null) {
+            this.viewedInstrument = pattern.instruments[0];
         }
 
         const highlightedPattern: Pattern | null = this.getCurrentPattern();
@@ -361,7 +350,7 @@ export class SongDocument {
         } else {
             this._recovery.saveVersion(this._recoveryUid, this.song.title, hash);
         }
-        let state: HistoryState = { canUndo: true, sequenceNumber: this._sequenceNumber, bar: this.bar, channel: this.channel, instrument: this.viewedInstrument[this.channel], recoveryUid: this._recoveryUid, prompt: this.prompt, selection: this.selection.toJSON() };
+        let state: HistoryState = { canUndo: true, sequenceNumber: this._sequenceNumber, bar: this.bar, channel: this.channel, instrument: this.viewedInstrument, recoveryUid: this._recoveryUid, prompt: this.prompt, selection: this.selection.toJSON() };
         if (this._stateShouldBePushed) {
             this._pushState(state, hash);
         } else {
@@ -398,7 +387,7 @@ export class SongDocument {
         this.prompt = prompt;
         const hash: string = this.song.toBase64String();
         this._sequenceNumber++;
-        const state = { canUndo: true, sequenceNumber: this._sequenceNumber, bar: this.bar, channel: this.channel, instrument: this.viewedInstrument[this.channel], recoveryUid: this._recoveryUid, prompt: this.prompt, selection: this.selection.toJSON() };
+        const state = { canUndo: true, sequenceNumber: this._sequenceNumber, bar: this.bar, channel: this.channel, instrument: this.viewedInstrument, recoveryUid: this._recoveryUid, prompt: this.prompt, selection: this.selection.toJSON() };
         this._pushState(state, hash);
     }
 
@@ -452,7 +441,7 @@ export class SongDocument {
 
     public getCurrentInstrument(barOffset: number = 0): number {
         if (barOffset == 0) {
-            return this.viewedInstrument[this.channel];
+            return this.viewedInstrument;
         } else {
             const pattern: Pattern | null = this.getCurrentPattern(barOffset);
             return pattern == null ? 0 : pattern.instruments[0];

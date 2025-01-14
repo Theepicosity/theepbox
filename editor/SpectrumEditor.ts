@@ -44,7 +44,7 @@ export class SpectrumEditor {
     private _changeQueue: number[][] = [];
 
     constructor(private _doc: SongDocument, private _spectrumIndex: number | null, private _isPrompt: boolean = false) {
-        this.instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this.instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         this._initial = new SpectrumWave(this._spectrumIndex != null);
         this._initial.spectrum = this._spectrumIndex == null ? this.instrument.spectrumWave.spectrum.slice() : this.instrument.drumsetSpectrumWaves[this._spectrumIndex].spectrum.slice();
         for (let i: number = 0; i < Config.spectrumControlPoints; i += Config.spectrumControlPointsPerOctave) {
@@ -179,7 +179,7 @@ export class SpectrumEditor {
             const freq: number = this._xToFreq(this._mouseX);
             const amp: number = this._yToAmp(this._mouseY);
 
-            const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+            const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
             const spectrumWave: SpectrumWave = (this._spectrumIndex == null) ? instrument.spectrumWave : instrument.drumsetSpectrumWaves[this._spectrumIndex];
 
             if (freq != this._freqPrev) {
@@ -215,7 +215,7 @@ export class SpectrumEditor {
     }
 
     public getSpectrumWave(): SpectrumWave {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         if (this._spectrumIndex == null) {
             return instrument.spectrumWave;
         } else {
@@ -224,7 +224,7 @@ export class SpectrumEditor {
     }
 
     public setSpectrumWave(spectrum: number[], saveHistory: boolean = false) {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         if (this._spectrumIndex == null) {
             for (let i = 0; i < Config.spectrumControlPoints; i++) {
                 instrument.spectrumWave.spectrum[i] = spectrum[i];
@@ -246,7 +246,7 @@ export class SpectrumEditor {
     }
 
     public saveSettings(): ChangeSpectrum {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         if (this._spectrumIndex == null || this._spectrumIndex == undefined) {
             return new ChangeSpectrum(this._doc, instrument, instrument.spectrumWave);
         } else {
@@ -261,7 +261,7 @@ export class SpectrumEditor {
     }
 
     public render(): void {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
         const spectrumWave: SpectrumWave = (this._spectrumIndex == null) ? instrument.spectrumWave : instrument.drumsetSpectrumWaves[this._spectrumIndex];
         const controlPointToHeight = (point: number): number => {
             return (1 - (point / Config.spectrumMax)) * (this._editorHeight - 1) + 1;

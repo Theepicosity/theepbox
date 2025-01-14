@@ -295,7 +295,7 @@ export class Piano {
         this._renderedKey = this._doc.song.key;
         this._renderedDrums = isDrum;
         this._renderedMod = isMod;
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        const instrument: Instrument = this._doc.song.instruments[this._doc.getCurrentInstrument()];
 
         this._pianoContainer.style.display = (isDrum || isMod) ? "none" : "flex";
         this._drumContainer.style.display = isDrum ? "flex" : "none";
@@ -370,7 +370,7 @@ export class Piano {
                     status = 0;
                 else if (instrument.modChannels[Config.modCount - j - 1] == -1)
                     status = 3;
-                let instrumentsLength: number = this._doc.song.channels[Math.max(0, channelVal - 1)].instruments.length;
+                let instrumentsLength: number = this._doc.song.instruments.length;
                 // 0 - none
                 // 1 - pitch
                 // 2 - noise

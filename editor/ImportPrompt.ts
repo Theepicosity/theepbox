@@ -468,7 +468,7 @@ export class ImportPrompt implements Prompt {
                 instrument.fromJsonObject(preset.settings, false, false, false, false, 1);
 
                 instrument.preset = presetValue;
-                channel.instruments.push(instrument);
+                this._doc.song.instruments.push(instrument);
 
                 for (let noteEventIndex: number = 0; noteEventIndex <= noteEvents[midiChannel].length; noteEventIndex++) {
                     const noMoreNotes: boolean = noteEventIndex == noteEvents[midiChannel].length;
@@ -628,10 +628,10 @@ export class ImportPrompt implements Prompt {
                                         instrument.pan = currentInstrumentPan;
                                         instrument.panDelay = 0;
 
-                                        channel.instruments.push(instrument);
+                                        this._doc.song.instruments.push(instrument);
                                     }
 
-                                    pattern.instruments[0] = channel.instruments.indexOf(instrumentByProgram[currentProgram]);
+                                    pattern.instruments[0] = this._doc.song.instruments.indexOf(instrumentByProgram[currentProgram]);
                                     pattern.instruments.length = 1;
                                 }
 
@@ -833,7 +833,7 @@ export class ImportPrompt implements Prompt {
             tempoModInstrument.setTypeAndReset(9 /* InstrumentType.mod */, false, true);
             tempoModInstrument.modulators[0] = Config.modulators.dictionary["tempo"].index;
             tempoModInstrument.modChannels[0] = -1;
-            tempoModChannel.instruments.push(tempoModInstrument);
+            this._doc.song.modInstruments.push(tempoModInstrument);
             // We're using the first modulator in the channel, but the pitch values are
             // flipped relative to the UI, so we need to pick a pitch value accordingly.
             const tempoModPitch = Config.modCount - 1;
@@ -917,13 +917,8 @@ export class ImportPrompt implements Prompt {
                 // Merge channelB's patterns, instruments, and bars into channelA.
                 const channelA: Channel = channels[bestChannelIndexA];
                 const channelB: Channel = channels[bestChannelIndexB];
-                const channelAInstrumentCount: number = channelA.instruments.length;
                 const channelAPatternCount: number = channelA.patterns.length;
-                for (const instrument of channelB.instruments) {
-                    channelA.instruments.push(instrument);
-                }
                 for (const pattern of channelB.patterns) {
-                    pattern.instruments[0] += channelAInstrumentCount;
                     channelA.patterns.push(pattern);
                 }
                 for (let barIndex: number = 0; barIndex < channelA.bars.length && barIndex < channelB.bars.length; barIndex++) {
@@ -951,7 +946,7 @@ export class ImportPrompt implements Prompt {
                 song.scale = 0;
                 song.rhythm = 2;
                 song.layeredInstruments = false;
-                song.patternInstruments = pitchChannels.some(channel => channel.instruments.length > 1) || noiseChannels.some(channel => channel.instruments.length > 1);
+                song.patternInstruments = pitchChannels.some(channel => song.instruments.length > 1) || noiseChannels.some(channel => song.instruments.length > 1);
 
                 removeDuplicatePatterns(pitchChannels);
                 removeDuplicatePatterns(noiseChannels);
