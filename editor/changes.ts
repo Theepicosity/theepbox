@@ -1661,10 +1661,10 @@ export class ChangePatternNumbers extends Change {
         if (startChannel >= doc.song.pitchChannelCount + doc.song.noiseChannelCount) {
             const pattern: Pattern | null = doc.getCurrentPattern();
             if (pattern != null) {
-                doc.viewedInstrument[startChannel] = pattern.instruments[0];
+                doc.viewedInstrument = pattern.instruments[0];
             }
             else {
-                doc.viewedInstrument[startChannel] = 0;
+                doc.viewedInstrument = 0;
             }
         }
 
@@ -1937,8 +1937,8 @@ export class ChangeRemoveChannel extends ChangeGroup {
 
         // Update modulators - if a higher index was removed, shift down
         for (let modChannel: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; modChannel < doc.song.channels.length; modChannel++) {
-            for (let instrumentIndex: number = 0; instrumentIndex < doc.song.modInstruments.length; instrumentIndex++) {
-                const modInstrument: Instrument = doc.song.modInstruments[instrumentIndex];
+            for (let instrumentIndex: number = 0; instrumentIndex < doc.song.modChannelInstruments.length; instrumentIndex++) {
+                const modInstrument: Instrument = doc.song.modChannelInstruments[instrumentIndex];
                 for (let mod: number = 0; mod < Config.modCount; mod++) {
                     if (modInstrument.modChannels[mod] >= minIndex && modInstrument.modChannels[mod] <= oldMax) {
                         this.append(new ChangeModChannel(doc, mod, 0, modInstrument));
@@ -1994,7 +1994,7 @@ export class ChangeChannelBar extends Change {
         if (doc.song.getChannelIsMod(doc.channel)) {
             const pattern: Pattern | null = doc.song!.getPattern(doc.channel, doc.bar);
             if (pattern != null)
-                doc.viewedInstrument[doc.channel] = pattern.instruments[0];
+                doc.viewedInstrument = pattern.instruments[0];
         }
         doc.notifier.changed();
         if (oldChannel != newChannel || oldBar != newBar) {
@@ -2134,7 +2134,7 @@ export class ChangeVibratoDepth extends Change {
         super();
         const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevVibrato: number = instrument.vibrato;
-        doc.synth.unsetMod(Config.modulators.dictionary["vibrato depth"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["vibrato depth"].index, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
@@ -2151,7 +2151,7 @@ export class ChangeEnvelopeSpeed extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
         const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
-        doc.synth.unsetMod(Config.modulators.dictionary["envelope speed"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["envelope speed"].index, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue) {
@@ -2168,7 +2168,7 @@ export class ChangeVibratoSpeed extends Change {
         super();
         const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevVibrato: number = instrument.vibrato;
-        doc.synth.unsetMod(Config.modulators.dictionary["vibrato speed"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["vibrato speed"].index, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
@@ -2186,7 +2186,7 @@ export class ChangeVibratoDelay extends Change {
         super();
         const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         let prevVibrato: number = instrument.vibrato;
-        doc.synth.unsetMod(Config.modulators.dictionary["vibrato delay"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["vibrato delay"].index, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
@@ -2222,7 +2222,7 @@ export class ChangeArpeggioSpeed extends Change {
         super();
         const instrument: Instrument = doc.song.instruments[doc.getCurrentInstrument()];
         instrument.arpeggioSpeed = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["arp speed"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["arp speed"].index, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue) {
@@ -2359,7 +2359,7 @@ export class ChangePulseWidth extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.pulseWidth = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["pulse width"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["pulse width"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2369,7 +2369,7 @@ export class ChangeDecimalOffset extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.decimalOffset = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["decimalOffset"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["decimalOffset"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2379,7 +2379,7 @@ export class ChangeSupersawDynamism extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.supersawDynamism = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["dynamism"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["dynamism"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2388,7 +2388,7 @@ export class ChangeSupersawSpread extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.supersawSpread = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["spread"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["spread"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2397,7 +2397,7 @@ export class ChangeSupersawShape extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.supersawShape = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["saw shape"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["saw shape"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2417,7 +2417,7 @@ export class ChangeDetune extends ChangeInstrumentSlider {
         super(doc);
         this._instrument.detune = newValue + Config.detuneCenter;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["detune"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["detune"].index, doc.getCurrentInstrument());
         if (oldValue != newValue) this._didSomething();
     }
 }
@@ -2427,7 +2427,7 @@ export class ChangeDistortion extends ChangeInstrumentSlider {
         super(doc);
         this._instrument.distortion = newValue;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["distortion"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["distortion"].index, doc.getCurrentInstrument());
         if (oldValue != newValue) this._didSomething();
     }
 }
@@ -2436,7 +2436,7 @@ export class ChangeBitcrusherFreq extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.bitcrusherFreq = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["bit crush"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["bit crush"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2445,7 +2445,7 @@ export class ChangeBitcrusherFreq extends ChangeInstrumentSlider {
 export class ChangeBitcrusherQuantization extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
-        doc.synth.unsetMod(Config.modulators.dictionary["freq crush"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["freq crush"].index, doc.getCurrentInstrument());
         this._instrument.bitcrusherQuantization = newValue;
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
@@ -2456,7 +2456,7 @@ export class ChangeStringSustain extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.stringSustain = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["sustain"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["sustain"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2524,7 +2524,7 @@ export class ChangeEQFilterSimpleCut extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.eqFilterSimpleCut = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["eq filt cut"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["eq filt cut"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2534,7 +2534,7 @@ export class ChangeEQFilterSimplePeak extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.eqFilterSimplePeak = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["eq filt peak"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["eq filt peak"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2544,7 +2544,7 @@ export class ChangeNoteFilterSimpleCut extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.noteFilterSimpleCut = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["note filt cut"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["note filt cut"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2554,7 +2554,7 @@ export class ChangeNoteFilterSimplePeak extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.noteFilterSimplePeak = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["note filt peak"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["note filt peak"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -3050,7 +3050,7 @@ export class ChangeOperatorAmplitude extends ChangeInstrumentSlider {
         this.operatorIndex = operatorIndex;
         this._instrument.operators[operatorIndex].amplitude = newValue;
         // Not used currently as mod is implemented as multiplicative
-        //doc.synth.unsetMod(ModSetting.mstFMSlider1 + operatorIndex, doc.channel, doc.getCurrentInstrument());
+        //doc.synth.unsetMod(ModSetting.mstFMSlider1 + operatorIndex, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -3061,7 +3061,7 @@ export class ChangeFeedbackAmplitude extends ChangeInstrumentSlider {
         super(doc);
         this._instrument.feedbackAmplitude = newValue;
         // Not used currently as mod is implemented as multiplicative
-        //doc.synth.unsetMod(ModSetting.mstFMFeedback, doc.channel, doc.getCurrentInstrument());
+        //doc.synth.unsetMod(ModSetting.mstFMFeedback, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -3095,7 +3095,7 @@ export class ChangeAddChannelInstrument extends Change {
                     let modInstrument: number = instrument.modInstruments[mod];
                     let modChannel: number = instrument.modChannels[mod];
 
-                    if (modChannel == doc.channel && modInstrument >= doc.song.modInstruments.length - 1) {
+                    if (modChannel == doc.channel && modInstrument >= doc.song.modChannelInstruments.length - 1) {
                         //BUGFIX FROM JUMMBOX
                         instrument.modInstruments[mod]++;
                     }
@@ -3115,7 +3115,7 @@ export class ChangeRemoveChannelInstrument extends Change {
         super();
         const channel: Channel = doc.song.channels[doc.channel];
         if (doc.song.instruments.length <= Config.instrumentCountMin) return;
-        const removedIndex: number = doc.viewedInstrument[doc.channel];
+        const removedIndex: number = doc.viewedInstrument;
         doc.song.instruments.splice(removedIndex, 1);
         if (doc.song.patternInstruments) {
             for (const pattern of channel.patterns) {
@@ -3168,8 +3168,7 @@ export class ChangeViewInstrument extends Change {
         super();
         if (doc.viewedInstrument != index) {
             doc.viewedInstrument = index;
-            if (doc.channel >= doc.song.pitchChannelCount + doc.song.noiseChannelCount)
-                doc.recentPatternInstruments = [index];
+            if (doc.channel >= doc.song.pitchChannelCount + doc.song.noiseChannelCount) doc.recentPatternInstruments = [[index]];
             doc.notifier.changed();
             this._didSomething();
         }
@@ -3591,7 +3590,7 @@ export class ChangeEnsurePatternExists extends UndoableChange {
         if (channelIndex < doc.song.pitchChannelCount + doc.song.noiseChannelCount)
             this._newPatternInstruments = doc.recentPatternInstruments[channelIndex].concat();
         else
-            this._newPatternInstruments = [doc.viewedInstrument[channelIndex]];
+            this._newPatternInstruments = [doc.viewedInstrument];
 
         let firstEmptyUnusedIndex: number | null = null;
         let firstUnusedIndex: number | null = null;
@@ -4060,10 +4059,10 @@ export class ChangeSong extends ChangeGroup {
             doc.song.scale = doc.prefs.defaultScale;
 
             for (let i: number = 0; i <= doc.song.channels.length; i++) {
-                doc.viewedInstrument[i] = 0;
+                doc.viewedInstrument = 0;
                 doc.recentPatternInstruments[i] = [0];
             }
-            doc.viewedInstrument.length = doc.song.channels.length;
+            doc.viewedInstrument = doc.song.channels.length;
         } else {
             this.append(new ChangeValidateTrackSelection(doc));
         }
@@ -4260,7 +4259,7 @@ export class ChangeEchoDelay extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.echoDelay = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["echo delay"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["echo delay"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -4270,7 +4269,7 @@ export class ChangeEchoSustain extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.echoSustain = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["echo"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["echo"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -4289,7 +4288,7 @@ export class ChangeReverb extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.reverb = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["reverb"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["reverb"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -4851,7 +4850,7 @@ export class ChangeVolume extends Change {
         super();
         doc.song.instruments[doc.getCurrentInstrument()].volume = newValue;
         // Not used currently as mod is implemented as multiplicative.
-        //doc.synth.unsetMod(ModSetting.mstInsVolume, doc.channel, doc.getCurrentInstrument());
+        //doc.synth.unsetMod(ModSetting.mstInsVolume, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -4890,7 +4889,7 @@ export class ChangePan extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
         doc.song.instruments[doc.getCurrentInstrument()].pan = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["pan"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["pan"].index, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }

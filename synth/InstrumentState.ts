@@ -690,7 +690,7 @@ export class InstrumentState {
         this.chorusPhase = 0.0;
     }
 
-    public compute(synth: Synth, instrument: Instrument, samplesPerTick: number, roundedSamplesPerTick: number, tone: Tone | null, channelIndex: number, instrumentIndex: number): void {
+    public compute(synth: Synth, instrument: Instrument, samplesPerTick: number, roundedSamplesPerTick: number, tone: Tone | null, instrumentIndex: number): void {
         this.computed = true;
 
         this.type = instrument.type;
@@ -719,8 +719,8 @@ export class InstrumentState {
             envelopeSpeeds[i] = 0;
         }
         let useEnvelopeSpeed: number = Config.arpSpeedScale[instrument.envelopeSpeed];
-        if (synth.isModActive(Config.modulators.dictionary["envelope speed"].index, channelIndex, instrumentIndex)) {
-            useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.modulators.dictionary["envelope speed"].index, channelIndex, instrumentIndex, false)));
+        if (synth.isModActive(Config.modulators.dictionary["envelope speed"].index, instrumentIndex)) {
+            useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.modulators.dictionary["envelope speed"].index, instrumentIndex, false)));
             if (Number.isInteger(useEnvelopeSpeed)) {
                 useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed];
             } else {
@@ -730,7 +730,7 @@ export class InstrumentState {
         }
         for (let envelopeIndex: number = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
             let perEnvelopeSpeed: number = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-            if (synth.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+            if (synth.isModActive(Config.modulators.dictionary["individual envelope speed"].index, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                 perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed!;
             }
             envelopeSpeeds[envelopeIndex] = useEnvelopeSpeed * perEnvelopeSpeed;
@@ -752,9 +752,9 @@ export class InstrumentState {
             let useDistortionEnd: number = instrument.distortion;
 
             // Check for distortion mods
-            if (synth.isModActive(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex)) {
-                useDistortionStart = synth.getModValue(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, false);
-                useDistortionEnd = synth.getModValue(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, true);
+            if (synth.isModActive(Config.modulators.dictionary["distortion"].index, instrumentIndex)) {
+                useDistortionStart = synth.getModValue(Config.modulators.dictionary["distortion"].index, instrumentIndex, false);
+                useDistortionEnd = synth.getModValue(Config.modulators.dictionary["distortion"].index, instrumentIndex, true);
             }
 
             const distortionSliderStart = Math.min(1.0, envelopeStarts[EnvelopeComputeIndex.distortion] * useDistortionStart / (Config.distortionRange - 1));
@@ -774,18 +774,18 @@ export class InstrumentState {
             let freqSettingEnd: number = instrument.bitcrusherFreq * Math.sqrt(envelopeEnds[EnvelopeComputeIndex.bitcrusherFrequency]);
 
             // Check for freq crush mods
-            if (synth.isModActive(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex)) {
-                freqSettingStart = synth.getModValue(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, false) * Math.sqrt(envelopeStarts[EnvelopeComputeIndex.bitcrusherFrequency]);
-                freqSettingEnd = synth.getModValue(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, true) * Math.sqrt(envelopeEnds[EnvelopeComputeIndex.bitcrusherFrequency]);
+            if (synth.isModActive(Config.modulators.dictionary["freq crush"].index, instrumentIndex)) {
+                freqSettingStart = synth.getModValue(Config.modulators.dictionary["freq crush"].index, instrumentIndex, false) * Math.sqrt(envelopeStarts[EnvelopeComputeIndex.bitcrusherFrequency]);
+                freqSettingEnd = synth.getModValue(Config.modulators.dictionary["freq crush"].index, instrumentIndex, true) * Math.sqrt(envelopeEnds[EnvelopeComputeIndex.bitcrusherFrequency]);
             }
 
             let quantizationSettingStart: number = instrument.bitcrusherQuantization * Math.sqrt(envelopeStarts[EnvelopeComputeIndex.bitcrusherQuantization]);
             let quantizationSettingEnd: number = instrument.bitcrusherQuantization * Math.sqrt(envelopeEnds[EnvelopeComputeIndex.bitcrusherQuantization]);
 
             // Check for bitcrush mods
-            if (synth.isModActive(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex)) {
-                quantizationSettingStart = synth.getModValue(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, false) * Math.sqrt(envelopeStarts[EnvelopeComputeIndex.bitcrusherQuantization]);
-                quantizationSettingEnd = synth.getModValue(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, true) * Math.sqrt(envelopeEnds[EnvelopeComputeIndex.bitcrusherQuantization]);
+            if (synth.isModActive(Config.modulators.dictionary["bit crush"].index, instrumentIndex)) {
+                quantizationSettingStart = synth.getModValue(Config.modulators.dictionary["bit crush"].index, instrumentIndex, false) * Math.sqrt(envelopeStarts[EnvelopeComputeIndex.bitcrusherQuantization]);
+                quantizationSettingEnd = synth.getModValue(Config.modulators.dictionary["bit crush"].index, instrumentIndex, true) * Math.sqrt(envelopeEnds[EnvelopeComputeIndex.bitcrusherQuantization]);
             }
 
             const basePitch: number = Config.keys[synth.song!.key].basePitch + (Config.pitchesPerOctave * synth.song!.octave); // TODO: What if there's a key change mid-song?
@@ -823,14 +823,14 @@ export class InstrumentState {
 
             let filterChanges: boolean = false;
 
-            if (synth.isModActive(Config.modulators.dictionary["eq filt cut"].index, channelIndex, instrumentIndex)) {
-                startSimpleFreq = synth.getModValue(Config.modulators.dictionary["eq filt cut"].index, channelIndex, instrumentIndex, false);
-                endSimpleFreq = synth.getModValue(Config.modulators.dictionary["eq filt cut"].index, channelIndex, instrumentIndex, true);
+            if (synth.isModActive(Config.modulators.dictionary["eq filt cut"].index, instrumentIndex)) {
+                startSimpleFreq = synth.getModValue(Config.modulators.dictionary["eq filt cut"].index, instrumentIndex, false);
+                endSimpleFreq = synth.getModValue(Config.modulators.dictionary["eq filt cut"].index, instrumentIndex, true);
                 filterChanges = true;
             }
-            if (synth.isModActive(Config.modulators.dictionary["eq filt peak"].index, channelIndex, instrumentIndex)) {
-                startSimpleGain = synth.getModValue(Config.modulators.dictionary["eq filt peak"].index, channelIndex, instrumentIndex, false);
-                endSimpleGain = synth.getModValue(Config.modulators.dictionary["eq filt peak"].index, channelIndex, instrumentIndex, true);
+            if (synth.isModActive(Config.modulators.dictionary["eq filt peak"].index, instrumentIndex)) {
+                startSimpleGain = synth.getModValue(Config.modulators.dictionary["eq filt peak"].index, instrumentIndex, false);
+                endSimpleGain = synth.getModValue(Config.modulators.dictionary["eq filt peak"].index, instrumentIndex, true);
                 filterChanges = true;
             }
 
@@ -905,18 +905,18 @@ export class InstrumentState {
         let mixVolumeEnd: number = mainInstrumentVolume * envelopeEnds[EnvelopeComputeIndex.mixVolume]; //TODO: doesn't work super well with note size + reverb. fix by setting reverb volume to the ending tone volume when the tone finishes?
 
         // Check for mod-related volume delta
-        if (synth.isModActive(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex)) {
+        if (synth.isModActive(Config.modulators.dictionary["post volume"].index, instrumentIndex)) {
             // Linear falloff below 0, normal volume formula above 0. Seems to work best for scaling since the normal volume mult formula has a big gap from -25 to -24.
-            const startVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, false);
-            const endVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, true);
+            const startVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, instrumentIndex, false);
+            const endVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, instrumentIndex, true);
             this.mixVolume *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
             mixVolumeEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
         }
 
         // Check for SONG mod-related volume delta
         if (synth.isModActive(Config.modulators.dictionary["song volume"].index)) {
-            this.mixVolume *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, false)) / 100.0;
-            mixVolumeEnd *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, true)) / 100.0;
+            this.mixVolume *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, false)) / 100.0;
+            mixVolumeEnd *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, true)) / 100.0;
         }
 
         this.mixVolumeDelta = (mixVolumeEnd - this.mixVolume) / roundedSamplesPerTick;
@@ -933,9 +933,9 @@ export class InstrumentState {
             let usePanStart: number = instrument.pan;
             let usePanEnd: number = instrument.pan;
             // Check for pan mods
-            if (synth.isModActive(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex)) {
-                usePanStart = synth.getModValue(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, false);
-                usePanEnd = synth.getModValue(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, true);
+            if (synth.isModActive(Config.modulators.dictionary["pan"].index, instrumentIndex)) {
+                usePanStart = synth.getModValue(Config.modulators.dictionary["pan"].index, instrumentIndex, false);
+                usePanEnd = synth.getModValue(Config.modulators.dictionary["pan"].index, instrumentIndex, true);
             }
 
             let panStart: number = Math.max(-1.0, Math.min(1.0, (usePanStart - Config.panCenter) / Config.panCenter * panEnvelopeStart));
@@ -950,9 +950,9 @@ export class InstrumentState {
             let usePanDelayStart: number = instrument.panDelay;
             let usePanDelayEnd: number = instrument.panDelay;
             // Check for pan delay mods
-            if (synth.isModActive(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex)) {
-                usePanDelayStart = synth.getModValue(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, false);
-                usePanDelayEnd = synth.getModValue(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, true);
+            if (synth.isModActive(Config.modulators.dictionary["pan delay"].index, instrumentIndex)) {
+                usePanDelayStart = synth.getModValue(Config.modulators.dictionary["pan delay"].index, instrumentIndex, false);
+                usePanDelayEnd = synth.getModValue(Config.modulators.dictionary["pan delay"].index, instrumentIndex, true);
             }
 
             const delayStart: number = panStart * usePanDelayStart * maxDelaySamples / 10;
@@ -978,9 +978,9 @@ export class InstrumentState {
             let useChorusStart: number = instrument.chorus;
             let useChorusEnd: number = instrument.chorus;
             // Check for chorus mods
-            if (synth.isModActive(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex)) {
-                useChorusStart = synth.getModValue(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, false);
-                useChorusEnd = synth.getModValue(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, true);
+            if (synth.isModActive(Config.modulators.dictionary["chorus"].index, instrumentIndex)) {
+                useChorusStart = synth.getModValue(Config.modulators.dictionary["chorus"].index, instrumentIndex, false);
+                useChorusEnd = synth.getModValue(Config.modulators.dictionary["chorus"].index, instrumentIndex, true);
             }
 
             let chorusStart: number = Math.min(1.0, chorusEnvelopeStart * useChorusStart / (Config.chorusRange - 1));
@@ -1003,9 +1003,9 @@ export class InstrumentState {
             let useEchoSustainStart: number = instrument.echoSustain;
             let useEchoSustainEnd: number = instrument.echoSustain;
             // Check for echo mods
-            if (synth.isModActive(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex)) {
-                useEchoSustainStart = Math.max( 0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, false) );
-                useEchoSustainEnd = Math.max( 0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, true) );
+            if (synth.isModActive(Config.modulators.dictionary["echo"].index, instrumentIndex)) {
+                useEchoSustainStart = Math.max( 0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, instrumentIndex, false) );
+                useEchoSustainEnd = Math.max( 0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, instrumentIndex, true) );
             }
             const echoMultStart: number = Math.min(1.0, Math.pow(echoSustainEnvelopeStart * useEchoSustainStart / Config.echoSustainRange, 1.1)) * 0.9;
             const echoMultEnd: number = Math.min(1.0, Math.pow(echoSustainEnvelopeEnd   * useEchoSustainEnd / Config.echoSustainRange, 1.1)) * 0.9;
@@ -1022,9 +1022,9 @@ export class InstrumentState {
             let useEchoDelayEnd: number = instrument.echoDelay;
             let ignoreTicks: boolean = false;
             // Check for pan delay mods
-            if (synth.isModActive(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex)) {
-                useEchoDelayStart = synth.getModValue(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, false);
-                useEchoDelayEnd = synth.getModValue(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, true);
+            if (synth.isModActive(Config.modulators.dictionary["echo delay"].index, instrumentIndex)) {
+                useEchoDelayStart = synth.getModValue(Config.modulators.dictionary["echo delay"].index, instrumentIndex, false);
+                useEchoDelayEnd = synth.getModValue(Config.modulators.dictionary["echo delay"].index, instrumentIndex, true);
                 ignoreTicks = true;
             }
 
@@ -1058,14 +1058,14 @@ export class InstrumentState {
             let useReverbEnd: number = instrument.reverb;
 
             // Check for mod reverb, instrument level
-            if (synth.isModActive(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex)) {
-                useReverbStart = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, false);
-                useReverbEnd = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, true);
+            if (synth.isModActive(Config.modulators.dictionary["reverb"].index, instrumentIndex)) {
+                useReverbStart = synth.getModValue(Config.modulators.dictionary["reverb"].index, instrumentIndex, false);
+                useReverbEnd = synth.getModValue(Config.modulators.dictionary["reverb"].index, instrumentIndex, true);
             }
             // Check for mod reverb, song scalar
-            if (synth.isModActive(Config.modulators.dictionary["song reverb"].index, channelIndex, instrumentIndex)) {
-                useReverbStart *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, false) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
-                useReverbEnd *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, true) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
+            if (synth.isModActive(Config.modulators.dictionary["song reverb"].index, instrumentIndex)) {
+                useReverbStart *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, false) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
+                useReverbEnd *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, true) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
             }
 
             const reverbStart: number = Math.min(1.0, Math.pow(reverbEnvelopeStart * useReverbStart / Config.reverbRange, 0.667)) * 0.425;

@@ -49,7 +49,7 @@ import { SpectrumEditor, SpectrumEditorPrompt } from "./SpectrumEditor";
 import { CustomThemePrompt } from "./CustomThemePrompt";
 import { ThemePrompt } from "./ThemePrompt";
 import { TipPrompt } from "./TipPrompt";
-import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeDiscreteEnvelope, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeChipWaveInStereo, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback } from "./changes";
+import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePanMode, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeDiscreteEnvelope, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeChipWaveInStereo, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback } from "./changes";
 
 import { TrackEditor } from "./TrackEditor";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
@@ -1902,16 +1902,16 @@ export class SongEditor {
         } else {
 
             let instrument: number = this._doc.getCurrentInstrument();
-            const anyModActive: boolean = this._doc.synth.isAnyModActive(this._doc.channel, instrument);
+            const anyModActive: boolean = this._doc.synth.isAnyModActive(instrument);
 
             // Check and update mod values on sliders
             if (anyModActive) {
 
                 let instrument: number = this._doc.getCurrentInstrument();
 
-                function updateModSlider(editor: SongEditor, slider: Slider, setting: number, channel: number, instrument: number): boolean {
-                    if (editor._doc.synth.isModActive(setting, channel, instrument)) {
-                        let currentVal: number = (editor._doc.synth.getModValue(setting, channel, instrument, false) - Config.modulators[setting].convertRealFactor) / Config.modulators[setting].maxRawVol;
+                function updateModSlider(editor: SongEditor, slider: Slider, setting: number, instrument: number): boolean {
+                    if (editor._doc.synth.isModActive(setting, instrument)) {
+                        let currentVal: number = (editor._doc.synth.getModValue(setting, instrument, false) - Config.modulators[setting].convertRealFactor) / Config.modulators[setting].maxRawVol;
 
                         if (Config.modulators[setting].invertSliderIndicator == true) {
                             currentVal = 1 - currentVal;
@@ -1934,7 +1934,7 @@ export class SongEditor {
                     // Check for newer value
                     let slider: Slider | null = this.getSliderForModSetting(setting);
                     if (slider != null) {
-                        this._newShowModSliders[setting] = updateModSlider(this, slider, setting, this._doc.channel, instrument);
+                        this._newShowModSliders[setting] = updateModSlider(this, slider, setting, instrument);
                     }
                 }
 
@@ -2382,7 +2382,7 @@ export class SongEditor {
         this._tempoSlider.updateValue(Math.max(0, Math.round(this._doc.song.tempo)));
         this._tempoStepper.value = Math.round(this._doc.song.tempo).toString();
         this._songTitleInputBox.updateValue(this._doc.song.title);
-        if (this._doc.synth.isFilterModActive(false, 0, 0, true)) {
+        if (this._doc.synth.isFilterModActive(false, 0, true)) {
             this._songEqFilterEditor.render(true, this._ctrlHeld || this._shiftHeld);
         } else {
             this._songEqFilterEditor.render();
@@ -2762,7 +2762,7 @@ export class SongEditor {
                     this._eqFilterTypeRow.style.setProperty("--text-color-dim", colors.secondaryNote);
                     this._eqFilterTypeRow.style.setProperty("--background-color-lit", colors.primaryChannel);
                     this._eqFilterTypeRow.style.setProperty("--background-color-dim", colors.secondaryChannel);
-                    if (this._doc.synth.isFilterModActive(true, this._doc.channel, this._doc.getCurrentInstrument())) {
+                    if (this._doc.synth.isFilterModActive(true, this._doc.getCurrentInstrument())) {
                         this._eqFilterEditor.render(true, this._ctrlHeld || this._shiftHeld);
                     }
                     else {
@@ -2969,7 +2969,7 @@ export class SongEditor {
                 let modInstrument: number = instrument.modInstruments[mod];
 
                 // Boundary checking
-                if (modInstrument >= this._doc.song.modInstruments.length + 2 || (modInstrument > 0 && this._doc.song.modInstruments.length <= 1)) {
+                if (modInstrument >= this._doc.song.modChannelInstruments.length + 2 || (modInstrument > 0 && this._doc.song.modChannelInstruments.length <= 1)) {
                     modInstrument = 0;
                     instrument.modInstruments[mod] = 0;
                 }
@@ -3377,17 +3377,17 @@ export class SongEditor {
 
                     let useInstrument: number = instrument.modInstruments[mod];
                     let tmpCount: number = -1;
-                    if (useInstrument >= this._doc.song.modInstruments.length) {
+                    if (useInstrument >= this._doc.song.modChannelInstruments.length) {
                         // Use greatest number of dots among all instruments if setting is 'all' or 'active'. If it won't have an effect on one, no worry.
-                        for (let i: number = 0; i < this._doc.song.modInstruments.length; i++) {
+                        for (let i: number = 0; i < this._doc.song.modChannelInstruments.length; i++) {
                             if (filterType == "post eq") {
-                                if (this._doc.song.modInstruments[i].eqFilter.controlPointCount > tmpCount) {
-                                    tmpCount = this._doc.song.modInstruments[i].eqFilter.controlPointCount;
+                                if (this._doc.song.modChannelInstruments[i].eqFilter.controlPointCount > tmpCount) {
+                                    tmpCount = this._doc.song.modChannelInstruments[i].eqFilter.controlPointCount;
                                     useInstrument = i;
                                 }
                             } else {
-                                if (this._doc.song.modInstruments[i].noteFilter.controlPointCount > tmpCount) {
-                                    tmpCount = this._doc.song.modInstruments[i].noteFilter.controlPointCount;
+                                if (this._doc.song.modChannelInstruments[i].noteFilter.controlPointCount > tmpCount) {
+                                    tmpCount = this._doc.song.modChannelInstruments[i].noteFilter.controlPointCount;
                                     useInstrument = i;
                                 }
                             }
@@ -3461,9 +3461,9 @@ export class SongEditor {
 
                     let envCount: number = -1;
                     // Use greatest envelope count among all instruments if setting is 'all' or 'active'. If it won't have an effect on one, no worry.
-                    for (let i: number = 0; i < this._doc.song.modInstruments.length; i++) {
-                        if (this._doc.song.modInstruments[i].envelopeCount > envCount) {
-                            envCount = this._doc.song.modInstruments[i].envelopeCount;
+                    for (let i: number = 0; i < this._doc.song.modChannelInstruments.length; i++) {
+                        if (this._doc.song.modChannelInstruments[i].envelopeCount > envCount) {
+                            envCount = this._doc.song.modChannelInstruments[i].envelopeCount;
                         }
                     }
 
@@ -3531,12 +3531,12 @@ export class SongEditor {
 
         this._instrumentSettingsGroup.style.color = colors.primaryNote;
 
-        if (this._doc.synth.isFilterModActive(false, this._doc.channel, this._doc.getCurrentInstrument())) {
+        if (this._doc.synth.isFilterModActive(false, this._doc.getCurrentInstrument())) {
             this._noteFilterEditor.render(true, this._ctrlHeld || this._shiftHeld);
         } else {
             this._noteFilterEditor.render();
         }
-        if (this._doc.synth.isFilterModActive(false, 0, 0, true)) {
+        if (this._doc.synth.isFilterModActive(false, 0, true)) {
             this._songEqFilterEditor.render(true, this._ctrlHeld || this._shiftHeld);
         } else {
             this._songEqFilterEditor.render();
@@ -3775,7 +3775,7 @@ export class SongEditor {
                 const patternIdx = modChannel.bars[this._doc.bar];
                 if (patternIdx > 0) {
                     //const modInstrumentIdx: number = modChannel.patterns[patternIdx - 1].instruments[0];
-                    //const modInstrument: Instrument = this._doc.song.modInstruments[modInstrumentIdx];
+                    //const modInstrument: Instrument = this._doc.song.modChannelInstruments[modInstrumentIdx];
                     for (let mod: number = 0; mod < Config.modCount; mod++) {
                         /*
                         if (modInstrument.modChannels[mod] == channelIndex && (modInstrument.modInstruments[mod] == instrumentIndex)) {
@@ -4303,7 +4303,7 @@ export class SongEditor {
 
                         // Auto set the used instruments to the ones you were most recently viewing.
                         if (this._doc.channel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
-                            this._doc.viewedInstrument[this._doc.channel] = this._doc.recentPatternInstruments[this._doc.channel][0];
+                            this._doc.viewedInstrument = this._doc.recentPatternInstruments[this._doc.channel][0];
                         }
                         group.append(new ChangeSetPatternInstruments(this._doc, this._doc.channel, this._doc.recentPatternInstruments[this._doc.channel], this._doc.song.channels[this._doc.channel].patterns[nextEmpty - 1]));
 
@@ -4329,7 +4329,7 @@ export class SongEditor {
 
                         // Auto set the used instruments to the ones you were most recently viewing.
                         if (this._doc.channel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
-                            this._doc.viewedInstrument[this._doc.channel] = this._doc.recentPatternInstruments[this._doc.channel][0];
+                            this._doc.viewedInstrument = this._doc.recentPatternInstruments[this._doc.channel][0];
                         }
                         group.append(new ChangeSetPatternInstruments(this._doc, this._doc.channel, this._doc.recentPatternInstruments[this._doc.channel], this._doc.song.channels[this._doc.channel].patterns[nextUnused - 1]));
 
@@ -4726,13 +4726,13 @@ export class SongEditor {
         // ...and barscrollbar playhead
         this._barScrollBar.animatePlayhead();
         // ...and filters
-        if (this._doc.synth.isFilterModActive(false, this._doc.channel, this._doc.getCurrentInstrument())) {
+        if (this._doc.synth.isFilterModActive(false, this._doc.getCurrentInstrument())) {
             this._eqFilterEditor.render(true, this._ctrlHeld || this._shiftHeld);
         }
-        if (this._doc.synth.isFilterModActive(true, this._doc.channel, this._doc.getCurrentInstrument())) {
+        if (this._doc.synth.isFilterModActive(true, this._doc.getCurrentInstrument())) {
             this._noteFilterEditor.render(true, this._ctrlHeld || this._shiftHeld);
         }
-        if (this._doc.synth.isFilterModActive(false, 0, 0, true)) {
+        if (this._doc.synth.isFilterModActive(false, 0, true)) {
             this._songEqFilterEditor.render(true, this._ctrlHeld || this._shiftHeld);
         }
 
@@ -4999,7 +4999,7 @@ export class SongEditor {
         const modChannel: number = Math.max(0, instrument.modChannels[mod]);
 
         // Check if setting was 'song' or 'none' and is changing to a channel number, in which case suggested instrument to mod will auto-set to the current one.
-        if (this._doc.song.modInstruments.length > 1 && previouslyUnset && this._modChannelBoxes[mod].selectedIndex >= 2) {
+        if (this._doc.song.modChannelInstruments.length > 1 && previouslyUnset && this._modChannelBoxes[mod].selectedIndex >= 2) {
             if (this._doc.song.channels[modChannel].bars[this._doc.bar] > 0) {
                 this._doc.selection.setModInstrument(mod, this._doc.song.channels[modChannel].patterns[this._doc.song.channels[modChannel].bars[this._doc.bar] - 1].instruments[0]);
             }
@@ -5054,7 +5054,7 @@ export class SongEditor {
                 const patternIdx = modChannel.bars[this._doc.bar];
                 if (patternIdx > 0) {
                     const modInstrumentIdx: number = modChannel.patterns[patternIdx - 1].instruments[0];
-                    const modInstrument: Instrument = this._doc.song.modInstruments[modInstrumentIdx];
+                    const modInstrument: Instrument = this._doc.song.modChannelInstruments[modInstrumentIdx];
                     for (let mod: number = 0; mod < Config.modCount; mod++) {
                         if (modInstrument.modChannels[mod] == channelIndex && (modInstrument.modInstruments[mod] == instrumentIndex || modInstrument.modInstruments[mod] >= this._doc.song.instruments.length)) {
                             this._doc.selection.setChannelBar(modChannelIdx, this._doc.bar);

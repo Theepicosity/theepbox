@@ -1275,9 +1275,9 @@ export class PatternEditor {
                     // Hunt for instrument matching this setting and swap to it.
                     var rtn;
                     if (applyToFilterTargets.length > applyIndex)
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modInstruments, undefined, applyToFilterTargets[applyIndex]);
+                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modChannelInstruments, undefined, applyToFilterTargets[applyIndex]);
                     else
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modInstruments);
+                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modChannelInstruments);
                     useInstrumentIndex = rtn[0];
                     useModIndex = rtn[1];
 
@@ -1296,9 +1296,9 @@ export class PatternEditor {
                 else {
                     var rtn;
                     if (applyToFilterTargets.length > applyIndex)
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modInstruments, pattern.instruments[0], applyToFilterTargets[applyIndex]);
+                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modChannelInstruments, pattern.instruments[0], applyToFilterTargets[applyIndex]);
                     else
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modInstruments, pattern.instruments[0]);
+                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], this._doc.song.modChannelInstruments, pattern.instruments[0]);
                     useInstrumentIndex = rtn[0];
                     useModIndex = rtn[1];
 
@@ -1427,8 +1427,8 @@ export class PatternEditor {
                     }
 
                     for (let instrumentIndex: number = 0; instrumentIndex < usedNewInstrumentIndices.length; instrumentIndex++) {
-                        this._doc.synth.setModValue(applyValues[applyIndex], applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
-                        this._doc.synth.forceHoldMods(applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
+                        this._doc.synth.setModValue(applyValues[applyIndex], applyValues[applyIndex], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
+                        this._doc.synth.forceHoldMods(applyValues[applyIndex], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
                     }
                 }
 

@@ -104,8 +104,8 @@ export class Selection {
         // @jummbus - changing current viewed instrument to the first for the current pattern if the viewedInstrument is not in the pattern
         const pattern: Pattern | null = this._doc.getCurrentPattern(0);
         if (pattern != null) {
-            if (pattern.instruments.indexOf(this._doc.viewedInstrument[this._doc.channel]) < 0) {
-                this._doc.viewedInstrument[this._doc.channel] = pattern.instruments[0];
+            if (pattern.instruments.indexOf(this._doc.viewedInstrument) < 0) {
+                this._doc.viewedInstrument = pattern.instruments[0];
             }
         }
         // Don't erase existing redo history just to look at highlighted pattern.
@@ -699,7 +699,7 @@ export class Selection {
 
             const currentChannel = this._doc.song.channels[this.boxSelectionChannel];
             const bar: number = currentChannel.bars[this._doc.bar] - 1;
-            const modInstrument = (bar >= 0) ? this._doc.song.instruments[currentChannel.patterns[bar].instruments[0]] : this._doc.song.instruments[this._doc.viewedInstrument[this.boxSelectionChannel]];
+            const modInstrument = (bar >= 0) ? this._doc.song.instruments[currentChannel.patterns[bar].instruments[0]] : this._doc.song.instruments[this._doc.viewedInstrument];
             const soloPattern: boolean[] = [];
             let matchesSoloPattern: boolean = !invert;
 
@@ -861,7 +861,7 @@ export class Selection {
     }
 
     public selectInstrument(instrument: number): void {
-        if (this._doc.viewedInstrument[this._doc.channel] == instrument) {
+        if (this._doc.viewedInstrument == instrument) {
             // Multi-selection is not possible for mods... that would not make much sense.
             if (this._doc.song.layeredInstruments && this._doc.song.patternInstruments && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
                 const canReplaceLastChange: boolean = this._doc.lastChangeWas(this._changeInstrument);

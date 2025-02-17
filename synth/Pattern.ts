@@ -102,7 +102,7 @@ export class Pattern {
         const noteArray: Object[] = [];
         for (const note of this.notes) {
             // Only one ins per pattern is enforced in mod channels.
-            let instrument: Instrument = channel.instruments[this.instruments[0]];
+            let instrument: Instrument = song.instruments[this.instruments[0]];
             let mod: number = Math.max(0, Config.modCount - note.pitches[0] - 1);
             let volumeCap: number = song.getVolumeCapForSetting(isModChannel, instrument.modulators[mod], instrument.modFilterTypes[mod]);
             const pointArray: Object[] = [];
@@ -141,11 +141,11 @@ export class Pattern {
                 const instruments: any[] = patternObject["instruments"];
                 const instrumentCount: number = clamp(Config.instrumentCountMin, song.getMaxInstrumentsPerPatternForChannel(channel) + 1, instruments.length);
                 for (let j: number = 0; j < instrumentCount; j++) {
-                    this.instruments[j] = clamp(0, channel.instruments.length, (instruments[j] | 0) - 1);
+                    this.instruments[j] = clamp(0, song.instruments.length, (instruments[j] | 0) - 1);
                 }
                 this.instruments.length = instrumentCount;
             } else {
-                this.instruments[0] = clamp(0, channel.instruments.length, (patternObject["instrument"] | 0) - 1);
+                this.instruments[0] = clamp(0, song.instruments.length, (patternObject["instrument"] | 0) - 1);
                 this.instruments.length = 1;
             }
         }
@@ -178,7 +178,7 @@ export class Pattern {
                 //let noteClock: number = tickClock;
                 let startInterval: number = 0;
 
-                let instrument: Instrument = channel.instruments[this.instruments[0]];
+                let instrument: Instrument = song.instruments[this.instruments[0]];
                 let mod: number = Math.max(0, Config.modCount - note.pitches[0] - 1);
 
                 for (let k: number = 0; k < noteObject["points"].length; k++) {
