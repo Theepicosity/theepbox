@@ -19816,6 +19816,7 @@ li.select2-results__option[role=group] > strong:hover {
       __name(this, "Tone");
     }
     instrumentIndex;
+    channelIndex;
     pitches = Array(Config.maxChordSize + 2).fill(0);
     pitchCount = 0;
     chordSize = 0;
@@ -21274,6 +21275,7 @@ li.select2-results__option[role=group] > strong:hover {
     }
     freeTone(tone) {
       this.tonePool.pushBack(tone);
+      console.log("done");
     }
     newTone() {
       if (this.tonePool.count() > 0) {
@@ -21287,6 +21289,7 @@ li.select2-results__option[role=group] > strong:hover {
       instrumentState.releasedTones.pushFront(tone);
       tone.atNoteStart = false;
       tone.passedEndOfNote = true;
+      console.log("released");
     }
     freeReleasedTone(instrumentState, toneIndex) {
       this.freeTone(instrumentState.releasedTones.get(toneIndex));
@@ -21600,33 +21603,20 @@ li.select2-results__option[role=group] > strong:hover {
               if (nextNotes[channelIndexAgain] != null && nextNotes[channelIndexAgain].start != notes[channelIndexAgain].end) nextNotes[channelIndexAgain] = null;
             } else continue;
           }
-          if (pattern2 != null && (!song.layeredInstruments || song.instruments.length == 1 || song.patternInstruments && pattern2.instruments.length == 1)) {
-            const newInstrumentIndex = song.patternInstruments ? pattern2.instruments[0] : 0;
-            if (channelState2.singleSeamlessInstrument != null && channelState2.singleSeamlessInstrument != newInstrumentIndex && channelState2.singleSeamlessInstrument < channelState2.instruments.length) {
-              const sourceInstrumentState = channelState2.instruments[channelState2.singleSeamlessInstrument];
-              const destInstrumentState = channelState2.instruments[newInstrumentIndex];
-              while (sourceInstrumentState.activeTones.count() > 0) {
-                destInstrumentState.activeTones.pushFront(sourceInstrumentState.activeTones.popBack());
-              }
-            }
-            channelState2.singleSeamlessInstrument = newInstrumentIndex;
-          } else {
-            channelState2.singleSeamlessInstrument = null;
-          }
         }
         for (let channelIndexAgain = 0; channelIndexAgain < song.pitchChannelCount + song.noiseChannelCount; channelIndexAgain++) {
           const channel2 = song.channels[channelIndexAgain];
           const pattern2 = song.getPattern(channelIndexAgain, this.bar);
-          if (notes[channelIndexAgain] != null) {
-            const instruments = pattern2.instruments;
-            for (let instrumentIdx = 0; instrumentIdx < pattern2.instruments.length; instrumentIdx++) {
-              const instrumentIndex = pattern2.instruments[instrumentIdx];
-              const instrumentState = this.instruments[instrumentIndex];
-              const instrument = song.instruments[instrumentIndex];
-              const toneList = instrumentState.activeTones;
-              let toneCount = 0;
-              let prevNoteForThisInstrument = prevNotes[channelIndexAgain];
-              let nextNoteForThisInstrument = nextNotes[channelIndexAgain];
+          for (let instrumentIndex = 0; instrumentIndex < song.instruments.length; instrumentIndex++) {
+            if (pattern2 != null && !pattern2.instruments.includes(instrumentIndex)) continue;
+            console.log(pattern2.instruments);
+            const instrumentState = this.instruments[instrumentIndex];
+            const instrument = song.instruments[instrumentIndex];
+            const toneList = instrumentState.activeTones;
+            let toneCount = 0;
+            let prevNoteForThisInstrument = prevNotes[channelIndexAgain];
+            let nextNoteForThisInstrument = nextNotes[channelIndexAgain];
+            if (notes[channelIndexAgain] != null) {
               const partsPerBar = Config.partsPerBeat * song.beatsPerBar;
               const transition = instrument.getTransition();
               const chord = instrument.getChord();
@@ -21635,7 +21625,7 @@ li.select2-results__option[role=group] > strong:hover {
               let tonesInPrevNote = 0;
               let tonesInNextNote = 0;
               if (notes[channelIndexAgain].start == 0) {
-                let prevPattern = this.prevBar == null ? null : song.getPattern(channelIndex, this.prevBar);
+                let prevPattern = this.prevBar == null ? null : song.getPattern(channelIndexAgain, this.prevBar);
                 if (prevPattern != null) {
                   const lastNote = prevPattern.notes.length <= 0 ? null : prevPattern.notes[prevPattern.notes.length - 1];
                   if (lastNote != null && lastNote.end == partsPerBar) {
@@ -21652,7 +21642,7 @@ li.select2-results__option[role=group] > strong:hover {
                 tonesInPrevNote = chord.singleTone ? 1 : prevNoteForThisInstrument.pitches.length;
               }
               if (notes[channelIndexAgain].end == partsPerBar) {
-                let nextPattern = this.nextBar == null ? null : song.getPattern(channelIndex, this.nextBar);
+                let nextPattern = this.nextBar == null ? null : song.getPattern(channelIndexAgain, this.nextBar);
                 if (nextPattern != null) {
                   const firstNote = nextPattern.notes.length <= 0 ? null : nextPattern.notes[0];
                   if (firstNote != null && firstNote.start == 0) {
@@ -21694,6 +21684,7 @@ li.select2-results__option[role=group] > strong:hover {
                 tone.chordSize = 1;
                 tone.instrumentIndex = instrumentIndex;
                 tone.note = notes[channelIndexAgain];
+                tone.channelIndex = channelIndexAgain;
                 tone.noteStartPart = notes[channelIndexAgain].start;
                 tone.noteEndPart = notes[channelIndexAgain].end;
                 tone.prevNote = prevNoteForThisInstrument;
@@ -21704,7 +21695,7 @@ li.select2-results__option[role=group] > strong:hover {
                 tone.passedEndOfNote = false;
                 tone.forceContinueAtStart = forceContinueAtStart;
                 tone.forceContinueAtEnd = forceContinueAtEnd;
-                this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
+                this.computeTone(song, channelIndexAgain, samplesPerTick, tone, false, false);
               } else {
                 const transition2 = instrument.getTransition();
                 if ((transition2.isSeamless && !transition2.slides && chord.strumParts == 0 || forceContinueAtStart) && Config.ticksPerPart * notes[channelIndexAgain].start == currentTick && prevNoteForThisInstrument != null) {
@@ -21762,6 +21753,7 @@ li.select2-results__option[role=group] > strong:hover {
                   tone.chordSize = noteForThisTone.pitches.length;
                   tone.instrumentIndex = instrumentIndex;
                   tone.note = noteForThisTone;
+                  tone.channelIndex = channelIndexAgain;
                   tone.noteStartPart = noteStartPart;
                   tone.noteEndPart = noteEndPart;
                   tone.prevNote = prevNoteForThisTone;
@@ -21772,21 +21764,22 @@ li.select2-results__option[role=group] > strong:hover {
                   tone.passedEndOfNote = passedEndOfNote;
                   tone.forceContinueAtStart = forceContinueAtStart && prevNoteForThisTone != null;
                   tone.forceContinueAtEnd = forceContinueAtEnd && nextNoteForThisTone != null;
-                  this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
+                  this.computeTone(song, channelIndexAgain, samplesPerTick, tone, false, false);
                 }
               }
               if (transition.continues && toneList.count() <= 0 || notes[channelIndexAgain].pitches.length <= 0) instrumentState.envelopeComputer.reset();
-              while (toneList.count() > toneCount) {
-                const tone = toneList.popBack();
-                if (tone.instrumentIndex < song.instruments.length && !tone.isOnLastTick) {
-                  const instrumentState2 = this.instruments[tone.instrumentIndex];
-                  this.releaseTone(instrumentState2, tone);
-                } else {
-                  this.freeTone(tone);
-                }
-              }
-              this.clearTempMatchedPitchTones(toneCount, instrumentState);
             }
+            console.log(toneList.count() + "/" + toneCount);
+            while (toneList.count() > toneCount) {
+              const tone = toneList.popBack();
+              if (tone.instrumentIndex < song.instruments.length && !tone.isOnLastTick) {
+                const instrumentState2 = this.instruments[tone.instrumentIndex];
+                this.releaseTone(instrumentState2, tone);
+              } else {
+                this.freeTone(tone);
+              }
+            }
+            this.clearTempMatchedPitchTones(toneCount, instrumentState);
           }
         }
       }

@@ -11209,6 +11209,7 @@ var beepbox = (function (exports) {
                 let pattern = this.song.getPattern(channel, bar);
                 if (pattern != null) {
                     let instrument = this.song.modChannelInstruments[pattern.instruments[0]];
+                    console.log(instrument);
                     for (let mod = 0; mod < Config.modCount; mod++) {
                         if (instrument.modulators[mod] == Config.modulators.dictionary["next bar"].index) {
                             for (const note of pattern.notes) {
@@ -11553,10 +11554,8 @@ var beepbox = (function (exports) {
             this.limit = 0.0;
             this.freeAllTones();
             if (this.song != null) {
-                for (const channelState of this.channels) {
-                    for (const instrumentState of channelState.instruments) {
-                        instrumentState.resetAllEffects();
-                    }
+                for (const instrumentState of this.instruments) {
+                    instrumentState.resetAllEffects();
                 }
             }
         }
@@ -11874,8 +11873,8 @@ var beepbox = (function (exports) {
                 const samplesLeftInTick = Math.ceil(this.tickSampleCountdown);
                 const runLength = Math.min(samplesLeftInTick, samplesLeftInBuffer);
                 const runEnd = bufferIndex + runLength;
-                if (this.isPlayingSong || this.renderingSong) {
-                    const channelIndex = 0;
+                if ((this.isPlayingSong || this.renderingSong) && false) {
+                    const channelIndex = 4;
                     this.determineCurrentActiveTones(song, channelIndex, samplesPerTick, playSong);
                     for (let instrumentIndex = 0; instrumentIndex < song.modChannelInstruments.length; instrumentIndex++) {
                         const instrumentState = this.modChannelInstruments[instrumentIndex];
@@ -12618,6 +12617,8 @@ var beepbox = (function (exports) {
                             if (nextNotes[channelIndexAgain] != null && nextNotes[channelIndexAgain].start != notes[channelIndexAgain].end)
                                 nextNotes[channelIndexAgain] = null;
                         }
+                        else
+                            continue;
                     }
                     if (pattern != null && (!song.layeredInstruments || song.instruments.length == 1 || (song.patternInstruments && pattern.instruments.length == 1))) {
                         const newInstrumentIndex = song.patternInstruments ? pattern.instruments[0] : 0;
@@ -12634,15 +12635,16 @@ var beepbox = (function (exports) {
                         channelState.singleSeamlessInstrument = null;
                     }
                 }
-                for (let instrumentIndex = 0; instrumentIndex < song.instruments.length; instrumentIndex++) {
-                    const instrumentState = this.instruments[instrumentIndex];
-                    const toneList = instrumentState.activeTones;
-                    let toneCount = 0;
-                    for (let channelIndexAgain = 0; channelIndexAgain < song.pitchChannelCount + song.noiseChannelCount; channelIndexAgain++) {
-                        const channel = song.channels[channelIndexAgain];
-                        const pattern = song.getPattern(channelIndexAgain, this.bar);
-                        if ((notes[channelIndexAgain] != null) && (!song.patternInstruments || (pattern.instruments.indexOf(instrumentIndex) != -1))) {
+                for (let channelIndexAgain = 0; channelIndexAgain < song.pitchChannelCount + song.noiseChannelCount; channelIndexAgain++) {
+                    const channel = song.channels[channelIndexAgain];
+                    const pattern = song.getPattern(channelIndexAgain, this.bar);
+                    if (notes[channelIndexAgain] != null) {
+                        for (let instrumentIdx = 0; instrumentIdx < pattern.instruments.length; instrumentIdx++) {
+                            const instrumentIndex = pattern.instruments[instrumentIdx];
+                            const instrumentState = this.instruments[instrumentIndex];
                             const instrument = song.instruments[instrumentIndex];
+                            const toneList = instrumentState.activeTones;
+                            let toneCount = 0;
                             let prevNoteForThisInstrument = prevNotes[channelIndexAgain];
                             let nextNoteForThisInstrument = nextNotes[channelIndexAgain];
                             const partsPerBar = Config.partsPerBeat * song.beatsPerBar;
@@ -12653,7 +12655,7 @@ var beepbox = (function (exports) {
                             let tonesInPrevNote = 0;
                             let tonesInNextNote = 0;
                             if (notes[channelIndexAgain].start == 0) {
-                                let prevPattern = (this.prevBar == null) ? null : song.getPattern(channelIndex, this.prevBar);
+                                let prevPattern = (this.prevBar == null) ? null : song.getPattern(channelIndexAgain, this.prevBar);
                                 if (prevPattern != null) {
                                     const lastNote = (prevPattern.notes.length <= 0) ? null : prevPattern.notes[prevPattern.notes.length - 1];
                                     if (lastNote != null && lastNote.end == partsPerBar) {
@@ -12671,7 +12673,7 @@ var beepbox = (function (exports) {
                                 tonesInPrevNote = chord.singleTone ? 1 : prevNoteForThisInstrument.pitches.length;
                             }
                             if (notes[channelIndexAgain].end == partsPerBar) {
-                                let nextPattern = (this.nextBar == null) ? null : song.getPattern(channelIndex, this.nextBar);
+                                let nextPattern = (this.nextBar == null) ? null : song.getPattern(channelIndexAgain, this.nextBar);
                                 if (nextPattern != null) {
                                     const firstNote = (nextPattern.notes.length <= 0) ? null : nextPattern.notes[0];
                                     if (firstNote != null && firstNote.start == 0) {
@@ -12727,7 +12729,7 @@ var beepbox = (function (exports) {
                                 tone.passedEndOfNote = false;
                                 tone.forceContinueAtStart = forceContinueAtStart;
                                 tone.forceContinueAtEnd = forceContinueAtEnd;
-                                this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
+                                this.computeTone(song, channelIndexAgain, samplesPerTick, tone, false, false);
                             }
                             else {
                                 const transition = instrument.getTransition();
@@ -12801,24 +12803,24 @@ var beepbox = (function (exports) {
                                     tone.passedEndOfNote = passedEndOfNote;
                                     tone.forceContinueAtStart = forceContinueAtStart && prevNoteForThisTone != null;
                                     tone.forceContinueAtEnd = forceContinueAtEnd && nextNoteForThisTone != null;
-                                    this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
+                                    this.computeTone(song, channelIndexAgain, samplesPerTick, tone, false, false);
                                 }
                             }
                             if (transition.continues && (toneList.count() <= 0) || (notes[channelIndexAgain].pitches.length <= 0))
                                 instrumentState.envelopeComputer.reset();
+                            while (toneList.count() > toneCount) {
+                                const tone = toneList.popBack();
+                                if (tone.instrumentIndex < song.instruments.length && !tone.isOnLastTick) {
+                                    const instrumentState = this.instruments[tone.instrumentIndex];
+                                    this.releaseTone(instrumentState, tone);
+                                }
+                                else {
+                                    this.freeTone(tone);
+                                }
+                            }
+                            this.clearTempMatchedPitchTones(toneCount, instrumentState);
                         }
                     }
-                    while (toneList.count() > toneCount) {
-                        const tone = toneList.popBack();
-                        if (tone.instrumentIndex < song.instruments.length && !tone.isOnLastTick) {
-                            const instrumentState = this.instruments[tone.instrumentIndex];
-                            this.releaseTone(instrumentState, tone);
-                        }
-                        else {
-                            this.freeTone(tone);
-                        }
-                    }
-                    this.clearTempMatchedPitchTones(toneCount, instrumentState);
                 }
             }
         }
@@ -12837,7 +12839,6 @@ var beepbox = (function (exports) {
             }
         }
         playTone(channelIndex, bufferIndex, runLength, tone) {
-            console.log(this.instruments[tone.instrumentIndex]);
             const instrumentState = this.instruments[tone.instrumentIndex];
             if (instrumentState.synthesizer != null)
                 instrumentState.synthesizer(this, bufferIndex, runLength, tone, instrumentState);
