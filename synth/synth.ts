@@ -13950,6 +13950,7 @@ export class Synth {
                     }
 
                     // The eq filter volume is also used to fade out the instrument state, so always include it.
+
                     effectsSource += `
 
                     sampleL *= eqFilterVolume;

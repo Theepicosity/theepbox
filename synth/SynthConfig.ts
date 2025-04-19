@@ -389,7 +389,9 @@ export async function startLoadingSample(url: string, chipWaveIndex: number, pre
     }).then((audioBuffer) => {
 	// @TODO: Downmix.
         const samples = centerWave(Array.from(audioBuffer.getChannelData(0)));
-        const samplesR = centerWave(Array.from(audioBuffer.getChannelData(1)));
+        var samplesR = samples;
+        if(audioBuffer.numberOfChannels > 1) samplesR = centerWave(Array.from(audioBuffer.getChannelData(1)));
+        else samplesR = samples;
         const integratedSamples = performIntegral(samples);
         const integratedSamplesR = performIntegral(samplesR);
         chipWave.samples = integratedSamples;

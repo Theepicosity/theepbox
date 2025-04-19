@@ -86,7 +86,11 @@ var beepbox = (function (exports) {
                 return sampleLoaderAudioContext.decodeAudioData(arrayBuffer);
             }).then((audioBuffer) => {
                 const samples = centerWave(Array.from(audioBuffer.getChannelData(0)));
-                const samplesR = centerWave(Array.from(audioBuffer.getChannelData(1)));
+                var samplesR = samples;
+                if (audioBuffer.numberOfChannels > 1)
+                    samplesR = centerWave(Array.from(audioBuffer.getChannelData(1)));
+                else
+                    samplesR = samples;
                 const integratedSamples = performIntegral(samples);
                 const integratedSamplesR = performIntegral(samplesR);
                 chipWave.samples = integratedSamples;
@@ -23927,7 +23931,6 @@ li.select2-results__option[role=group] > strong:hover {
             sampleR *= eqFilterVolume;
             eqFilterVolume += eqFilterVolumeDelta;`;
                 for (let i of instrumentState.effectOrder) {
-                    console.log(i);
                     if (usesBitcrusher && i == 4) {
                         effectsSource += `
 
