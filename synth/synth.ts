@@ -8333,6 +8333,19 @@ class InstrumentState {
     public delayInputMult: number = 0.0;
     public delayInputMultDelta: number = 0.0;
 
+    public granularMix: number = 1.0;
+    public granularMixDelta: number = 0.0;
+    public granularDelayLineL: Float32Array | null = null;
+    public granularDelayLineR: Float32Array | null = null;
+    public granularDelayLineIndex: number = 0;
+    public granularMaximumDelayTimeInSeconds: number = 1;
+    public granularGrains: Grain[];
+    public granularGrainsLength: number;
+    public granularMaximumGrains: number;
+    public usesRandomGrainLocation: boolean = true; //eventually I might use the granular code for sample pitch shifting, but we'll see
+    public granularDelayLineDirty: boolean = false;
+    public computeGrains: boolean = true;
+
     public distortion: number = 0.0;
     public distortionDelta: number = 0.0;
     public distortionDrive: number = 0.0;
@@ -8480,6 +8493,26 @@ class InstrumentState {
                 this.reverbDelayLine = new Float32Array(Config.reverbDelayBufferSize);
             }
         }
+        if (effectsIncludeGranular(instrument.effects)) {
+            const granularDelayLineSizeInMilliseconds: number = 2500;
+            const granularDelayLineSizeInSeconds: number = granularDelayLineSizeInMilliseconds / 1000; // Maximum possible delay time
+            this.granularMaximumDelayTimeInSeconds = granularDelayLineSizeInSeconds;
+            const granularDelayLineSizeInSamples: number = fittingPowerOfTwo(Math.floor(granularDelayLineSizeInSeconds * synth.samplesPerSecond));
+            if (this.granularDelayLineL == null || this.granularDelayLineR == null || this.granularDelayLineL.length != granularDelayLineSizeInSamples || this.granularDelayLineR.length != granularDelayLineSizeInSamples) {
+                this.granularDelayLineL = new Float32Array(granularDelayLineSizeInSamples);
+                this.granularDelayLineR = new Float32Array(granularDelayLineSizeInSamples);
+                this.granularDelayLineIndex = 0;
+            }
+            const oldGrainsLength: number = this.granularGrains.length;
+            if (this.granularMaximumGrains > oldGrainsLength) { //increase grain amount if it changes
+                for (let i: number = oldGrainsLength; i < this.granularMaximumGrains+1; i++) {
+                    this.granularGrains.push(new Grain());
+                }
+            }
+            if (this.granularMaximumGrains < this.granularGrainsLength) {
+                this.granularGrainsLength = Math.round(this.granularMaximumGrains);
+            }
+        }
     }
 
     public deactivate(): void {
@@ -8504,7 +8537,8 @@ class InstrumentState {
         this.distortionPrevInput = 0.0;
         this.distortionNextOutput = 0.0;
         this.panningDelayPos = 0;
-        if (this.panningDelayLine != null) for (let i: number = 0; i < this.panningDelayLine.length; i++) this.panningDelayLine[i] = 0.0;
+        if (this.panningDelayLineL != null) for (let i: number = 0; i < this.panningDelayLineL.length; i++) this.panningDelayLineL[i] = 0.0;
+        if (this.panningDelayLineR != null) for (let i: number = 0; i < this.panningDelayLineR.length; i++) this.panningDelayLineR[i] = 0.0;
         this.echoDelayOffsetEnd = null;
         this.echoShelfSampleL = 0.0;
         this.echoShelfSampleR = 0.0;
@@ -8548,6 +8582,10 @@ class InstrumentState {
         }
         if (this.reverbDelayLineDirty) {
             for (let i: number = 0; i < this.reverbDelayLine!.length; i++) this.reverbDelayLine![i] = 0.0;
+        }
+        if (this.granularDelayLineDirty) {
+            for (let i: number = 0; i < this.granularDelayLineL!.length; i++) this.granularDelayLineL![i] = 0.0;
+            for (let i: number = 0; i < this.granularDelayLineR!.length; i++) this.granularDelayLineR![i] = 0.0;
         }
 
         this.chorusPhase = 0.0;
@@ -8600,12 +8638,66 @@ class InstrumentState {
         const envelopeStarts: number[] = this.envelopeComputer.envelopeStarts;
         const envelopeEnds: number[] = this.envelopeComputer.envelopeEnds;
 
+        const usesGranular: boolean = effectsIncludeGranular(this.effects);
         const usesDistortion: boolean = effectsIncludeDistortion(this.effects);
         const usesBitcrusher: boolean = effectsIncludeBitcrusher(this.effects);
         const usesPanning: boolean = effectsIncludePanning(this.effects);
         const usesChorus: boolean = effectsIncludeChorus(this.effects);
         const usesEcho: boolean = effectsIncludeEcho(this.effects);
         const usesReverb: boolean = effectsIncludeReverb(this.effects);
+
+        if (usesGranular) {
+            this.granularMix = instrument.granular / Config.granularRange;
+            this.computeGrains = true;
+            let granularMixEnd = this.granularMix;
+            if (synth.isModActive(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex)) {
+                this.granularMix = synth.getModValue(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, false) / Config.granularRange;
+                granularMixEnd = synth.getModValue(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, true) / Config.granularRange;
+            }
+            this.granularMix *= envelopeStarts[EnvelopeComputeIndex.granular];
+            granularMixEnd *= envelopeEnds[EnvelopeComputeIndex.granular];
+            this.granularMixDelta = (granularMixEnd - this.granularMix) / roundedSamplesPerTick;
+            for (let iterations: number = 0; iterations < Math.ceil(Math.random() * Math.random() * 10); iterations++) { //dirty weighting toward lower numbers
+                //create a grain
+                if (this.granularGrainsLength < this.granularMaximumGrains) {
+                    let granularMinGrainSizeInMilliseconds: number = instrument.grainSize;
+                    if (synth.isModActive(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex)) {
+                        granularMinGrainSizeInMilliseconds = synth.getModValue(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex, false);
+                    }
+                    granularMinGrainSizeInMilliseconds *= envelopeStarts[EnvelopeComputeIndex.grainSize];
+                    let grainRange = instrument.grainRange;
+                    if (synth.isModActive(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex)) {
+                        grainRange = synth.getModValue(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex, false);
+                    }
+                    grainRange *= envelopeStarts[EnvelopeComputeIndex.grainRange];
+                    const granularMaxGrainSizeInMilliseconds: number = granularMinGrainSizeInMilliseconds + grainRange;
+                    const granularGrainSizeInMilliseconds: number = granularMinGrainSizeInMilliseconds + (granularMaxGrainSizeInMilliseconds - granularMinGrainSizeInMilliseconds) * Math.random();
+                    const granularGrainSizeInSeconds: number = granularGrainSizeInMilliseconds / 1000.0;
+                    const granularGrainSizeInSamples: number = Math.floor(granularGrainSizeInSeconds * samplesPerSecond);
+                    const granularDelayLineLength: number = this.granularDelayLineL!.length;
+                    const grainIndex: number = this.granularGrainsLength;
+
+                    this.granularGrainsLength++;
+                    const grain: Grain = this.granularGrains[grainIndex];
+                    grain.ageInSamples = 0;
+                    grain.maxAgeInSamples = granularGrainSizeInSamples;
+                    // const minDelayTimeInMilliseconds: number = 2;
+                    // const minDelayTimeInSeconds: number = minDelayTimeInMilliseconds / 1000.0;
+                    const minDelayTimeInSeconds: number = 0.02;
+                    // const maxDelayTimeInSeconds: number = this.granularMaximumDelayTimeInSeconds;
+                    const maxDelayTimeInSeconds: number = 2.4;
+                    grain.delayLinePosition = this.usesRandomGrainLocation ? (minDelayTimeInSeconds + (maxDelayTimeInSeconds - minDelayTimeInSeconds) * Math.random() * Math.random() * samplesPerSecond) % (granularDelayLineLength - 1) : minDelayTimeInSeconds; //dirty weighting toward lower numbers ; The clamp was clumping everything at the end, so I decided to use a modulo instead
+                    if (Config.granularEnvelopeType == GranularEnvelopeType.parabolic) {
+                        grain.initializeParabolicEnvelope(grain.maxAgeInSamples, 1.0);
+                    } else if (Config.granularEnvelopeType == GranularEnvelopeType.raisedCosineBell) {
+                        grain.initializeRCBEnvelope(grain.maxAgeInSamples, 1.0);
+                    }
+                    // if (this.usesRandomGrainLocation) {
+                    grain.addDelay(Math.random() * samplesPerTick * 4); //offset when grains begin playing ; This is different from the above delay, which delays how far back in time the grain looks for samples
+                    // }
+                }
+            }
+        }
 
         if (usesDistortion) {
             let useDistortionStart: number = instrument.distortion;
@@ -8982,6 +9074,10 @@ class InstrumentState {
                 delayDuration += reverbDuration;
             }
 
+            if (usesGranular) {
+                this.computeGrains = false;
+            }
+
             const secondsInTick: number = samplesPerTick / samplesPerSecond;
             const progressInTick: number = secondsInTick / delayDuration;
             const progressAtEndOfTick: number = this.attentuationProgress + progressInTick;
@@ -9004,6 +9100,7 @@ class InstrumentState {
             if (usesChorus) totalDelaySamples += synth.chorusDelayBufferSize;
             if (usesEcho) totalDelaySamples += this.echoDelayLineL!.length;
             if (usesReverb) totalDelaySamples += Config.reverbDelayBufferSize;
+            if (usesGranular) totalDelaySamples += this.granularMaximumDelayTimeInSeconds;
 
             this.flushedSamples += roundedSamplesPerTick;
             if (this.flushedSamples >= totalDelaySamples) {
@@ -13459,6 +13556,24 @@ export class Synth {
 				const delayInputMultDelta = +instrumentState.delayInputMultDelta;`
             }
 
+            if (usesGranular) {
+                effectsSource += `
+                let granularWet = instrumentState.granularMix;
+                const granularMixDelta = instrumentState.granularMixDelta;
+                let granularDry = 1.0 - granularWet; 
+                const granularDelayLineL = instrumentState.granularDelayLineL;
+                const granularDelayLineR = instrumentState.granularDelayLineR;
+                const granularGrains = instrumentState.granularGrains;
+                let granularGrainCount = instrumentState.granularGrainsLength;
+                const granularDelayLineLength = granularDelayLineL.length;
+                const granularDelayLineMask = granularDelayLineLength - 1;
+                let granularDelayLineIndex = instrumentState.granularDelayLineIndex;
+                const usesRandomGrainLocation = instrumentState.usesRandomGrainLocation;
+                const computeGrains = instrumentState.computeGrains;
+                instrumentState.granularDelayLineDirty = true;
+                `
+            }
+            
             if (usesDistortion) {
                 // Distortion can sometimes create noticeable aliasing.
                 // It seems the established industry best practice for distortion antialiasing
@@ -13545,7 +13660,8 @@ export class Synth {
                 effectsSource += `
 				
 				const panningMask = synth.panningDelayBufferMask >>> 0;
-				const panningDelayLine = instrumentState.panningDelayLine;
+                const panningDelayLineL = instrumentState.panningDelayLineL;
+                const panningDelayLineR = instrumentState.panningDelayLineR;
 				let panningDelayPos = instrumentState.panningDelayPos & panningMask;
 				let   panningVolumeL      = +instrumentState.panningVolumeL;
 				let   panningVolumeR      = +instrumentState.panningVolumeR;
@@ -13663,6 +13779,89 @@ export class Synth {
                         tempInstrumentSampleBufferL[sampleIndex] = 0.0;
                         tempInstrumentSampleBufferR[sampleIndex] = 0.0;`
 
+                    if (usesGranular) {
+                        effectsSource += `
+                        let granularOutputL = 0;
+                        let granularOutputR = 0;
+                        for (let grainIndex = 0; grainIndex < granularGrainCount; grainIndex++) {
+                            const grain = granularGrains[grainIndex];
+                            if(computeGrains) {
+                                if(grain.delay > 0) {
+                                    grain.delay--;
+                                } else {
+                                    const grainDelayLinePosition = grain.delayLinePosition;
+                                    const grainDelayLinePositionInt = grainDelayLinePosition | 0;
+                                    // const grainDelayLinePositionT = grainDelayLinePosition - grainDelayLinePositionInt;
+                                    let grainAgeInSamples = grain.ageInSamples;
+                                    const grainMaxAgeInSamples = grain.maxAgeInSamples;
+                                    // const grainSample0 = granularDelayLine[((granularDelayLineIndex + (granularDelayLineLength - grainDelayLinePositionInt))    ) & granularDelayLineMask];
+                                    // const grainSample1 = granularDelayLine[((granularDelayLineIndex + (granularDelayLineLength - grainDelayLinePositionInt)) + 1) & granularDelayLineMask];
+                                    // let grainSample = grainSample0 + (grainSample1 - grainSample0) * grainDelayLinePositionT; // Linear interpolation (@TODO: sounds quite bad?)
+                                    let grainSampleL = granularDelayLineL[((granularDelayLineIndex + (granularDelayLineLength - grainDelayLinePositionInt))    ) & granularDelayLineMask];
+                                    let grainSampleR = granularDelayLineR[((granularDelayLineIndex + (granularDelayLineLength - grainDelayLinePositionInt))    ) & granularDelayLineMask]; // No interpolation
+                                    `
+                                    if (Config.granularEnvelopeType == GranularEnvelopeType.parabolic) {
+                                        effectsSource +=`
+                                        const grainEnvelope = grain.parabolicEnvelopeAmplitude;
+                                        `
+                                    } else if (Config.granularEnvelopeType == GranularEnvelopeType.raisedCosineBell) {
+                                        effectsSource +=`
+                                        const grainEnvelope = grain.rcbEnvelopeAmplitude;
+                                        `
+                                    }
+                                    effectsSource +=`
+                                    grainSampleL *= grainEnvelope;
+                                    grainSampleR *= grainEnvelope;
+                                    granularOutputL += grainSampleL;
+                                    granularOutputR += grainSampleR;
+                                    if (grainAgeInSamples > grainMaxAgeInSamples) {
+                                        if (granularGrainCount > 0) {
+                                            // Faster equivalent of .pop, ignoring the order in the array.
+                                            const lastGrainIndex = granularGrainCount - 1;
+                                            const lastGrain = granularGrains[lastGrainIndex];
+                                            granularGrains[grainIndex] = lastGrain;
+                                            granularGrains[lastGrainIndex] = grain;
+                                            granularGrainCount--;
+                                            grainIndex--;
+                                            // ^ Dangerous, since this could end up causing an infinite loop,
+                                            // but should be okay in this case.
+                                        }
+                                    } else {
+                                        grainAgeInSamples++;
+                                        `
+                                        if (Config.granularEnvelopeType == GranularEnvelopeType.parabolic) {
+                                            // grain.updateParabolicEnvelope();
+                                            // Inlined:
+                                            effectsSource +=`
+                                            grain.parabolicEnvelopeAmplitude += grain.parabolicEnvelopeSlope;
+                                            grain.parabolicEnvelopeSlope += grain.parabolicEnvelopeCurve;
+                                            `
+                                        } else if (Config.granularEnvelopeType == GranularEnvelopeType.raisedCosineBell) {
+                                            effectsSource +=`
+                                            grain.updateRCBEnvelope();
+                                            `
+                                        }
+                                        effectsSource +=`
+                                        grain.ageInSamples = grainAgeInSamples;
+                                        // if(usesRandomGrainLocation) {
+                                        //     grain.delayLine -= grainPitchShift;
+                                        // }
+                                    }
+                                }
+                            }
+                        }
+                        granularWet += granularMixDelta;
+                        granularDry -= granularMixDelta;
+                        granularOutputL *= Config.granularOutputLoudnessCompensation;
+                        granularOutputR *= Config.granularOutputLoudnessCompensation;
+                        granularDelayLineL[granularDelayLineIndex] = sampleL;
+                        granularDelayLineR[granularDelayLineIndex] = sampleR;
+                        granularDelayLineIndex = (granularDelayLineIndex + 1) & granularDelayLineMask;
+                        sampleL = sampleL * granularDry + granularOutputL * granularWet;
+                        sampleR = sampleR * granularDry + granularOutputR * granularWet;
+                        `
+                    }
+
                     if (usesDistortion) {
                         effectsSource += `
 
@@ -13757,13 +13956,27 @@ export class Synth {
                     sampleR *= eqFilterVolume;
                     eqFilterVolume += eqFilterVolumeDelta;`
 
-                if (usesPanning) { //TODO: add panning delay
+                if (usesPanning) {
                     effectsSource += `
 
-                    sampleL *= panningVolumeL;
-                    sampleR *= panningVolumeR;
+                    panningDelayLineL[panningDelayPos] = sampleL;
+                    panningDelayLineR[panningDelayPos] = sampleR;
+                    const panningRatioL  = panningOffsetL % 1;
+                    const panningRatioR  = panningOffsetR % 1;
+                    const panningTapLA   = panningDelayLineL[(panningOffsetL) & panningMask];
+                    const panningTapLB   = panningDelayLineL[(panningOffsetL + 1) & panningMask];
+                    const panningTapRA   = panningDelayLineR[(panningOffsetR) & panningMask];
+                    const panningTapRB   = panningDelayLineR[(panningOffsetR + 1) & panningMask];
+                    const panningTapL    = panningTapLA + (panningTapLB - panningTapLA) * panningRatioL;
+                    const panningTapR    = panningTapRA + (panningTapRB - panningTapRA) * panningRatioR;
+
+                    sampleL = panningTapL * panningVolumeL;
+                    sampleR = panningTapR * panningVolumeR;
+                    panningDelayPos = (panningDelayPos + 1) & panningMask;
                     panningVolumeL += panningVolumeDeltaL;
-                    panningVolumeR += panningVolumeDeltaR;`
+                    panningVolumeR += panningVolumeDeltaR;
+                    panningOffsetL += panningOffsetDeltaL;
+                    panningOffsetR += panningOffsetDeltaR;`
                 }
             } else {
                 effectsSource += `
@@ -13772,6 +13985,82 @@ export class Synth {
                 for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
                     let sample = tempInstrumentSampleBufferL[sampleIndex];
                     tempInstrumentSampleBufferL[sampleIndex] = 0.0;`
+
+                    if (usesGranular) {
+                        effectsSource += `
+                        let granularOutputL = 0;
+                        for (let grainIndex = 0; grainIndex < granularGrainCount; grainIndex++) {
+                            const grain = granularGrains[grainIndex];
+                            if(computeGrains) {
+                                if(grain.delay > 0) {
+                                    grain.delay--;
+                                } else {
+                                    const grainDelayLinePosition = grain.delayLinePosition;
+                                    const grainDelayLinePositionInt = grainDelayLinePosition | 0;
+                                    // const grainDelayLinePositionT = grainDelayLinePosition - grainDelayLinePositionInt;
+                                    let grainAgeInSamples = grain.ageInSamples;
+                                    const grainMaxAgeInSamples = grain.maxAgeInSamples;
+                                    // const grainSample0 = granularDelayLine[((granularDelayLineIndex + (granularDelayLineLength - grainDelayLinePositionInt))    ) & granularDelayLineMask];
+                                    // const grainSample1 = granularDelayLine[((granularDelayLineIndex + (granularDelayLineLength - grainDelayLinePositionInt)) + 1) & granularDelayLineMask];
+                                    // let grainSample = grainSample0 + (grainSample1 - grainSample0) * grainDelayLinePositionT; // Linear interpolation (@TODO: sounds quite bad?)
+                                    let grainSampleL = granularDelayLineL[((granularDelayLineIndex + (granularDelayLineLength - grainDelayLinePositionInt))    ) & granularDelayLineMask];
+                                    `
+                                    if (Config.granularEnvelopeType == GranularEnvelopeType.parabolic) {
+                                        effectsSource +=`
+                                        const grainEnvelope = grain.parabolicEnvelopeAmplitude;
+                                        `
+                                    } else if (Config.granularEnvelopeType == GranularEnvelopeType.raisedCosineBell) {
+                                        effectsSource +=`
+                                        const grainEnvelope = grain.rcbEnvelopeAmplitude;
+                                        `
+                                    }
+                                    effectsSource +=`
+                                    grainSampleL *= grainEnvelope;
+                                    granularOutputL += grainSampleL;
+                                    if (grainAgeInSamples > grainMaxAgeInSamples) {
+                                        if (granularGrainCount > 0) {
+                                            // Faster equivalent of .pop, ignoring the order in the array.
+                                            const lastGrainIndex = granularGrainCount - 1;
+                                            const lastGrain = granularGrains[lastGrainIndex];
+                                            granularGrains[grainIndex] = lastGrain;
+                                            granularGrains[lastGrainIndex] = grain;
+                                            granularGrainCount--;
+                                            grainIndex--;
+                                            // ^ Dangerous, since this could end up causing an infinite loop,
+                                            // but should be okay in this case.
+                                        }
+                                    } else {
+                                        grainAgeInSamples++;
+                                        `
+                                        if (Config.granularEnvelopeType == GranularEnvelopeType.parabolic) {
+                                            // grain.updateParabolicEnvelope();
+                                            // Inlined:
+                                            effectsSource +=`
+                                            grain.parabolicEnvelopeAmplitude += grain.parabolicEnvelopeSlope;
+                                            grain.parabolicEnvelopeSlope += grain.parabolicEnvelopeCurve;
+                                            `
+                                        } else if (Config.granularEnvelopeType == GranularEnvelopeType.raisedCosineBell) {
+                                            effectsSource +=`
+                                            grain.updateRCBEnvelope();
+                                            `
+                                        }
+                                        effectsSource +=`
+                                        grain.ageInSamples = grainAgeInSamples;
+                                        // if(usesRandomGrainLocation) {
+                                        //     grain.delayLine -= grainPitchShift;
+                                        // }
+                                    }
+                                }
+                            }
+                        }
+                        granularWet += granularMixDelta;
+                        granularDry -= granularMixDelta;
+                        granularOutputL *= Config.granularOutputLoudnessCompensation;
+                        granularDelayLineL[granularDelayLineIndex] = sample;
+                        granularDelayLineIndex = (granularDelayLineIndex + 1) & granularDelayLineMask;
+                        sample = sample * granularDry + granularOutputL * granularWet;
+                        `
+                    }
 
                 if (usesDistortion) {
                     effectsSource += `
@@ -14074,7 +14363,8 @@ export class Synth {
             if (usesPanning) {
                 effectsSource += `
 				
-				Synth.sanitizeDelayLine(panningDelayLine, panningDelayPos, panningMask);
+				Synth.sanitizeDelayLine(panningDelayLineL, panningDelayPos, panningMask);
+                Synth.sanitizeDelayLine(panningDelayLineR, panningDelayPos, panningMask);
 				instrumentState.panningDelayPos = panningDelayPos;
 				instrumentState.panningVolumeL = panningVolumeL;
 				instrumentState.panningVolumeR = panningVolumeR;
