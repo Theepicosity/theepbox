@@ -1031,6 +1031,8 @@ export class SongEditor {
     private readonly _modFilterBoxes: HTMLSelectElement[];
     private readonly _modEnvelopeRows: HTMLElement[];
     private readonly _modEnvelopeBoxes: HTMLSelectElement[];
+    private readonly _modEffectRows: HTMLElement[];
+    private readonly _modEffectBoxes: HTMLSelectElement[];
     private readonly _modTargetIndicators: SVGElement[];
 
     private readonly _feedback6OpTypeSelect: HTMLSelectElement = buildOptions(select(), Config.feedbacks6Op.map(feedback => feedback.name));
@@ -1504,6 +1506,8 @@ export class SongEditor {
         this._modFilterBoxes = [];
         this._modEnvelopeRows = [];
         this._modEnvelopeBoxes = [];
+        this._modEffectRows = [];
+        this._modEffectBoxes = [];
         this._modTargetIndicators = [];
         for (let mod: number = 0; mod < Config.modCount; mod++) {
 
@@ -1517,9 +1521,11 @@ export class SongEditor {
             let modSetBox: HTMLSelectElement = select();
             let modFilterBox: HTMLSelectElement = select();
             let modEnvelopeBox: HTMLSelectElement = select();
+            let modEffectBox: HTMLSelectElement = select();
             let modSetRow: HTMLDivElement = div({ class: "selectRow", id: "modSettingText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modSet") }, "Setting: "), span({ class: "tip", style: "font-size:x-small;", onclick: () => this._openPrompt("modSetInfo" + mod) }, "?"), div({ class: "selectContainer" }, modSetBox));
             let modFilterRow: HTMLDivElement = div({ class: "selectRow", id: "modFilterText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modFilter" + mod) }, "Target: "), div({ class: "selectContainer" }, modFilterBox));
             let modEnvelopeRow: HTMLDivElement = div({ class: "selectRow", id: "modEnvelopeText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modEnvelope") }, "Envelope: "), div({ class: "selectContainer" }, modEnvelopeBox));
+            let modEffectRow: HTMLDivElement = div({ class: "selectRow", id: "modEffectText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modEffect") }, "Effect: "), div({ class: "selectContainer" }, modEffectBox));
 
 
             // @jummbus: I could template this up above and simply create from the template, especially since I also reuse it in song settings, but unsure how to do that with imperative-html :P
@@ -1538,6 +1544,8 @@ export class SongEditor {
             this._modFilterBoxes.push(modFilterBox);
             this._modEnvelopeRows.push(modEnvelopeRow);
             this._modEnvelopeBoxes.push(modEnvelopeBox);
+            this._modEffectRows.push(modEffectRow);
+            this._modEffectBoxes.push(modEffectBox);
             this._modTargetIndicators.push(modTarget);
 
             this._modulatorGroup.appendChild(div({ style: "margin: 3px 0; font-weight: bold; margin-bottom: 0.7em; text-align: center; color: " + ColorConfig.secondaryText + "; background: " + ColorConfig.uiWidgetBackground + ";" }, ["Modulator " + (mod + 1), modTarget]));
@@ -1640,6 +1648,7 @@ export class SongEditor {
             this._modSetBoxes[mod].addEventListener("change", function () { thisRef._whenSetModSetting(mod); });
             this._modFilterBoxes[mod].addEventListener("change", function () { thisRef._whenSetModFilter(mod); });
             this._modEnvelopeBoxes[mod].addEventListener("change", function () { thisRef._whenSetModEnvelope(mod); })
+            this._modEffectBoxes[mod].addEventListener("change", function () { thisRef._whenSetModEffect(mod); })
             this._modTargetIndicators[mod].addEventListener("click", function () { thisRef._whenClickModTarget(mod); });
         }
 
@@ -3406,6 +3415,7 @@ export class SongEditor {
                 if (filterType == "post eq" || filterType == "pre eq") {
                     $("#modFilterText" + mod).get(0)!.style.display = "";
                     $("#modEnvelopeText" + mod).get(0)!.style.display = "none";
+                    $("#modEffectText" + mod).get(0)!.style.display = "none";
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
 
                     let useInstrument: number = instrument.modInstruments[mod][0];
@@ -3505,9 +3515,9 @@ export class SongEditor {
                     for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
                         let modChannel: Channel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod][i])];
                         // Use greatest envelope count among all instruments if setting is 'all' or 'active'. If it won't have an effect on one, no worry.
-                        for (let i: number = 0; i < modChannel.instruments.length; i++) {
-                            if (modChannel.instruments[i].envelopeCount > envCount) {
-                                envCount = modChannel.instruments[i].envelopeCount;
+                        for (let j: number = 0; j < modChannel.instruments.length; j++) {
+                            if (modChannel.instruments[j].envelopeCount > envCount) {
+                                envCount = modChannel.instruments[j].envelopeCount;
                             }
                         }
                     }
@@ -3533,15 +3543,64 @@ export class SongEditor {
                         instrument.invalidModulators[mod] = false;
                         this._modEnvelopeBoxes[mod].selectedIndex = instrument.modEnvelopeNumbers[mod];
                     }
-
-
-
                 } else {
                     $("#modEnvelopeText" + mod).get(0)!.style.display = "none";
                     if (!(filterType == "post eq" || filterType == "pre eq")) {
                         $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "0.9em");
                     }
+                }
 
+                let effects: string = Config.modulators[instrument.modulators[mod]].name;
+                if (effects == "chorus") {
+                    $("#modEffectText" + mod).get(0)!.style.display = "";
+                    $("#modEnvelopeText" + mod).get(0)!.style.display = "none";
+                    $("#modFilterText" + mod).get(0)!.style.display = "none";
+                    $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
+
+                    let effCount: number = -1;
+                    for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
+                        let modChannel: Channel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod][i])];
+                        for (let j: number = 0; j < modChannel.instruments.length; j++) {
+                            let tempEffCount: number = -1;
+                            for (let effectIndex: number = 0; effectIndex < modChannel.instruments[i].effects.length; effectIndex++) {
+                                let effect = modChannel.instruments[j].effects[effectIndex] as Effect;
+                                if (effect.type == Config.modulators[instrument.modulators[mod]].associatedEffect) {
+                                    tempEffCount++;
+                                }
+                            }
+                            if (tempEffCount > effCount) effCount = tempEffCount;
+                        }
+                    }
+
+                    // Build options for modulator envelopes (make sure it has the right number of envelopes).
+                    while (this._modEffectBoxes[mod].firstChild) this._modEffectBoxes[mod].remove(0);
+                    const effectList: string[] = [];
+                    for (let i: number = 0; i < effCount; i++) {
+                        effectList.push("effect " + (i + 1));
+                    }
+                    buildOptions(this._modEnvelopeBoxes[mod], effectList);
+
+                    if (instrument.modEffectNumbers[mod] >= this._modEffectBoxes[mod].length) {
+                        this._modEffectBoxes[mod].classList.add("invalidSetting");
+                        instrument.invalidModulators[mod] = true;
+                        let useName: string = "envelope " + (instrument.modEffectNumbers[mod]);
+                        this._modEffectBoxes[mod].insertBefore(option({ value: useName, style: "color: red;" }, useName), this._modEffectBoxes[mod].children[0]);
+                        this._modEffectBoxes[mod].selectedIndex = 0;
+
+                    }
+                    else {
+                        this._modEffectBoxes[mod].classList.remove("invalidSetting");
+                        instrument.invalidModulators[mod] = false;
+                        this._modEffectBoxes[mod].selectedIndex = instrument.modEffectNumbers[mod];
+                    }
+
+
+
+                } else {
+                    $("#modEffectText" + mod).get(0)!.style.display = "none";
+                    if (!(filterType == "post eq" || filterType == "pre eq")) {
+                        $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "0.9em");
+                    }
                 }
             }
 
@@ -5102,6 +5161,10 @@ export class SongEditor {
 
     private _whenSetModEnvelope = (mod: number): void => {
         this._doc.selection.setModEnvelope(mod, this._modEnvelopeBoxes[mod].selectedIndex);
+    }
+
+    private _whenSetModEffect = (mod: number): void => {
+        this._doc.selection.setModEffect(mod, this._modEffectBoxes[mod].selectedIndex);
     }
 
     private _whenSetChipWave = (): void => {

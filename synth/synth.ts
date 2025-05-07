@@ -260,6 +260,12 @@ export class Synth {
                     this.modInsValues[channel][instrument] = [];
                     this.nextModInsValues[channel][instrument] = [];
                     latestModInsTimes[channel][instrument] = [];
+
+                    for (let effect: number = 0; effect < this.song.channels[channel].instruments[instrument].effects.length; effect++) {
+                        this.modInsValues[channel][instrument][effect] = [];
+                        this.nextModInsValues[channel][instrument][effect] = [];
+                        latestModInsTimes[channel][instrument][effect] = [];
+                    }
                 }
             }
 

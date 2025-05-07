@@ -381,7 +381,7 @@ export class InstrumentState {
     public unisonExpression: number = 1.4;
     public unisonSign: number = 1.0;
     public chord: Chord | null = null;
-    public effects: (EffectState | null)[] = [];
+    public effects: EffectState[] = [];
 
     public volumeScale: number = 0;
     public aliases: boolean = false;

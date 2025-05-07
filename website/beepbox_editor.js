@@ -11691,6 +11691,7 @@ li.select2-results__option[role=group] > strong:hover {
             this.modulators = [];
             this.modFilterTypes = [];
             this.modEnvelopeNumbers = [];
+            this.modEffectNumbers = [];
             this.invalidModulators = [];
             this.isNoiseInstrument = false;
             if (isModChannel) {
@@ -11732,9 +11733,7 @@ li.select2-results__option[role=group] > strong:hover {
             this.type = type;
             this.preset = type;
             this.volume = 0;
-            for (let i = 0; i < Config.effectCount; i++) {
-                this.effects[i] = null;
-            }
+            this.effects = [];
             this.effectCount = 0;
             this.mdeffects = 0;
             for (let i = 0; i < Config.filterMorphCount; i++) {
@@ -11863,6 +11862,7 @@ li.select2-results__option[role=group] > strong:hover {
                         this.invalidModulators[mod] = false;
                         this.modFilterTypes[mod] = 0;
                         this.modEnvelopeNumbers[mod] = 0;
+                        this.modEffectNumbers[mod] = 0;
                     }
                     break;
                 case 8:
@@ -12168,12 +12168,14 @@ li.select2-results__option[role=group] > strong:hover {
                 instrumentObject["modSettings"] = [];
                 instrumentObject["modFilterTypes"] = [];
                 instrumentObject["modEnvelopeNumbers"] = [];
+                instrumentObject["modEffectNumbers"] = [];
                 for (let mod = 0; mod < Config.modCount; mod++) {
                     instrumentObject["modChannels"][mod] = this.modChannels[mod];
                     instrumentObject["modInstruments"][mod] = this.modInstruments[mod];
                     instrumentObject["modSettings"][mod] = this.modulators[mod];
                     instrumentObject["modFilterTypes"][mod] = this.modFilterTypes[mod];
                     instrumentObject["modEnvelopeNumbers"][mod] = this.modEnvelopeNumbers[mod];
+                    instrumentObject["modEffectNumbers"][mod] = this.modEffectNumbers[mod];
                 }
             }
             else {
@@ -12632,6 +12634,8 @@ li.select2-results__option[role=group] > strong:hover {
                             this.modFilterTypes[mod] = instrumentObject["modFilterTypes"][mod];
                         if (instrumentObject["modEnvelopeNumbers"] != undefined)
                             this.modEnvelopeNumbers[mod] = instrumentObject["modEnvelopeNumbers"][mod];
+                        if (instrumentObject["modEffectNumbers"] != undefined)
+                            this.modEffectNumbers[mod] = instrumentObject["modEffectNumbers"][mod];
                     }
                 }
             }
@@ -29626,6 +29630,33 @@ li.select2-results__option[role=group] > strong:hover {
             }
         }
     }
+    class ChangeModEffect extends Change {
+        constructor(doc, mod, effect) {
+            super();
+            let instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+            if (instrument.modEffectNumbers[mod] != effect) {
+                instrument.modEffectNumbers[mod] = effect;
+                let cap = doc.song.getVolumeCapForSetting(true, instrument.modulators[mod], instrument.modEffectNumbers[mod]);
+                for (let i = 0; i < doc.song.patternsPerChannel; i++) {
+                    const pattern = doc.song.channels[doc.channel].patterns[i];
+                    if (pattern.instruments[0] == doc.getCurrentInstrument()) {
+                        for (let j = 0; j < pattern.notes.length; j++) {
+                            const note = pattern.notes[j];
+                            if (note.pitches[0] == Config.modCount - mod - 1) {
+                                for (let k = 0; k < note.pins.length; k++) {
+                                    const pin = note.pins[k];
+                                    if (pin.size > cap)
+                                        pin.size = cap;
+                                }
+                            }
+                        }
+                    }
+                }
+                doc.notifier.changed();
+                this._didSomething();
+            }
+        }
+    }
     class ChangePatternsPerChannel extends Change {
         constructor(doc, newValue) {
             super();
@@ -32362,6 +32393,9 @@ li.select2-results__option[role=group] > strong:hover {
         }
         setModEnvelope(mod, type) {
             this._doc.record(new ChangeModEnvelope(this._doc, mod, type));
+        }
+        setModEffect(mod, type) {
+            this._doc.record(new ChangeModEffect(this._doc, mod, type));
         }
         insertBars() {
             this._doc.record(new ChangeInsertBars(this._doc, this.boxSelectionBar + this.boxSelectionWidth, this.boxSelectionWidth));
@@ -44943,6 +44977,11 @@ You should be redirected to the song at:<br /><br />
                         message = div$5(h2$4("Envelope Target"), p("This setting specifies which envelope of the specified instrument you would like to change."));
                     }
                     break;
+                case "modEffect":
+                    {
+                        message = div$5(h2$4("Effect Target"), p("This setting specifies which effect of the specified instrument you would like to change."));
+                    }
+                    break;
                 case "randomSteps":
                     {
                         message = div$5(h2$4("Random Envelope Steps"), p("This setting changes how many \"steps\", or different possible values can be outputted. For example, a step size of 2 will output either 0 or 1, and a step size of 3 either 0, 0.5, or 1. Every step is equidistant from each other"));
@@ -48713,6 +48752,7 @@ You should be redirected to the song at:<br /><br />
                         if (filterType == "post eq" || filterType == "pre eq") {
                             $("#modFilterText" + mod).get(0).style.display = "";
                             $("#modEnvelopeText" + mod).get(0).style.display = "none";
+                            $("#modEffectText" + mod).get(0).style.display = "none";
                             $("#modSettingText" + mod).get(0).style.setProperty("margin-bottom", "2px");
                             let useInstrument = instrument.modInstruments[mod][0];
                             let useEffect = 0;
@@ -48807,9 +48847,9 @@ You should be redirected to the song at:<br /><br />
                             let envCount = -1;
                             for (let i = 0; i < instrument.modChannels[mod].length; i++) {
                                 let modChannel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod][i])];
-                                for (let i = 0; i < modChannel.instruments.length; i++) {
-                                    if (modChannel.instruments[i].envelopeCount > envCount) {
-                                        envCount = modChannel.instruments[i].envelopeCount;
+                                for (let j = 0; j < modChannel.instruments.length; j++) {
+                                    if (modChannel.instruments[j].envelopeCount > envCount) {
+                                        envCount = modChannel.instruments[j].envelopeCount;
                                     }
                                 }
                             }
@@ -48835,6 +48875,53 @@ You should be redirected to the song at:<br /><br />
                         }
                         else {
                             $("#modEnvelopeText" + mod).get(0).style.display = "none";
+                            if (!(filterType == "post eq" || filterType == "pre eq")) {
+                                $("#modSettingText" + mod).get(0).style.setProperty("margin-bottom", "0.9em");
+                            }
+                        }
+                        let effects = Config.modulators[instrument.modulators[mod]].name;
+                        if (effects == "chorus") {
+                            $("#modEffectText" + mod).get(0).style.display = "";
+                            $("#modEnvelopeText" + mod).get(0).style.display = "none";
+                            $("#modFilterText" + mod).get(0).style.display = "none";
+                            $("#modSettingText" + mod).get(0).style.setProperty("margin-bottom", "2px");
+                            let effCount = -1;
+                            for (let i = 0; i < instrument.modChannels[mod].length; i++) {
+                                let modChannel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod][i])];
+                                for (let j = 0; j < modChannel.instruments.length; j++) {
+                                    let tempEffCount = -1;
+                                    for (let effectIndex = 0; effectIndex < modChannel.instruments[i].effects.length; effectIndex++) {
+                                        let effect = modChannel.instruments[j].effects[effectIndex];
+                                        if (effect.type == Config.modulators[instrument.modulators[mod]].associatedEffect) {
+                                            tempEffCount++;
+                                        }
+                                    }
+                                    if (tempEffCount > effCount)
+                                        effCount = tempEffCount;
+                                }
+                            }
+                            while (this._modEffectBoxes[mod].firstChild)
+                                this._modEffectBoxes[mod].remove(0);
+                            const effectList = [];
+                            for (let i = 0; i < effCount; i++) {
+                                effectList.push("effect " + (i + 1));
+                            }
+                            buildOptions(this._modEnvelopeBoxes[mod], effectList);
+                            if (instrument.modEffectNumbers[mod] >= this._modEffectBoxes[mod].length) {
+                                this._modEffectBoxes[mod].classList.add("invalidSetting");
+                                instrument.invalidModulators[mod] = true;
+                                let useName = "envelope " + (instrument.modEffectNumbers[mod]);
+                                this._modEffectBoxes[mod].insertBefore(option({ value: useName, style: "color: red;" }, useName), this._modEffectBoxes[mod].children[0]);
+                                this._modEffectBoxes[mod].selectedIndex = 0;
+                            }
+                            else {
+                                this._modEffectBoxes[mod].classList.remove("invalidSetting");
+                                instrument.invalidModulators[mod] = false;
+                                this._modEffectBoxes[mod].selectedIndex = instrument.modEffectNumbers[mod];
+                            }
+                        }
+                        else {
+                            $("#modEffectText" + mod).get(0).style.display = "none";
                             if (!(filterType == "post eq" || filterType == "pre eq")) {
                                 $("#modSettingText" + mod).get(0).style.setProperty("margin-bottom", "0.9em");
                             }
@@ -50034,6 +50121,9 @@ You should be redirected to the song at:<br /><br />
             this._whenSetModEnvelope = (mod) => {
                 this._doc.selection.setModEnvelope(mod, this._modEnvelopeBoxes[mod].selectedIndex);
             };
+            this._whenSetModEffect = (mod) => {
+                this._doc.selection.setModEffect(mod, this._modEffectBoxes[mod].selectedIndex);
+            };
             this._whenSetChipWave = () => {
                 this._doc.record(new ChangeChipWave(this._doc, this._chipWaveSelect.selectedIndex));
             };
@@ -50432,6 +50522,8 @@ You should be redirected to the song at:<br /><br />
             this._modFilterBoxes = [];
             this._modEnvelopeRows = [];
             this._modEnvelopeBoxes = [];
+            this._modEffectRows = [];
+            this._modEffectBoxes = [];
             this._modTargetIndicators = [];
             for (let mod = 0; mod < Config.modCount; mod++) {
                 let modChannelBox = select({ style: "width: 100%; color: currentColor; text-overflow:ellipsis;" });
@@ -50439,9 +50531,11 @@ You should be redirected to the song at:<br /><br />
                 let modSetBox = select();
                 let modFilterBox = select();
                 let modEnvelopeBox = select();
+                let modEffectBox = select();
                 let modSetRow = div({ class: "selectRow", id: "modSettingText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modSet") }, "Setting: "), span({ class: "tip", style: "font-size:x-small;", onclick: () => this._openPrompt("modSetInfo" + mod) }, "?"), div({ class: "selectContainer" }, modSetBox));
                 let modFilterRow = div({ class: "selectRow", id: "modFilterText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modFilter" + mod) }, "Target: "), div({ class: "selectContainer" }, modFilterBox));
                 let modEnvelopeRow = div({ class: "selectRow", id: "modEnvelopeText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modEnvelope") }, "Envelope: "), div({ class: "selectContainer" }, modEnvelopeBox));
+                let modEffectRow = div({ class: "selectRow", id: "modEffectText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modEffect") }, "Effect: "), div({ class: "selectContainer" }, modEffectBox));
                 let modTarget = SVG.svg({ style: "transform: translate(0px, 1px);", width: "1.5em", height: "1em", viewBox: "0 0 200 200" }, [
                     SVG.path({ d: "M90 155 l0 -45 -45 0 c-25 0 -45 -4 -45 -10 0 -5 20 -10 45 -10 l45 0 0 -45 c0 -25 5 -45 10 -45 6 0 10 20 10 45 l0 45 45 0 c25 0 45 5 45 10 0 6 -20 10 -45 10 l -45 0 0 45 c0 25 -4 45 -10 45 -5 0 -10 -20 -10 -45z" }),
                     SVG.path({ d: "M42 158 c-15 -15 -16 -38 -2 -38 6 0 10 7 10 15 0 8 7 15 15 15 8 0 15 5 15 10 0 14 -23 13 -38 -2z" }),
@@ -50457,6 +50551,8 @@ You should be redirected to the song at:<br /><br />
                 this._modFilterBoxes.push(modFilterBox);
                 this._modEnvelopeRows.push(modEnvelopeRow);
                 this._modEnvelopeBoxes.push(modEnvelopeBox);
+                this._modEffectRows.push(modEffectRow);
+                this._modEffectBoxes.push(modEffectBox);
                 this._modTargetIndicators.push(modTarget);
                 this._modulatorGroup.appendChild(div({ style: "margin: 3px 0; font-weight: bold; margin-bottom: 0.7em; text-align: center; color: " + ColorConfig.secondaryText + "; background: " + ColorConfig.uiWidgetBackground + ";" }, ["Modulator " + (mod + 1), modTarget]));
                 this._modulatorGroup.appendChild(modNameRow);
@@ -50542,6 +50638,7 @@ You should be redirected to the song at:<br /><br />
                 this._modSetBoxes[mod].addEventListener("change", function () { thisRef._whenSetModSetting(mod); });
                 this._modFilterBoxes[mod].addEventListener("change", function () { thisRef._whenSetModFilter(mod); });
                 this._modEnvelopeBoxes[mod].addEventListener("change", function () { thisRef._whenSetModEnvelope(mod); });
+                this._modEffectBoxes[mod].addEventListener("change", function () { thisRef._whenSetModEffect(mod); });
                 this._modTargetIndicators[mod].addEventListener("click", function () { thisRef._whenClickModTarget(mod); });
             }
             this._jumpToModIndicator.addEventListener("click", function () { thisRef._whenClickJumpToModTarget(); });

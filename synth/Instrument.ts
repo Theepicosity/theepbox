@@ -243,7 +243,7 @@ export class Instrument {
     public unisonOffset: number = 0.0;
     public unisonExpression: number = 1.4;
     public unisonSign: number = 1.0;
-    public effects: (Effect | null)[] = []; // having this array potentially include null is honestly a huge nuisance, and probably needs to be changed. coming soon! ~ theepie
+    public effects: Effect[] = [];
     public effectCount: number = 0;
     public mdeffects: number = 0;
     public chord: number = 1;
@@ -280,6 +280,7 @@ export class Instrument {
     public modulators: number[] = [];
     public modFilterTypes: number[] = [];
     public modEnvelopeNumbers: number[] = [];
+    public modEffectNumbers: number[] = [];
     public invalidModulators: boolean[] = [];
 
     //Literally just for pitch envelopes.
@@ -354,9 +355,7 @@ export class Instrument {
         this.type = type;
         this.preset = type;
         this.volume = 0;
-        for (let i: number = 0; i < Config.effectCount; i++) {
-            this.effects[i] = null;
-        }
+        this.effects = [];
         this.effectCount = 0;
         this.mdeffects = 0;
         for (let i: number = 0; i < Config.filterMorphCount; i++) {
@@ -492,6 +491,7 @@ export class Instrument {
                     this.invalidModulators[mod] = false;
                     this.modFilterTypes[mod] = 0;
                     this.modEnvelopeNumbers[mod] = 0;
+                    this.modEffectNumbers[mod] = 0;
                 }
                 break;
             case InstrumentType.supersaw:
@@ -888,12 +888,14 @@ export class Instrument {
             instrumentObject["modSettings"] = [];
             instrumentObject["modFilterTypes"] = [];
             instrumentObject["modEnvelopeNumbers"] = [];
+            instrumentObject["modEffectNumbers"] = [];
             for (let mod: number = 0; mod < Config.modCount; mod++) {
                 instrumentObject["modChannels"][mod] = this.modChannels[mod];
                 instrumentObject["modInstruments"][mod] = this.modInstruments[mod];
                 instrumentObject["modSettings"][mod] = this.modulators[mod];
                 instrumentObject["modFilterTypes"][mod] = this.modFilterTypes[mod];
                 instrumentObject["modEnvelopeNumbers"][mod] = this.modEnvelopeNumbers[mod];
+                instrumentObject["modEffectNumbers"][mod] = this.modEffectNumbers[mod];
             }
         } else {
             throw new Error("Unrecognized instrument type");
@@ -1377,6 +1379,8 @@ export class Instrument {
                         this.modFilterTypes[mod] = instrumentObject["modFilterTypes"][mod];
                     if (instrumentObject["modEnvelopeNumbers"] != undefined)
                         this.modEnvelopeNumbers[mod] = instrumentObject["modEnvelopeNumbers"][mod];
+                    if (instrumentObject["modEffectNumbers"] != undefined)
+                        this.modEffectNumbers[mod] = instrumentObject["modEffectNumbers"][mod];
                 }
             }
         }

@@ -609,6 +609,12 @@ export class TipPrompt implements Prompt {
 					p("This setting specifies which envelope of the specified instrument you would like to change."),
 				);
 			} break;
+			case "modEffect": {
+				message = div(
+					h2("Effect Target"),
+							  p("This setting specifies which effect of the specified instrument you would like to change."),
+				);
+			} break;
 			case "randomSteps": {
 				message = div(
 					h2("Random Envelope Steps"),

@@ -5,7 +5,7 @@ import { Note, NotePin, Pattern } from "../synth/Pattern";
 import { SongDocument } from "./SongDocument";
 import { ChangeGroup } from "./Change";
 import { ColorConfig } from "./ColorConfig";
-import { ChangeTrackSelection, ChangeChannelBar, ChangeAddChannel, ChangeRemoveChannel, ChangeChannelOrder, ChangeDuplicateSelectedReusedPatterns, ChangeNoteAdded, ChangeNoteTruncate, ChangePatternNumbers, ChangePatternSelection, ChangeInsertBars, ChangeDeleteBars, ChangeEnsurePatternExists, ChangeNoteLength, ChangePaste, ChangeSetPatternInstruments, ChangeViewInstrument, ChangeModChannel, ChangeModInstrument, ChangeModSetting, ChangeModFilter, ChangePatternsPerChannel, ChangePatternRhythm, ChangePatternScale, ChangeTranspose, ChangeRhythm, comparePatternNotes, unionOfUsedNotes, generateScaleMap, discardInvalidPatternInstruments, patternsContainSameInstruments, ChangeModEnvelope } from "./changes";
+import { ChangeTrackSelection, ChangeChannelBar, ChangeAddChannel, ChangeRemoveChannel, ChangeChannelOrder, ChangeDuplicateSelectedReusedPatterns, ChangeNoteAdded, ChangeNoteTruncate, ChangePatternNumbers, ChangePatternSelection, ChangeInsertBars, ChangeDeleteBars, ChangeEnsurePatternExists, ChangeNoteLength, ChangePaste, ChangeSetPatternInstruments, ChangeViewInstrument, ChangeModChannel, ChangeModInstrument, ChangeModSetting, ChangeModFilter, ChangePatternsPerChannel, ChangePatternRhythm, ChangePatternScale, ChangeTranspose, ChangeRhythm, comparePatternNotes, unionOfUsedNotes, generateScaleMap, discardInvalidPatternInstruments, patternsContainSameInstruments, ChangeModEnvelope, ChangeModEffect } from "./changes";
 
 interface PatternCopy {
     instruments: number[];
@@ -196,6 +196,10 @@ export class Selection {
 
     public setModEnvelope(mod: number, type: number): void {
         this._doc.record(new ChangeModEnvelope(this._doc, mod, type));
+    }
+
+    public setModEffect(mod: number, type: number): void {
+        this._doc.record(new ChangeModEffect(this._doc, mod, type));
     }
 
     public insertBars(): void {

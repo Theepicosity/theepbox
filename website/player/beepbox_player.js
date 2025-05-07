@@ -9518,6 +9518,7 @@ var beepbox = (function (exports) {
             this.modulators = [];
             this.modFilterTypes = [];
             this.modEnvelopeNumbers = [];
+            this.modEffectNumbers = [];
             this.invalidModulators = [];
             this.isNoiseInstrument = false;
             if (isModChannel) {
@@ -9559,9 +9560,7 @@ var beepbox = (function (exports) {
             this.type = type;
             this.preset = type;
             this.volume = 0;
-            for (let i = 0; i < Config.effectCount; i++) {
-                this.effects[i] = null;
-            }
+            this.effects = [];
             this.effectCount = 0;
             this.mdeffects = 0;
             for (let i = 0; i < Config.filterMorphCount; i++) {
@@ -9690,6 +9689,7 @@ var beepbox = (function (exports) {
                         this.invalidModulators[mod] = false;
                         this.modFilterTypes[mod] = 0;
                         this.modEnvelopeNumbers[mod] = 0;
+                        this.modEffectNumbers[mod] = 0;
                     }
                     break;
                 case 8:
@@ -9995,12 +9995,14 @@ var beepbox = (function (exports) {
                 instrumentObject["modSettings"] = [];
                 instrumentObject["modFilterTypes"] = [];
                 instrumentObject["modEnvelopeNumbers"] = [];
+                instrumentObject["modEffectNumbers"] = [];
                 for (let mod = 0; mod < Config.modCount; mod++) {
                     instrumentObject["modChannels"][mod] = this.modChannels[mod];
                     instrumentObject["modInstruments"][mod] = this.modInstruments[mod];
                     instrumentObject["modSettings"][mod] = this.modulators[mod];
                     instrumentObject["modFilterTypes"][mod] = this.modFilterTypes[mod];
                     instrumentObject["modEnvelopeNumbers"][mod] = this.modEnvelopeNumbers[mod];
+                    instrumentObject["modEffectNumbers"][mod] = this.modEffectNumbers[mod];
                 }
             }
             else {
@@ -10459,6 +10461,8 @@ var beepbox = (function (exports) {
                             this.modFilterTypes[mod] = instrumentObject["modFilterTypes"][mod];
                         if (instrumentObject["modEnvelopeNumbers"] != undefined)
                             this.modEnvelopeNumbers[mod] = instrumentObject["modEnvelopeNumbers"][mod];
+                        if (instrumentObject["modEffectNumbers"] != undefined)
+                            this.modEffectNumbers[mod] = instrumentObject["modEffectNumbers"][mod];
                     }
                 }
             }

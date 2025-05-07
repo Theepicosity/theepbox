@@ -3927,6 +3927,41 @@ export class ChangeModEnvelope extends Change {
     }
 }
 
+export class ChangeModEffect extends Change {
+    constructor(doc: SongDocument, mod: number, effect: number) {
+        super();
+
+        let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
+
+        if (instrument.modEffectNumbers[mod] != effect) {
+
+            instrument.modEffectNumbers[mod] = effect;
+
+            // Go through each pattern where this instrument is set, and clean up any notes that are out of bounds
+            let cap: number = doc.song.getVolumeCapForSetting(true, instrument.modulators[mod], instrument.modEffectNumbers[mod]);
+
+            for (let i: number = 0; i < doc.song.patternsPerChannel; i++) {
+                const pattern: Pattern = doc.song.channels[doc.channel].patterns[i];
+                if (pattern.instruments[0] == doc.getCurrentInstrument()) {
+                    for (let j: number = 0; j < pattern.notes.length; j++) {
+                        const note: Note = pattern.notes[j];
+                        if (note.pitches[0] == Config.modCount - mod - 1) {
+                            for (let k: number = 0; k < note.pins.length; k++) {
+                                const pin: NotePin = note.pins[k];
+                                if (pin.size > cap)
+                                    pin.size = cap;
+                            }
+                        }
+                    }
+                }
+            }
+
+            doc.notifier.changed();
+            this._didSomething();
+        }
+    }
+}
+
 export class ChangePatternsPerChannel extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();
