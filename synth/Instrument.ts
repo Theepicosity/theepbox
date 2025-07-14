@@ -202,6 +202,12 @@ export class HarmonicsWave {
     }
 }
 
+export class AudioBus {
+    public volume: number = 0;
+    public effects: Effect[] = [];
+    public effectCount: number = 0;
+}
+
 export class Instrument {
     public type: InstrumentType = InstrumentType.chip;
     public preset: number = 0;
@@ -1577,6 +1583,15 @@ export class Instrument {
 
     public static frequencyFromPitch(pitch: number): number {
         return 440.0 * Math.pow(2.0, (pitch - 69.0) / 12.0);
+    }
+
+    public syncAudioBusEffects(audioBus: AudioBus): AudioBus {
+        let addEffects: number = -1;
+        for(let i: number = 0; i < this.effectCount; i++) {
+            if (addEffects > -1) audioBus.effects[i - addEffects] = this.effects[i];
+            if (this.effects[i].type == EffectType.audioBus) addEffects = i + 1;
+        }
+        return audioBus;
     }
 
     public addEffect(type: EffectType): Effect {

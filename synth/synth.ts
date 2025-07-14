@@ -5,10 +5,10 @@ import { Deque } from "./Deque";
 import { Song, HeldMod } from "./Song";
 import { Channel } from "./Channel";
 import { ChannelState } from "./ChannelState";
-import { Instrument } from "./Instrument";
+import { Instrument, AudioBus } from "./Instrument";
 import { Effect } from "./Effect";
 import { EffectState } from "./EffectState";
-import { PickedString, InstrumentState } from "./InstrumentState";
+import { PickedString, InstrumentState, AudioBusState } from "./InstrumentState";
 import { Note, NotePin, Pattern } from "./Pattern";
 import { EnvelopeComputer } from "./EnvelopeComputer";
 import { FilterSettings, FilterControlPoint } from "./Filter";
@@ -188,6 +188,9 @@ export class Synth {
                     }
                 }
             }
+            for (const audioBusState of this.audioBuses) {
+                audioBusState.resetAllEffects();
+            }
         }
     }
 
@@ -226,6 +229,11 @@ export class Synth {
                     instrumentState.arpTime = 0;
                     instrumentState.updateWaves(instrument, this.samplesPerSecond);
                     instrumentState.allocateNecessaryBuffers(this, instrument, samplesPerTick);
+                    for (let effectIndex: number = 0; effectIndex < instrument.effects.length; effectIndex++) {
+                        const effect: Effect = instrument.effects[effectIndex];
+                        const bufferSize: number = this.anticipatePoorPerformance ? (this.preferLowerLatency ? 2048 : 4096) : (this.preferLowerLatency ? 512 : 2048);
+                        if (effect.type == EffectType.audioBus) this.audioBuses[effect.audioBusIndex] = new AudioBusState(bufferSize);
+                    }
                 }
 
             }
@@ -571,6 +579,8 @@ export class Synth {
     public readonly channels: ChannelState[] = [];
     private readonly tonePool: Deque<Tone> = new Deque<Tone>();
     private readonly tempMatchedPitchTones: Array<Tone | null> = Array(Config.maxChordSize).fill(null);
+
+    public readonly audioBuses: AudioBusState[] = [];
 
     private startedMetronome: boolean = false;
     private metronomeSamplesRemaining: number = -1;
@@ -955,6 +965,9 @@ export class Synth {
                 for (const instrumentState of channelState.instruments) {
                     instrumentState.resetAllEffects();
                 }
+            }
+            for (const audioBusState of this.audioBuses) {
+                audioBusState.resetAllEffects();
             }
         }
     }
@@ -1450,6 +1463,7 @@ export class Synth {
                 // In this case processing will return before the designated number of samples are processed. In other words, silence will be generated.
                 let barVisited = skippedBars.includes(this.bar);
                 if (barVisited && bufferIndex == firstSkippedBufferIndex) {
+                    this.resetEffects();
                     this.pause();
                     return;
                 }
@@ -1548,6 +1562,29 @@ export class Synth {
                     else {
                         instrumentState.nextVibratoTime += useVibratoSpeed * 0.1 * (partTimeEnd - partTimeStart);
                     }
+                }
+            }
+
+            for (let audioBusIndex: number = 0; audioBusIndex < this.audioBuses.length; audioBusIndex++) {
+                const audioBus: AudioBus = song.audioBuses[audioBusIndex];
+                const audioBusState: AudioBusState = this.audioBuses[audioBusIndex];
+
+                if (audioBusState.awake) {
+                    if (!audioBusState.computed || true) {
+                        audioBusState.compute(this, audioBus, samplesPerTick, Math.ceil(samplesPerTick), null, 0, 0);
+                    }
+                    audioBusState.computed = false;
+                    this.tempInstrumentSampleBufferL = audioBusState.audioBufferL;
+                    this.tempInstrumentSampleBufferR = audioBusState.audioBufferR;
+                    /*
+                    for (let i: number = bufferIndex; i < runEnd; i++) {
+                        outputDataL[i] += audioBusState.audioBufferL[i];
+                        outputDataR[i] += audioBusState.audioBufferR[i];
+                        //outputDataL[i] += audioBusState.audioBufferL;
+                        //outputDataR[i] += audioBusState.audioBufferR;
+                    }
+                    */
+                    Synth.effectsSynth(this, outputDataL, outputDataR, bufferIndex, runLength, audioBusState);
                 }
             }
 
@@ -2585,11 +2622,6 @@ export class Synth {
 
         let specialIntervalMult: number = 1.0;
         tone.specialIntervalExpressionMult = 1.0;
-
-        //if (synth.isModActive(ModSetting.mstPan, channelIndex, tone.instrumentIndex)) {
-        //    startPan = synth.getModValue(ModSetting.mstPan, false, channel, instrumentIdx, false);
-        //    endPan = synth.getModValue(ModSetting.mstPan, false, channel, instrumentIdx, true);
-        //}
 
         let toneIsOnLastTick: boolean = shouldFadeOutFast;
         let intervalStart: number = 0.0;
@@ -4457,7 +4489,7 @@ export class Synth {
         pickedStringFunction(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState);
     }
 
-    private static effectsSynth(synth: Synth, outputDataL: Float32Array, outputDataR: Float32Array, bufferIndex: number, runLength: number, instrumentState: InstrumentState): void {
+    private static effectsSynth(synth: Synth, outputDataL: Float32Array, outputDataR: Float32Array, bufferIndex: number, runLength: number, instrumentState: InstrumentState | AudioBusState): void {
         // TODO: If automation is involved, don't assume sliders will stay at zero.
         // @jummbus - ^ Correct, removed the non-zero checks as modulation can change them.
 
@@ -4471,8 +4503,9 @@ export class Synth {
         const usesEcho: boolean = instrumentState.effectsIncludeType(EffectType.echo);
 		const usesReverb: boolean = instrumentState.effectsIncludeType(EffectType.reverb);
 		const usesGranular: boolean = instrumentState.effectsIncludeType(EffectType.granular);
-		const usesRingModulation: boolean = instrumentState.effectsIncludeType(EffectType.ringModulation);
-        const isStereo: boolean = instrumentState.chipWaveInStereo && (instrumentState.synthesizer == Synth.loopableChipSynth || instrumentState.synthesizer == Synth.chipSynth); //TODO: make an instrumentIsStereo function
+        const usesRingModulation: boolean = instrumentState.effectsIncludeType(EffectType.ringModulation);
+        const usesAudioBus: boolean = instrumentState.effectsIncludeType(EffectType.audioBus);
+        const isStereo: boolean = instrumentState.getIsStereo();
         let signature: string = "";
         for (let i of instrumentState.effects) {
             if (i != null) {
@@ -4504,6 +4537,13 @@ export class Synth {
                 const delayInputMultDelta = +instrumentState.delayInputMultDelta;`
             }
 
+            if (usesAudioBus) {
+                effectsSource += `
+
+                let audioBus = [];
+                let audioBusBufferL = [];
+                let audioBusBufferR = [];`
+            }
             if (usesEqFilter) {
                 effectsSource += `
 
@@ -4628,7 +4668,7 @@ export class Synth {
                 let flangerTapDeltaL = [];
                 let flangerTapDeltaR = [];
 
-                let flangerTapRatioL = []; // you don't know how happy i am that this variable exists
+                let flangerTapRatioL = [];
                 let flangerTapRatioR = [];
                 let flangerTapLA = [];
                 let flangerTapLB = [];
@@ -4860,7 +4900,15 @@ export class Synth {
                 effectIndex = ` + i + `;
                 `
 
-                if (usesGranular && effectState.type == EffectType.granular) {
+                if (usesAudioBus && effectState.type == EffectType.audioBus) {
+                    effectsSource += `
+
+                    audioBus[effectIndex] = effectState.audioBusIndex;
+                    audioBusBufferL[effectIndex] = synth.audioBuses[audioBus[effectIndex]].audioBufferL;
+                    audioBusBufferR[effectIndex] = synth.audioBuses[audioBus[effectIndex]].audioBufferR;
+                    `
+                }
+                else if (usesGranular && effectState.type == EffectType.granular) {
                     effectsSource += `
 
                     granularWet[effectIndex] = effectState.granularMix;
@@ -5124,7 +5172,17 @@ export class Synth {
                 effectIndex = ` + i + `;
                 `
 
-                if (usesBitcrusher && effectState.type == EffectType.bitcrusher) {
+                if (usesAudioBus && effectState.type == EffectType.audioBus) {
+                    effectsSource += `
+
+                    audioBusBufferL[effectIndex][sampleIndex] = sampleL;
+                    audioBusBufferR[effectIndex][sampleIndex] = sampleR;
+                    sampleL = 0.0;
+                    sampleR = 0.0;
+                    continue;
+                    `
+                }
+                else if (usesBitcrusher && effectState.type == EffectType.bitcrusher) {
                     effectsSource += `
 
                     bitcrusherPhase[effectIndex] += bitcrusherPhaseDelta[effectIndex];
@@ -5528,6 +5586,7 @@ export class Synth {
 
             for (let i: number = 0; i < instrumentState.effects.length; i++) {
                 let effectState: EffectState = instrumentState.effects[i] as EffectState
+
                 effectsSource += `
 
                 effectState = instrumentState.effects[` + i + `];

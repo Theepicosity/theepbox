@@ -2,8 +2,8 @@
 
 import { FilterType, EffectType, EnvelopeComputeIndex, Config, GranularEnvelopeType, calculateRingModHertz } from "./SynthConfig";
 import { DynamicBiquadFilter } from "./filtering";
-import { Instrument } from "./Instrument";
-import { InstrumentState } from "./InstrumentState";
+import { Instrument, AudioBus } from "./Instrument";
+import { InstrumentState, AudioBusState } from "./InstrumentState";
 import { Effect } from "./Effect";
 import { Synth, Tone } from "./synth";
 import { FilterSettings, FilterControlPoint } from "./Filter";
@@ -81,6 +81,8 @@ class Grain {
 
 export class EffectState {
 	public type: EffectType = EffectType.reverb;
+
+	public audioBusIndex: number = 0;
 
 	public eqFilterVolume: number = 1.0;
 	public eqFilterVolumeDelta: number = 0.0;
@@ -260,7 +262,7 @@ export class EffectState {
 		this.ringModMixFade = 1.0;
 	}
 
-	public allocateNecessaryBuffers(synth: Synth, instrument: Instrument, effect: Effect, samplesPerTick: number): void {
+	public allocateNecessaryBuffers(synth: Synth, instrument: Instrument | AudioBus, effect: Effect, samplesPerTick: number): void {
 		if (effect.type == EffectType.panning) {
 			if (this.panningDelayLineL == null || this.panningDelayLineR == null || this.panningDelayLineL.length < synth.panningDelayBufferSize || this.panningDelayLineR.length < synth.panningDelayBufferSize) {
 				this.panningDelayLineL = new Float32Array(synth.panningDelayBufferSize);
@@ -387,11 +389,12 @@ export class EffectState {
 		this.reverbShelfPrevInput3 = 0.0;
 	}
 
-	public compute(synth: Synth, instrument: Instrument, effect: Effect, instrumentState: InstrumentState, samplesPerTick: number, roundedSamplesPerTick: number, tone: Tone | null, channelIndex: number, instrumentIndex: number, envelopeStarts: number[], envelopeEnds: number[]): void {
+	public compute(synth: Synth, instrument: Instrument | AudioBus, effect: Effect, instrumentState: InstrumentState | AudioBusState, samplesPerTick: number, roundedSamplesPerTick: number, tone: Tone | null, channelIndex: number, instrumentIndex: number, envelopeStarts: number[], envelopeEnds: number[]): void {
 		const samplesPerSecond: number = synth.samplesPerSecond;
 
 		this.type = effect.type;
 
+		const usesAudioBus: boolean = effect.type == EffectType.audioBus;
 		const usesGranular: boolean = effect.type == EffectType.granular;
 		const usesRingModulation: boolean = effect.type == EffectType.ringModulation;
 		const usesDistortion: boolean = effect.type == EffectType.distortion;
@@ -413,6 +416,10 @@ export class EffectState {
 		}
 
 		this.allocateNecessaryBuffers(synth, instrument, effect, samplesPerTick);
+
+		if (usesAudioBus) {
+			this.audioBusIndex = effect.audioBusIndex;
+		}
 
 		if (usesGranular) {
 			this.granularMix = effect.granular / Config.granularRange;

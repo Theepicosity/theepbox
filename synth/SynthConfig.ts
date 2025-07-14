@@ -122,6 +122,7 @@ export const enum EffectType {
     granular,
     gain,
     flanger,
+    audioBus,
     length,
 }
 
@@ -1220,17 +1221,17 @@ export class Config {
 		
         //for modbox; voices = riffapp, spread = intervals, offset = offsets, expression = volume, and sign = signs
     ]);
-    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "post eq", "echo", "ring mod", "granular", "gain", "flanger"];
-    public static readonly effectDisplayNames: ReadonlyArray<string> = ["Reverb", "Chorus", "Panning", "Distortion", "Bitcrusher", "Post EQ", "Echo", "Ring Mod", "Granular", "Gain", "Flanger"];
-    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.reverb, EffectType.chorus, EffectType.panning, EffectType.distortion, EffectType.bitcrusher, EffectType.eqFilter,EffectType.echo,  EffectType.ringModulation, EffectType.granular, EffectType.gain, EffectType.flanger];
-    public static readonly effectCount: 11
+    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "post eq", "echo", "ring mod", "granular", "gain", "flanger", "audio bus"];
+    public static readonly effectDisplayNames: ReadonlyArray<string> = ["Reverb", "Chorus", "Panning", "Distortion", "Bitcrusher", "Post EQ", "Echo", "Ring Mod", "Granular", "Gain", "Flanger", "Audio Bus"];
+    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.reverb, EffectType.chorus, EffectType.panning, EffectType.distortion, EffectType.bitcrusher, EffectType.eqFilter,EffectType.echo,  EffectType.ringModulation, EffectType.granular, EffectType.gain, EffectType.flanger, EffectType.audioBus];
+    public static readonly effectCount: 12
     public static readonly mdeffectNames: ReadonlyArray<string> = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
     public static readonly mdeffectOrder: ReadonlyArray<MDEffectType> = [MDEffectType.transition, MDEffectType.chord, MDEffectType.pitchShift, MDEffectType.detune, MDEffectType.vibrato, MDEffectType.noteRange];
     public static readonly mdeffectCount: 6
     public static readonly noteSizeMax: number = 6;
     public static readonly volumeRange: number = 100;
-    // Beepbox's old volume scale used factor -0.5 and was [0~7] had roughly value 6 = 0.125 power. This new value is chosen to have -21 be the same,
-    // given that the new scale is [-25~25]. This is such that conversion between the scales is roughly equivalent by satisfying (0.5*6 = 0.1428*21)
+    // Beepbox's old volume scale used factor -0.5 and was [0~7] had roughly value 6 = 0.125 power. This new value is chosen to have -42 be the same,
+    // given that the new scale is [-50~50]. This is such that conversion between the scales is roughly equivalent by satisfying (0.5*6 = 0.0714*42)
     public static readonly volumeLogScale: number = 0.0714;
     public static readonly gainRangeMult: number = 2;
     public static readonly panCenter: number = 50;

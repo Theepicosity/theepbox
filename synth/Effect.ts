@@ -8,6 +8,7 @@ export class Effect {
 	public wetDryMix: number = 0.5;
 	public send: number = 1;
 
+	public audioBusIndex: number = 0;
 	public eqFilter: FilterSettings = new FilterSettings();
 	public eqFilterType: boolean = false;
 	public eqFilterSimpleCut: number = Config.filterSimpleCutRange - 1;

@@ -3,7 +3,7 @@
 import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, InstrumentType, EffectType, MDEffectType, Envelope, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, LFOEnvelopeTypes, RandomEnvelopeTypes } from "./SynthConfig";
 import { Preset, EditorConfig } from "../editor/EditorConfig";
 import { Channel } from "./Channel";
-import { Instrument, LegacySettings } from "./Instrument";
+import { Instrument, LegacySettings, AudioBus } from "./Instrument";
 import { Effect } from "./Effect";
 import { Note, NotePin, makeNotePin, Pattern } from "./Pattern";
 import { FilterSettings, FilterControlPoint } from "./Filter";
@@ -416,6 +416,7 @@ export class Song {
     public noiseChannelCount: number;
     public modChannelCount: number;
     public readonly channels: Channel[] = [];
+    public readonly audioBuses: AudioBus[] = [];
     public limitDecay: number = 4.0;
     public limitRise: number = 4000.0;
     public compressionThreshold: number = 1.0;
@@ -2722,6 +2723,7 @@ export class Song {
                     const effectCount: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)]
                     if (fromTheepBox) {
                         instrument.effects = [];
+                        let newAudioBus: AudioBus | null = null;
                         for (let i: number = 0; i < effectCount; i++) { // this for loop caused me a lot of grief... i dont wanna talk about it
                             let newEffect: Effect = instrument.addEffect(base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             if (newEffect.type == EffectType.eqFilter) {
@@ -2784,6 +2786,9 @@ export class Song {
                                 newEffect.bitcrusherFreq = clamp(0, Config.bitcrusherFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 newEffect.bitcrusherQuantization = clamp(0, Config.bitcrusherQuantizationRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             }
+                            if (newEffect.type == EffectType.audioBus) {
+                                newAudioBus = new AudioBus;
+                            }
                             if (newEffect.type == EffectType.panning) {
                                 if (fromBeepBox) {
                                     // Beepbox has a panMax of 8 (9 total positions), Jummbox has a panMax of 100 (101 total positions)
@@ -2837,6 +2842,11 @@ export class Song {
                                 newEffect.ringModPulseWidth = clamp(0, Config.pulseWidthRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 newEffect.ringModHzOffset = clamp(Config.rmHzOffsetMin, Config.rmHzOffsetMax + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             }
+                        }
+                        if (newAudioBus != null) {
+                            newAudioBus = instrument.syncAudioBusEffects(newAudioBus as AudioBus);
+                            console.log(newAudioBus.effects);
+                            this.audioBuses.push(newAudioBus);
                         }
                         instrument.mdeffects = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                     }
