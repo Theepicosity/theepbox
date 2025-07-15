@@ -21026,6 +21026,7 @@ li.select2-results__option[role=group] > strong:hover {
                 if (this.wantToSkip) {
                     let barVisited = skippedBars.includes(this.bar);
                     if (barVisited && bufferIndex == firstSkippedBufferIndex) {
+                        this.resetEffects();
                         this.pause();
                         return;
                     }

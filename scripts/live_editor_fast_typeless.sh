@@ -18,4 +18,4 @@ done
 # before publishing updates.
 npx concurrently \
 	"npx esbuild --format=iife --keep-names --global-name=beepbox --bundle ./editor/main.js --outfile=website/beepbox_editor.js --sourcemap --watch" \
-	"npx five-server --wait=200 --watch=website/* --port=8081 --open=$open_browser_path website/"
+	"npx five-server --wait=200 --watch=website --port=8081 --open=$open_browser_path website/"

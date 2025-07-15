@@ -19133,6 +19133,7 @@ var beepbox = (function (exports) {
                 if (this.wantToSkip) {
                     let barVisited = skippedBars.includes(this.bar);
                     if (barVisited && bufferIndex == firstSkippedBufferIndex) {
+                        this.resetEffects();
                         this.pause();
                         return;
                     }

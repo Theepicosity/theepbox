@@ -1450,6 +1450,7 @@ export class Synth {
                 // In this case processing will return before the designated number of samples are processed. In other words, silence will be generated.
                 let barVisited = skippedBars.includes(this.bar);
                 if (barVisited && bufferIndex == firstSkippedBufferIndex) {
+                    this.resetEffects();
                     this.pause();
                     return;
                 }
