@@ -5514,18 +5514,6 @@ export class ChangeChipWavePlayBackwards extends Change {
 }
 // advloop addition
 
-export class ChangeChipWaveInStereo extends Change {
-    constructor(doc: SongDocument, newValue: boolean) {
-        super();
-        const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
-        if (instrument.chipWaveInStereo != newValue) {
-            instrument.chipWaveInStereo = newValue;
-            instrument.preset = instrument.type;
-            doc.notifier.changed();
-            this._didSomething();
-        }
-    }
-}
 export class ChangeNoiseWave extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();

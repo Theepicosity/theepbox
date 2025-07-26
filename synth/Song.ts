@@ -1082,10 +1082,8 @@ export class Song {
                     buffer.push(base64IntToCharCode[encodedLoopMode]);
                     // The same encoding above is used here, but with the release mode
                     // (which isn't implemented currently), and the backwards toggle.
-                    // changed in theepbox! now i added stereo toggle :3
                     const encodedReleaseMode: number = (
-                        (clamp(0, 31 + 1, 0) << 2)
-                        | ((instrument.chipWaveInStereo ? 1 : 0) << 1)
+                        (clamp(0, 31 + 1, 0) << 1)
                         | (instrument.chipWavePlayBackwards ? 1 : 0)
                     );
                     buffer.push(base64IntToCharCode[encodedReleaseMode]);
@@ -2261,7 +2259,6 @@ export class Song {
                         const isUsingAdvancedLoopControls: boolean = Boolean(encodedLoopMode & 1);
                         const chipWaveLoopMode: number = encodedLoopMode >> 1;
                         const encodedReleaseMode: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                        const chipWaveInStereo: boolean = Boolean(encodedReleaseMode & 2);
                         const chipWavePlayBackwards: boolean = Boolean(encodedReleaseMode & 1);
                         // const chipWaveReleaseMode: number = encodedReleaseMode >> 1;
                         const chipWaveLoopStart: number = decode32BitNumber(compressed, charIndex);
@@ -2277,7 +2274,6 @@ export class Song {
                         instrument.chipWaveLoopMode = chipWaveLoopMode;
                         instrument.chipWavePlayBackwards = chipWavePlayBackwards;
                         instrument.chipWaveStartOffset = chipWaveStartOffset;
-                        instrument.chipWaveInStereo = chipWaveInStereo;
                         // instrument.chipWaveReleaseMode = chipWaveReleaseMode;
                     }
                 }
@@ -3927,7 +3923,7 @@ export class Song {
         let presetChipWaveStartOffset: number | null = null;
         let presetChipWaveLoopMode: number | null = null;
         let presetChipWavePlayBackwards: boolean = false;
-        let presetChipWaveInStereo: boolean = false;
+        let stereoChannels: number = 0;
 
         let parsedSampleOptions: boolean = false;
         let optionsStartIndex: number = url.indexOf("!");
@@ -3971,9 +3967,8 @@ export class Song {
                     } else if (optionCode === "e") {
                         presetChipWavePlayBackwards = true;
                         presetIsUsingAdvancedLoopControls = true;
-                    } else if (optionCode === "f") {
-                        presetChipWaveInStereo = true;
-                        presetIsUsingAdvancedLoopControls = true;
+                    } else if (optionCode === "m") {
+                        stereoChannels = parseIntWithDefault(optionData, 0);
                     }
                 }
                 urlSliced = url.slice(optionsEndIndex + 1, url.length);
@@ -4064,8 +4059,8 @@ export class Song {
                 if (presetChipWaveStartOffset != null) namedOptions.push("c" + presetChipWaveStartOffset);
                 if (presetChipWaveLoopMode != null) namedOptions.push("d" + presetChipWaveLoopMode);
                 if (presetChipWavePlayBackwards) namedOptions.push("e");
-                if (presetChipWaveInStereo) namedOptions.push("f");
             }
+            if (stereoChannels !== 0) namedOptions.push("m" + stereoChannels);
             if (namedOptions.length > 0) {
                 urlWithNamedOptions = "!" + namedOptions.join(",") + "!" + urlSliced;
             }
@@ -4099,6 +4094,7 @@ export class Song {
                 sampleRate: customSampleRate,
                 samples: defaultIntegratedSamplesL,
                 samplesR: defaultIntegratedSamplesR,
+                stereoChannels: stereoChannels,
                 index: chipWaveIndex,
             };
             Config.rawChipWaves[chipWaveIndex] = {
@@ -4110,6 +4106,7 @@ export class Song {
                 sampleRate: customSampleRate,
                 samples: defaultSamplesL,
                 samplesR: defaultSamplesR,
+                stereoChannels: stereoChannels,
                 index: chipWaveIndex,
             };
             Config.rawRawChipWaves[chipWaveIndex] = {
@@ -4121,6 +4118,7 @@ export class Song {
                 sampleRate: customSampleRate,
                 samples: defaultSamplesL,
                 samplesR: defaultSamplesR,
+                stereoChannels: stereoChannels,
                 index: chipWaveIndex,
             };
             const customSamplePresetSettings: Dictionary<any> = {
@@ -4135,7 +4133,6 @@ export class Song {
                 "wave": name,
                 "unison": "none",
                 "envelopes": [],
-                "chipWaveInStereo": true,
             };
             if (presetIsUsingAdvancedLoopControls) {
                 customSamplePresetSettings["isUsingAdvancedLoopControls"] = true;

@@ -214,7 +214,6 @@ export class Instrument {
     public chipWavePlayBackwards: boolean = false;
     public chipWaveStartOffset: number = 0;
     // advloop addition
-    public chipWaveInStereo: boolean = false;
     public chipNoise: number = 1;
     public noteFilter: FilterSettings = new FilterSettings();
     public noteFilterType: boolean = false;
@@ -392,13 +391,11 @@ export class Instrument {
                 this.chipWaveLoopEnd = Config.rawRawChipWaves[this.chipWave].samples.length - 1;
                 this.chipWaveLoopMode = 0;
                 this.chipWavePlayBackwards = false;
-                this.chipWaveInStereo = false;
                 this.chipWaveStartOffset = 0;
                 // advloop addition
                 break;
             case InstrumentType.customChipWave:
                 this.chipWave = 2;
-                this.chipWaveInStereo = false;
                 this.chord = Config.chords.dictionary["arpeggio"].index;
                 for (let i: number = 0; i < 64; i++) {
                     this.customChipWave[i] = 24 - (Math.floor(i * (48 / 64)));
@@ -789,7 +786,6 @@ export class Instrument {
             instrumentObject["chipWavePlayBackwards"] = this.chipWavePlayBackwards;
             instrumentObject["chipWaveStartOffset"] = this.chipWaveStartOffset;
             // advloop addition
-            instrumentObject["chipWaveInStereo"] = this.chipWaveInStereo;
         } else if (this.type == InstrumentType.pwm) {
             instrumentObject["pulseWidth"] = this.pulseWidth;
             instrumentObject["decimalOffset"] = this.decimalOffset;
@@ -1547,7 +1543,6 @@ export class Instrument {
                 this.chipWavePlayBackwards = false;
                 this.chipWaveStartOffset = 0;
             }
-            this.chipWaveInStereo = instrumentObject["chipWaveInStereo"];
         }
     }
     // advloop addition

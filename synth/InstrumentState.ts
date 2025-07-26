@@ -372,7 +372,7 @@ export class InstrumentState {
     public chipWavePlayBackwards = false;
     public chipWaveStartOffset = 0;
     // advloop addition
-    public chipWaveInStereo = false; //...and this refers to whether or not the stereo checkmark is active.
+    public stereoChannels: number = 0; //...and this refers to whether or not the stereo checkmark is active.
     public noisePitchFilterMult: number = 1.0;
     public unison: Unison | null = null;
     public unisonVoices: number = 1;
@@ -586,8 +586,8 @@ export class InstrumentState {
             this.chipWavePlayBackwards = instrument.chipWavePlayBackwards;
             this.chipWaveStartOffset = instrument.chipWaveStartOffset;
             // advloop addition
+            this.stereoChannels = Config.chipWaves[instrument.chipWave].stereoChannels || 0;
 
-            this.chipWaveInStereo = instrument.chipWaveInStereo;
             this.unisonVoices = instrument.unisonVoices;
             this.unisonSpread = instrument.unisonSpread;
             this.unisonOffset = instrument.unisonOffset;

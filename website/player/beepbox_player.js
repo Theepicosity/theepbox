@@ -9494,7 +9494,6 @@ var beepbox = (function (exports) {
             this.chipWaveLoopMode = 0;
             this.chipWavePlayBackwards = false;
             this.chipWaveStartOffset = 0;
-            this.chipWaveInStereo = false;
             this.chipNoise = 1;
             this.noteFilter = new FilterSettings();
             this.noteFilterType = false;
@@ -9634,12 +9633,10 @@ var beepbox = (function (exports) {
                     this.chipWaveLoopEnd = Config.rawRawChipWaves[this.chipWave].samples.length - 1;
                     this.chipWaveLoopMode = 0;
                     this.chipWavePlayBackwards = false;
-                    this.chipWaveInStereo = false;
                     this.chipWaveStartOffset = 0;
                     break;
                 case 9:
                     this.chipWave = 2;
-                    this.chipWaveInStereo = false;
                     this.chord = Config.chords.dictionary["arpeggio"].index;
                     for (let i = 0; i < 64; i++) {
                         this.customChipWave[i] = 24 - (Math.floor(i * (48 / 64)));
@@ -9929,7 +9926,6 @@ var beepbox = (function (exports) {
                 instrumentObject["chipWaveLoopMode"] = this.chipWaveLoopMode;
                 instrumentObject["chipWavePlayBackwards"] = this.chipWavePlayBackwards;
                 instrumentObject["chipWaveStartOffset"] = this.chipWaveStartOffset;
-                instrumentObject["chipWaveInStereo"] = this.chipWaveInStereo;
             }
             else if (this.type == 6) {
                 instrumentObject["pulseWidth"] = this.pulseWidth;
@@ -10658,7 +10654,6 @@ var beepbox = (function (exports) {
                     this.chipWavePlayBackwards = false;
                     this.chipWaveStartOffset = 0;
                 }
-                this.chipWaveInStereo = instrumentObject["chipWaveInStereo"];
             }
         }
         getLargestControlPointCount(forNoteFilter) {
@@ -12051,8 +12046,7 @@ var beepbox = (function (exports) {
                         const encodedLoopMode = ((clamp(0, 31 + 1, instrument.chipWaveLoopMode) << 1)
                             | (instrument.isUsingAdvancedLoopControls ? 1 : 0));
                         buffer.push(base64IntToCharCode[encodedLoopMode]);
-                        const encodedReleaseMode = ((clamp(0, 31 + 1, 0) << 2)
-                            | ((instrument.chipWaveInStereo ? 1 : 0) << 1)
+                        const encodedReleaseMode = ((clamp(0, 31 + 1, 0) << 1)
                             | (instrument.chipWavePlayBackwards ? 1 : 0));
                         buffer.push(base64IntToCharCode[encodedReleaseMode]);
                         encode32BitNumber(buffer, instrument.chipWaveLoopStart);
@@ -13188,7 +13182,6 @@ var beepbox = (function (exports) {
                                     const isUsingAdvancedLoopControls = Boolean(encodedLoopMode & 1);
                                     const chipWaveLoopMode = encodedLoopMode >> 1;
                                     const encodedReleaseMode = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                    const chipWaveInStereo = Boolean(encodedReleaseMode & 2);
                                     const chipWavePlayBackwards = Boolean(encodedReleaseMode & 1);
                                     const chipWaveLoopStart = decode32BitNumber(compressed, charIndex);
                                     charIndex += 6;
@@ -13203,7 +13196,6 @@ var beepbox = (function (exports) {
                                     instrument.chipWaveLoopMode = chipWaveLoopMode;
                                     instrument.chipWavePlayBackwards = chipWavePlayBackwards;
                                     instrument.chipWaveStartOffset = chipWaveStartOffset;
-                                    instrument.chipWaveInStereo = chipWaveInStereo;
                                 }
                             }
                             else if (fromGoldBox && !beforeFour && beforeSix) {
@@ -14769,7 +14761,7 @@ var beepbox = (function (exports) {
             let presetChipWaveStartOffset = null;
             let presetChipWaveLoopMode = null;
             let presetChipWavePlayBackwards = false;
-            let presetChipWaveInStereo = false;
+            let stereoChannels = 0;
             let parsedSampleOptions = false;
             let optionsStartIndex = url.indexOf("!");
             let optionsEndIndex = -1;
@@ -14818,9 +14810,8 @@ var beepbox = (function (exports) {
                             presetChipWavePlayBackwards = true;
                             presetIsUsingAdvancedLoopControls = true;
                         }
-                        else if (optionCode === "f") {
-                            presetChipWaveInStereo = true;
-                            presetIsUsingAdvancedLoopControls = true;
+                        else if (optionCode === "m") {
+                            stereoChannels = parseIntWithDefault(optionData, 0);
                         }
                     }
                     urlSliced = url.slice(optionsEndIndex + 1, url.length);
@@ -14912,9 +14903,9 @@ var beepbox = (function (exports) {
                         namedOptions.push("d" + presetChipWaveLoopMode);
                     if (presetChipWavePlayBackwards)
                         namedOptions.push("e");
-                    if (presetChipWaveInStereo)
-                        namedOptions.push("f");
                 }
+                if (stereoChannels !== 0)
+                    namedOptions.push("m" + stereoChannels);
                 if (namedOptions.length > 0) {
                     urlWithNamedOptions = "!" + namedOptions.join(",") + "!" + urlSliced;
                 }
@@ -14936,6 +14927,7 @@ var beepbox = (function (exports) {
                     sampleRate: customSampleRate,
                     samples: defaultIntegratedSamplesL,
                     samplesR: defaultIntegratedSamplesR,
+                    stereoChannels: stereoChannels,
                     index: chipWaveIndex,
                 };
                 Config.rawChipWaves[chipWaveIndex] = {
@@ -14947,6 +14939,7 @@ var beepbox = (function (exports) {
                     sampleRate: customSampleRate,
                     samples: defaultSamplesL,
                     samplesR: defaultSamplesR,
+                    stereoChannels: stereoChannels,
                     index: chipWaveIndex,
                 };
                 Config.rawRawChipWaves[chipWaveIndex] = {
@@ -14958,6 +14951,7 @@ var beepbox = (function (exports) {
                     sampleRate: customSampleRate,
                     samples: defaultSamplesL,
                     samplesR: defaultSamplesR,
+                    stereoChannels: stereoChannels,
                     index: chipWaveIndex,
                 };
                 const customSamplePresetSettings = {
@@ -14972,7 +14966,6 @@ var beepbox = (function (exports) {
                     "wave": name,
                     "unison": "none",
                     "envelopes": [],
-                    "chipWaveInStereo": true,
                 };
                 if (presetIsUsingAdvancedLoopControls) {
                     customSamplePresetSettings["isUsingAdvancedLoopControls"] = true;
@@ -17640,7 +17633,7 @@ var beepbox = (function (exports) {
             this.chipWaveLoopMode = 0;
             this.chipWavePlayBackwards = false;
             this.chipWaveStartOffset = 0;
-            this.chipWaveInStereo = false;
+            this.stereoChannels = 0;
             this.noisePitchFilterMult = 1.0;
             this.unison = null;
             this.unisonVoices = 1;
@@ -17813,7 +17806,7 @@ var beepbox = (function (exports) {
                 this.chipWaveLoopMode = instrument.chipWaveLoopMode;
                 this.chipWavePlayBackwards = instrument.chipWavePlayBackwards;
                 this.chipWaveStartOffset = instrument.chipWaveStartOffset;
-                this.chipWaveInStereo = instrument.chipWaveInStereo;
+                this.stereoChannels = Config.chipWaves[instrument.chipWave].stereoChannels || 0;
                 this.unisonVoices = instrument.unisonVoices;
                 this.unisonSpread = instrument.unisonSpread;
                 this.unisonOffset = instrument.unisonOffset;
@@ -21084,10 +21077,23 @@ var beepbox = (function (exports) {
         }
         static loopableChipSynth(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState) {
             const aliases = (instrumentState.effectsIncludeType(3) && instrumentState.aliases);
-            const dataL = synth.tempInstrumentSampleBufferL;
-            const dataR = synth.tempInstrumentSampleBufferR;
-            const waveL = instrumentState.waveL;
-            const waveR = instrumentState.waveR;
+            const stereoChannels = instrumentState.stereoChannels;
+            let dataL = synth.tempInstrumentSampleBufferL;
+            let dataR = synth.tempInstrumentSampleBufferR;
+            let waveL = instrumentState.waveL;
+            let waveR = instrumentState.waveR;
+            if (stereoChannels == 0) {
+                dataL = synth.tempInstrumentSampleBufferL;
+                dataR = synth.tempInstrumentSampleBufferL;
+                waveL = instrumentState.waveL;
+                waveR = instrumentState.waveL;
+            }
+            else if (stereoChannels == 1) {
+                dataL = synth.tempInstrumentSampleBufferR;
+                dataR = synth.tempInstrumentSampleBufferR;
+                waveL = instrumentState.waveR;
+                waveR = instrumentState.waveR;
+            }
             const volumeScale = instrumentState.volumeScale;
             const waveLength = (aliases && instrumentState.type == 8) ? waveL.length : waveL.length - 1;
             let chipWaveLoopEnd = Math.max(0, Math.min(waveLength, instrumentState.chipWaveLoopEnd));
@@ -21470,10 +21476,23 @@ var beepbox = (function (exports) {
         }
         static chipSynth(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState) {
             const aliases = (instrumentState.effectsIncludeType(5) && instrumentState.aliases);
-            const dataL = synth.tempInstrumentSampleBufferL;
-            const dataR = synth.tempInstrumentSampleBufferR;
-            const waveL = instrumentState.waveL;
-            const waveR = instrumentState.waveR;
+            const stereoChannels = instrumentState.stereoChannels;
+            let dataL = synth.tempInstrumentSampleBufferL;
+            let dataR = synth.tempInstrumentSampleBufferR;
+            let waveL = instrumentState.waveL;
+            let waveR = instrumentState.waveR;
+            if (stereoChannels == 0) {
+                dataL = synth.tempInstrumentSampleBufferL;
+                dataR = synth.tempInstrumentSampleBufferL;
+                waveL = instrumentState.waveL;
+                waveR = instrumentState.waveL;
+            }
+            else if (stereoChannels == 1) {
+                dataL = synth.tempInstrumentSampleBufferR;
+                dataR = synth.tempInstrumentSampleBufferR;
+                waveL = instrumentState.waveR;
+                waveR = instrumentState.waveR;
+            }
             const volumeScale = instrumentState.volumeScale;
             const waveLength = (aliases && instrumentState.type == 8) ? waveL.length : waveL.length - 1;
             const unisonSign = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
@@ -21802,7 +21821,7 @@ var beepbox = (function (exports) {
             const usesReverb = instrumentState.effectsIncludeType(0);
             const usesGranular = instrumentState.effectsIncludeType(8);
             const usesRingModulation = instrumentState.effectsIncludeType(7);
-            const isStereo = instrumentState.chipWaveInStereo && (instrumentState.synthesizer == Synth.loopableChipSynth || instrumentState.synthesizer == Synth.chipSynth);
+            const stereoChannels = (instrumentState.synthesizer == Synth.loopableChipSynth || instrumentState.synthesizer == Synth.chipSynth) ? instrumentState.stereoChannels : 0;
             let signature = "";
             for (let i of instrumentState.effects) {
                 if (i != null) {
@@ -21811,6 +21830,7 @@ var beepbox = (function (exports) {
                         signature = signature + i.panningMode.toString();
                 }
             }
+            signature = signature + stereoChannels.toString();
             let effectsFunction = Synth.effectsFunctionCache[signature];
             if (effectsFunction == undefined) {
                 let effectsSource = "return (synth, outputDataL, outputDataR, bufferIndex, runLength, instrumentState) => {";
@@ -22401,24 +22421,33 @@ var beepbox = (function (exports) {
                     gainDelta[effectIndex] = +effectState.gainDelta;`;
                     }
                 }
-                if (isStereo) {
-                    effectsSource += `
-
-                const stopIndex = bufferIndex + runLength;
-                for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
-                    let sample = 0.0;
-                    let sampleL = tempInstrumentSampleBufferL[sampleIndex];
-                    let sampleR = tempInstrumentSampleBufferR[sampleIndex];
-                    tempInstrumentSampleBufferL[sampleIndex] = 0.0;
-                    tempInstrumentSampleBufferR[sampleIndex] = 0.0;`;
-                }
-                else {
+                if (stereoChannels == 0) {
                     effectsSource += `
 
                 const stopIndex = bufferIndex + runLength;
                 for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
                     let sampleL = tempInstrumentSampleBufferL[sampleIndex];
                     let sampleR = tempInstrumentSampleBufferL[sampleIndex];
+                    tempInstrumentSampleBufferL[sampleIndex] = 0.0;
+                    tempInstrumentSampleBufferR[sampleIndex] = 0.0;`;
+                }
+                else if (stereoChannels == 1) {
+                    effectsSource += `
+
+                const stopIndex = bufferIndex + runLength;
+                for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
+                    let sampleL = tempInstrumentSampleBufferR[sampleIndex];
+                    let sampleR = tempInstrumentSampleBufferR[sampleIndex];
+                    tempInstrumentSampleBufferL[sampleIndex] = 0.0;
+                    tempInstrumentSampleBufferR[sampleIndex] = 0.0;`;
+                }
+                else if (stereoChannels == 2) {
+                    effectsSource += `
+
+                const stopIndex = bufferIndex + runLength;
+                for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
+                    let sampleL = tempInstrumentSampleBufferL[sampleIndex];
+                    let sampleR = tempInstrumentSampleBufferR[sampleIndex];
                     tempInstrumentSampleBufferL[sampleIndex] = 0.0;
                     tempInstrumentSampleBufferR[sampleIndex] = 0.0;`;
                 }

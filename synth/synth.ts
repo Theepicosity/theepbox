@@ -3698,11 +3698,27 @@ export class Synth {
 		//   samples are expected to vary too much), this is left up to the
 		//   user.
 		const aliases: boolean = (instrumentState.effectsIncludeType(EffectType.distortion) && instrumentState.aliases);
-		// const aliases = false;
-		const dataL: Float32Array = synth.tempInstrumentSampleBufferL!;
-		const dataR: Float32Array = synth.tempInstrumentSampleBufferR!;
-		const waveL: Float32Array = instrumentState.waveL!;
-		const waveR: Float32Array = instrumentState.waveR!;
+        // const aliases = false;
+        const stereoChannels: number = instrumentState.stereoChannels;
+        let dataL: Float32Array = synth.tempInstrumentSampleBufferL!;
+        let dataR: Float32Array = synth.tempInstrumentSampleBufferR!;
+        let waveL: Float32Array = instrumentState.waveL!;
+        let waveR: Float32Array = instrumentState.waveR!;
+
+        //TODO: it makes sense to avoid doing stereo calculations if both channels are the same
+        if (stereoChannels == 0) {
+            dataL = synth.tempInstrumentSampleBufferL!;
+            dataR = synth.tempInstrumentSampleBufferL!;
+            waveL = instrumentState.waveL!;
+            waveR = instrumentState.waveL!;
+        }
+        else if (stereoChannels == 1) {
+            dataL = synth.tempInstrumentSampleBufferR!;
+            dataR = synth.tempInstrumentSampleBufferR!;
+            waveL = instrumentState.waveR!;
+            waveR = instrumentState.waveR!;
+        }
+
 		const volumeScale: number = instrumentState.volumeScale;
 		const waveLength: number = (aliases && instrumentState.type == 8) ? waveL.length : waveL.length - 1;
 		let chipWaveLoopEnd: number = Math.max(0, Math.min(waveLength, instrumentState.chipWaveLoopEnd));
@@ -3720,7 +3736,7 @@ export class Synth {
 			chipWaveLoopLength = waveLength;
 		}
 		const chipWaveLoopMode: number = instrumentState.chipWaveLoopMode;
-		const chipWavePlayBackwards: boolean = instrumentState.chipWavePlayBackwards;
+        const chipWavePlayBackwards: boolean = instrumentState.chipWavePlayBackwards;
 		const unisonSign: number = tone.specialIntervalExpressionMult * instrumentState.unisonSign;
 		if (instrumentState.unisonVoices == 1 && instrumentState.unisonSpread == 0 && !instrumentState.chord!.customInterval)
 			tone.phases[1] = tone.phases[0];
@@ -4094,10 +4110,25 @@ export class Synth {
 	}
     private static chipSynth(synth: Synth, bufferIndex: number, roundedSamplesPerTick: number, tone: Tone, instrumentState: InstrumentState): void {
         const aliases: boolean = (instrumentState.effectsIncludeType(EffectType.eqFilter) && instrumentState.aliases);
-        const dataL: Float32Array = synth.tempInstrumentSampleBufferL!;
-        const dataR: Float32Array = synth.tempInstrumentSampleBufferR!;
-        const waveL: Float32Array = instrumentState.waveL!;
-        const waveR: Float32Array = instrumentState.waveR!;
+        const stereoChannels: number = instrumentState.stereoChannels;
+        let dataL: Float32Array = synth.tempInstrumentSampleBufferL!;
+        let dataR: Float32Array = synth.tempInstrumentSampleBufferR!;
+        let waveL: Float32Array = instrumentState.waveL!;
+        let waveR: Float32Array = instrumentState.waveR!;
+
+        //TODO: it makes sense to avoid doing stereo calculations if both channels are the same
+        if (stereoChannels == 0) {
+            dataL = synth.tempInstrumentSampleBufferL!;
+            dataR = synth.tempInstrumentSampleBufferL!;
+            waveL = instrumentState.waveL!;
+            waveR = instrumentState.waveL!;
+        }
+        else if (stereoChannels == 1) {
+            dataL = synth.tempInstrumentSampleBufferR!;
+            dataR = synth.tempInstrumentSampleBufferR!;
+            waveL = instrumentState.waveR!;
+            waveR = instrumentState.waveR!;
+        }
         const volumeScale = instrumentState.volumeScale;
 
         const waveLength = (aliases && instrumentState.type == 8) ? waveL.length : waveL.length - 1;
@@ -4472,8 +4503,9 @@ export class Synth {
         const usesEcho: boolean = instrumentState.effectsIncludeType(EffectType.echo);
 		const usesReverb: boolean = instrumentState.effectsIncludeType(EffectType.reverb);
 		const usesGranular: boolean = instrumentState.effectsIncludeType(EffectType.granular);
-		const usesRingModulation: boolean = instrumentState.effectsIncludeType(EffectType.ringModulation);
-        const isStereo: boolean = instrumentState.chipWaveInStereo && (instrumentState.synthesizer == Synth.loopableChipSynth || instrumentState.synthesizer == Synth.chipSynth); //TODO: make an instrumentIsStereo function
+        const usesRingModulation: boolean = instrumentState.effectsIncludeType(EffectType.ringModulation);
+        const stereoChannels: number = (instrumentState.synthesizer == Synth.loopableChipSynth || instrumentState.synthesizer == Synth.chipSynth) ? instrumentState.stereoChannels : 0; //TODO: make an instrumentIsStereo function
+
         let signature: string = "";
         for (let i of instrumentState.effects) {
             if (i != null) {
@@ -4481,6 +4513,7 @@ export class Synth {
                 if (i!.type == EffectType.panning) signature = signature + i!.panningMode.toString();
             }
         }
+        signature = signature + stereoChannels.toString();
 
         let effectsFunction: Function = Synth.effectsFunctionCache[signature];
         if (effectsFunction == undefined) {
@@ -5096,17 +5129,7 @@ export class Synth {
                 }
             }
 
-			if (isStereo) {
-                effectsSource += `
-
-                const stopIndex = bufferIndex + runLength;
-                for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
-                    let sample = 0.0;
-                    let sampleL = tempInstrumentSampleBufferL[sampleIndex];
-                    let sampleR = tempInstrumentSampleBufferR[sampleIndex];
-                    tempInstrumentSampleBufferL[sampleIndex] = 0.0;
-                    tempInstrumentSampleBufferR[sampleIndex] = 0.0;`
-            } else {
+            if (stereoChannels == 0) {
                 effectsSource += `
 
                 const stopIndex = bufferIndex + runLength;
@@ -5115,7 +5138,25 @@ export class Synth {
                     let sampleR = tempInstrumentSampleBufferL[sampleIndex];
                     tempInstrumentSampleBufferL[sampleIndex] = 0.0;
                     tempInstrumentSampleBufferR[sampleIndex] = 0.0;`
-			}
+            } else if (stereoChannels == 1) {
+                effectsSource += `
+
+                const stopIndex = bufferIndex + runLength;
+                for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
+                    let sampleL = tempInstrumentSampleBufferR[sampleIndex];
+                    let sampleR = tempInstrumentSampleBufferR[sampleIndex];
+                    tempInstrumentSampleBufferL[sampleIndex] = 0.0;
+                    tempInstrumentSampleBufferR[sampleIndex] = 0.0;`
+            } else if (stereoChannels == 2) {
+                effectsSource += `
+
+                const stopIndex = bufferIndex + runLength;
+                for (let sampleIndex = bufferIndex; sampleIndex < stopIndex; sampleIndex++) {
+                    let sampleL = tempInstrumentSampleBufferL[sampleIndex];
+                    let sampleR = tempInstrumentSampleBufferR[sampleIndex];
+                    tempInstrumentSampleBufferL[sampleIndex] = 0.0;
+                    tempInstrumentSampleBufferR[sampleIndex] = 0.0;`
+            }
 
 			for (let i: number = 0; i < instrumentState.effects.length; i++) {
                 let effectState: EffectState = instrumentState.effects[i] as EffectState

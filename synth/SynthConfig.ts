@@ -217,6 +217,7 @@ export interface ChipWave extends BeepBoxOption {
     isPercussion?: boolean;
     isCustomSampled?: boolean;
     isSampled?: boolean;
+    stereoChannels?: number;
     extraSampleDetune?: number;
     rootKey?: number;
     sampleRate?: number;

@@ -17,6 +17,7 @@ interface SampleEntry {
     chipWaveStartOffset: number | null;
     chipWaveLoopMode: number | null;
     chipWavePlayBackwards: boolean;
+    stereoChannels: number;
 }
 
 interface ParsedEntries {
@@ -200,6 +201,7 @@ export class AddSamplesPrompt {
             chipWaveStartOffset: null,
             chipWaveLoopMode: null,
             chipWavePlayBackwards: false,
+            stereoChannels: 2
         });
         this._entryOptionsDisplayStates[entryIndex] = false;
         this._reconfigureAddSampleButton();
@@ -333,6 +335,13 @@ export class AddSamplesPrompt {
         }
     }
 
+    private _whenStereoChannelsChanges = (event: Event): void => {
+        const element: HTMLSelectElement = <HTMLSelectElement>event.target;
+        const entryIndex: number = +(element.dataset.index!);
+        const newValue: number = +element.value;
+        this._entries[entryIndex].stereoChannels = newValue;
+    }
+
     private _whenChipWavePlayBackwardsChanges = (event: Event): void => {
         const element: HTMLInputElement = <HTMLInputElement>event.target;
         const entryIndex: number = +(element.dataset.index!);
@@ -450,6 +459,7 @@ export class AddSamplesPrompt {
                         chipWaveStartOffset: null,
                         chipWaveLoopMode: null,
                         chipWavePlayBackwards: false,
+                        stereoChannels: 0,
                     });
                 }
                 useLegacySamples = true;
@@ -465,6 +475,7 @@ export class AddSamplesPrompt {
                         chipWaveStartOffset: null,
                         chipWaveLoopMode: null,
                         chipWavePlayBackwards: false,
+                        stereoChannels: 0,
                     });
                 }
                 useNintariboxSamples = true;
@@ -480,6 +491,7 @@ export class AddSamplesPrompt {
                         chipWaveStartOffset: null,
                         chipWaveLoopMode: null,
                         chipWavePlayBackwards: false,
+                        stereoChannels: 0,
                     });
                 }
                 useMarioPaintboxSamples = true;
@@ -493,6 +505,7 @@ export class AddSamplesPrompt {
                 let chipWaveStartOffset: number | null = null;
                 let chipWaveLoopMode: number | null = null;
                 let chipWavePlayBackwards: boolean = false;
+                let stereoChannels: number = 0;
                 let optionsStartIndex: number = url.indexOf("!");
                 let optionsEndIndex: number = -1;
                 let parsedSampleOptions: boolean = false;
@@ -525,6 +538,8 @@ export class AddSamplesPrompt {
                                 }
                             } else if (optionCode === "e") {
                                 chipWavePlayBackwards = true;
+                            } else if (optionCode === "m") {
+                                stereoChannels = parseIntWithDefault(optionData, 0);
                             }
                         }
                         urlSliced = url.slice(optionsEndIndex + 1, url.length);
@@ -567,6 +582,7 @@ export class AddSamplesPrompt {
                     chipWaveStartOffset: chipWaveStartOffset,
                     chipWaveLoopMode: chipWaveLoopMode,
                     chipWavePlayBackwards: chipWavePlayBackwards,
+                    stereoChannels: stereoChannels,
                 });
             }
         }
@@ -583,6 +599,7 @@ export class AddSamplesPrompt {
         const chipWaveStartOffset: number | null = entry.chipWaveStartOffset;
         const chipWaveLoopMode: number | null = entry.chipWaveLoopMode;
         const chipWavePlayBackwards: boolean = entry.chipWavePlayBackwards;
+        const stereoChannels: number = entry.stereoChannels;
         const urlInLowerCase: string = url.toLowerCase();
         const isBundledSamplePack: boolean = (
             urlInLowerCase === "legacysamples"
@@ -598,6 +615,7 @@ export class AddSamplesPrompt {
         if (chipWaveStartOffset != null) options.push("c" + chipWaveStartOffset);
         if (chipWaveLoopMode != null) options.push("d" + chipWaveLoopMode);
         if (chipWavePlayBackwards) options.push("e");
+        if (stereoChannels != 0) options.push("m" + stereoChannels);
         if (isBundledSamplePack || options.length <= 0) {
             return url;
         } else {
@@ -677,6 +695,12 @@ export class AddSamplesPrompt {
             if (entry.chipWaveLoopMode != null) {
                 chipWaveLoopModeSelect.value = "" + entry.chipWaveLoopMode;
             }
+            const stereoChannelsSelect: HTMLSelectElement = select({ style: "width: 100%; flex-grow: 1; margin-left: 0.5em;" },
+                option({ value: 0 }, "Left"),
+                option({ value: 1 }, "Right"),
+                option({ value: 2 }, "Stereo"),
+            );
+            stereoChannelsSelect.value = "" + entry.stereoChannels;
             const chipWavePlayBackwardsBox: HTMLInputElement = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-left: auto; margin-right: auto;" });
             chipWavePlayBackwardsBox.checked = entry.chipWavePlayBackwards;
             const sampleName: string = this._getSampleName(entry);
@@ -700,6 +724,10 @@ export class AddSamplesPrompt {
                 div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
                     div({ style: `text-align: right; color: ${ColorConfig.primaryText};` }, "Percussion (pitch doesn't change with key)"),
                     percussionBox
+                ),
+                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
+                    div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, "Stereo Channels"),
+                    stereoChannelsSelect
                 ),
                 div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" },
                     div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "Applies to the \"Loop Start\" loop control option of the preset created for this sample" }, "Loop Start")),
@@ -731,6 +759,7 @@ export class AddSamplesPrompt {
             chipWaveStartOffsetStepper.dataset.index = "" + entryIndex;
             chipWaveLoopModeSelect.dataset.index = "" + entryIndex;
             chipWavePlayBackwardsBox.dataset.index = "" + entryIndex;
+            stereoChannelsSelect.dataset.index = "" + entryIndex;
             copyLinkPresetButton.dataset.index = "" + entryIndex;
             removeButton.dataset.index = "" + entryIndex;
             moveUpButton.dataset.index = "" + entryIndex;
@@ -768,6 +797,7 @@ export class AddSamplesPrompt {
             chipWaveStartOffsetStepper.addEventListener("change", this._whenChipWaveStartOffsetChanges);
             chipWaveLoopModeSelect.addEventListener("change", this._whenChipWaveLoopModeChanges);
             chipWavePlayBackwardsBox.addEventListener("change", this._whenChipWavePlayBackwardsChanges);
+            stereoChannelsSelect.addEventListener("change", this._whenStereoChannelsChanges);
             copyLinkPresetButton.addEventListener("click", this._whenCopyLinkPresetClicked);
             removeButton.addEventListener("click", this._whenRemoveSampleClicked);
             if (canMoveUp) {
