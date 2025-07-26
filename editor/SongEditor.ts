@@ -48,7 +48,6 @@ import { CustomThemePrompt } from "./CustomThemePrompt";
 import { ThemePrompt } from "./ThemePrompt";
 import { TipPrompt } from "./TipPrompt";
 import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeDiscreteEnvelope, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeChipWaveInStereo, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback } from "./changes";
-
 import { TrackEditor } from "./TrackEditor";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
 import { VisualLoopControlsPrompt } from "./VisualLoopControlsPrompt";
@@ -886,7 +885,6 @@ export class SongEditor {
     private readonly _setChipWaveLoopEndToEndButton = button({ type: "button", style: "width: 1.5em; height: 1.5em; padding: 0; margin-left: 0.5em;" }, SVG.svg({ width: "16", height: "16", viewBox: "-13 -14 26 26", "pointer-events": "none", style: "width: 100%; height: 100%;" }, SVG.rect({ x: "4", y: "-6", width: "2", height: "12", fill: ColorConfig.primaryText }), SVG.path({ d: "M -6 -6 L -6 6 L 3 0 z", fill: ColorConfig.primaryText })));
     private readonly _chipWaveStartOffsetStepper = input({ type: "number", min: "0", step: "1", value: "0", style: "width: 100%; height: 1.5em; font-size: 80%; margin-left: 0.4em; vertical-align: middle;" });
     private readonly _chipWavePlayBackwardsBox = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-left: 0.4em; margin-right: 4em;" });
-    private readonly _chipWaveInStereoBox = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-left: 0.4em; margin-right: 4em;" });
     // advloop addition
     private readonly _chipWaveSelectRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("chipWave") }, "Wave: "), div({ class: "selectContainer" }, this._chipWaveSelect));
     private readonly _chipNoiseSelectRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("chipNoise") }, "Noise: "), div({ class: "selectContainer" }, this._chipNoiseSelect));
@@ -898,7 +896,6 @@ export class SongEditor {
     private readonly _chipWaveStartOffsetRow = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("offset") }, "Offset: "), span({ style: "display: flex;" }, this._chipWaveStartOffsetStepper));
     private readonly _chipWavePlayBackwardsRow = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("backwards") }, "Backwards: "), this._chipWavePlayBackwardsBox);
     private readonly _fadeInOutEditor: FadeInOutEditor = new FadeInOutEditor(this._doc);
-    private readonly _chipWaveInStereoRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", style: "flex-shrink: 0;", onclick: () => this._openPrompt("inStereo") }, "Stereo: "), this._chipWaveInStereoBox);
     private readonly _fadeInOutRow: HTMLElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("fadeInOut") }, "Fade:"), this._fadeInOutEditor.container);
     private readonly _transitionSelect: HTMLSelectElement = buildOptions(select(), Config.transitions.map(transition => transition.name));
     private readonly _transitionDropdown: HTMLButtonElement = button({ style: "margin-left:0em; height:1.5em; width: 10px; padding: 0px; font-size: 8px;", onclick: () => this._toggleDropdownMenu(DropdownID.Transition) }, "▼");
@@ -1147,7 +1144,6 @@ export class SongEditor {
         this._chipWaveLoopEndRow,
         this._chipWaveStartOffsetRow,
         this._chipWavePlayBackwardsRow,
-        this._chipWaveInStereoRow,
         this._customWaveDraw,
         this._eqFilterTypeRow,
         this._eqFilterRow,
@@ -1622,7 +1618,6 @@ export class SongEditor {
         this._chipWaveStartOffsetStepper.addEventListener("change", this._whenSetChipWaveStartOffset);
         this._chipWavePlayBackwardsBox.addEventListener("input", this._whenSetChipWavePlayBackwards);
         // advloop addition
-        this._chipWaveInStereoBox.addEventListener("input", this._whenSetChipWaveInStereo);
         this._sampleLoadingStatusContainer.addEventListener("click", this._whenSampleLoadingStatusClicked);
         this._chipNoiseSelect.addEventListener("change", this._whenSetNoiseWave);
         this._transitionSelect.addEventListener("change", this._whenSetTransition);
@@ -2467,7 +2462,6 @@ export class SongEditor {
                 this._chipWaveStartOffsetRow.style.display = "none";
                 this._chipWavePlayBackwardsRow.style.display = "none";
                 // advloop addition
-                this._chipWaveInStereoRow.style.display = "none";
                 this._chipNoiseSelectRow.style.display = "";
                 setSelectedValue(this._chipNoiseSelect, instrument.chipNoise, true);
             } else {
@@ -2483,7 +2477,6 @@ export class SongEditor {
                 this._chipWaveStartOffsetRow.style.display = "none";
                 this._chipWavePlayBackwardsRow.style.display = "none";
                 // advloop addition
-                this._chipWaveInStereoRow.style.display = "none";
                 this._spectrumRow.style.display = "";
                 this._spectrumEditor.render();
             } else {
@@ -2499,7 +2492,6 @@ export class SongEditor {
                 this._chipWaveStartOffsetRow.style.display = "none";
                 this._chipWavePlayBackwardsRow.style.display = "none";
                 // advloop addition
-                this._chipWaveInStereoRow.style.display = "none";
                 this._harmonicsRow.style.display = "flex";
                 this._harmonicsEditor.render();
             } else {
@@ -2515,7 +2507,6 @@ export class SongEditor {
                 this._chipWaveStartOffsetRow.style.display = "none";
                 this._chipWavePlayBackwardsRow.style.display = "none";
                 // advloop addition
-                this._chipWaveInStereoRow.style.display = "none";
                 this._stringSustainRow.style.display = "";
                 this._stringSustainSlider.updateValue(instrument.stringSustain);
                 this._stringSustainLabel.textContent = Config.enableAcousticSustain ? "Sustain (" + Config.sustainTypeNames[instrument.stringSustainType].substring(0, 1).toUpperCase() + "):" : "Sustain:";
@@ -2549,7 +2540,6 @@ export class SongEditor {
                 this._chipWaveStartOffsetRow.style.display = "none";
                 this._chipWavePlayBackwardsRow.style.display = "none";
                 // advloop addition
-                this._chipWaveInStereoRow.style.display = "none";
                 this._fadeInOutRow.style.display = "none";
                 for (let i: number = 0; i < Config.drumCount; i++) {
                     setSelectedValue(this._drumsetEnvelopeSelects[i], instrument.drumsetEnvelopes[i]);
@@ -2578,7 +2568,6 @@ export class SongEditor {
                     this._chipWaveStartOffsetRow.style.display = "none";
                     this._chipWavePlayBackwardsRow.style.display = "none";
                 }
-                this._chipWaveInStereoRow.style.display = "";
                 // advloop addition
                 setSelectedValue(this._chipWaveSelect, instrument.chipWave);
                 // advloop addition
@@ -2592,7 +2581,6 @@ export class SongEditor {
                 // this._chipWaveStartOffsetStepper.max = (chipWaveLength - 1) + "";
                 this._chipWavePlayBackwardsBox.checked = instrument.chipWavePlayBackwards ? true : false;
                 // advloop addition
-                this._chipWaveInStereoBox.checked = instrument.chipWaveInStereo ? true : false;
             }
 
             if (instrument.type == InstrumentType.customChipWave) {
@@ -2606,7 +2594,6 @@ export class SongEditor {
                 this._chipWaveStartOffsetRow.style.display = "none";
                 this._chipWavePlayBackwardsRow.style.display = "none";
                 // advloop addition
-                this._chipWaveInStereoRow.style.display = "none";
             }
             else {
                 this._customWaveDraw.style.display = "none";
@@ -2634,7 +2621,6 @@ export class SongEditor {
                 this._chipWaveStartOffsetRow.style.display = "none";
                 this._chipWavePlayBackwardsRow.style.display = "none";
                 // advloop addition
-                this._chipWaveInStereoRow.style.display = "none";
                 this._pulseWidthRow.style.display = "";
                 this._pulseWidthSlider.input.title = prettyNumber(instrument.pulseWidth) + "%";
                 this._pulseWidthSlider.updateValue(instrument.pulseWidth);
@@ -2664,7 +2650,6 @@ export class SongEditor {
                 this._chipWaveStartOffsetRow.style.display = "none";
                 this._chipWavePlayBackwardsRow.style.display = "none";
                 // advloop addition
-                this._chipWaveInStereoRow.style.display = "none";
                 setSelectedValue(this._algorithmSelect, instrument.algorithm);
                 setSelectedValue(this._feedbackTypeSelect, instrument.feedbackType);
                 this._feedbackAmplitudeSlider.updateValue(instrument.feedbackAmplitude);
@@ -2976,7 +2961,6 @@ export class SongEditor {
             this._chipWaveStartOffsetRow.style.display = "none";
             this._chipWavePlayBackwardsRow.style.display = "none";
             // advloop addition
-            this._chipWaveInStereoRow.style.display = "none";
             this._spectrumRow.style.display = "none";
             this._harmonicsRow.style.display = "none";
             this._additiveRow.style.display = "none";
@@ -5162,9 +5146,6 @@ export class SongEditor {
     }
     // advloop addition
 
-    private _whenSetChipWaveInStereo = (): void => {
-        this._doc.record(new ChangeChipWaveInStereo(this._doc, this._chipWaveInStereoBox.checked ? true : false));
-    }
     private _whenSetNoiseWave = (): void => {
         this._doc.record(new ChangeNoiseWave(this._doc, this._chipNoiseSelect.selectedIndex));
     }
