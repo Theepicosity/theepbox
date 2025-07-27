@@ -135,76 +135,76 @@ var beepbox = (function (exports) {
         const defaultSamples = Config.rawRawChipWaves[defaultIndex].samples;
         if (set == 0) {
             const chipWaves = [
-                { name: "paandorasbox kick", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "paandorasbox snare", expression: 3.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "paandorasbox piano1", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 2 },
-                { name: "paandorasbox WOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
-                { name: "paandorasbox overdrive", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -2 },
-                { name: "paandorasbox trumpet", expression: 3.0, isSampled: true, isPercussion: false, extraSampleDetune: 1.2 },
-                { name: "paandorasbox saxophone", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -5 },
-                { name: "paandorasbox orchestrahit", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
-                { name: "paandorasbox detatched violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 4.2 },
-                { name: "paandorasbox synth", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -0.8 },
-                { name: "paandorasbox sonic3snare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "paandorasbox come on", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
-                { name: "paandorasbox choir", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
-                { name: "paandorasbox overdriveguitar", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6.2 },
-                { name: "paandorasbox flute", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -6 },
-                { name: "paandorasbox legato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -28 },
-                { name: "paandorasbox tremolo violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -33 },
-                { name: "paandorasbox amen break", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -55 },
-                { name: "paandorasbox pizzicato violin", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -11 },
-                { name: "paandorasbox tim allen grunt", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -20 },
-                { name: "paandorasbox tuba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: 44 },
-                { name: "paandorasbox loopingcymbal", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17 },
-                { name: "paandorasbox standardkick", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -7 },
-                { name: "paandorasbox standardsnare", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "paandorasbox closedhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 5 },
-                { name: "paandorasbox foothihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: 4 },
-                { name: "paandorasbox openhihat", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -31 },
-                { name: "paandorasbox crashcymbal", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -43 },
-                { name: "paandorasbox pianoC4", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.5 },
-                { name: "paandorasbox liver pad", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -22.5 },
-                { name: "paandorasbox marimba", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -15.5 },
-                { name: "paandorasbox susdotwav", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -24.5 },
-                { name: "paandorasbox wackyboxtts", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -17.5 },
-                { name: "paandorasbox peppersteak_1", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -42.2 },
-                { name: "paandorasbox peppersteak_2", expression: 2.0, isSampled: true, isPercussion: false, extraSampleDetune: -47 },
-                { name: "paandorasbox vinyl_noise", expression: 2.0, isSampled: true, isPercussion: true, extraSampleDetune: -50 },
-                { name: "paandorasbeta slap bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -56 },
-                { name: "paandorasbeta HD EB overdrive guitar", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60 },
-                { name: "paandorasbeta sunsoft bass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -18.5 },
-                { name: "paandorasbeta masculine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
-                { name: "paandorasbeta feminine choir", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -60.5 },
-                { name: "paandorasbeta tololoche", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -29.5 },
-                { name: "paandorasbeta harp", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -54 },
-                { name: "paandorasbeta pan flute", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -58 },
-                { name: "paandorasbeta krumhorn", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -46 },
-                { name: "paandorasbeta timpani", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -50 },
-                { name: "paandorasbeta crowd hey", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -29 },
-                { name: "paandorasbeta wario land 4 brass", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -68 },
-                { name: "paandorasbeta wario land 4 rock organ", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -63 },
-                { name: "paandorasbeta wario land 4 DAOW", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -35 },
-                { name: "paandorasbeta wario land 4 hour chime", expression: 1.0, isSampled: true, isPercussion: false, extraSampleDetune: -47.5 },
-                { name: "paandorasbeta wario land 4 tick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -12.5 },
-                { name: "paandorasbeta kirby kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-                { name: "paandorasbeta kirby snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-                { name: "paandorasbeta kirby bongo", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-                { name: "paandorasbeta kirby click", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46.5 },
-                { name: "paandorasbeta sonor kick", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
-                { name: "paandorasbeta sonor snare", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28.5 },
-                { name: "paandorasbeta sonor snare (left hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
-                { name: "paandorasbeta sonor snare (right hand)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -22.5 },
-                { name: "paandorasbeta sonor high tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
-                { name: "paandorasbeta sonor low tom", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -41.5 },
-                { name: "paandorasbeta sonor hihat (closed)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -17 },
-                { name: "paandorasbeta sonor hihat (half opened)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -21 },
-                { name: "paandorasbeta sonor hihat (open)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -54.5 },
-                { name: "paandorasbeta sonor hihat (open tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -43.5 },
-                { name: "paandorasbeta sonor hihat (pedal)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -28 },
-                { name: "paandorasbeta sonor crash", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -51 },
-                { name: "paandorasbeta sonor crash (tip)", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -50.5 },
-                { name: "paandorasbeta sonor ride", expression: 1.0, isSampled: true, isPercussion: true, extraSampleDetune: -46 }
+                { name: "paandorasbox kick", expression: 4.0, isSampled: true, isPercussion: 2, extraSampleDetune: 0 },
+                { name: "paandorasbox snare", expression: 3.0, isSampled: true, isPercussion: 2, extraSampleDetune: 0 },
+                { name: "paandorasbox piano1", expression: 3.0, isSampled: true, isPercussion: 0, extraSampleDetune: 2 },
+                { name: "paandorasbox WOW", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: 0 },
+                { name: "paandorasbox overdrive", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -2 },
+                { name: "paandorasbox trumpet", expression: 3.0, isSampled: true, isPercussion: 0, extraSampleDetune: 1.2 },
+                { name: "paandorasbox saxophone", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -5 },
+                { name: "paandorasbox orchestrahit", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: 4.2 },
+                { name: "paandorasbox detatched violin", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: 4.2 },
+                { name: "paandorasbox synth", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -0.8 },
+                { name: "paandorasbox sonic3snare", expression: 2.0, isSampled: true, isPercussion: 2, extraSampleDetune: 0 },
+                { name: "paandorasbox come on", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: 0 },
+                { name: "paandorasbox choir", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -3 },
+                { name: "paandorasbox overdriveguitar", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -6.2 },
+                { name: "paandorasbox flute", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -6 },
+                { name: "paandorasbox legato violin", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -28 },
+                { name: "paandorasbox tremolo violin", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -33 },
+                { name: "paandorasbox amen break", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -55 },
+                { name: "paandorasbox pizzicato violin", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -11 },
+                { name: "paandorasbox tim allen grunt", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -20 },
+                { name: "paandorasbox tuba", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: 44 },
+                { name: "paandorasbox loopingcymbal", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -17 },
+                { name: "paandorasbox standardkick", expression: 2.0, isSampled: true, isPercussion: 2, extraSampleDetune: -7 },
+                { name: "paandorasbox standardsnare", expression: 2.0, isSampled: true, isPercussion: 2, extraSampleDetune: 0 },
+                { name: "paandorasbox closedhihat", expression: 2.0, isSampled: true, isPercussion: 2, extraSampleDetune: 5 },
+                { name: "paandorasbox foothihat", expression: 2.0, isSampled: true, isPercussion: 2, extraSampleDetune: 4 },
+                { name: "paandorasbox openhihat", expression: 2.0, isSampled: true, isPercussion: 2, extraSampleDetune: -31 },
+                { name: "paandorasbox crashcymbal", expression: 2.0, isSampled: true, isPercussion: 2, extraSampleDetune: -43 },
+                { name: "paandorasbox pianoC4", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -42.5 },
+                { name: "paandorasbox liver pad", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -22.5 },
+                { name: "paandorasbox marimba", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -15.5 },
+                { name: "paandorasbox susdotwav", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -24.5 },
+                { name: "paandorasbox wackyboxtts", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -17.5 },
+                { name: "paandorasbox peppersteak_1", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -42.2 },
+                { name: "paandorasbox peppersteak_2", expression: 2.0, isSampled: true, isPercussion: 0, extraSampleDetune: -47 },
+                { name: "paandorasbox vinyl_noise", expression: 2.0, isSampled: true, isPercussion: 2, extraSampleDetune: -50 },
+                { name: "paandorasbeta slap bass", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -56 },
+                { name: "paandorasbeta HD EB overdrive guitar", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -60 },
+                { name: "paandorasbeta sunsoft bass", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -18.5 },
+                { name: "paandorasbeta masculine choir", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -50 },
+                { name: "paandorasbeta feminine choir", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -60.5 },
+                { name: "paandorasbeta tololoche", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -29.5 },
+                { name: "paandorasbeta harp", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -54 },
+                { name: "paandorasbeta pan flute", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -58 },
+                { name: "paandorasbeta krumhorn", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -46 },
+                { name: "paandorasbeta timpani", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -50 },
+                { name: "paandorasbeta crowd hey", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -29 },
+                { name: "paandorasbeta wario land 4 brass", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -68 },
+                { name: "paandorasbeta wario land 4 rock organ", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -63 },
+                { name: "paandorasbeta wario land 4 DAOW", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -35 },
+                { name: "paandorasbeta wario land 4 hour chime", expression: 1.0, isSampled: true, isPercussion: 0, extraSampleDetune: -47.5 },
+                { name: "paandorasbeta wario land 4 tick", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -12.5 },
+                { name: "paandorasbeta kirby kick", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -46.5 },
+                { name: "paandorasbeta kirby snare", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -46.5 },
+                { name: "paandorasbeta kirby bongo", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -46.5 },
+                { name: "paandorasbeta kirby click", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -46.5 },
+                { name: "paandorasbeta sonor kick", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -28.5 },
+                { name: "paandorasbeta sonor snare", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -28.5 },
+                { name: "paandorasbeta sonor snare (left hand)", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -22.5 },
+                { name: "paandorasbeta sonor snare (right hand)", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -22.5 },
+                { name: "paandorasbeta sonor high tom", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -41.5 },
+                { name: "paandorasbeta sonor low tom", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -41.5 },
+                { name: "paandorasbeta sonor hihat (closed)", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -17 },
+                { name: "paandorasbeta sonor hihat (half opened)", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -21 },
+                { name: "paandorasbeta sonor hihat (open)", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -54.5 },
+                { name: "paandorasbeta sonor hihat (open tip)", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -43.5 },
+                { name: "paandorasbeta sonor hihat (pedal)", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -28 },
+                { name: "paandorasbeta sonor crash", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -51 },
+                { name: "paandorasbeta sonor crash (tip)", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -50.5 },
+                { name: "paandorasbeta sonor ride", expression: 1.0, isSampled: true, isPercussion: 2, extraSampleDetune: -46 }
             ];
             sampleLoadingState.totalSamples += chipWaves.length;
             const startIndex = Config.rawRawChipWaves.length;
@@ -316,10 +316,10 @@ var beepbox = (function (exports) {
         }
         else if (set == 1) {
             const chipWaves = [
-                { name: "chronoperc1final", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "synthkickfm", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "mcwoodclick1", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 },
-                { name: "acoustic snare", expression: 4.0, isSampled: true, isPercussion: true, extraSampleDetune: 0 }
+                { name: "chronoperc1final", expression: 4.0, isSampled: true, isPercussion: 2, extraSampleDetune: 0 },
+                { name: "synthkickfm", expression: 4.0, isSampled: true, isPercussion: 2, extraSampleDetune: 0 },
+                { name: "mcwoodclick1", expression: 4.0, isSampled: true, isPercussion: 2, extraSampleDetune: 0 },
+                { name: "acoustic snare", expression: 4.0, isSampled: true, isPercussion: 2, extraSampleDetune: 0 }
             ];
             sampleLoadingState.totalSamples += chipWaves.length;
             const startIndex = Config.rawRawChipWaves.length;
@@ -360,17 +360,17 @@ var beepbox = (function (exports) {
         }
         else if (set == 2) {
             const chipWaves = [
-                { name: "cat", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -3 },
-                { name: "gameboy", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 7 },
-                { name: "mario", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 0 },
-                { name: "drum", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 4 },
-                { name: "yoshi", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
-                { name: "star", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -16 },
-                { name: "fire flower", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
-                { name: "dog", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -1 },
-                { name: "oink", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 3 },
-                { name: "swan", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: 1 },
-                { name: "face", expression: 1, isSampled: true, isPercussion: false, extraSampleDetune: -12 }
+                { name: "cat", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: -3 },
+                { name: "gameboy", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: 7 },
+                { name: "mario", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: 0 },
+                { name: "drum", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: 4 },
+                { name: "yoshi", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: -16 },
+                { name: "star", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: -16 },
+                { name: "fire flower", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: -1 },
+                { name: "dog", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: -1 },
+                { name: "oink", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: 3 },
+                { name: "swan", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: 1 },
+                { name: "face", expression: 1, isSampled: true, isPercussion: 0, extraSampleDetune: -12 }
             ];
             sampleLoadingState.totalSamples += chipWaves.length;
             const startIndex = Config.rawRawChipWaves.length;
@@ -8070,7 +8070,7 @@ var beepbox = (function (exports) {
             const chipWaveIndex = Config.chipWaves.length;
             let urlSliced = url;
             let customSampleRate = 44100;
-            let isCustomPercussive = false;
+            let isCustomPercussive = 0;
             let customRootKey = 60;
             let presetIsUsingAdvancedLoopControls = false;
             let presetChipWaveLoopStart = null;
@@ -8096,7 +8096,7 @@ var beepbox = (function (exports) {
                             customRootKey = parseFloatWithDefault(optionData, 60);
                         }
                         else if (optionCode === "p") {
-                            isCustomPercussive = true;
+                            isCustomPercussive = parseIntWithDefault(optionData, 2);
                         }
                         else if (optionCode === "a") {
                             presetChipWaveLoopStart = parseIntWithDefault(optionData, null);
@@ -8157,7 +8157,7 @@ var beepbox = (function (exports) {
                         else {
                             parsedUrl = new URL(urlSliced);
                         }
-                        isCustomPercussive = true;
+                        isCustomPercussive = 2;
                     }
                     function sliceForSampleRate() {
                         urlSliced = url.slice(0, url.indexOf(","));
@@ -8206,8 +8206,8 @@ var beepbox = (function (exports) {
                     namedOptions.push("s" + customSampleRate);
                 if (customRootKey !== 60)
                     namedOptions.push("r" + customRootKey);
-                if (isCustomPercussive)
-                    namedOptions.push("p");
+                if (isCustomPercussive != 0)
+                    namedOptions.push("p" + isCustomPercussive);
                 if (presetIsUsingAdvancedLoopControls) {
                     if (presetChipWaveLoopStart != null)
                         namedOptions.push("a" + presetChipWaveLoopStart);
@@ -13481,7 +13481,7 @@ var beepbox = (function (exports) {
             else if (instrument.type == 0) {
                 baseExpression = Config.chipBaseExpression;
                 if (Config.chipWaves[instrument.chipWave].isCustomSampled) {
-                    if (Config.chipWaves[instrument.chipWave].isPercussion) {
+                    if (Config.chipWaves[instrument.chipWave].isPercussion != 0) {
                         basePitch = -84.37 + Math.log2(Config.chipWaves[instrument.chipWave].samples.length / Config.chipWaves[instrument.chipWave].sampleRate) * -12 - (-60 + Config.chipWaves[instrument.chipWave].rootKey);
                     }
                     else {
@@ -13489,10 +13489,10 @@ var beepbox = (function (exports) {
                     }
                 }
                 else {
-                    if (Config.chipWaves[instrument.chipWave].isSampled && !Config.chipWaves[instrument.chipWave].isPercussion) {
+                    if (Config.chipWaves[instrument.chipWave].isSampled && Config.chipWaves[instrument.chipWave].isPercussion == 0) {
                         basePitch = basePitch - 63 + Config.chipWaves[instrument.chipWave].extraSampleDetune;
                     }
-                    else if (Config.chipWaves[instrument.chipWave].isSampled && Config.chipWaves[instrument.chipWave].isPercussion) {
+                    else if (Config.chipWaves[instrument.chipWave].isSampled && Config.chipWaves[instrument.chipWave].isPercussion != 0) {
                         basePitch = -51 + Config.chipWaves[instrument.chipWave].extraSampleDetune;
                     }
                 }
@@ -13722,9 +13722,11 @@ var beepbox = (function (exports) {
                     modDetuneStart = this.getModValue(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, false) + Config.detuneCenter;
                     modDetuneEnd = this.getModValue(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, true) + Config.detuneCenter;
                 }
-                if (this.isModActive(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex)) {
-                    modDetuneStart += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, false);
-                    modDetuneEnd += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, true);
+                if (!Config.chipWaves[instrument.chipWave].isCustomSampled || Config.chipWaves[instrument.chipWave].isPercussion != 1) {
+                    if (this.isModActive(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex)) {
+                        modDetuneStart += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, false);
+                        modDetuneEnd += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, true);
+                    }
                 }
                 intervalStart += detuneToCents(modDetuneStart) * envelopeStart * Config.pitchesPerOctave / (12.0 * 100.0);
                 intervalEnd += detuneToCents(modDetuneEnd) * envelopeEnd * Config.pitchesPerOctave / (12.0 * 100.0);

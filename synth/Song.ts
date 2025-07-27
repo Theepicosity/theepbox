@@ -3915,7 +3915,7 @@ export class Song {
         let urlSliced: string = url;
 
         let customSampleRate: number = 44100;
-        let isCustomPercussive: boolean = false;
+        let isCustomPercussive: number = 0;
         let customRootKey: number = 60;
         let presetIsUsingAdvancedLoopControls: boolean = false;
         let presetChipWaveLoopStart: number | null = null;
@@ -3940,7 +3940,7 @@ export class Song {
                     } else if (optionCode === "r") {
                         customRootKey = parseFloatWithDefault(optionData, 60);
                     } else if (optionCode === "p") {
-                        isCustomPercussive = true;
+                        isCustomPercussive = parseIntWithDefault(optionData, 2);
                     } else if (optionCode === "a") {
                         presetChipWaveLoopStart = parseIntWithDefault(optionData, null);
                         if (presetChipWaveLoopStart != null) {
@@ -3997,7 +3997,7 @@ export class Song {
                     } else {
                         parsedUrl = new URL(urlSliced);
                     }
-                    isCustomPercussive = true;
+                    isCustomPercussive = 2;
                 }
 
                 function sliceForSampleRate() {
@@ -4050,7 +4050,7 @@ export class Song {
             const namedOptions: string[] = [];
             if (customSampleRate !== 44100) namedOptions.push("s" + customSampleRate);
             if (customRootKey !== 60) namedOptions.push("r" + customRootKey);
-            if (isCustomPercussive) namedOptions.push("p");
+            if (isCustomPercussive != 0) namedOptions.push("p" + isCustomPercussive);
             if (presetIsUsingAdvancedLoopControls) {
                 if (presetChipWaveLoopStart != null) namedOptions.push("a" + presetChipWaveLoopStart);
                 if (presetChipWaveLoopEnd != null) namedOptions.push("b" + presetChipWaveLoopEnd);

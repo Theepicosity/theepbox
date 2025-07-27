@@ -11,7 +11,7 @@ interface SampleEntry {
     url: string;
     sampleRate: number;
     rootKey: number;
-    percussion: boolean;
+    percussion: number;
     chipWaveLoopStart: number | null;
     chipWaveLoopEnd: number | null;
     chipWaveStartOffset: number | null;
@@ -195,7 +195,7 @@ export class AddSamplesPrompt {
             url: "",
             sampleRate: 44100,
             rootKey: 60,
-            percussion: false,
+            percussion: 0,
             chipWaveLoopStart: null,
             chipWaveLoopEnd: null,
             chipWaveStartOffset: null,
@@ -298,9 +298,10 @@ export class AddSamplesPrompt {
     }
 
     private _whenPercussionChanges = (event: Event): void => {
-        const element: HTMLInputElement = <HTMLInputElement>event.target;
+        const element: HTMLSelectElement = <HTMLSelectElement>event.target;
         const entryIndex: number = +(element.dataset.index!);
-        this._entries[entryIndex].percussion = element.checked ? true : false;
+        const newValue: number = +element.value;
+        this._entries[entryIndex].percussion = newValue;
     }
 
     private _whenChipWaveLoopStartChanges = (event: Event): void => {
@@ -449,7 +450,7 @@ export class AddSamplesPrompt {
                         url: "legacySamples",
                         sampleRate: 44100,
                         rootKey: 60,
-                        percussion: false,
+                        percussion: 0,
                         chipWaveLoopStart: null,
                         chipWaveLoopEnd: null,
                         chipWaveStartOffset: null,
@@ -465,7 +466,7 @@ export class AddSamplesPrompt {
                         url: "nintariboxSamples",
                         sampleRate: 44100,
                         rootKey: 60,
-                        percussion: false,
+                        percussion: 0,
                         chipWaveLoopStart: null,
                         chipWaveLoopEnd: null,
                         chipWaveStartOffset: null,
@@ -481,7 +482,7 @@ export class AddSamplesPrompt {
                         url: "marioPaintboxSamples",
                         sampleRate: 44100,
                         rootKey: 60,
-                        percussion: false,
+                        percussion: 0,
                         chipWaveLoopStart: null,
                         chipWaveLoopEnd: null,
                         chipWaveStartOffset: null,
@@ -495,7 +496,7 @@ export class AddSamplesPrompt {
                 let urlSliced: string = url;
                 let sampleRate: number = 44100;
                 let rootKey: number = 60;
-                let percussion: boolean = false;
+                let percussion: number = 0;
                 let chipWaveLoopStart: number | null = null;
                 let chipWaveLoopEnd: number | null = null;
                 let chipWaveStartOffset: number | null = null;
@@ -517,7 +518,7 @@ export class AddSamplesPrompt {
                             } else if (optionCode === "r") {
                                 rootKey = parseFloatWithDefault(optionData, 60);
                             } else if (optionCode === "p") {
-                                percussion = true;
+                                percussion = parseIntWithDefault(optionData, 2);
                             } else if (optionCode === "a") {
                                 chipWaveLoopStart = parseIntWithDefault(optionData, null);
                             } else if (optionCode === "b") {
@@ -544,7 +545,7 @@ export class AddSamplesPrompt {
                     if (!parsedSampleOptions) {
                         if (url.indexOf("@") != -1) {
                             urlSliced = url.replaceAll("@", "");
-                            percussion = true;
+                            percussion = 2;
                         }
                         if (url.indexOf(",") != -1 && url.indexOf("!") != -1) {
                             if (url.indexOf(",") < url.indexOf("!")) {
@@ -587,7 +588,7 @@ export class AddSamplesPrompt {
         const url: string = entry.url.trim();
         const sampleRate: number = entry.sampleRate;
         const rootKey: number = entry.rootKey;
-        const percussion: boolean = entry.percussion;
+        const percussion: number = entry.percussion;
         const chipWaveLoopStart: number | null = entry.chipWaveLoopStart;
         const chipWaveLoopEnd: number | null = entry.chipWaveLoopEnd;
         const chipWaveStartOffset: number | null = entry.chipWaveStartOffset;
@@ -603,7 +604,7 @@ export class AddSamplesPrompt {
         const options: string[] = [];
         if (sampleRate !== 44100) options.push("s" + sampleRate);
         if (rootKey !== 60) options.push("r" + rootKey);
-        if (percussion) options.push("p");
+        if (percussion != 0) options.push("p" + percussion);
         if (chipWaveLoopStart != null) options.push("a" + chipWaveLoopStart);
         if (chipWaveLoopEnd != null) options.push("b" + chipWaveLoopEnd);
         if (chipWaveStartOffset != null) options.push("c" + chipWaveStartOffset);
@@ -675,7 +676,12 @@ export class AddSamplesPrompt {
             const sampleRateStepper: HTMLInputElement = input({ style: "width: 50%;", type: "number", value: "" + entry.sampleRate, min: "8000", max: "96000", step: "1" });
             const rootKeyStepper: HTMLInputElement = input({ style: "width: 50%;", type: "number", value: "" + entry.rootKey, min: "0", max: Config.maxPitch + Config.pitchesPerOctave, step: "1" });
             const rootKeyDisplay: HTMLSpanElement = span({ class: "add-sample-prompt-root-key-display", style: "margin-left: 0.4em; width: 3em; text-align: left; text-overflow: ellipsis; overflow: hidden; flex-shrink: 0;" }, `(${this._noteNameFromPitchNumber(entry.rootKey)})`);
-            const percussionBox: HTMLInputElement = input({ style: "width: 1em; margin-left: 1em;", type: "checkbox" });
+            //const percussionBox: HTMLInputElement = input({ style: "width: 1em; margin-left: 1em;", type: "checkbox" });
+            const percussionSelect: HTMLSelectElement = select({ style: "width: 50%;" },
+                option({ value: 0 }, "disabled"),
+                option({ value: 1 }, "enabled"),
+                option({ value: 2 }, "key only (legacy)"),
+            );
             const chipWaveLoopStartStepper: HTMLInputElement = input({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + (entry.chipWaveLoopStart != null ? entry.chipWaveLoopStart : ""), min: "0", step: "1" });
             const chipWaveLoopEndStepper: HTMLInputElement = input({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + (entry.chipWaveLoopEnd != null ? entry.chipWaveLoopEnd : ""), min: "0", step: "1" });
             const chipWaveStartOffsetStepper: HTMLInputElement = input({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + (entry.chipWaveStartOffset != null ? entry.chipWaveStartOffset : ""), min: "0", step: "1" });
@@ -687,15 +693,15 @@ export class AddSamplesPrompt {
             );
             chipWaveLoopModeSelect.value = "" + entry.chipWaveLoopMode;
             const stereoChannelsSelect: HTMLSelectElement = select({ style: "width: 50%;" },
-                option({ value: 0 }, "Left"),
-                option({ value: 1 }, "Right"),
-                option({ value: 2 }, "Stereo"),
+                option({ value: 0 }, "left"),
+                option({ value: 1 }, "right"),
+                option({ value: 2 }, "stereo"),
             );
             stereoChannelsSelect.value = "" + entry.stereoChannels;
             const chipWavePlayBackwardsBox: HTMLInputElement = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-left: auto; margin-right: auto;" });
             chipWavePlayBackwardsBox.checked = entry.chipWavePlayBackwards;
             const sampleName: string = this._getSampleName(entry);
-            percussionBox.checked = entry.percussion;
+            percussionSelect.value = "" + entry.percussion;
             const copyLinkPresetButton: HTMLButtonElement = button({ style: "height: auto; min-height: var(--button-size);", title: "For use with \"Add multiple samples\"" }, "Copy link preset");
             const removeButton: HTMLButtonElement = button({ style: "height: auto; min-height: var(--button-size); margin-left: 0.5em;" }, "Remove");
             const moveUpButton: HTMLButtonElement = button({ style: "height: auto; min-height: var(--button-size); margin-left: 0.5em;" }, SVG.svg({ width: "16", height: "16", viewBox: "-13 -14 26 26", "pointer-events": "none", style: "width: 100%; height: 100%;" }, SVG.path({ d: "M -6 6 L 0 -6 L 6 6 z", fill: ColorConfig.primaryText })));
@@ -715,8 +721,8 @@ export class AddSamplesPrompt {
                     rootKeyStepper
                 ),
                 div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
-                    div({ style: `text-align: left; color: ${ColorConfig.primaryText};` }, span({ title: "Pitch doesn't change with key" }, "Percussion")),
-                    percussionBox
+                    div({ style: `text-align: left; color: ${ColorConfig.primaryText};` }, span({ title: "Pitch doesn't change with key or song detune" }, "Percussion")),
+                    percussionSelect
                 ),
                 div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
                     div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "What stereo channels to use" }, "Stereo Channels")),
@@ -726,7 +732,7 @@ export class AddSamplesPrompt {
             urlInput.dataset.index = "" + entryIndex;
             sampleRateStepper.dataset.index = "" + entryIndex;
             rootKeyStepper.dataset.index = "" + entryIndex;
-            percussionBox.dataset.index = "" + entryIndex;
+            percussionSelect.dataset.index = "" + entryIndex;
             chipWaveLoopStartStepper.dataset.index = "" + entryIndex;
             chipWaveLoopEndStepper.dataset.index = "" + entryIndex;
             chipWaveStartOffsetStepper.dataset.index = "" + entryIndex;
@@ -764,7 +770,7 @@ export class AddSamplesPrompt {
             urlInput.addEventListener("change", this._whenURLChanges);
             sampleRateStepper.addEventListener("change", this._whenSampleRateChanges);
             rootKeyStepper.addEventListener("change", this._whenRootKeyChanges);
-            percussionBox.addEventListener("change", this._whenPercussionChanges);
+            percussionSelect.addEventListener("change", this._whenPercussionChanges);
             chipWaveLoopStartStepper.addEventListener("change", this._whenChipWaveLoopStartChanges);
             chipWaveLoopEndStepper.addEventListener("change", this._whenChipWaveLoopEndChanges);
             chipWaveStartOffsetStepper.addEventListener("change", this._whenChipWaveStartOffsetChanges);
