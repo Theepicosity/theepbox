@@ -677,7 +677,7 @@ export class AddSamplesPrompt {
             const rootKeyStepper: HTMLInputElement = input({ style: "width: 50%;", type: "number", value: "" + entry.rootKey, min: "0", max: Config.maxPitch + Config.pitchesPerOctave, step: "1" });
             const rootKeyDisplay: HTMLSpanElement = span({ class: "add-sample-prompt-root-key-display", style: "margin-left: 0.4em; width: 3em; text-align: left; text-overflow: ellipsis; overflow: hidden; flex-shrink: 0;" }, `(${this._noteNameFromPitchNumber(entry.rootKey)})`);
             //const percussionBox: HTMLInputElement = input({ style: "width: 1em; margin-left: 1em;", type: "checkbox" });
-            const percussionSelect: HTMLSelectElement = select({ style: "width: 50%;" },
+            const percussionSelect: HTMLSelectElement = select({ style: "width: 100%;" },
                 option({ value: 0 }, "disabled"),
                 option({ value: 1 }, "enabled"),
                 option({ value: 2 }, "key only (legacy)"),
@@ -692,7 +692,7 @@ export class AddSamplesPrompt {
                 option({ value: 3 }, "Play Loop Once"),
             );
             chipWaveLoopModeSelect.value = "" + entry.chipWaveLoopMode;
-            const stereoChannelsSelect: HTMLSelectElement = select({ style: "width: 50%;" },
+            const stereoChannelsSelect: HTMLSelectElement = select({ style: "width: 100%;" },
                 option({ value: 0 }, "left"),
                 option({ value: 1 }, "right"),
                 option({ value: 2 }, "stereo"),
@@ -722,11 +722,11 @@ export class AddSamplesPrompt {
                 ),
                 div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
                     div({ style: `text-align: left; color: ${ColorConfig.primaryText};` }, span({ title: "Pitch doesn't change with key or song detune" }, "Percussion")),
-                    percussionSelect
+                    div({ class: "selectContainer", style: "width: 50%; margin-left: 1em;" }, percussionSelect)
                 ),
                 div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
                     div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "What stereo channels to use" }, "Stereo Channels")),
-                    stereoChannelsSelect
+                    div({ class: "selectContainer", style: "width: 50%; margin-left: 1em;" }, stereoChannelsSelect)
                 ),
             );
             urlInput.dataset.index = "" + entryIndex;
