@@ -15,7 +15,7 @@ interface SampleEntry {
     chipWaveLoopStart: number | null;
     chipWaveLoopEnd: number | null;
     chipWaveStartOffset: number | null;
-    chipWaveLoopMode: number | null;
+    chipWaveLoopMode: number;
     chipWavePlayBackwards: boolean;
     stereoChannels: number;
 }
@@ -199,7 +199,7 @@ export class AddSamplesPrompt {
             chipWaveLoopStart: null,
             chipWaveLoopEnd: null,
             chipWaveStartOffset: null,
-            chipWaveLoopMode: null,
+            chipWaveLoopMode: 0,
             chipWavePlayBackwards: false,
             stereoChannels: 2
         });
@@ -328,11 +328,7 @@ export class AddSamplesPrompt {
         const element: HTMLSelectElement = <HTMLSelectElement>event.target;
         const entryIndex: number = +(element.dataset.index!);
         const newValue: number = +element.value;
-        if (newValue === -1) {
-            this._entries[entryIndex].chipWaveLoopMode = null;
-        } else {
-            this._entries[entryIndex].chipWaveLoopMode = newValue;
-        }
+        this._entries[entryIndex].chipWaveLoopMode = newValue;
     }
 
     private _whenStereoChannelsChanges = (event: Event): void => {
@@ -457,7 +453,7 @@ export class AddSamplesPrompt {
                         chipWaveLoopStart: null,
                         chipWaveLoopEnd: null,
                         chipWaveStartOffset: null,
-                        chipWaveLoopMode: null,
+                        chipWaveLoopMode: 0,
                         chipWavePlayBackwards: false,
                         stereoChannels: 0,
                     });
@@ -473,7 +469,7 @@ export class AddSamplesPrompt {
                         chipWaveLoopStart: null,
                         chipWaveLoopEnd: null,
                         chipWaveStartOffset: null,
-                        chipWaveLoopMode: null,
+                        chipWaveLoopMode: 0,
                         chipWavePlayBackwards: false,
                         stereoChannels: 0,
                     });
@@ -489,7 +485,7 @@ export class AddSamplesPrompt {
                         chipWaveLoopStart: null,
                         chipWaveLoopEnd: null,
                         chipWaveStartOffset: null,
-                        chipWaveLoopMode: null,
+                        chipWaveLoopMode: 0,
                         chipWavePlayBackwards: false,
                         stereoChannels: 0,
                     });
@@ -503,7 +499,7 @@ export class AddSamplesPrompt {
                 let chipWaveLoopStart: number | null = null;
                 let chipWaveLoopEnd: number | null = null;
                 let chipWaveStartOffset: number | null = null;
-                let chipWaveLoopMode: number | null = null;
+                let chipWaveLoopMode: number = 0;
                 let chipWavePlayBackwards: boolean = false;
                 let stereoChannels: number = 0;
                 let optionsStartIndex: number = url.indexOf("!");
@@ -529,13 +525,11 @@ export class AddSamplesPrompt {
                             } else if (optionCode === "c") {
                                 chipWaveStartOffset = parseIntWithDefault(optionData, null);
                             } else if (optionCode === "d") {
-                                chipWaveLoopMode = parseIntWithDefault(optionData, null);
-                                if (chipWaveLoopMode != null) {
-                                    // @TODO: Error-prone. This should be
-                                    // automatically derived from the list of
-                                    // available loop modes.
-                                    chipWaveLoopMode = clamp(0, 3 + 1, chipWaveLoopMode);
-                                }
+                                chipWaveLoopMode = parseIntWithDefault(optionData, 0);
+                                // @TODO: Error-prone. This should be
+                                // automatically derived from the list of
+                                // available loop modes.
+                                chipWaveLoopMode = clamp(0, 3 + 1, chipWaveLoopMode);
                             } else if (optionCode === "e") {
                                 chipWavePlayBackwards = true;
                             } else if (optionCode === "m") {
@@ -597,7 +591,7 @@ export class AddSamplesPrompt {
         const chipWaveLoopStart: number | null = entry.chipWaveLoopStart;
         const chipWaveLoopEnd: number | null = entry.chipWaveLoopEnd;
         const chipWaveStartOffset: number | null = entry.chipWaveStartOffset;
-        const chipWaveLoopMode: number | null = entry.chipWaveLoopMode;
+        const chipWaveLoopMode: number = entry.chipWaveLoopMode;
         const chipWavePlayBackwards: boolean = entry.chipWavePlayBackwards;
         const stereoChannels: number = entry.stereoChannels;
         const urlInLowerCase: string = url.toLowerCase();
@@ -613,7 +607,7 @@ export class AddSamplesPrompt {
         if (chipWaveLoopStart != null) options.push("a" + chipWaveLoopStart);
         if (chipWaveLoopEnd != null) options.push("b" + chipWaveLoopEnd);
         if (chipWaveStartOffset != null) options.push("c" + chipWaveStartOffset);
-        if (chipWaveLoopMode != null) options.push("d" + chipWaveLoopMode);
+        if (chipWaveLoopMode != 0) options.push("d" + chipWaveLoopMode);
         if (chipWavePlayBackwards) options.push("e");
         if (stereoChannels != 0) options.push("m" + stereoChannels);
         if (isBundledSamplePack || options.length <= 0) {
@@ -678,24 +672,21 @@ export class AddSamplesPrompt {
             const entry: SampleEntry = this._entries[entryIndex];
             const optionsVisible: boolean = Boolean(this._entryOptionsDisplayStates[entryIndex]);
             const urlInput: HTMLInputElement = input({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", value: entry.url });
-            const sampleRateStepper: HTMLInputElement = input({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + entry.sampleRate, min: "8000", max: "96000", step: "1" });
-            const rootKeyStepper: HTMLInputElement = input({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + entry.rootKey, min: "0", max: Config.maxPitch + Config.pitchesPerOctave, step: "1" });
+            const sampleRateStepper: HTMLInputElement = input({ style: "width: 50%;", type: "number", value: "" + entry.sampleRate, min: "8000", max: "96000", step: "1" });
+            const rootKeyStepper: HTMLInputElement = input({ style: "width: 50%;", type: "number", value: "" + entry.rootKey, min: "0", max: Config.maxPitch + Config.pitchesPerOctave, step: "1" });
             const rootKeyDisplay: HTMLSpanElement = span({ class: "add-sample-prompt-root-key-display", style: "margin-left: 0.4em; width: 3em; text-align: left; text-overflow: ellipsis; overflow: hidden; flex-shrink: 0;" }, `(${this._noteNameFromPitchNumber(entry.rootKey)})`);
             const percussionBox: HTMLInputElement = input({ style: "width: 1em; margin-left: 1em;", type: "checkbox" });
             const chipWaveLoopStartStepper: HTMLInputElement = input({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + (entry.chipWaveLoopStart != null ? entry.chipWaveLoopStart : ""), min: "0", step: "1" });
             const chipWaveLoopEndStepper: HTMLInputElement = input({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + (entry.chipWaveLoopEnd != null ? entry.chipWaveLoopEnd : ""), min: "0", step: "1" });
             const chipWaveStartOffsetStepper: HTMLInputElement = input({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + (entry.chipWaveStartOffset != null ? entry.chipWaveStartOffset : ""), min: "0", step: "1" });
             const chipWaveLoopModeSelect: HTMLSelectElement = select({ style: "width: 100%; flex-grow: 1; margin-left: 0.5em;" },
-                option({ value: -1 }, ""),
                 option({ value: 0 }, "Loop"),
                 option({ value: 1 }, "Ping-Pong"),
                 option({ value: 2 }, "Play Once"),
                 option({ value: 3 }, "Play Loop Once"),
             );
-            if (entry.chipWaveLoopMode != null) {
-                chipWaveLoopModeSelect.value = "" + entry.chipWaveLoopMode;
-            }
-            const stereoChannelsSelect: HTMLSelectElement = select({ style: "width: 100%; flex-grow: 1; margin-left: 0.5em;" },
+            chipWaveLoopModeSelect.value = "" + entry.chipWaveLoopMode;
+            const stereoChannelsSelect: HTMLSelectElement = select({ style: "width: 50%;" },
                 option({ value: 0 }, "Left"),
                 option({ value: 1 }, "Right"),
                 option({ value: 2 }, "Stereo"),
@@ -712,42 +703,24 @@ export class AddSamplesPrompt {
             const optionsContainer: HTMLDetailsElement = details(
                 { open: optionsVisible, style: "margin-bottom: 2em; margin-top: 1em;" },
                 summary({ style: "margin-bottom: 1em;" }, "Options"),
-                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" },
-                    div({ style: `flex-shrink: 0; :text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "What rate to resample to" }, "Sample rate")),
+                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
+                    div({ style: `text-align: left; color: ${ColorConfig.primaryText};` }, span({ title: "What rate to resample to" }, "Sample rate")),
                     sampleRateStepper
                 ),
-                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" },
-                    div({ style: `text-align: right; color: ${ColorConfig.primaryText}; flex-shrink: 0;` }, span({ title: "Pitch where the sample is played as-is" }, "Root key")),
-                    rootKeyDisplay,
+                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
+                    div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" },
+                        div({ style: `text-align: left; color: ${ColorConfig.primaryText};` }, span({ title: "Pitch where the sample is played as-is" }, "Root key")),
+                        rootKeyDisplay,
+                    ),
                     rootKeyStepper
                 ),
                 div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
-                    div({ style: `text-align: right; color: ${ColorConfig.primaryText};` }, "Percussion (pitch doesn't change with key)"),
+                    div({ style: `text-align: left; color: ${ColorConfig.primaryText};` }, span({ title: "Pitch doesn't change with key" }, "Percussion")),
                     percussionBox
                 ),
                 div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" },
-                    div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, "Stereo Channels"),
+                    div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "What stereo channels to use" }, "Stereo Channels")),
                     stereoChannelsSelect
-                ),
-                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" },
-                    div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "Applies to the \"Loop Start\" loop control option of the preset created for this sample" }, "Loop Start")),
-                    chipWaveLoopStartStepper
-                ),
-                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" },
-                    div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "Applies to the \"Loop End\" loop control option of the preset created for this sample" }, "Loop End")),
-                    chipWaveLoopEndStepper
-                ),
-                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" },
-                    div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "Applies to the \"Offset\" loop control option of the preset created for this sample" }, "Sample Start Offset")),
-                    chipWaveStartOffsetStepper
-                ),
-                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" },
-                    div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "Applies to the \"Loop Mode\" loop control option of the preset created for this sample" }, "Loop Mode")),
-                    chipWaveLoopModeSelect
-                ),
-                div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" },
-                    div({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span({ title: "Applies to the \"Backwards\" loop control option of the preset created for this sample" }, "Backwards")),
-                    chipWavePlayBackwardsBox
                 ),
             );
             urlInput.dataset.index = "" + entryIndex;

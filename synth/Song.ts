@@ -3921,7 +3921,7 @@ export class Song {
         let presetChipWaveLoopStart: number | null = null;
         let presetChipWaveLoopEnd: number | null = null;
         let presetChipWaveStartOffset: number | null = null;
-        let presetChipWaveLoopMode: number | null = null;
+        let presetChipWaveLoopMode: number = 0;
         let presetChipWavePlayBackwards: boolean = false;
         let stereoChannels: number = 0;
 
@@ -3957,13 +3957,11 @@ export class Song {
                             presetIsUsingAdvancedLoopControls = true;
                         }
                     } else if (optionCode === "d") {
-                        presetChipWaveLoopMode = parseIntWithDefault(optionData, null);
-                        if (presetChipWaveLoopMode != null) {
-                            // @TODO: Error-prone. This should be automatically
-                            // derived from the list of available loop modes.
-                            presetChipWaveLoopMode = clamp(0, 3 + 1, presetChipWaveLoopMode);
-                            presetIsUsingAdvancedLoopControls = true;
-                        }
+                        presetChipWaveLoopMode = parseIntWithDefault(optionData, 0);
+                        // @TODO: Error-prone. This should be automatically
+                        // derived from the list of available loop modes.
+                        presetChipWaveLoopMode = clamp(0, 3 + 1, presetChipWaveLoopMode);
+                        if (presetChipWaveLoopMode != 0) presetIsUsingAdvancedLoopControls = true;
                     } else if (optionCode === "e") {
                         presetChipWavePlayBackwards = true;
                         presetIsUsingAdvancedLoopControls = true;
@@ -4057,7 +4055,7 @@ export class Song {
                 if (presetChipWaveLoopStart != null) namedOptions.push("a" + presetChipWaveLoopStart);
                 if (presetChipWaveLoopEnd != null) namedOptions.push("b" + presetChipWaveLoopEnd);
                 if (presetChipWaveStartOffset != null) namedOptions.push("c" + presetChipWaveStartOffset);
-                if (presetChipWaveLoopMode != null) namedOptions.push("d" + presetChipWaveLoopMode);
+                if (presetChipWaveLoopMode != 0) namedOptions.push("d" + presetChipWaveLoopMode);
                 if (presetChipWavePlayBackwards) namedOptions.push("e");
             }
             if (stereoChannels !== 0) namedOptions.push("m" + stereoChannels);
@@ -4138,7 +4136,7 @@ export class Song {
                 customSamplePresetSettings["isUsingAdvancedLoopControls"] = true;
                 customSamplePresetSettings["chipWaveLoopStart"] = presetChipWaveLoopStart != null ? presetChipWaveLoopStart : 0;
                 customSamplePresetSettings["chipWaveLoopEnd"] = presetChipWaveLoopEnd != null ? presetChipWaveLoopEnd : 2;
-                customSamplePresetSettings["chipWaveLoopMode"] = presetChipWaveLoopMode != null ? presetChipWaveLoopMode : 0;
+                customSamplePresetSettings["chipWaveLoopMode"] = presetChipWaveLoopMode;
                 customSamplePresetSettings["chipWavePlayBackwards"] = presetChipWavePlayBackwards;
                 customSamplePresetSettings["chipWaveStartOffset"] = presetChipWaveStartOffset != null ? presetChipWaveStartOffset : 0;
             }

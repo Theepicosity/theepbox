@@ -102,7 +102,7 @@ var beepbox = (function (exports) {
                 if (rawLoopOptions["isUsingAdvancedLoopControls"]) {
                     presetSettings["chipWaveLoopStart"] = rawLoopOptions["chipWaveLoopStart"] != null ? rawLoopOptions["chipWaveLoopStart"] : 0;
                     presetSettings["chipWaveLoopEnd"] = rawLoopOptions["chipWaveLoopEnd"] != null ? rawLoopOptions["chipWaveLoopEnd"] : samples.length - 1;
-                    presetSettings["chipWaveLoopMode"] = rawLoopOptions["chipWaveLoopMode"] != null ? rawLoopOptions["chipWaveLoopMode"] : 0;
+                    presetSettings["chipWaveLoopMode"] = rawLoopOptions["chipWaveLoopMode"];
                     presetSettings["chipWavePlayBackwards"] = rawLoopOptions["chipWavePlayBackwards"];
                     presetSettings["chipWaveStartOffset"] = rawLoopOptions["chipWaveStartOffset"] != null ? rawLoopOptions["chipWaveStartOffset"] : 0;
                 }
@@ -16652,7 +16652,7 @@ li.select2-results__option[role=group] > strong:hover {
             let presetChipWaveLoopStart = null;
             let presetChipWaveLoopEnd = null;
             let presetChipWaveStartOffset = null;
-            let presetChipWaveLoopMode = null;
+            let presetChipWaveLoopMode = 0;
             let presetChipWavePlayBackwards = false;
             let stereoChannels = 0;
             let parsedSampleOptions = false;
@@ -16693,11 +16693,10 @@ li.select2-results__option[role=group] > strong:hover {
                             }
                         }
                         else if (optionCode === "d") {
-                            presetChipWaveLoopMode = parseIntWithDefault(optionData, null);
-                            if (presetChipWaveLoopMode != null) {
-                                presetChipWaveLoopMode = clamp(0, 3 + 1, presetChipWaveLoopMode);
+                            presetChipWaveLoopMode = parseIntWithDefault(optionData, 0);
+                            presetChipWaveLoopMode = clamp(0, 3 + 1, presetChipWaveLoopMode);
+                            if (presetChipWaveLoopMode != 0)
                                 presetIsUsingAdvancedLoopControls = true;
-                            }
                         }
                         else if (optionCode === "e") {
                             presetChipWavePlayBackwards = true;
@@ -16792,7 +16791,7 @@ li.select2-results__option[role=group] > strong:hover {
                         namedOptions.push("b" + presetChipWaveLoopEnd);
                     if (presetChipWaveStartOffset != null)
                         namedOptions.push("c" + presetChipWaveStartOffset);
-                    if (presetChipWaveLoopMode != null)
+                    if (presetChipWaveLoopMode != 0)
                         namedOptions.push("d" + presetChipWaveLoopMode);
                     if (presetChipWavePlayBackwards)
                         namedOptions.push("e");
@@ -16864,7 +16863,7 @@ li.select2-results__option[role=group] > strong:hover {
                     customSamplePresetSettings["isUsingAdvancedLoopControls"] = true;
                     customSamplePresetSettings["chipWaveLoopStart"] = presetChipWaveLoopStart != null ? presetChipWaveLoopStart : 0;
                     customSamplePresetSettings["chipWaveLoopEnd"] = presetChipWaveLoopEnd != null ? presetChipWaveLoopEnd : 2;
-                    customSamplePresetSettings["chipWaveLoopMode"] = presetChipWaveLoopMode != null ? presetChipWaveLoopMode : 0;
+                    customSamplePresetSettings["chipWaveLoopMode"] = presetChipWaveLoopMode;
                     customSamplePresetSettings["chipWavePlayBackwards"] = presetChipWavePlayBackwards;
                     customSamplePresetSettings["chipWaveStartOffset"] = presetChipWaveStartOffset != null ? presetChipWaveStartOffset : 0;
                 }
@@ -46901,7 +46900,7 @@ You should be redirected to the song at:<br /><br />
                     chipWaveLoopStart: null,
                     chipWaveLoopEnd: null,
                     chipWaveStartOffset: null,
-                    chipWaveLoopMode: null,
+                    chipWaveLoopMode: 0,
                     chipWavePlayBackwards: false,
                     stereoChannels: 2
                 });
@@ -47016,12 +47015,7 @@ You should be redirected to the song at:<br /><br />
                 const element = event.target;
                 const entryIndex = +(element.dataset.index);
                 const newValue = +element.value;
-                if (newValue === -1) {
-                    this._entries[entryIndex].chipWaveLoopMode = null;
-                }
-                else {
-                    this._entries[entryIndex].chipWaveLoopMode = newValue;
-                }
+                this._entries[entryIndex].chipWaveLoopMode = newValue;
             };
             this._whenStereoChannelsChanges = (event) => {
                 const element = event.target;
@@ -47116,7 +47110,7 @@ You should be redirected to the song at:<br /><br />
                                 chipWaveLoopStart: null,
                                 chipWaveLoopEnd: null,
                                 chipWaveStartOffset: null,
-                                chipWaveLoopMode: null,
+                                chipWaveLoopMode: 0,
                                 chipWavePlayBackwards: false,
                                 stereoChannels: 0,
                             });
@@ -47133,7 +47127,7 @@ You should be redirected to the song at:<br /><br />
                                 chipWaveLoopStart: null,
                                 chipWaveLoopEnd: null,
                                 chipWaveStartOffset: null,
-                                chipWaveLoopMode: null,
+                                chipWaveLoopMode: 0,
                                 chipWavePlayBackwards: false,
                                 stereoChannels: 0,
                             });
@@ -47150,7 +47144,7 @@ You should be redirected to the song at:<br /><br />
                                 chipWaveLoopStart: null,
                                 chipWaveLoopEnd: null,
                                 chipWaveStartOffset: null,
-                                chipWaveLoopMode: null,
+                                chipWaveLoopMode: 0,
                                 chipWavePlayBackwards: false,
                                 stereoChannels: 0,
                             });
@@ -47165,7 +47159,7 @@ You should be redirected to the song at:<br /><br />
                         let chipWaveLoopStart = null;
                         let chipWaveLoopEnd = null;
                         let chipWaveStartOffset = null;
-                        let chipWaveLoopMode = null;
+                        let chipWaveLoopMode = 0;
                         let chipWavePlayBackwards = false;
                         let stereoChannels = 0;
                         let optionsStartIndex = url.indexOf("!");
@@ -47197,10 +47191,8 @@ You should be redirected to the song at:<br /><br />
                                         chipWaveStartOffset = parseIntWithDefault(optionData, null);
                                     }
                                     else if (optionCode === "d") {
-                                        chipWaveLoopMode = parseIntWithDefault(optionData, null);
-                                        if (chipWaveLoopMode != null) {
-                                            chipWaveLoopMode = clamp(0, 3 + 1, chipWaveLoopMode);
-                                        }
+                                        chipWaveLoopMode = parseIntWithDefault(optionData, 0);
+                                        chipWaveLoopMode = clamp(0, 3 + 1, chipWaveLoopMode);
                                     }
                                     else if (optionCode === "e") {
                                         chipWavePlayBackwards = true;
@@ -47283,7 +47275,7 @@ You should be redirected to the song at:<br /><br />
                     options.push("b" + chipWaveLoopEnd);
                 if (chipWaveStartOffset != null)
                     options.push("c" + chipWaveStartOffset);
-                if (chipWaveLoopMode != null)
+                if (chipWaveLoopMode != 0)
                     options.push("d" + chipWaveLoopMode);
                 if (chipWavePlayBackwards)
                     options.push("e");
@@ -47348,18 +47340,16 @@ You should be redirected to the song at:<br /><br />
                     const entry = this._entries[entryIndex];
                     const optionsVisible = Boolean(this._entryOptionsDisplayStates[entryIndex]);
                     const urlInput = input$1({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", value: entry.url });
-                    const sampleRateStepper = input$1({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + entry.sampleRate, min: "8000", max: "96000", step: "1" });
-                    const rootKeyStepper = input$1({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + entry.rootKey, min: "0", max: Config.maxPitch + Config.pitchesPerOctave, step: "1" });
+                    const sampleRateStepper = input$1({ style: "width: 50%;", type: "number", value: "" + entry.sampleRate, min: "8000", max: "96000", step: "1" });
+                    const rootKeyStepper = input$1({ style: "width: 50%;", type: "number", value: "" + entry.rootKey, min: "0", max: Config.maxPitch + Config.pitchesPerOctave, step: "1" });
                     const rootKeyDisplay = span$1({ class: "add-sample-prompt-root-key-display", style: "margin-left: 0.4em; width: 3em; text-align: left; text-overflow: ellipsis; overflow: hidden; flex-shrink: 0;" }, `(${this._noteNameFromPitchNumber(entry.rootKey)})`);
                     const percussionBox = input$1({ style: "width: 1em; margin-left: 1em;", type: "checkbox" });
                     const chipWaveLoopStartStepper = input$1({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + (entry.chipWaveLoopStart != null ? entry.chipWaveLoopStart : ""), min: "0", step: "1" });
                     const chipWaveLoopEndStepper = input$1({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + (entry.chipWaveLoopEnd != null ? entry.chipWaveLoopEnd : ""), min: "0", step: "1" });
                     const chipWaveStartOffsetStepper = input$1({ style: "flex-grow: 1; margin-left: 1em; width: 100%;", type: "number", value: "" + (entry.chipWaveStartOffset != null ? entry.chipWaveStartOffset : ""), min: "0", step: "1" });
-                    const chipWaveLoopModeSelect = select$2({ style: "width: 100%; flex-grow: 1; margin-left: 0.5em;" }, option$2({ value: -1 }, ""), option$2({ value: 0 }, "Loop"), option$2({ value: 1 }, "Ping-Pong"), option$2({ value: 2 }, "Play Once"), option$2({ value: 3 }, "Play Loop Once"));
-                    if (entry.chipWaveLoopMode != null) {
-                        chipWaveLoopModeSelect.value = "" + entry.chipWaveLoopMode;
-                    }
-                    const stereoChannelsSelect = select$2({ style: "width: 100%; flex-grow: 1; margin-left: 0.5em;" }, option$2({ value: 0 }, "Left"), option$2({ value: 1 }, "Right"), option$2({ value: 2 }, "Stereo"));
+                    const chipWaveLoopModeSelect = select$2({ style: "width: 100%; flex-grow: 1; margin-left: 0.5em;" }, option$2({ value: 0 }, "Loop"), option$2({ value: 1 }, "Ping-Pong"), option$2({ value: 2 }, "Play Once"), option$2({ value: 3 }, "Play Loop Once"));
+                    chipWaveLoopModeSelect.value = "" + entry.chipWaveLoopMode;
+                    const stereoChannelsSelect = select$2({ style: "width: 50%;" }, option$2({ value: 0 }, "Left"), option$2({ value: 1 }, "Right"), option$2({ value: 2 }, "Stereo"));
                     stereoChannelsSelect.value = "" + entry.stereoChannels;
                     const chipWavePlayBackwardsBox = input$1({ type: "checkbox", style: "width: 1em; padding: 0; margin-left: auto; margin-right: auto;" });
                     chipWavePlayBackwardsBox.checked = entry.chipWavePlayBackwards;
@@ -47369,7 +47359,7 @@ You should be redirected to the song at:<br /><br />
                     const removeButton = button$2({ style: "height: auto; min-height: var(--button-size); margin-left: 0.5em;" }, "Remove");
                     const moveUpButton = button$2({ style: "height: auto; min-height: var(--button-size); margin-left: 0.5em;" }, SVG.svg({ width: "16", height: "16", viewBox: "-13 -14 26 26", "pointer-events": "none", style: "width: 100%; height: 100%;" }, SVG.path({ d: "M -6 6 L 0 -6 L 6 6 z", fill: ColorConfig.primaryText })));
                     const moveDownButton = button$2({ style: "height: auto; min-height: var(--button-size); margin-left: 0.5em;" }, SVG.svg({ width: "16", height: "16", viewBox: "-13 -14 26 26", "pointer-events": "none", style: "width: 100%; height: 100%;" }, SVG.path({ d: "M -6 -6 L 6 -6 L 0 6 z", fill: ColorConfig.primaryText })));
-                    const optionsContainer = details({ open: optionsVisible, style: "margin-bottom: 2em; margin-top: 1em;" }, summary({ style: "margin-bottom: 1em;" }, "Options"), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" }, div$2({ style: `flex-shrink: 0; :text-align: right; color: ${ColorConfig.primaryText};` }, span$1({ title: "What rate to resample to" }, "Sample rate")), sampleRateStepper), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" }, div$2({ style: `text-align: right; color: ${ColorConfig.primaryText}; flex-shrink: 0;` }, span$1({ title: "Pitch where the sample is played as-is" }, "Root key")), rootKeyDisplay, rootKeyStepper), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" }, div$2({ style: `text-align: right; color: ${ColorConfig.primaryText};` }, "Percussion (pitch doesn't change with key)"), percussionBox), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" }, div$2({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, "Stereo Channels"), stereoChannelsSelect), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" }, div$2({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span$1({ title: "Applies to the \"Loop Start\" loop control option of the preset created for this sample" }, "Loop Start")), chipWaveLoopStartStepper), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" }, div$2({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span$1({ title: "Applies to the \"Loop End\" loop control option of the preset created for this sample" }, "Loop End")), chipWaveLoopEndStepper), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" }, div$2({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span$1({ title: "Applies to the \"Offset\" loop control option of the preset created for this sample" }, "Sample Start Offset")), chipWaveStartOffsetStepper), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" }, div$2({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span$1({ title: "Applies to the \"Loop Mode\" loop control option of the preset created for this sample" }, "Loop Mode")), chipWaveLoopModeSelect), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" }, div$2({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span$1({ title: "Applies to the \"Backwards\" loop control option of the preset created for this sample" }, "Backwards")), chipWavePlayBackwardsBox));
+                    const optionsContainer = details({ open: optionsVisible, style: "margin-bottom: 2em; margin-top: 1em;" }, summary({ style: "margin-bottom: 1em;" }, "Options"), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" }, div$2({ style: `text-align: left; color: ${ColorConfig.primaryText};` }, span$1({ title: "What rate to resample to" }, "Sample rate")), sampleRateStepper), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" }, div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: flex-end; margin-bottom: 0.5em;" }, div$2({ style: `text-align: left; color: ${ColorConfig.primaryText};` }, span$1({ title: "Pitch where the sample is played as-is" }, "Root key")), rootKeyDisplay), rootKeyStepper), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" }, div$2({ style: `text-align: left; color: ${ColorConfig.primaryText};` }, span$1({ title: "Pitch doesn't change with key" }, "Percussion")), percussionBox), div$2({ style: "display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5em;" }, div$2({ style: `flex-shrink: 0; text-align: right; color: ${ColorConfig.primaryText};` }, span$1({ title: "What stereo channels to use" }, "Stereo Channels")), stereoChannelsSelect));
                     urlInput.dataset.index = "" + entryIndex;
                     sampleRateStepper.dataset.index = "" + entryIndex;
                     rootKeyStepper.dataset.index = "" + entryIndex;

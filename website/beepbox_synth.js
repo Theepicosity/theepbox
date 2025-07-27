@@ -95,7 +95,7 @@ var beepbox = (function (exports) {
                 if (rawLoopOptions["isUsingAdvancedLoopControls"]) {
                     presetSettings["chipWaveLoopStart"] = rawLoopOptions["chipWaveLoopStart"] != null ? rawLoopOptions["chipWaveLoopStart"] : 0;
                     presetSettings["chipWaveLoopEnd"] = rawLoopOptions["chipWaveLoopEnd"] != null ? rawLoopOptions["chipWaveLoopEnd"] : samples.length - 1;
-                    presetSettings["chipWaveLoopMode"] = rawLoopOptions["chipWaveLoopMode"] != null ? rawLoopOptions["chipWaveLoopMode"] : 0;
+                    presetSettings["chipWaveLoopMode"] = rawLoopOptions["chipWaveLoopMode"];
                     presetSettings["chipWavePlayBackwards"] = rawLoopOptions["chipWavePlayBackwards"];
                     presetSettings["chipWaveStartOffset"] = rawLoopOptions["chipWaveStartOffset"] != null ? rawLoopOptions["chipWaveStartOffset"] : 0;
                 }
@@ -8076,7 +8076,7 @@ var beepbox = (function (exports) {
             let presetChipWaveLoopStart = null;
             let presetChipWaveLoopEnd = null;
             let presetChipWaveStartOffset = null;
-            let presetChipWaveLoopMode = null;
+            let presetChipWaveLoopMode = 0;
             let presetChipWavePlayBackwards = false;
             let stereoChannels = 0;
             let parsedSampleOptions = false;
@@ -8117,11 +8117,10 @@ var beepbox = (function (exports) {
                             }
                         }
                         else if (optionCode === "d") {
-                            presetChipWaveLoopMode = parseIntWithDefault(optionData, null);
-                            if (presetChipWaveLoopMode != null) {
-                                presetChipWaveLoopMode = clamp(0, 3 + 1, presetChipWaveLoopMode);
+                            presetChipWaveLoopMode = parseIntWithDefault(optionData, 0);
+                            presetChipWaveLoopMode = clamp(0, 3 + 1, presetChipWaveLoopMode);
+                            if (presetChipWaveLoopMode != 0)
                                 presetIsUsingAdvancedLoopControls = true;
-                            }
                         }
                         else if (optionCode === "e") {
                             presetChipWavePlayBackwards = true;
@@ -8216,7 +8215,7 @@ var beepbox = (function (exports) {
                         namedOptions.push("b" + presetChipWaveLoopEnd);
                     if (presetChipWaveStartOffset != null)
                         namedOptions.push("c" + presetChipWaveStartOffset);
-                    if (presetChipWaveLoopMode != null)
+                    if (presetChipWaveLoopMode != 0)
                         namedOptions.push("d" + presetChipWaveLoopMode);
                     if (presetChipWavePlayBackwards)
                         namedOptions.push("e");
@@ -8288,7 +8287,7 @@ var beepbox = (function (exports) {
                     customSamplePresetSettings["isUsingAdvancedLoopControls"] = true;
                     customSamplePresetSettings["chipWaveLoopStart"] = presetChipWaveLoopStart != null ? presetChipWaveLoopStart : 0;
                     customSamplePresetSettings["chipWaveLoopEnd"] = presetChipWaveLoopEnd != null ? presetChipWaveLoopEnd : 2;
-                    customSamplePresetSettings["chipWaveLoopMode"] = presetChipWaveLoopMode != null ? presetChipWaveLoopMode : 0;
+                    customSamplePresetSettings["chipWaveLoopMode"] = presetChipWaveLoopMode;
                     customSamplePresetSettings["chipWavePlayBackwards"] = presetChipWavePlayBackwards;
                     customSamplePresetSettings["chipWaveStartOffset"] = presetChipWaveStartOffset != null ? presetChipWaveStartOffset : 0;
                 }
