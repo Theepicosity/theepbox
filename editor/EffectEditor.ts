@@ -5,7 +5,7 @@ import { Instrument } from "../synth/Instrument";
 import { Channel } from "../synth/Channel";
 import { Effect } from "../synth/Effect";
 import { SongDocument } from "./SongDocument";
-import { ChangeChorus, ChangeReverb, ChangeFlanger, ChangeFlangerSpeed, ChangeFlangerDepth, ChangeFlangerFeedback, ChangeRingModChipWave, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeEchoDelay, ChangeEchoSustain, ChangeEchoPingPong, ChangeGain, ChangePan, ChangePanMode, ChangePanDelay, ChangeDistortion, ChangeAliasing, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEQFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeRemoveEffects, ChangeReorderEffects } from "./changes";
+import { ChangeChorus, ChangeReverb, ChangeFlanger, ChangeFlangerSpeed, ChangeFlangerDepth, ChangeFlangerFeedback, ChangeRingModChipWave, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeEchoDelay, ChangeEchoSustain, ChangeEchoPingPong, ChangeGain, ChangePan, ChangePanMode, ChangePanDelay, ChangeDistortion, ChangeClippingType, ChangeClippingInGain, ChangeClippingThreshold, ChangeAliasing, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEQFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeRemoveEffects, ChangeReorderEffects } from "./changes";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { Change } from "./Change";
 import { FilterEditor } from "./FilterEditor";
@@ -66,6 +66,9 @@ export class EffectEditor {
 	public readonly panDelaySliders: Slider[] = [];
 	public readonly panModeSelects: HTMLSelectElement[] = [];
 	public readonly distortionSliders: Slider[] = [];
+	public readonly clippingInGainSliders: Slider[] = [];
+	public readonly clippingThresholdSliders: Slider[] = [];
+	public readonly clippingTypeSelects: HTMLSelectElement[] = [];
 	public readonly aliasingBoxes: HTMLInputElement[] = [];
 	public readonly bitcrusherQuantizationSliders: Slider[] = [];
 	public readonly bitcrusherFreqSliders: Slider[] = [];
@@ -92,6 +95,7 @@ export class EffectEditor {
 	private _onChange = (event: Event): void => {
 		const ringModWaveSelectIndex: number = this.ringModWaveSelects.indexOf(<any>event.target);
 		const panModeSelectIndex: number = this.panModeSelects.indexOf(<any>event.target);
+		const clippingTypeSelectIndex: number = this.clippingTypeSelects.indexOf(<any>event.target);
 		const aliasingBoxIndex: number = this.aliasingBoxes.indexOf(<any>event.target);
 
 		const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
@@ -101,6 +105,9 @@ export class EffectEditor {
 		} else if (panModeSelectIndex != -1) {
 			let effect: Effect = <Effect>instrument.effects[panModeSelectIndex];
 			this._doc.record(new ChangePanMode(this._doc, effect, parseInt(this.panModeSelects[panModeSelectIndex].value)));
+		} else if (clippingTypeSelectIndex != -1) {
+			let effect: Effect = <Effect>instrument.effects[clippingTypeSelectIndex];
+			this._doc.record(new ChangeClippingType(this._doc, effect, parseInt(this.clippingTypeSelects[clippingTypeSelectIndex].value)));
 		} else if (aliasingBoxIndex != -1) {
 			let effect: Effect = <Effect>instrument.effects[aliasingBoxIndex];
 			this._doc.record(new ChangeAliasing(this._doc, effect, this.aliasingBoxes[aliasingBoxIndex].checked));
@@ -208,6 +215,9 @@ export class EffectEditor {
 				const panSliderInputBox: HTMLInputElement = HTML.input({ style: "width: 4em; font-size: 80%; ", id: "panSliderInputBox", type: "number", step: "1", min: "0", max: "100", value: effect.pan.toString() });
 				const panDelaySlider: Slider = new Slider(HTML.input({ value: effect.panDelay, type: "range", min: 0, max: Config.modulators.dictionary["pan delay"].maxRawVol, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangePanDelay(this._doc, effect, newValue), false);
 				const panModeSelect: HTMLSelectElement = buildOptions(HTML.select(), ["stereo", "split stereo", "mono"]); //TODO: put this in SynthConfig.ts
+				const clippingTypeSelect: HTMLSelectElement = buildOptions(HTML.select(), ["soft", "hard", "wave folding", "wave wrapping"]); //TODO: also put this in SynthConfig.ts
+				const clippingInGainSlider: Slider = new Slider(HTML.input({ value: effect.clippingInGain, type: "range", min: 0, max: Config.distortionRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeClippingInGain(this._doc, effect, newValue), false);
+				const clippingThresholdSlider: Slider = new Slider(HTML.input({ value: effect.clippingThreshold, type: "range", min: 0, max: Config.volumeRange / 2 * Config.gainRangeMult, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeClippingThreshold(this._doc, effect, newValue), false);
 				const distortionSlider: Slider = new Slider(HTML.input({ value: effect.distortion, type: "range", min: 0, max: Config.distortionRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeDistortion(this._doc, effect, newValue), false);
 				const aliasingBox: HTMLInputElement = HTML.input({ type: "checkbox", style: "width: 1em; padding: 0; margin-right: 4em;" });
 				const bitcrusherQuantizationSlider: Slider = new Slider(HTML.input({ value: effect.bitcrusherQuantization, type: "range", min: 0, max: Config.bitcrusherQuantizationRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeBitcrusherQuantization(this._doc, effect, newValue), false);
@@ -221,6 +231,7 @@ export class EffectEditor {
 
 				setSelectedValue(ringModWaveSelect, effect.ringModWaveformIndex);
 				setSelectedValue(panModeSelect, effect.panMode);
+				setSelectedValue(clippingTypeSelect, effect.clippingType);
 				panSliderInputBox.value = effect.pan + "";
 				gainSliderInputBox.value = effect.gain + "";
 				aliasingBox.checked = instrument.aliases ? true : false;
@@ -259,6 +270,9 @@ export class EffectEditor {
 				const panDelayRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("panDelay") }, "Pan Delay:"), panDelaySlider.container);
 				const panModeRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("panMode") }, "Pan Mode:"), HTML.div({ class: "selectContainer" }, panModeSelect));
 				const distortionRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("distortion") }, "Distortion:"), distortionSlider.container);
+				const clippingInGainRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("clippingInGain") }, "In-Gain:"), clippingInGainSlider.container);
+				const clippingThresholdRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("clippingThreshold") }, "Threshold:"), clippingThresholdSlider.container);
+				const clippingTypeRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("clippingType") }, "Type:"), HTML.div({ class: "selectContainer" }, clippingTypeSelect));
 				const aliasingRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("aliasing") }, "Aliasing:"), aliasingBox);
 				const bitcrusherQuantizationRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("bitcrusherQuantization") }, "Bit Crush:"), bitcrusherQuantizationSlider.container);
 				const bitcrusherFreqRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("bitcrusherFreq") }, "Freq Crush:"), bitcrusherFreqSlider.container);
@@ -301,6 +315,10 @@ export class EffectEditor {
 					} else if (effect.type == EffectType.distortion) {
 						distortionRow.style.display = "";
 						aliasingRow.style.display = "";
+					} else if (effect.type == EffectType.clipping) {
+						clippingTypeRow.style.display = "";
+						clippingInGainRow.style.display = "";
+						clippingThresholdRow.style.display = "";
 					} else if (effect.type == EffectType.bitcrusher) {
 						bitcrusherQuantizationRow.style.display = "";
 						bitcrusherFreqRow.style.display = "";
@@ -346,6 +364,9 @@ export class EffectEditor {
 					panDelayRow,
 					panModeRow,
 					distortionRow,
+					clippingTypeRow,
+					clippingInGainRow,
+					clippingThresholdRow,
 					aliasingRow,
 					bitcrusherQuantizationRow,
 					bitcrusherFreqRow,
@@ -388,6 +409,9 @@ export class EffectEditor {
 				this.panModeSelects[effectIndex] = panModeSelect;
 				this.distortionSliders[effectIndex] = distortionSlider;
 				this.aliasingBoxes[effectIndex] = aliasingBox;
+				this.clippingTypeSelects[effectIndex] = clippingTypeSelect;
+				this.clippingInGainSliders[effectIndex] = clippingInGainSlider;
+				this.clippingThresholdSliders[effectIndex] = clippingThresholdSlider;
 				this.bitcrusherQuantizationSliders[effectIndex] = bitcrusherQuantizationSlider;
 				this.bitcrusherFreqSliders[effectIndex] = bitcrusherFreqSlider;
 				this.eqFilterSimpleButtons[effectIndex] = eqFilterSimpleButton;
@@ -427,6 +451,8 @@ export class EffectEditor {
 			this.panSliders[effectIndex].updateValue(effect.pan);
 			this.panDelaySliders[effectIndex].updateValue(effect.panDelay);
 			this.distortionSliders[effectIndex].updateValue(effect.distortion);
+			this.clippingInGainSliders[effectIndex].updateValue(effect.clippingInGain);
+			this.clippingThresholdSliders[effectIndex].updateValue(effect.clippingThreshold);
 			this.bitcrusherQuantizationSliders[effectIndex].updateValue(effect.bitcrusherQuantization);
 			this.bitcrusherFreqSliders[effectIndex].updateValue(effect.bitcrusherFreq);
 			this.eqFilterSimpleCutSliders[effectIndex].updateValue(effect.eqFilterSimpleCut);
@@ -441,6 +467,7 @@ export class EffectEditor {
 			}
 			setSelectedValue(this.ringModWaveSelects[effectIndex], effect.ringModWaveformIndex);
 			setSelectedValue(this.panModeSelects[effectIndex], effect.panMode);
+			setSelectedValue(this.clippingTypeSelects[effectIndex], effect.clippingType);
 			this.panSliderInputBoxes[effectIndex].value = effect.pan + "";
 			this.gainSliderInputBoxes[effectIndex].value = effect.gain + "";
 			this.aliasingBoxes[effectIndex].checked = instrument.aliases ? true : false;

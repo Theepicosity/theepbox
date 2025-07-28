@@ -124,6 +124,12 @@ export class EffectState {
 	public distortionNextOutputL: number = 0.0;
 	public distortionNextOutputR: number = 0.0;
 
+	public clippingType: number = 0;
+	public clippingInGain: number = 0.0;
+	public clippingInGainDelta: number = 0.0;
+	public clippingThreshold: number = 0.0;
+	public clippingThresholdDelta: number = 0.0;
+
 	public bitcrusherPrevInputL: number = 0.0;
 	public bitcrusherPrevInputR: number = 0.0;
 	public bitcrusherCurrentOutputL: number = 0.0;
@@ -395,6 +401,7 @@ export class EffectState {
 		const usesGranular: boolean = effect.type == EffectType.granular;
 		const usesRingModulation: boolean = effect.type == EffectType.ringModulation;
 		const usesDistortion: boolean = effect.type == EffectType.distortion;
+		const usesClipping: boolean = effect.type == EffectType.clipping;
 		const usesBitcrusher: boolean = effect.type == EffectType.bitcrusher;
 		const usesGain: boolean = effect.type == EffectType.gain;
 		const usesPanning: boolean = effect.type == EffectType.panning;
@@ -479,14 +486,41 @@ export class EffectState {
 
 			const distortionSliderStart = Math.min(1.0, envelopeStarts[EnvelopeComputeIndex.distortion] * useDistortionStart / (Config.distortionRange - 1));
 			const distortionSliderEnd = Math.min(1.0, envelopeEnds[EnvelopeComputeIndex.distortion] * useDistortionEnd / (Config.distortionRange - 1));
-			const distortionStart: number = Math.pow(1.0 - 0.895 * (Math.pow(20.0, distortionSliderStart) - 1.0) / 19.0, 2.0);
+			const distortionStart: number = Math.pow(1.0 - 0.895 * (Math.pow(20.0, distortionSliderStart) - 1.0) / 19.0, 2.0); //1: 0.7, 0: 1.0
 			const distortionEnd: number = Math.pow(1.0 - 0.895 * (Math.pow(20.0, distortionSliderEnd) - 1.0) / 19.0, 2.0);
-			const distortionDriveStart: number = (1.0 + 2.0 * distortionSliderStart) / Config.distortionBaseVolume;
+			const distortionDriveStart: number = (1.0 + 2.0 * distortionSliderStart) / Config.distortionBaseVolume; //1.0 - 3.0
 			const distortionDriveEnd: number = (1.0 + 2.0 * distortionSliderEnd) / Config.distortionBaseVolume;
 			this.distortion = distortionStart;
 			this.distortionDelta = (distortionEnd - distortionStart) / roundedSamplesPerTick;
 			this.distortionDrive = distortionDriveStart;
 			this.distortionDriveDelta = (distortionDriveEnd - distortionDriveStart) / roundedSamplesPerTick;
+		}
+
+		if (usesClipping) {
+			let useClippingInGainStart: number = effect.clippingInGain;
+			let useClippingInGainEnd: number = effect.clippingInGain;
+			let useClippingThresholdStart: number = effect.clippingThreshold;
+			let useClippingThresholdEnd: number = effect.clippingThreshold;
+
+			if (synth.isModActive(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex)) {
+				useClippingInGainStart = synth.getModValue(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, false);
+				useClippingInGainEnd = synth.getModValue(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, true);
+			}
+			if (synth.isModActive(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex)) {
+				useClippingThresholdStart = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, false);
+				useClippingThresholdEnd = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, true);
+			}
+
+			const clippingInGainStart: number = Math.pow(1 - (useClippingInGainStart / Config.distortionRange), 2.0);
+			const clippingInGainEnd: number = Math.pow(1 - (useClippingInGainEnd / Config.distortionRange), 2.0);
+			const clippingThresholdStart: number = Math.min(Config.gainRangeMult, useClippingThresholdStart / (Config.volumeRange + 1));
+			const clippingThresholdEnd: number = Math.min(Config.gainRangeMult, useClippingThresholdEnd / (Config.volumeRange + 1));
+
+			this.clippingInGain = clippingInGainStart;
+			this.clippingInGainDelta = (clippingInGainEnd - clippingInGainStart) / roundedSamplesPerTick;
+			this.clippingThreshold = clippingThresholdStart;
+			this.clippingThresholdDelta = (clippingThresholdEnd - clippingThresholdStart) / roundedSamplesPerTick;
+			this.clippingType = effect.clippingType;
 		}
 
 		if (usesBitcrusher) {

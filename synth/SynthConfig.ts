@@ -122,6 +122,7 @@ export const enum EffectType {
     granular,
     gain,
     flanger,
+    clipping,
     length,
 }
 
@@ -1003,6 +1004,7 @@ export class Config {
     public static readonly pickedStringBaseExpression: number = 0.025; // Same as harmonics.
     public static readonly distortionBaseVolume: number = 0.011; // Distortion is not affected by pitchDamping, which otherwise approximately halves expression for notes around the middle of the range.
     public static readonly bitcrusherBaseVolume: number = 0.010; // Also not affected by pitchDamping, used when bit crushing is maxed out (aka "1-bit" output).
+    public static readonly clippingBaseVolume: number = 0.05;
     public static readonly granularOutputLoudnessCompensation: number = 0.5; //compensate for multiple grains playing at once
     public static rawChipWaves: DictionaryArray<ChipWave> = toNameMap([
         { name: "rounded", expression: 0.94, samples: centerWave([0.0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.95, 0.9, 0.85, 0.8, 0.7, 0.6, 0.5, 0.4, 0.2, 0.0, -0.2, -0.4, -0.5, -0.6, -0.7, -0.8, -0.85, -0.9, -0.95, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -0.95, -0.9, -0.85, -0.8, -0.7, -0.6, -0.5, -0.4, -0.2]) },
@@ -1221,10 +1223,10 @@ export class Config {
 		
         //for modbox; voices = riffapp, spread = intervals, offset = offsets, expression = volume, and sign = signs
     ]);
-    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "post eq", "echo", "ring mod", "granular", "gain", "flanger"];
-    public static readonly effectDisplayNames: ReadonlyArray<string> = ["Reverb", "Chorus", "Panning", "Distortion", "Bitcrusher", "Post EQ", "Echo", "Ring Mod", "Granular", "Gain", "Flanger"];
-    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.reverb, EffectType.chorus, EffectType.panning, EffectType.distortion, EffectType.bitcrusher, EffectType.eqFilter,EffectType.echo,  EffectType.ringModulation, EffectType.granular, EffectType.gain, EffectType.flanger];
-    public static readonly effectCount: 11
+    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "post eq", "echo", "ring mod", "granular", "gain", "flanger", "clipping"];
+    public static readonly effectDisplayNames: ReadonlyArray<string> = ["Reverb", "Chorus", "Panning", "Distortion", "Bitcrusher", "Post EQ", "Echo", "Ring Mod", "Granular", "Gain", "Flanger", "Clipping"];
+    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.reverb, EffectType.chorus, EffectType.panning, EffectType.distortion, EffectType.bitcrusher, EffectType.eqFilter,EffectType.echo,  EffectType.ringModulation, EffectType.granular, EffectType.gain, EffectType.flanger, EffectType.clipping];
+    public static readonly effectCount: 12
     public static readonly mdeffectNames: ReadonlyArray<string> = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
     public static readonly mdeffectOrder: ReadonlyArray<MDEffectType> = [MDEffectType.transition, MDEffectType.chord, MDEffectType.pitchShift, MDEffectType.detune, MDEffectType.vibrato, MDEffectType.noteRange];
     public static readonly mdeffectCount: 6
@@ -1842,6 +1844,10 @@ export class Config {
             promptName: "Instrument Reverb", promptDesc: [ "This setting controls the reverb of your insturment, just like the reverb slider.", "At $LO, your instrument will have no reverb. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "distortion", pianoName: "Distortion", maxRawVol: Config.distortionRange-1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.distortion, associatedMDEffect: MDEffectType.length, maxIndex: 0,
             promptName: "Instrument Distortion", promptDesc: [ "This setting controls the amount of distortion for your instrument, just like the distortion slider.", "At $LO, your instrument will have no distortion. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]" ] },
+        { name: "clipping in-gain", pianoName: "Clip In-Gain", maxRawVol: Config.distortionRange-1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.clipping, associatedMDEffect: MDEffectType.length, maxIndex: 0,
+            promptName: "Clipping In-Gain", promptDesc: [ "This setting controls the amount of added gain for the instrument clipping effect.", "At $LO, your instrument will have no added gain. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]" ] },
+        { name: "clipping threshold", pianoName: "Clip Threshold", maxRawVol: Config.volumeRange / 2 * Config.gainRangeMult, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.clipping, associatedMDEffect: MDEffectType.length, maxIndex: 0,
+            promptName: "Clipping Threshold", promptDesc: [ "This setting controls the threshold for the instrument clipping effect.", "At $LO, the threshold will be at maximum. At $HI, it will be at the minimum.", "[OVERWRITING] [$LO - $HI]" ]  },
         { name: "fm slider 1", pianoName: "FM 1", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
             promptName: "FM Slider 1", promptDesc: [ "This setting affects the strength of the first FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
         { name: "fm slider 2", pianoName: "FM 2", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,

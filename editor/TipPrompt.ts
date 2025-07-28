@@ -5,7 +5,7 @@ import { Prompt } from "./Prompt";
 import { SongDocument } from "./SongDocument";
 import { Config } from "../synth/SynthConfig";
 
-const { button, div, p, h2, h3 } = HTML;
+const { button, div, p, h2, h3, li, ul } = HTML;
 
 export class TipPrompt implements Prompt {
 	private readonly _closeButton: HTMLButtonElement = button({ class: "cancelButton" });
@@ -392,6 +392,32 @@ export class TipPrompt implements Prompt {
 					p("First, most chords don't sound right when combined with heavy distortion. The only chords commonly used with distorted electric guitars are \"power chords\" which consist of a root note, a \"fifth\" note above that, and/or any octaves of those two notes."),
 					p("Second, the distortion sound depends a lot on filtering. In particular, I recommend enabling the note filter effect, and adding both high-pass and low-pass points to the note filter. (Note filters are applied first, then distortion which transforms the sound based on that filtering, then the EQ filter is applied last.)"),
 					p("Finally, I recommend adjusting the fade-out setting to allow the end of each note to overlap a little bit with the beginning of the next, but not too much!"),
+				);
+			} break;
+			case "clippingType": {
+				message = div(
+					h2("Clipping Type"),
+					p("Clipping is a variation on distortion. When the instrument gets louder than a certain threshold, it will get \"clipped\" and cannot get louder than that threshold."),
+					p("The clipping type gives some options for ways that the clipping can be done, called \"transfer functions\". Below is an explanation of each type: "),
+					ul(
+						li("Soft clipping is similar to BeepBox distortion: it uses a hyperbolic tangent function to smoothly round off the edges of the waves."),
+						li("Hard clipping is a more traditional clipping effect, simply cutting off the waves once they get past the threshold."),
+						li("Wave folding uses a periodic sine wave as a transfer function, causing the wave to fold back in on itself and producing interesting type of distortion."),
+						li("Wave wrapping uses a modulo operation as a transfer function, causing extremely harsh and bright distortion."),
+					),
+				);
+			} break;
+			case "clippingInGain": {
+				message = div(
+					h2("Clipping In-Gain"),
+					p("The in-gain controls the amount of extra gain to add before clipping. The effect will dampen itself so it doesn't get too loud, but you should still be careful!"),
+				);
+			} break;
+			case "clippingThreshold": {
+				message = div(
+					h2("Clipping Threshold"),
+					p("Unlike the classic BeepBox distortion, clipping depends on a certain \"clipping threshold\" so that the wave only gets distorted when it gets larger than this threshold. The higher the slider is, the lower the threshold is, and the more distortion will occur."),
+					p("This works together with the in-gain, allowing you to find the perfect level for the particular effects and instruments the clipping gets applied to."),
 				);
 			} break;
 			case "bitcrusherQuantization": {

@@ -2740,6 +2740,35 @@ export class ChangeDistortion extends ChangeInstrumentSlider {
     }
 }
 
+export class ChangeClippingInGain extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, effect: Effect, newValue: number) {
+        super(doc);
+        effect.clippingInGain = newValue;
+        doc.notifier.changed();
+        //doc.synth.unsetMod(Config.modulators.dictionary["clipping ingain"].index, doc.channel, doc.getCurrentInstrument());
+        this._didSomething();
+    }
+}
+
+export class ChangeClippingThreshold extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, effect: Effect, newValue: number) {
+        super(doc);
+        effect.clippingThreshold = newValue;
+        doc.notifier.changed();
+        //doc.synth.unsetMod(Config.modulators.dictionary["clipping threshold"].index, doc.channel, doc.getCurrentInstrument());
+        this._didSomething();
+    }
+}
+
+export class ChangeClippingType extends Change {
+    constructor(doc: SongDocument, effect: Effect, newValue: number) {
+        super();
+        effect.clippingType = newValue;
+        doc.notifier.changed();
+        this._didSomething();
+    }
+}
+
 export class ChangeBitcrusherFreq extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);

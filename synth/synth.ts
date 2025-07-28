@@ -4497,6 +4497,7 @@ export class Synth {
         // @jummbus - ^ Correct, removed the non-zero checks as modulation can change them.
 
         const usesDistortion: boolean = instrumentState.effectsIncludeType(EffectType.distortion);
+        const usesClipping: boolean = instrumentState.effectsIncludeType(EffectType.clipping);
         const usesBitcrusher: boolean = instrumentState.effectsIncludeType(EffectType.bitcrusher);
         const usesEqFilter: boolean = instrumentState.effectsIncludeType(EffectType.eqFilter);
         const usesGain: boolean = instrumentState.effectsIncludeType(EffectType.gain);
@@ -4511,10 +4512,9 @@ export class Synth {
 
         let signature: string = "";
         for (let i of instrumentState.effects) {
-            if (i != null) {
-                signature = signature + i!.type.toString();
-                if (i!.type == EffectType.panning) signature = signature + i!.panningMode.toString();
-            }
+            signature = signature + i!.type.toString();
+            if (i.type == EffectType.panning) signature = signature + i.panningMode.toString();
+            else if (i.type == EffectType.clipping) signature = signature + i.clippingType.toString();
         }
         signature = signature + stereoChannels.toString();
 
@@ -4607,6 +4607,18 @@ export class Synth {
                 let distortionOutputR1 = [];
                 let distortionOutputR2 = [];
                 let distortionOutputR3 = [];`
+            }
+            if (usesClipping) {
+
+                effectsSource += `
+
+                const clippingBaseVolume = +Config.clippingBaseVolume;
+                let clippingInGain = [];
+                let clippingInGainDelta = [];
+                let clippingThreshold = [];
+                let clippingThresholdDelta = [];
+
+                let clippingThresholdLevel = [];`
             }
             if (usesBitcrusher) {
                 effectsSource += `
@@ -4947,6 +4959,20 @@ export class Synth {
                     distortionNextOutputL[effectIndex] = +effectState.distortionNextOutputL;
                     distortionNextOutputR[effectIndex] = +effectState.distortionNextOutputR;`
                 }
+                else if (usesClipping && effectState.type == EffectType.clipping) {
+                    // TODO: add an anti-aliasing filter, similar to distortion (?)
+
+                    // also this feels like a good place to mention how the clipping
+                    // effect is badly named, because it actually includes a bunch of
+                    // different threshold-based distortions (like wavefolding)
+
+                    effectsSource += `
+
+                    clippingInGain[effectIndex] = effectState.clippingInGain;
+                    clippingInGainDelta[effectIndex] = effectState.clippingInGainDelta;
+                    clippingThreshold[effectIndex] = effectState.clippingThreshold;
+                    clippingThresholdDelta[effectIndex] = effectState.clippingThresholdDelta;`
+                }
                 else if (usesBitcrusher && effectState.type == EffectType.bitcrusher) {
                     effectsSource += `
 
@@ -5238,6 +5264,80 @@ export class Synth {
                     distortionPrevInputR[effectIndex] = distortionNextInputR[effectIndex];
                     distortion[effectIndex] += distortionDelta[effectIndex];
                     distortionDrive[effectIndex] += distortionDriveDelta[effectIndex];`
+                }
+                else if (usesClipping && effectState.type == EffectType.clipping) {
+                    if (effectState.clippingType == 0) {
+                        effectsSource += `
+                        sampleL *= 1 / clippingInGain[effectIndex];
+                        sampleR *= 1 / clippingInGain[effectIndex];
+
+                        clippingThresholdLevel[effectIndex] = (1 - clippingThreshold[effectIndex]) * clippingBaseVolume;
+
+                        //sampleL = Math.abs(sampleL) > Math.abs(clippingThresholdLevel[effectIndex]) ? clippingThresholdLevel[effectIndex] * (sampleL / Math.abs(sampleL)) : (sampleL - (sampleL ** 3) / 3) * 1.5 * clippingThresholdLevel[effectIndex];
+                        //sampleR = Math.abs(sampleR) > Math.abs(clippingThresholdLevel[effectIndex]) ? clippingThresholdLevel[effectIndex] * (sampleR / Math.abs(sampleR)) : (sampleR - (sampleR ** 3) / 3) * 1.5 * clippingThresholdLevel[effectIndex];
+
+                        sampleL = Math.tanh(sampleL / clippingThresholdLevel[effectIndex]) * clippingThresholdLevel[effectIndex];
+                        sampleR = Math.tanh(sampleR / clippingThresholdLevel[effectIndex]) * clippingThresholdLevel[effectIndex];
+                        // tanh... i would much rather use a cubic implementation but i couldnt get that to work
+
+                        sampleL *= clippingInGain[effectIndex] ** 0.5;
+                        sampleR *= clippingInGain[effectIndex] ** 0.5;
+
+                        clippingInGain[effectIndex] += clippingInGainDelta[effectIndex];
+                        clippingThreshold[effectIndex] += clippingThresholdDelta[effectIndex];
+                        `
+                    }
+                    if (effectState.clippingType == 1) {
+                        effectsSource += `
+                        sampleL *= 1 / clippingInGain[effectIndex];
+                        sampleR *= 1 / clippingInGain[effectIndex];
+
+                        clippingThresholdLevel[effectIndex] = (1 - clippingThreshold[effectIndex]) * clippingBaseVolume;
+
+                        sampleL = Math.abs(sampleL) > Math.abs(clippingThresholdLevel[effectIndex]) ? clippingThresholdLevel[effectIndex] * (sampleL / Math.abs(sampleL)) : sampleL;
+                        sampleR = Math.abs(sampleR) > Math.abs(clippingThresholdLevel[effectIndex]) ? clippingThresholdLevel[effectIndex] * (sampleR / Math.abs(sampleR)) : sampleR;
+
+                        sampleL *= clippingInGain[effectIndex] ** 0.5;
+                        sampleR *= clippingInGain[effectIndex] ** 0.5;
+
+                        clippingInGain[effectIndex] += clippingInGainDelta[effectIndex];
+                        clippingThreshold[effectIndex] += clippingThresholdDelta[effectIndex];
+                        `
+                    }
+                    if (effectState.clippingType == 2) {
+                        effectsSource += `
+                        sampleL *= 1 / clippingInGain[effectIndex];
+                        sampleR *= 1 / clippingInGain[effectIndex];
+
+                        clippingThresholdLevel[effectIndex] = (1 - clippingThreshold[effectIndex]) * clippingBaseVolume;
+
+                        sampleL = Math.sin(sampleL / clippingThresholdLevel[effectIndex]) * clippingThresholdLevel[effectIndex];
+                        sampleR = Math.sin(sampleR / clippingThresholdLevel[effectIndex]) * clippingThresholdLevel[effectIndex];
+
+                        sampleL *= clippingInGain[effectIndex] ** 0.5;
+                        sampleR *= clippingInGain[effectIndex] ** 0.5;
+
+                        clippingInGain[effectIndex] += clippingInGainDelta[effectIndex];
+                        clippingThreshold[effectIndex] += clippingThresholdDelta[effectIndex];
+                        `
+                    }
+                    if (effectState.clippingType == 3) {
+                        effectsSource += `
+                        sampleL *= 1 / clippingInGain[effectIndex];
+                        sampleR *= 1 / clippingInGain[effectIndex];
+
+                        clippingThresholdLevel[effectIndex] = (1 - clippingThreshold[effectIndex]) * clippingBaseVolume;
+
+                        sampleL = (sampleL % clippingThresholdLevel[effectIndex]);
+                        sampleR = (sampleR % clippingThresholdLevel[effectIndex]);
+
+                        sampleL *= clippingInGain[effectIndex] ** 0.5;
+                        sampleR *= clippingInGain[effectIndex] ** 0.5;
+
+                        clippingInGain[effectIndex] += clippingInGainDelta[effectIndex];
+                        clippingThreshold[effectIndex] += clippingThresholdDelta[effectIndex];
+                        `
+                    }
                 }
                 else if (usesGain && effectState.type == EffectType.gain) {
                     effectsSource += `
@@ -5613,6 +5713,12 @@ export class Synth {
                     effectState.distortionPrevInputR = distortionPrevInputR[effectIndex];
                     effectState.distortionNextOutputL = distortionNextOutputL[effectIndex];
                     effectState.distortionNextOutputR = distortionNextOutputR[effectIndex];`
+                }
+                else if (usesClipping && effectState.type == EffectType.clipping) {
+                    effectsSource += `
+
+                    effectState.clippingInGain = clippingInGain[effectIndex];
+                    effectState.clippingThreshold = clippingThreshold[effectIndex];`
                 }
                 else if (usesBitcrusher && effectState.type == EffectType.bitcrusher) {
                     effectsSource += `

@@ -25,6 +25,9 @@ export class Effect {
 	public panMode: number = 0;
 	public aliases: boolean = false;
 	public distortion: number = 0;
+	public clippingInGain: number = 0;
+	public clippingThreshold: number = 0;
+	public clippingType: number = 0;
 	public bitcrusherFreq: number = 0;
 	public bitcrusherQuantization: number = 0;
 	public ringModulation: number = Math.floor(Config.ringModRange/2);
@@ -43,7 +46,7 @@ export class Effect {
 	public chorus: number = 0;
 	public reverb: number = 0;
 	public echoSustain: number = 0;
-	public echoDelay: number = 0;
+	public echoDelay: number = 11;
 	public echoPingPong: number = Config.panCenter;
 
 	constructor(type: EffectType) {

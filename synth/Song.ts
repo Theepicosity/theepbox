@@ -956,6 +956,11 @@ export class Song {
                         // Aliasing is tied into distortion for now
                         buffer.push(base64IntToCharCode[+instrument.aliases]);
                     }
+                    else if (effect.type == EffectType.clipping) {
+                        buffer.push(base64IntToCharCode[effect.clippingType]);
+                        buffer.push(base64IntToCharCode[effect.clippingInGain]);
+                        buffer.push(base64IntToCharCode[effect.clippingThreshold >> 6], base64IntToCharCode[effect.clippingThreshold & 0x3f]);
+                    }
                     else if (effect.type == EffectType.bitcrusher) {
                         buffer.push(base64IntToCharCode[effect.bitcrusherFreq], base64IntToCharCode[effect.bitcrusherQuantization]);
                     }
@@ -2771,10 +2776,19 @@ export class Song {
                                 }
                             }
                             if (newEffect.type == EffectType.distortion) {
-                                if (fromTheepBox) newEffect.distortion = clamp(0, Config.distortionRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                else newEffect.distortion = clamp(0, Config.distortionRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) * 2;
+                                if (fromTheepBox) {
+                                    newEffect.distortion = clamp(0, Config.distortionRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                }
+                                else {
+                                    newEffect.distortion = clamp(0, Config.distortionRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) * 2;
+                                }
                                 if ((fromJummBox && !beforeFive) || fromGoldBox || fromUltraBox || fromSlarmoosBox)
                                     instrument.aliases = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
+                            }
+                            if (newEffect.type == EffectType.clipping) {
+                                newEffect.clippingType = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                newEffect.clippingInGain = clamp(0, Config.distortionRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                newEffect.clippingThreshold = clamp(0, Config.volumeRange, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             }
                             if (newEffect.type == EffectType.bitcrusher) {
                                 newEffect.bitcrusherFreq = clamp(0, Config.bitcrusherFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);

@@ -2004,6 +2004,12 @@ export class SongEditor {
             case Config.modulators.dictionary["distortion"].index:
                 for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.distortion) index = i;
                 return this.effectEditor.distortionSliders[index];
+            case Config.modulators.dictionary["clipping in-gain"].index:
+                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.clipping) index = i;
+                return this.effectEditor.clippingInGainSliders[index];
+            case Config.modulators.dictionary["clipping threshold"].index:
+                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.clipping) index = i;
+                return this.effectEditor.clippingThresholdSliders[index];
             case Config.modulators.dictionary["pre volume"].index:
                 // So, this should technically not affect this slider, but it will look better as legacy songs used this mod as 'volume'.
                 // In the case that mix volume is used as well, they'd fight for the display, so just don't use this.
@@ -3118,6 +3124,7 @@ export class SongEditor {
                             anyInstrumentVibratos: boolean = false,
                             anyInstrumentEQFilters: boolean = false,
                             anyInstrumentDistorts: boolean = false,
+                            anyInstrumentClips: boolean = false,
                             anyInstrumentBitcrushes: boolean = false,
                             anyInstrumentGain: boolean = false,
                             anyInstrumentPans: boolean = false,
@@ -3133,6 +3140,7 @@ export class SongEditor {
                             allInstrumentDetunes: boolean = true,
                             allInstrumentVibratos: boolean = true,
                             allInstrumentDistorts: boolean = true,
+                            allInstrumentClips: boolean = true,
                             allInstrumentBitcrushes: boolean = true,
                             allInstrumentGain: boolean = true,
                             allInstrumentPans: boolean = true,
@@ -3191,6 +3199,12 @@ export class SongEditor {
                             }
                             else {
                                 allInstrumentDistorts = false;
+                            }
+                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.clipping)) {
+                                anyInstrumentClips = true;
+                            }
+                            else {
+                                allInstrumentClips = false;
                             }
                             if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.bitcrusher)) {
                                 anyInstrumentBitcrushes = true;
@@ -3326,6 +3340,14 @@ export class SongEditor {
                         }
                         if (!allInstrumentDistorts) {
                             unusedSettingList.push("+ distortion");
+                        }
+                        if (anyInstrumentClips) {
+                            settingList.push("clipping in-gain");
+                            settingList.push("clipping threshold");
+                        }
+                        if (!allInstrumentClips) {
+                            unusedSettingList.push("+ clipping in-gain");
+                            unusedSettingList.push("+ clipping threshold");
                         }
                         if (anyInstrumentBitcrushes) {
                             settingList.push("bit crush");
