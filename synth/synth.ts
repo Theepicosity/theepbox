@@ -5186,6 +5186,12 @@ export class Synth {
                     tempInstrumentSampleBufferR[sampleIndex] = 0.0;`
             }
 
+            effectsSource += `
+
+            sampleL *= attenuationVolume;
+            sampleR *= attenuationVolume;
+            `
+
 			for (let i: number = 0; i < instrumentState.effects.length; i++) {
                 let effectState: EffectState = instrumentState.effects[i] as EffectState
 
@@ -5646,8 +5652,8 @@ export class Synth {
 
             effectsSource += `
 
-                    outputDataL[sampleIndex] += sampleL * mixVolume * attenuationVolume;
-                    outputDataR[sampleIndex] += sampleR * mixVolume * attenuationVolume;
+                    outputDataL[sampleIndex] += sampleL * mixVolume;
+                    outputDataR[sampleIndex] += sampleR * mixVolume;
                     mixVolume += mixVolumeDelta;
                     attenuationVolume += attenuationVolumeDelta;`
 

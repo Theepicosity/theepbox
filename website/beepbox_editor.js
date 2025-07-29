@@ -24431,6 +24431,11 @@ li.select2-results__option[role=group] > strong:hover {
                     tempInstrumentSampleBufferL[sampleIndex] = 0.0;
                     tempInstrumentSampleBufferR[sampleIndex] = 0.0;`;
                 }
+                effectsSource += `
+
+            sampleL *= attenuationVolume;
+            sampleR *= attenuationVolume;
+            `;
                 for (let i = 0; i < instrumentState.effects.length; i++) {
                     let effectState = instrumentState.effects[i];
                     effectsSource += `
@@ -24887,8 +24892,8 @@ li.select2-results__option[role=group] > strong:hover {
                 }
                 effectsSource += `
 
-                    outputDataL[sampleIndex] += sampleL * mixVolume * attenuationVolume;
-                    outputDataR[sampleIndex] += sampleR * mixVolume * attenuationVolume;
+                    outputDataL[sampleIndex] += sampleL * mixVolume;
+                    outputDataR[sampleIndex] += sampleR * mixVolume;
                     mixVolume += mixVolumeDelta;
                     attenuationVolume += attenuationVolumeDelta;`;
                 if (usesDelays) {
