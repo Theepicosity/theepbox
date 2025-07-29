@@ -746,9 +746,9 @@ var beepbox = (function (exports) {
         { name: "extraterrestrial", voices: 6, spread: 15.2, offset: -6, expression: 0.35, sign: 0.7 },
         { name: "bow", voices: 9, spread: 0.006, offset: 0, expression: 0.15, sign: 0.5 }
     ]);
-    Config.effectNames = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "post eq", "echo", "ring mod", "granular", "gain", "flanger", "clipping"];
-    Config.effectDisplayNames = ["Reverb", "Chorus", "Panning", "Distortion", "Bitcrusher", "Post EQ", "Echo", "Ring Mod", "Granular", "Gain", "Flanger", "Clipping"];
-    Config.effectOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    Config.effectNames = ["bitcrusher", "chorus", "clipping", "distortion", "echo", "flanger", "gain", "granular", "panning", "post eq", "reverb", "ring mod"];
+    Config.effectDisplayNames = ["Bitcrusher", "Chorus", "Clipping", "Distortion", "Echo", "Flanger", "Gain", "Granular", "Panning", "Post EQ", "Reverb", "Ring Mod"];
+    Config.effectOrder = [4, 1, 11, 3, 6, 10, 9, 8, 2, 5, 0, 7];
     Config.mdeffectNames = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
     Config.mdeffectOrder = [3, 4, 0, 1, 2, 5];
     Config.noteSizeMax = 6;

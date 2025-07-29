@@ -760,9 +760,9 @@ var beepbox = (function (exports) {
         { name: "extraterrestrial", voices: 6, spread: 15.2, offset: -6, expression: 0.35, sign: 0.7 },
         { name: "bow", voices: 9, spread: 0.006, offset: 0, expression: 0.15, sign: 0.5 }
     ]);
-    Config.effectNames = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "post eq", "echo", "ring mod", "granular", "gain", "flanger", "clipping"];
-    Config.effectDisplayNames = ["Reverb", "Chorus", "Panning", "Distortion", "Bitcrusher", "Post EQ", "Echo", "Ring Mod", "Granular", "Gain", "Flanger", "Clipping"];
-    Config.effectOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    Config.effectNames = ["bitcrusher", "chorus", "clipping", "distortion", "echo", "flanger", "gain", "granular", "panning", "post eq", "reverb", "ring mod"];
+    Config.effectDisplayNames = ["Bitcrusher", "Chorus", "Clipping", "Distortion", "Echo", "Flanger", "Gain", "Granular", "Panning", "Post EQ", "Reverb", "Ring Mod"];
+    Config.effectOrder = [4, 1, 11, 3, 6, 10, 9, 8, 2, 5, 0, 7];
     Config.mdeffectNames = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
     Config.mdeffectOrder = [3, 4, 0, 1, 2, 5];
     Config.noteSizeMax = 6;
@@ -39809,7 +39809,7 @@ You should be redirected to the song at:<br /><br />
                     const movedownButton = HTML.button({ type: "button", class: "movedown-effect", style: "width: 16px; height: 70%; font-size: small; flex: 1; margin-left:0.2em;" }, "🞃");
                     const minimizeButton = HTML.button({ type: "button", class: "minimize-effect", style: "width: 16px; height: 70%; font-size: small; flex: 1; margin-left:0.2em;" }, "-");
                     const deleteButton = HTML.button({ type: "button", class: "delete-effect", style: "width: 16px; height: 70%; font-size: small; flex: 1; margin-left:0.2em;" }, "x");
-                    const effectButtonsText = HTML.div({ style: `width: 50%; color: ${ColorConfig.secondaryText};` }, Config.effectDisplayNames[effect.type]);
+                    const effectButtonsText = HTML.div({ style: `width: 50%; color: ${ColorConfig.secondaryText};` }, Config.effectDisplayNames[Config.effectOrder.indexOf(effect.type)]);
                     const chorusSlider = new Slider(HTML.input({ value: effect.chorus, type: "range", min: 0, max: Config.chorusRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeChorus(this._doc, effect, newValue), false);
                     const reverbSlider = new Slider(HTML.input({ value: effect.reverb, type: "range", min: 0, max: Config.reverbRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeReverb(this._doc, effect, newValue), false);
                     const flangerSlider = new Slider(HTML.input({ value: effect.flanger, type: "range", min: 0, max: Config.flangerRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeFlanger(this._doc, effect, newValue), false);
@@ -48659,14 +48659,12 @@ You should be redirected to the song at:<br /><br />
                     if (option.textContent != label)
                         option.textContent = label;
                 }
-                this._effectsSelect.selectedIndex = -1;
                 for (let i = this._effectsSelect.childElementCount - 1; i < Config.effectOrder.length; i++) {
                     this._effectsSelect.appendChild(option({ value: i }));
                 }
                 this._effectsSelect.selectedIndex = -1;
                 for (let i = 0; i < Config.effectOrder.length; i++) {
-                    let effectFlag = Config.effectOrder[i];
-                    const label = Config.effectNames[effectFlag];
+                    const label = Config.effectNames[i];
                     const option = this._effectsSelect.children[i + 1];
                     if (option.textContent != label)
                         option.textContent = label;

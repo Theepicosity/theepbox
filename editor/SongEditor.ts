@@ -2439,14 +2439,12 @@ export class SongEditor {
             if (option.textContent != label) option.textContent = label;
         }
 
-        this._effectsSelect.selectedIndex = -1;
         for (let i: number = this._effectsSelect.childElementCount - 1; i < Config.effectOrder.length; i++) {
             this._effectsSelect.appendChild(option({ value: i }));
         }
         this._effectsSelect.selectedIndex = -1;
         for (let i: number = 0; i < Config.effectOrder.length; i++) {
-            let effectFlag: number = Config.effectOrder[i];
-            const label: string = Config.effectNames[effectFlag];
+            const label: string = Config.effectNames[i];
             const option: HTMLOptionElement = <HTMLOptionElement>this._effectsSelect.children[i + 1];
             if (option.textContent != label) option.textContent = label;
         }

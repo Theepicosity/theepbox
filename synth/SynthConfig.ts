@@ -1223,13 +1223,14 @@ export class Config {
 		
         //for modbox; voices = riffapp, spread = intervals, offset = offsets, expression = volume, and sign = signs
     ]);
-    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "post eq", "echo", "ring mod", "granular", "gain", "flanger", "clipping"];
-    public static readonly effectDisplayNames: ReadonlyArray<string> = ["Reverb", "Chorus", "Panning", "Distortion", "Bitcrusher", "Post EQ", "Echo", "Ring Mod", "Granular", "Gain", "Flanger", "Clipping"];
-    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.reverb, EffectType.chorus, EffectType.panning, EffectType.distortion, EffectType.bitcrusher, EffectType.eqFilter,EffectType.echo,  EffectType.ringModulation, EffectType.granular, EffectType.gain, EffectType.flanger, EffectType.clipping];
-    public static readonly effectCount: 12
+    //i wanna have these in alphabetical order cuz the alphabet is cool!
+    public static readonly effectNames: ReadonlyArray<string> = ["bitcrusher", "chorus", "clipping", "distortion", "echo", "flanger", "gain", "granular", "panning", "post eq", "reverb", "ring mod" ];
+    public static readonly effectDisplayNames: ReadonlyArray<string> = ["Bitcrusher", "Chorus", "Clipping", "Distortion", "Echo", "Flanger", "Gain", "Granular", "Panning", "Post EQ", "Reverb", "Ring Mod" ];
+    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.bitcrusher, EffectType.chorus, EffectType.clipping, EffectType.distortion, EffectType.echo, EffectType.flanger, EffectType.gain, EffectType.granular, EffectType.panning, EffectType.eqFilter, EffectType.reverb, EffectType.ringModulation];
+    public static readonly effectCount: 12;
     public static readonly mdeffectNames: ReadonlyArray<string> = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
     public static readonly mdeffectOrder: ReadonlyArray<MDEffectType> = [MDEffectType.transition, MDEffectType.chord, MDEffectType.pitchShift, MDEffectType.detune, MDEffectType.vibrato, MDEffectType.noteRange];
-    public static readonly mdeffectCount: 6
+    public static readonly mdeffectCount: 6;
     public static readonly noteSizeMax: number = 6;
     public static readonly volumeRange: number = 100;
     // Beepbox's old volume scale used factor -0.5 and was [0~7] had roughly value 6 = 0.125 power. This new value is chosen to have -21 be the same,

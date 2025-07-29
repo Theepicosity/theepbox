@@ -191,7 +191,7 @@ export class EffectEditor {
 				const minimizeButton: HTMLButtonElement = HTML.button({ type: "button", class: "minimize-effect", style: "width: 16px; height: 70%; font-size: small; flex: 1; margin-left:0.2em;" }, "-");
 				const deleteButton: HTMLButtonElement = HTML.button({ type: "button", class: "delete-effect", style: "width: 16px; height: 70%; font-size: small; flex: 1; margin-left:0.2em;" }, "x");
 
-				const effectButtonsText: HTMLDivElement = HTML.div({ style: `width: 50%; color: ${ColorConfig.secondaryText};` }, Config.effectDisplayNames[effect.type]);
+				const effectButtonsText: HTMLDivElement = HTML.div({ style: `width: 50%; color: ${ColorConfig.secondaryText};` }, Config.effectDisplayNames[Config.effectOrder.indexOf(effect.type)]);
 
 				const chorusSlider: Slider = new Slider(HTML.input({ value: effect.chorus, type: "range", min: 0, max: Config.chorusRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeChorus(this._doc, effect, newValue), false);
 				const reverbSlider: Slider = new Slider(HTML.input({ value: effect.reverb, type: "range", min: 0, max: Config.reverbRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeReverb(this._doc, effect, newValue), false);
