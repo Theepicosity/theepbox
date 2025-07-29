@@ -758,6 +758,8 @@ var beepbox = (function (exports) {
     Config.panCenter = 50;
     Config.panMax = _a.panCenter * 2;
     Config.panDelaySecondsMax = 0.001;
+    Config.panModes = ["stereo", "split stereo", "mono"];
+    Config.clippingTypes = ["soft", "hard", "wavefold", "wavewrap"];
     Config.ringModRange = 8;
     Config.ringModHzRange = 64;
     Config.ringModMinHz = 20;
@@ -10981,7 +10983,9 @@ var beepbox = (function (exports) {
             this.tonesAddedInThisTick = false;
             this.flushingDelayLines = false;
             this.deactivateAfterThisTick = false;
-            this.attentuationProgress = 0.0;
+            this.attenuationProgress = 0.0;
+            this.attenuationVolume = 1.0;
+            this.attenuationVolumeDelta = 0.0;
             this.flushedSamples = 0;
             this.activeTones = new Deque();
             this.activeModTones = new Deque();
@@ -11046,7 +11050,7 @@ var beepbox = (function (exports) {
             this.awake = false;
             this.flushingDelayLines = false;
             this.deactivateAfterThisTick = false;
-            this.attentuationProgress = 0.0;
+            this.attenuationProgress = 0.0;
             this.flushedSamples = 0;
         }
         resetAllEffects() {
@@ -11128,27 +11132,37 @@ var beepbox = (function (exports) {
                 mixVolumeEnd *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, true)) / 100.0;
             }
             this.mixVolumeDelta = (mixVolumeEnd - this.mixVolume) / roundedSamplesPerTick;
+            let attenuationVolumeStart = 1.0;
+            let attenuationVolumeEnd = 1.0;
             let delayInputMultStart = 1.0;
             let delayInputMultEnd = 1.0;
             if (this.tonesAddedInThisTick) {
-                this.attentuationProgress = 0.0;
+                this.attenuationProgress = 0.0;
                 this.flushedSamples = 0;
                 this.flushingDelayLines = false;
             }
             else if (!this.flushingDelayLines) {
-                if (this.attentuationProgress == 0.0) ;
+                if (this.attenuationProgress == 0.0) {
+                    attenuationVolumeEnd = 0.0;
+                }
+                else {
+                    attenuationVolumeStart = 0.0;
+                    attenuationVolumeEnd = 0.0;
+                }
                 const secondsInTick = samplesPerTick / samplesPerSecond;
                 const progressInTick = secondsInTick / this.delayDuration;
-                const progressAtEndOfTick = this.attentuationProgress + progressInTick;
+                const progressAtEndOfTick = this.attenuationProgress + progressInTick;
                 if (progressAtEndOfTick >= 1.0) {
                     delayInputMultEnd = 0.0;
                 }
-                this.attentuationProgress = progressAtEndOfTick;
-                if (this.attentuationProgress >= 1.0) {
+                this.attenuationProgress = progressAtEndOfTick;
+                if (this.attenuationProgress >= 1.0) {
                     this.flushingDelayLines = true;
                 }
             }
             else {
+                attenuationVolumeStart = 0.0;
+                attenuationVolumeEnd = 0.0;
                 delayInputMultStart = 0.0;
                 delayInputMultEnd = 0.0;
                 this.flushedSamples += roundedSamplesPerTick;
@@ -11156,6 +11170,8 @@ var beepbox = (function (exports) {
                     this.deactivateAfterThisTick = true;
                 }
             }
+            this.attenuationVolume = attenuationVolumeStart;
+            this.attenuationVolumeDelta = (attenuationVolumeEnd - attenuationVolumeStart) / roundedSamplesPerTick;
             this.delayInputMult = delayInputMultStart;
             this.delayInputMultDelta = (delayInputMultEnd - delayInputMultStart) / roundedSamplesPerTick;
             this.envelopeComputer.clearEnvelopes();
@@ -15211,6 +15227,8 @@ var beepbox = (function (exports) {
 
             let mixVolume = +instrumentState.mixVolume;
             const mixVolumeDelta = +instrumentState.mixVolumeDelta;
+            let attenuationVolume = +instrumentState.attenuationVolume;
+            const attenuationVolumeDelta = +instrumentState.attenuationVolumeDelta;
             `;
                 if (usesDelays) {
                     effectsSource += `
@@ -15671,8 +15689,7 @@ var beepbox = (function (exports) {
                     initialFilterInputL1[effectIndex] = +effectState.initialEqFilterInputL1;
                     initialFilterInputR1[effectIndex] = +effectState.initialEqFilterInputR1;
                     initialFilterInputL2[effectIndex] = +effectState.initialEqFilterInputL2;
-                    initialFilterInputR2[effectIndex] = +effectState.initialEqFilterInputR2;`;
-                        effectsSource += `
+                    initialFilterInputR2[effectIndex] = +effectState.initialEqFilterInputR2;
 
                     eqFilterVolume[effectIndex] = +effectState.eqFilterVolume;
                     eqFilterVolumeDelta[effectIndex] = +effectState.eqFilterVolumeDelta;`;
@@ -16294,9 +16311,10 @@ var beepbox = (function (exports) {
                 }
                 effectsSource += `
 
-                    outputDataL[sampleIndex] += sampleL * mixVolume;
-                    outputDataR[sampleIndex] += sampleR * mixVolume;
-                    mixVolume += mixVolumeDelta;`;
+                    outputDataL[sampleIndex] += sampleL * mixVolume * attenuationVolume;
+                    outputDataR[sampleIndex] += sampleR * mixVolume * attenuationVolume;
+                    mixVolume += mixVolumeDelta;
+                    attenuationVolume += attenuationVolumeDelta;`;
                 if (usesDelays) {
                     effectsSource += `
 
@@ -16305,6 +16323,7 @@ var beepbox = (function (exports) {
                 effectsSource += `
                 }
 
+                instrumentState.attenuationVolume = attenuationVolume;
                 instrumentState.mixVolume = mixVolume;
 
                 // Avoid persistent denormal or NaN values in the delay buffers and filter history.

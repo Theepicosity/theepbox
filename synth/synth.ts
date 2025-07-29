@@ -4532,6 +4532,8 @@ export class Synth {
 
             let mixVolume = +instrumentState.mixVolume;
             const mixVolumeDelta = +instrumentState.mixVolumeDelta;
+            let attenuationVolume = +instrumentState.attenuationVolume;
+            const attenuationVolumeDelta = +instrumentState.attenuationVolumeDelta;
             `
 
             if (usesDelays) {
@@ -5018,10 +5020,7 @@ export class Synth {
                     initialFilterInputL1[effectIndex] = +effectState.initialEqFilterInputL1;
                     initialFilterInputR1[effectIndex] = +effectState.initialEqFilterInputR1;
                     initialFilterInputL2[effectIndex] = +effectState.initialEqFilterInputL2;
-                    initialFilterInputR2[effectIndex] = +effectState.initialEqFilterInputR2;`
-
-                    // this is *supposed* to always be included but it is rather inconvenient to do so...
-                    effectsSource += `
+                    initialFilterInputR2[effectIndex] = +effectState.initialEqFilterInputR2;
 
                     eqFilterVolume[effectIndex] = +effectState.eqFilterVolume;
                     eqFilterVolumeDelta[effectIndex] = +effectState.eqFilterVolumeDelta;`
@@ -5647,9 +5646,10 @@ export class Synth {
 
             effectsSource += `
 
-                    outputDataL[sampleIndex] += sampleL * mixVolume;
-                    outputDataR[sampleIndex] += sampleR * mixVolume;
-                    mixVolume += mixVolumeDelta;`
+                    outputDataL[sampleIndex] += sampleL * mixVolume * attenuationVolume;
+                    outputDataR[sampleIndex] += sampleR * mixVolume * attenuationVolume;
+                    mixVolume += mixVolumeDelta;
+                    attenuationVolume += attenuationVolumeDelta;`
 
             if (usesDelays) {
                 effectsSource += `
@@ -5660,6 +5660,7 @@ export class Synth {
             effectsSource += `
                 }
 
+                instrumentState.attenuationVolume = attenuationVolume;
                 instrumentState.mixVolume = mixVolume;
 
                 // Avoid persistent denormal or NaN values in the delay buffers and filter history.

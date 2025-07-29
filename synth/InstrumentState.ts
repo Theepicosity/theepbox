@@ -352,7 +352,9 @@ export class InstrumentState {
     public tonesAddedInThisTick: boolean = false; // Whether any instrument tones are currently active.
     public flushingDelayLines: boolean = false; // If no tones were active recently, enter a mode where the delay lines are filled with zeros to reset them for later use.
     public deactivateAfterThisTick: boolean = false; // Whether the instrument is ready to be deactivated because the delay lines, if any, are fully zeroed.
-    public attentuationProgress: number = 0.0; // How long since an active tone introduced an input signal to the delay lines, normalized from 0 to 1 based on how long to wait until the delay lines signal will have audibly dissapated.
+    public attenuationProgress: number = 0.0; // How long since an active tone introduced an input signal to the delay lines, normalized from 0 to 1 based on how long to wait until the delay lines signal will have audibly dissapated.
+    public attenuationVolume: number = 1.0; // Volume multiplier to fade out the instrument when it is done playing.
+    public attenuationVolumeDelta: number = 0.0;
     public flushedSamples: number = 0; // How many delay line samples have been flushed to zero.
     public readonly activeTones: Deque<Tone> = new Deque<Tone>();
     public readonly activeModTones: Deque<Tone> = new Deque<Tone>();
@@ -428,7 +430,7 @@ export class InstrumentState {
         this.awake = false;
         this.flushingDelayLines = false;
         this.deactivateAfterThisTick = false;
-        this.attentuationProgress = 0.0;
+        this.attenuationProgress = 0.0;
         this.flushedSamples = 0;
     }
 
@@ -527,11 +529,13 @@ export class InstrumentState {
 
         this.mixVolumeDelta = (mixVolumeEnd - this.mixVolume) / roundedSamplesPerTick;
 
+        let attenuationVolumeStart: number = 1.0;
+        let attenuationVolumeEnd: number = 1.0;
         let delayInputMultStart: number = 1.0;
         let delayInputMultEnd: number = 1.0;
 
         if (this.tonesAddedInThisTick) {
-            this.attentuationProgress = 0.0;
+            this.attenuationProgress = 0.0;
             this.flushedSamples = 0;
             this.flushingDelayLines = false;
         } else if (!this.flushingDelayLines) {
@@ -539,25 +543,27 @@ export class InstrumentState {
             // end of the first tick. It's possible for filters and the panning delay line to
             // continue past the end of the tone but they should have mostly dissipated by the
             // end of the tick anyway.
-            if (this.attentuationProgress == 0.0) {
-                //eqFilterVolumeEnd = 0.0;
+            if (this.attenuationProgress == 0.0) {
+                attenuationVolumeEnd = 0.0;
             } else {
-                //eqFilterVolumeStart = 0.0;
-                //eqFilterVolumeEnd = 0.0;
+                attenuationVolumeStart = 0.0;
+                attenuationVolumeEnd = 0.0;
             }
 
             const secondsInTick: number = samplesPerTick / samplesPerSecond;
             const progressInTick: number = secondsInTick / this.delayDuration;
-            const progressAtEndOfTick: number = this.attentuationProgress + progressInTick;
+            const progressAtEndOfTick: number = this.attenuationProgress + progressInTick;
             if (progressAtEndOfTick >= 1.0) {
                 delayInputMultEnd = 0.0;
             }
 
-            this.attentuationProgress = progressAtEndOfTick;
-            if (this.attentuationProgress >= 1.0) {
+            this.attenuationProgress = progressAtEndOfTick;
+            if (this.attenuationProgress >= 1.0) {
                 this.flushingDelayLines = true;
             }
         } else {
+            attenuationVolumeStart = 0.0;
+            attenuationVolumeEnd = 0.0;
             delayInputMultStart = 0.0;
             delayInputMultEnd = 0.0;
 
@@ -567,6 +573,8 @@ export class InstrumentState {
             }
         }
 
+        this.attenuationVolume = attenuationVolumeStart;
+        this.attenuationVolumeDelta = (attenuationVolumeEnd - attenuationVolumeStart) / roundedSamplesPerTick;
         this.delayInputMult = delayInputMultStart;
         this.delayInputMultDelta = (delayInputMultEnd - delayInputMultStart) / roundedSamplesPerTick;
 
