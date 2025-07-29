@@ -1240,6 +1240,8 @@ export class Config {
     public static readonly panCenter: number = 50;
     public static readonly panMax: number = Config.panCenter * 2;
     public static readonly panDelaySecondsMax: number = 0.001;
+    public static readonly panModes: ReadonlyArray<string> = ["stereo", "split stereo", "mono"];
+    public static readonly clippingTypes: ReadonlyArray<string> = ["soft", "hard", "wavefold", "wavewrap"];
     public static readonly ringModRange: number = 8;
     public static readonly ringModHzRange: number = 64;
     public static readonly ringModMinHz: number = 20;  
