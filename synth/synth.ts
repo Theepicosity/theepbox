@@ -5555,6 +5555,36 @@ export class Synth {
                     sampleR *= eqFilterVolume[effectIndex];
                     eqFilterVolume[effectIndex] += eqFilterVolumeDelta[effectIndex];`
 
+                    // the implementation of attenuation here, while consistent with beepbox, is
+                    // rather strange. Ideally, a chain like [reverb -> eq] should be identical to
+                    // a chain like [eq -> reverb], but because of the attenuation, it isn't. I've
+                    // been obsessing over this for the past twelve hours so I feel like I should
+                    // explain why.
+                    //
+                    // Firstly, why do we even need attenuation? The reason is because all filters
+                    // introduce extra delay, called "group delay." This causes audible ringing
+                    // after the input ends, which we generally don't want. For the types of filters
+                    // that beepbox uses, the delay is longer the more resonant the frequency is.
+                    // The group delay comes at a tradeoff with other characteristics of the filter,
+                    // and in general the more specific the filter is in the frequency domain, the
+                    // less specific it can be in the time domain. (i.e. filters with sharper
+                    // cutoffs have more ringing)
+                    //
+                    // This is where the attenuation comes in! After the note has finished, it will
+                    // cut off any extra delays that come after, which cleanly removes the ringing.
+                    // Unfortunately, it also removes delays we *do* want, such as reverb. In
+                    // Beepbox, this isn't a problem; the order of operations there goes roughly
+                    // [distortion etc. -> post eq -> attenuation -> reverb etc.], so that the
+                    // attenuation will always come after the eq and before the delays. In theepbox,
+                    // though, the effects can be in any order, and so the attenuation may come
+                    // after the delays. My compromise is to only attenuate if there hasn't already
+                    // been delays yet, so you get the attenuation as often as possible, but only
+                    // up to the point that it doesn't interfere with the other effects.
+                    //
+                    // In the future, I'd like to implement the Thiran filter (a filter with poor
+                    // frequency response but better impulse response) as well as adjustable Q
+                    // values so that you, as a musician, can evaluate the tradeoff yourself.
+
                     if (!hasUsedDelays) {
                         effectsSource += `
 

@@ -2178,6 +2178,13 @@ var beepbox = (function (exports) {
             this.b[1] = 0.0;
             this.order = 1;
         }
+        lowPass1stOrderThiran(cornerRadiansPerSample) {
+            const g = 1.0 / Math.tan(cornerRadiansPerSample * 0.5);
+            const a0 = 1.0 + g;
+            this.a[1] = (1.0 - g) / a0;
+            this.b[1] = this.b[0] = 1 / a0;
+            this.order = 1;
+        }
         highPass1stOrderButterworth(cornerRadiansPerSample) {
             const g = 1.0 / Math.tan(cornerRadiansPerSample * 0.5);
             const a0 = 1.0 + g;
@@ -2229,6 +2236,16 @@ var beepbox = (function (exports) {
             this.b[0] = g * g;
             this.b[1] = 0;
             this.b[2] = 0;
+            this.order = 2;
+        }
+        lowPass2ndOrderTest(cornerRadiansPerSample, peakLinearGain) {
+            const alpha = Math.sin(cornerRadiansPerSample) / (2.0 * peakLinearGain);
+            const cos = Math.cos(cornerRadiansPerSample);
+            const a0 = 1.0 + alpha;
+            this.a[1] = -2.0 * cos / a0;
+            this.a[2] = (1 - alpha) / a0;
+            this.b[2] = this.b[0] = (1 - cos) / (2.0 * a0);
+            this.b[1] = (1 - cos) / a0;
             this.order = 2;
         }
         highPass2ndOrderButterworth(cornerRadiansPerSample, peakLinearGain) {
@@ -2330,26 +2347,43 @@ var beepbox = (function (exports) {
             this.output2 = 0.0;
         }
         loadCoefficientsWithGradient(start, end, deltaRate, useMultiplicativeInputCoefficients) {
-            if (start.order != 2 || end.order != 2)
-                throw new Error();
-            this.a1 = start.a[1];
-            this.a2 = start.a[2];
-            this.b0 = start.b[0];
-            this.b1 = start.b[1];
-            this.b2 = start.b[2];
-            this.a1Delta = (end.a[1] - start.a[1]) * deltaRate;
-            this.a2Delta = (end.a[2] - start.a[2]) * deltaRate;
-            if (useMultiplicativeInputCoefficients) {
-                this.b0Delta = Math.pow(end.b[0] / start.b[0], deltaRate);
-                this.b1Delta = Math.pow(end.b[1] / start.b[1], deltaRate);
-                this.b2Delta = Math.pow(end.b[2] / start.b[2], deltaRate);
+            if (start.order != end.order)
+                throw new Error("start and end filters have different order");
+            if (start.order == 1) {
+                this.a1 = start.a[1];
+                this.b0 = start.b[0];
+                this.b1 = start.b[1];
+                this.a1Delta = (end.a[1] - start.a[1]) * deltaRate;
+                if (useMultiplicativeInputCoefficients) {
+                    this.b0Delta = Math.pow(end.b[0] / start.b[0], deltaRate);
+                    this.b1Delta = Math.pow(end.b[1] / start.b[1], deltaRate);
+                }
+                else {
+                    this.b0Delta = (end.b[0] - start.b[0]) * deltaRate;
+                    this.b1Delta = (end.b[1] - start.b[1]) * deltaRate;
+                }
+                this.useMultiplicativeInputCoefficients = useMultiplicativeInputCoefficients;
             }
-            else {
-                this.b0Delta = (end.b[0] - start.b[0]) * deltaRate;
-                this.b1Delta = (end.b[1] - start.b[1]) * deltaRate;
-                this.b2Delta = (end.b[2] - start.b[2]) * deltaRate;
+            else if (start.order == 2) {
+                this.a1 = start.a[1];
+                this.a2 = start.a[2];
+                this.b0 = start.b[0];
+                this.b1 = start.b[1];
+                this.b2 = start.b[2];
+                this.a1Delta = (end.a[1] - start.a[1]) * deltaRate;
+                this.a2Delta = (end.a[2] - start.a[2]) * deltaRate;
+                if (useMultiplicativeInputCoefficients) {
+                    this.b0Delta = Math.pow(end.b[0] / start.b[0], deltaRate);
+                    this.b1Delta = Math.pow(end.b[1] / start.b[1], deltaRate);
+                    this.b2Delta = Math.pow(end.b[2] / start.b[2], deltaRate);
+                }
+                else {
+                    this.b0Delta = (end.b[0] - start.b[0]) * deltaRate;
+                    this.b1Delta = (end.b[1] - start.b[1]) * deltaRate;
+                    this.b2Delta = (end.b[2] - start.b[2]) * deltaRate;
+                }
+                this.useMultiplicativeInputCoefficients = useMultiplicativeInputCoefficients;
             }
-            this.useMultiplicativeInputCoefficients = useMultiplicativeInputCoefficients;
         }
     }
     function warpInfinityToNyquist(radians) {

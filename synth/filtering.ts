@@ -500,24 +500,40 @@ export class DynamicBiquadFilter {
 	}
 	
 	public loadCoefficientsWithGradient(start: FilterCoefficients, end: FilterCoefficients, deltaRate: number, useMultiplicativeInputCoefficients: boolean): void {
-		if (start.order != 2 || end.order != 2) throw new Error();
-		this.a1 = start.a[1];
-		this.a2 = start.a[2];
-		this.b0 = start.b[0];
-		this.b1 = start.b[1];
-		this.b2 = start.b[2];
-		this.a1Delta = (end.a[1] - start.a[1]) * deltaRate;
-		this.a2Delta = (end.a[2] - start.a[2]) * deltaRate;
-		if (useMultiplicativeInputCoefficients) {
-			this.b0Delta = Math.pow(end.b[0] / start.b[0], deltaRate);
-			this.b1Delta = Math.pow(end.b[1] / start.b[1], deltaRate);
-			this.b2Delta = Math.pow(end.b[2] / start.b[2], deltaRate);
-		} else {
-			this.b0Delta = (end.b[0] - start.b[0]) * deltaRate;
-			this.b1Delta = (end.b[1] - start.b[1]) * deltaRate;
-			this.b2Delta = (end.b[2] - start.b[2]) * deltaRate;
+		if (start.order != end.order) throw new Error("start and end filters have different order");
+		if (start.order == 1) {
+			this.a1 = start.a[1];
+			this.b0 = start.b[0];
+			this.b1 = start.b[1];
+			this.a1Delta = (end.a[1] - start.a[1]) * deltaRate;
+			if (useMultiplicativeInputCoefficients) {
+				this.b0Delta = Math.pow(end.b[0] / start.b[0], deltaRate);
+				this.b1Delta = Math.pow(end.b[1] / start.b[1], deltaRate);
+			} else {
+				this.b0Delta = (end.b[0] - start.b[0]) * deltaRate;
+				this.b1Delta = (end.b[1] - start.b[1]) * deltaRate;
+			}
+			this.useMultiplicativeInputCoefficients = useMultiplicativeInputCoefficients;
 		}
-		this.useMultiplicativeInputCoefficients = useMultiplicativeInputCoefficients;
+		else if (start.order == 2) {
+			this.a1 = start.a[1];
+			this.a2 = start.a[2];
+			this.b0 = start.b[0];
+			this.b1 = start.b[1];
+			this.b2 = start.b[2];
+			this.a1Delta = (end.a[1] - start.a[1]) * deltaRate;
+			this.a2Delta = (end.a[2] - start.a[2]) * deltaRate;
+			if (useMultiplicativeInputCoefficients) {
+				this.b0Delta = Math.pow(end.b[0] / start.b[0], deltaRate);
+				this.b1Delta = Math.pow(end.b[1] / start.b[1], deltaRate);
+				this.b2Delta = Math.pow(end.b[2] / start.b[2], deltaRate);
+			} else {
+				this.b0Delta = (end.b[0] - start.b[0]) * deltaRate;
+				this.b1Delta = (end.b[1] - start.b[1]) * deltaRate;
+				this.b2Delta = (end.b[2] - start.b[2]) * deltaRate;
+			}
+			this.useMultiplicativeInputCoefficients = useMultiplicativeInputCoefficients;
+		}
 	}
 }
 
