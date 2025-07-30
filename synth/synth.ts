@@ -5186,19 +5186,17 @@ export class Synth {
                     tempInstrumentSampleBufferR[sampleIndex] = 0.0;`
             }
 
-            effectsSource += `
-
-            sampleL *= attenuationVolume;
-            sampleR *= attenuationVolume;
-            `
+            let hasUsedDelays: boolean = false;
 
 			for (let i: number = 0; i < instrumentState.effects.length; i++) {
-                let effectState: EffectState = instrumentState.effects[i] as EffectState
+                let effectState: EffectState = instrumentState.effects[i];
 
                 effectsSource += `
 
                 effectIndex = ` + i + `;
                 `
+
+                if (effectState.type == EffectType.chorus || effectState.type == EffectType.reverb || effectState.type == EffectType.echo || effectState.type == EffectType.granular || effectState.type == EffectType.flanger) hasUsedDelays = true;
 
                 if (usesBitcrusher && effectState.type == EffectType.bitcrusher) {
                     effectsSource += `
@@ -5556,6 +5554,14 @@ export class Synth {
                     sampleL *= eqFilterVolume[effectIndex];
                     sampleR *= eqFilterVolume[effectIndex];
                     eqFilterVolume[effectIndex] += eqFilterVolumeDelta[effectIndex];`
+
+                    if (!hasUsedDelays) {
+                        effectsSource += `
+
+                        sampleL *= attenuationVolume;
+                        sampleR *= attenuationVolume;
+                        `
+                    }
 				}
 				else if (usesRingModulation && effectState.type == EffectType.ringModulation) {
 					effectsSource += `

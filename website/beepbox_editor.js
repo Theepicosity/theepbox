@@ -24431,17 +24431,15 @@ li.select2-results__option[role=group] > strong:hover {
                     tempInstrumentSampleBufferL[sampleIndex] = 0.0;
                     tempInstrumentSampleBufferR[sampleIndex] = 0.0;`;
                 }
-                effectsSource += `
-
-            sampleL *= attenuationVolume;
-            sampleR *= attenuationVolume;
-            `;
+                let hasUsedDelays = false;
                 for (let i = 0; i < instrumentState.effects.length; i++) {
                     let effectState = instrumentState.effects[i];
                     effectsSource += `
 
                 effectIndex = ` + i + `;
                 `;
+                    if (effectState.type == 1 || effectState.type == 0 || effectState.type == 6 || effectState.type == 8 || effectState.type == 10)
+                        hasUsedDelays = true;
                     if (usesBitcrusher && effectState.type == 4) {
                         effectsSource += `
 
@@ -24797,6 +24795,13 @@ li.select2-results__option[role=group] > strong:hover {
                     sampleL *= eqFilterVolume[effectIndex];
                     sampleR *= eqFilterVolume[effectIndex];
                     eqFilterVolume[effectIndex] += eqFilterVolumeDelta[effectIndex];`;
+                        if (!hasUsedDelays) {
+                            effectsSource += `
+
+                        sampleL *= attenuationVolume;
+                        sampleR *= attenuationVolume;
+                        `;
+                        }
                     }
                     else if (usesRingModulation && effectState.type == 7) {
                         effectsSource += `
