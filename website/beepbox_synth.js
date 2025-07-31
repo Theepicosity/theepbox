@@ -1193,6 +1193,8 @@ var beepbox = (function (exports) {
         { name: "gain", computeIndex: 57, displayName: "gain", interleave: false, isFilter: false, maxCount: 1, effect: 9, mdeffect: null, compatibleInstruments: null },
         { name: "panning", computeIndex: 42, displayName: "panning", interleave: false, isFilter: false, maxCount: 1, effect: 2, mdeffect: null, compatibleInstruments: null },
         { name: "distortion", computeIndex: 43, displayName: "distortion", interleave: false, isFilter: false, maxCount: 1, effect: 3, mdeffect: null, compatibleInstruments: null },
+        { name: "clippingInGain", computeIndex: 62, displayName: "clipping in-gain", interleave: false, isFilter: false, maxCount: 1, effect: 11, mdeffect: null, compatibleInstruments: null },
+        { name: "clippingThreshold", computeIndex: 63, displayName: "clipping threshold", interleave: false, isFilter: false, maxCount: 1, effect: 11, mdeffect: null, compatibleInstruments: null },
         { name: "bitcrusherQuantization", computeIndex: 44, displayName: "bitcrush", interleave: false, isFilter: false, maxCount: 1, effect: 4, mdeffect: null, compatibleInstruments: null },
         { name: "bitcrusherFrequency", computeIndex: 45, displayName: "freq crush", interleave: false, isFilter: false, maxCount: 1, effect: 4, mdeffect: null, compatibleInstruments: null },
         { name: "flanger", computeIndex: 58, displayName: "flanger", interleave: false, isFilter: false, maxCount: 1, effect: 10, mdeffect: null, compatibleInstruments: null },
@@ -2178,13 +2180,6 @@ var beepbox = (function (exports) {
             this.b[1] = 0.0;
             this.order = 1;
         }
-        lowPass1stOrderThiran(cornerRadiansPerSample) {
-            const g = 1.0 / Math.tan(cornerRadiansPerSample * 0.5);
-            const a0 = 1.0 + g;
-            this.a[1] = (1.0 - g) / a0;
-            this.b[1] = this.b[0] = 1 / a0;
-            this.order = 1;
-        }
         highPass1stOrderButterworth(cornerRadiansPerSample) {
             const g = 1.0 / Math.tan(cornerRadiansPerSample * 0.5);
             const a0 = 1.0 + g;
@@ -2236,16 +2231,6 @@ var beepbox = (function (exports) {
             this.b[0] = g * g;
             this.b[1] = 0;
             this.b[2] = 0;
-            this.order = 2;
-        }
-        lowPass2ndOrderTest(cornerRadiansPerSample, peakLinearGain) {
-            const alpha = Math.sin(cornerRadiansPerSample) / (2.0 * peakLinearGain);
-            const cos = Math.cos(cornerRadiansPerSample);
-            const a0 = 1.0 + alpha;
-            this.a[1] = -2.0 * cos / a0;
-            this.a[2] = (1 - alpha) / a0;
-            this.b[2] = this.b[0] = (1 - cos) / (2.0 * a0);
-            this.b[1] = (1 - cos) / a0;
             this.order = 2;
         }
         highPass2ndOrderButterworth(cornerRadiansPerSample, peakLinearGain) {
@@ -9590,10 +9575,10 @@ var beepbox = (function (exports) {
                     useClippingThresholdStart = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, false);
                     useClippingThresholdEnd = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, true);
                 }
-                const clippingInGainStart = Math.pow(1 - (useClippingInGainStart / Config.distortionRange), 2.0);
-                const clippingInGainEnd = Math.pow(1 - (useClippingInGainEnd / Config.distortionRange), 2.0);
-                const clippingThresholdStart = Math.min(Config.gainRangeMult, useClippingThresholdStart / (Config.volumeRange + 1));
-                const clippingThresholdEnd = Math.min(Config.gainRangeMult, useClippingThresholdEnd / (Config.volumeRange + 1));
+                const clippingInGainStart = Math.pow(1 - (envelopeStarts[62] * useClippingInGainStart / Config.distortionRange), 2.0);
+                const clippingInGainEnd = Math.pow(1 - (envelopeStarts[62] * useClippingInGainEnd / Config.distortionRange), 2.0);
+                const clippingThresholdStart = Math.min(Config.gainRangeMult, envelopeStarts[63] * useClippingThresholdStart / (Config.volumeRange + 1));
+                const clippingThresholdEnd = Math.min(Config.gainRangeMult, envelopeStarts[63] * useClippingThresholdEnd / (Config.volumeRange + 1));
                 this.clippingInGain = clippingInGainStart;
                 this.clippingInGainDelta = (clippingInGainEnd - clippingInGainStart) / roundedSamplesPerTick;
                 this.clippingThreshold = clippingThresholdStart;
@@ -10183,7 +10168,7 @@ var beepbox = (function (exports) {
             this._modifiedEnvelopeIndices = [];
             this._modifiedEnvelopeCount = 0;
             this.lowpassCutoffDecayVolumeCompensation = 1.0;
-            const length = 62;
+            const length = 64;
             for (let i = 0; i < length; i++) {
                 this.envelopeStarts[i] = 1.0;
                 this.envelopeEnds[i] = 1.0;

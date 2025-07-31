@@ -166,6 +166,8 @@ export const enum EnvelopeComputeIndex {
     flangerSpeed,
     flangerDepth,
     flangerFeedback,
+    clippingInGain,
+    clippingThreshold,
     //Add more here
 
     length,
@@ -1770,6 +1772,8 @@ export class Config {
         { name: "gain", computeIndex: EnvelopeComputeIndex.gain, displayName: "gain",  /*perNote:  false,*/                  interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.gain, mdeffect: null, compatibleInstruments: null },
         { name: "panning", computeIndex: EnvelopeComputeIndex.panning, displayName: "panning",  /*perNote:  false,*/                  interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.panning, mdeffect: null, compatibleInstruments: null },
         { name: "distortion", computeIndex: EnvelopeComputeIndex.distortion, displayName: "distortion", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.distortion, mdeffect: null, compatibleInstruments: null },
+        { name: "clippingInGain", computeIndex: EnvelopeComputeIndex.clippingInGain, displayName: "clipping in-gain", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.clipping, mdeffect: null, compatibleInstruments: null },
+        { name: "clippingThreshold", computeIndex: EnvelopeComputeIndex.clippingThreshold, displayName: "clipping threshold", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.clipping, mdeffect: null, compatibleInstruments: null },
         { name: "bitcrusherQuantization", computeIndex: EnvelopeComputeIndex.bitcrusherQuantization, displayName: "bitcrush", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.bitcrusher, mdeffect: null, compatibleInstruments: null },
         { name: "bitcrusherFrequency", computeIndex: EnvelopeComputeIndex.bitcrusherFrequency, displayName: "freq crush", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.bitcrusher, mdeffect: null, compatibleInstruments: null },
         { name: "flanger", computeIndex: EnvelopeComputeIndex.flanger, displayName: "flanger", /*perNote:  false,*/                      interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.flanger, mdeffect: null, compatibleInstruments: null },

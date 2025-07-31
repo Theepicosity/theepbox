@@ -511,10 +511,10 @@ export class EffectState {
 				useClippingThresholdEnd = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, true);
 			}
 
-			const clippingInGainStart: number = Math.pow(1 - (useClippingInGainStart / Config.distortionRange), 2.0);
-			const clippingInGainEnd: number = Math.pow(1 - (useClippingInGainEnd / Config.distortionRange), 2.0);
-			const clippingThresholdStart: number = Math.min(Config.gainRangeMult, useClippingThresholdStart / (Config.volumeRange + 1));
-			const clippingThresholdEnd: number = Math.min(Config.gainRangeMult, useClippingThresholdEnd / (Config.volumeRange + 1));
+			const clippingInGainStart: number = Math.pow(1 - (envelopeStarts[EnvelopeComputeIndex.clippingInGain] * useClippingInGainStart / Config.distortionRange), 2.0);
+			const clippingInGainEnd: number = Math.pow(1 - (envelopeStarts[EnvelopeComputeIndex.clippingInGain] * useClippingInGainEnd / Config.distortionRange), 2.0);
+			const clippingThresholdStart: number = Math.min(Config.gainRangeMult, envelopeStarts[EnvelopeComputeIndex.clippingThreshold] * useClippingThresholdStart / (Config.volumeRange + 1));
+			const clippingThresholdEnd: number = Math.min(Config.gainRangeMult, envelopeStarts[EnvelopeComputeIndex.clippingThreshold] * useClippingThresholdEnd / (Config.volumeRange + 1));
 
 			this.clippingInGain = clippingInGainStart;
 			this.clippingInGainDelta = (clippingInGainEnd - clippingInGainStart) / roundedSamplesPerTick;
