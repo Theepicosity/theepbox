@@ -529,6 +529,8 @@ var beepbox = (function (exports) {
     Config.reverbShelfHz = 8000.0;
     Config.reverbShelfGain = Math.pow(2.0, -1.5);
     Config.reverbRange = 32;
+    Config.reverbWetDryMixRange = 24;
+    Config.reverbSendRange = 24;
     Config.reverbDelayBufferSize = 16384;
     Config.reverbDelayBufferMask = _a.reverbDelayBufferSize - 1;
     Config.beatsPerBarMin = 1;
@@ -1204,6 +1206,8 @@ var beepbox = (function (exports) {
         { name: "chorus", computeIndex: 46, displayName: "chorus", interleave: false, isFilter: false, maxCount: 1, effect: 1, mdeffect: null, compatibleInstruments: null },
         { name: "echoSustain", computeIndex: 47, displayName: "echo", interleave: false, isFilter: false, maxCount: 1, effect: 6, mdeffect: null, compatibleInstruments: null },
         { name: "reverb", computeIndex: 48, displayName: "reverb", interleave: false, isFilter: false, maxCount: 1, effect: 0, mdeffect: null, compatibleInstruments: null },
+        { name: "reverbWetDryMix", computeIndex: 64, displayName: "reverb wet/dry", interleave: false, isFilter: false, maxCount: 1, effect: 0, mdeffect: null, compatibleInstruments: null },
+        { name: "reverbSend", computeIndex: 65, displayName: "reverb send", interleave: false, isFilter: false, maxCount: 1, effect: 0, mdeffect: null, compatibleInstruments: null },
         { name: "arpeggioSpeed", computeIndex: 49, displayName: "arpeggio speed", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: 4, compatibleInstruments: null },
         { name: "ringModulation", computeIndex: 50, displayName: "ring mod", interleave: false, isFilter: false, maxCount: 1, effect: 7, mdeffect: null, compatibleInstruments: null },
         { name: "ringModulationHz", computeIndex: 51, displayName: "ring mod hz", interleave: false, isFilter: false, maxCount: 1, effect: 7, mdeffect: null, compatibleInstruments: null },
@@ -1255,6 +1259,10 @@ var beepbox = (function (exports) {
             promptName: "Instrument Panning", promptDesc: ["This setting controls the panning of your instrument, just like the panning slider.", "At $LO, your instrument will sound like it is coming fully from the left-ear side. At $MID it will be right in the middle, and at $HI, it will sound like it's on the right.", "[OVERWRITING] [$LO - $HI] [L-R]"] },
         { name: "reverb", pianoName: "Reverb", maxRawVol: _a.reverbRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 0, associatedMDEffect: 6, maxIndex: 0,
             promptName: "Instrument Reverb", promptDesc: ["This setting controls the reverb of your insturment, just like the reverb slider.", "At $LO, your instrument will have no reverb. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
+        { name: "reverb wet/dry", pianoName: "Reverb Wet/Dry", maxRawVol: _a.reverbWetDryMixRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 0, associatedMDEffect: 6, maxIndex: 0,
+            promptName: "Reverb Wet/Dry", promptDesc: ["This setting controls the wet/dry mix of the instrument reverb.", "At $LO, 100% of the original instrument will come through. At $HI, only the effect will come through.", "[OVERWRITING] [$LO - $HI]"] },
+        { name: "reverb send", pianoName: "Reverb Send", maxRawVol: _a.reverbSendRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 0, associatedMDEffect: 6, maxIndex: 0,
+            promptName: "Instrument Reverb", promptDesc: ["This setting controls the send of the instrument reverb.", "At $LO, the instrument will not have any reverb, and at $HI, the instrument will receive maximum reverb.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "distortion", pianoName: "Distortion", maxRawVol: _a.distortionRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 3, associatedMDEffect: 6, maxIndex: 0,
             promptName: "Instrument Distortion", promptDesc: ["This setting controls the amount of distortion for your instrument, just like the distortion slider.", "At $LO, your instrument will have no distortion. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "clipping in-gain", pianoName: "Clip In-Gain", maxRawVol: _a.distortionRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 11, associatedMDEffect: 6, maxIndex: 0,
@@ -2907,8 +2915,6 @@ var beepbox = (function (exports) {
     class Effect {
         constructor(type) {
             this.type = 0;
-            this.wetDryMix = 0.5;
-            this.send = 1;
             this.eqFilter = new FilterSettings();
             this.eqFilterType = false;
             this.eqFilterSimpleCut = Config.filterSimpleCutRange - 1;
@@ -2940,6 +2946,8 @@ var beepbox = (function (exports) {
             this.flangerFeedback = 0;
             this.chorus = 0;
             this.reverb = 0;
+            this.reverbWetDryMix = Config.reverbWetDryMixRange / 2.0;
+            this.reverbSend = Config.reverbSendRange;
             this.echoSustain = 0;
             this.echoDelay = 11;
             this.echoPingPong = Config.panCenter;
@@ -5317,6 +5325,8 @@ var beepbox = (function (exports) {
                         }
                         else if (effect.type == 0) {
                             buffer.push(base64IntToCharCode[effect.reverb]);
+                            buffer.push(base64IntToCharCode[effect.reverbWetDryMix]);
+                            buffer.push(base64IntToCharCode[effect.reverbSend]);
                         }
                         else if (effect.type == 8) {
                             buffer.push(base64IntToCharCode[effect.granular]);
@@ -7058,6 +7068,14 @@ var beepbox = (function (exports) {
                                             }
                                             else {
                                                 newEffect.reverb = clamp(0, Config.reverbRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                            }
+                                            if (fromTheepBox) {
+                                                newEffect.reverbWetDryMix = clamp(0, Config.reverbWetDryMixRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                newEffect.reverbSend = clamp(0, Config.reverbSendRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                            }
+                                            else {
+                                                newEffect.reverbWetDryMix = Config.reverbWetDryMixRange / 2.0;
+                                                newEffect.reverbSend = Config.reverbSendRange;
                                             }
                                         }
                                         if (newEffect.type == 8) {
@@ -9312,6 +9330,10 @@ var beepbox = (function (exports) {
             this.reverbShelfPrevInput1 = 0.0;
             this.reverbShelfPrevInput2 = 0.0;
             this.reverbShelfPrevInput3 = 0.0;
+            this.reverbWetDryMult = 0.0;
+            this.reverbWetDryMultDelta = 0.0;
+            this.reverbSendMult = 0.0;
+            this.reverbSendMultDelta = 0.0;
             this.type = type;
             this.granularGrains = [];
             this.granularMaximumGrains = 256;
@@ -9900,8 +9922,16 @@ var beepbox = (function (exports) {
             if (usesReverb) {
                 const reverbEnvelopeStart = envelopeStarts[48];
                 const reverbEnvelopeEnd = envelopeEnds[48];
+                const reverbWetDryMixEnvelopeStart = envelopeStarts[64];
+                const reverbWetDryMixEnvelopeEnd = envelopeEnds[64];
+                const reverbSendEnvelopeStart = envelopeStarts[65];
+                const reverbSendEnvelopeEnd = envelopeEnds[65];
                 let useReverbStart = effect.reverb;
                 let useReverbEnd = effect.reverb;
+                let useReverbWetDryMixStart = effect.reverbWetDryMix;
+                let useReverbWetDryMixEnd = effect.reverbWetDryMix;
+                let useReverbSendStart = effect.reverbSend;
+                let useReverbSendEnd = effect.reverbSend;
                 if (synth.isModActive(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex)) {
                     useReverbStart = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, false);
                     useReverbEnd = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, true);
@@ -9910,10 +9940,26 @@ var beepbox = (function (exports) {
                     useReverbStart *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, false) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
                     useReverbEnd *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, true) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
                 }
+                if (synth.isModActive(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex)) {
+                    useReverbWetDryMixStart = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, false);
+                    useReverbWetDryMixEnd = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, true);
+                }
+                if (synth.isModActive(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex)) {
+                    useReverbSendStart = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, false);
+                    useReverbSendEnd = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, true);
+                }
                 const reverbStart = Math.min(1.0, Math.pow(reverbEnvelopeStart * useReverbStart / Config.reverbRange, 0.667)) * 0.425;
                 const reverbEnd = Math.min(1.0, Math.pow(reverbEnvelopeEnd * useReverbEnd / Config.reverbRange, 0.667)) * 0.425;
+                const reverbWetDryMixStart = reverbWetDryMixEnvelopeStart * useReverbWetDryMixStart / Config.reverbWetDryMixRange * 2.0;
+                const reverbWetDryMixEnd = reverbWetDryMixEnvelopeEnd * useReverbWetDryMixEnd / Config.reverbWetDryMixRange * 2.0;
+                const reverbSendStart = reverbSendEnvelopeStart * useReverbSendStart / Config.reverbSendRange;
+                const reverbSendEnd = reverbSendEnvelopeEnd * useReverbSendEnd / Config.reverbSendRange;
                 this.reverbMult = reverbStart;
                 this.reverbMultDelta = (reverbEnd - reverbStart) / roundedSamplesPerTick;
+                this.reverbWetDryMult = reverbWetDryMixStart;
+                this.reverbWetDryMultDelta = (reverbWetDryMixEnd - reverbWetDryMixStart) / roundedSamplesPerTick;
+                this.reverbSendMult = reverbSendStart;
+                this.reverbSendMultDelta = (reverbSendEnd - reverbSendStart) / roundedSamplesPerTick;
                 maxReverbMult = Math.max(reverbStart, reverbEnd);
                 const shelfRadians = 2.0 * Math.PI * Config.reverbShelfHz / synth.samplesPerSecond;
                 Synth.tempFilterStartCoefficients.highShelf1stOrder(shelfRadians, Config.reverbShelfGain);
@@ -10168,7 +10214,7 @@ var beepbox = (function (exports) {
             this._modifiedEnvelopeIndices = [];
             this._modifiedEnvelopeCount = 0;
             this.lowpassCutoffDecayVolumeCompensation = 1.0;
-            const length = 64;
+            const length = 66;
             for (let i = 0; i < length; i++) {
                 this.envelopeStarts[i] = 1.0;
                 this.envelopeEnds[i] = 1.0;
@@ -15511,6 +15557,10 @@ var beepbox = (function (exports) {
 
                 let reverb = [];
                 let reverbDelta = [];
+                let reverbWetDryMult = [];
+                let reverbWetDryMultDelta = [];
+                let reverbSendMult = [];
+                let reverbSendMultDelta = [];
 
                 let reverbShelfA1 = [];
                 let reverbShelfB0 = [];
@@ -15824,6 +15874,10 @@ var beepbox = (function (exports) {
 
                     reverb[effectIndex] = +effectState.reverbMult;
                     reverbDelta[effectIndex] = +effectState.reverbMultDelta;
+                    reverbWetDryMult[effectIndex] = +effectState.reverbWetDryMult;
+                    reverbWetDryMultDelta[effectIndex] = +effectState.reverbWetDryMultDelta;
+                    reverbSendMult[effectIndex] = +effectState.reverbSendMult;
+                    reverbSendMultDelta[effectIndex] = +effectState.reverbSendMultDelta;
 
                     reverbShelfA1[effectIndex] = +effectState.reverbShelfA1;
                     reverbShelfB0[effectIndex] = +effectState.reverbShelfB0;
@@ -16197,8 +16251,8 @@ var beepbox = (function (exports) {
                     reverbSample1[effectIndex] = reverbDelayLine[effectIndex][reverbDelayPos1[effectIndex]];
                     reverbSample2[effectIndex] = reverbDelayLine[effectIndex][reverbDelayPos2[effectIndex]];
                     reverbSample3[effectIndex] = reverbDelayLine[effectIndex][reverbDelayPos3[effectIndex]];
-                    reverbTemp0[effectIndex] = -(reverbSample0[effectIndex] + sampleL) + reverbSample1[effectIndex];
-                    reverbTemp1[effectIndex] = -(reverbSample0[effectIndex] + sampleR) - reverbSample1[effectIndex];
+                    reverbTemp0[effectIndex] = -(reverbSample0[effectIndex] + sampleL * reverbSendMult[effectIndex]) + reverbSample1[effectIndex];
+                    reverbTemp1[effectIndex] = -(reverbSample0[effectIndex] + sampleR * reverbSendMult[effectIndex]) - reverbSample1[effectIndex];
                     reverbTemp2[effectIndex] = -reverbSample2[effectIndex] + reverbSample3[effectIndex];
                     reverbTemp3[effectIndex] = -reverbSample2[effectIndex] - reverbSample3[effectIndex];
                     reverbShelfInput0[effectIndex] = (reverbTemp0[effectIndex] + reverbTemp2[effectIndex]) * reverb[effectIndex];
@@ -16218,9 +16272,11 @@ var beepbox = (function (exports) {
                     reverbDelayLine[effectIndex][reverbDelayPos3[effectIndex]] = reverbShelfSample2[effectIndex] * delayInputMult;
                     reverbDelayLine[effectIndex][reverbDelayPos[effectIndex] ] = reverbShelfSample3[effectIndex] * delayInputMult;
                     reverbDelayPos[effectIndex] = (reverbDelayPos[effectIndex] + 1) & reverbMask;
-                    sampleL += reverbSample1[effectIndex] + reverbSample2[effectIndex] + reverbSample3[effectIndex];
-                    sampleR += reverbSample0[effectIndex] + reverbSample2[effectIndex] - reverbSample3[effectIndex];
-                    reverb[effectIndex] += reverbDelta[effectIndex];`;
+                    sampleL = sampleL * Math.min(1.0, 2.0-reverbWetDryMult[effectIndex]) + (reverbSample1[effectIndex] + reverbSample2[effectIndex] + reverbSample3[effectIndex]) * Math.min(1.0, reverbWetDryMult[effectIndex]);
+                    sampleR = sampleR * Math.min(1.0, 2.0-reverbWetDryMult[effectIndex]) + (reverbSample0[effectIndex] + reverbSample2[effectIndex] - reverbSample3[effectIndex]) * Math.min(1.0, reverbWetDryMult[effectIndex]);
+                    reverb[effectIndex] += reverbDelta[effectIndex];
+                    reverbWetDryMult[effectIndex] += reverbWetDryMultDelta[effectIndex];
+                    reverbSendMult[effectIndex] += reverbSendMultDelta[effectIndex];`;
                     }
                     else if (usesEqFilter && effectState.type == 5) {
                         effectsSource += `
@@ -16528,6 +16584,8 @@ var beepbox = (function (exports) {
                     Synth.sanitizeDelayLine(reverbDelayLine[effectIndex], reverbDelayPos[effectIndex] + 10907, reverbMask);
                     effectState.reverbDelayPos = reverbDelayPos[effectIndex];
                     effectState.reverbMult = reverb[effectIndex];
+                    effectState.reverbWetDryMult = reverbWetDryMult[effectIndex];
+                    effectState.reverbSendMult = reverbSendMult[effectIndex];
 
                     if (!Number.isFinite(reverbShelfSample0[effectIndex]) || Math.abs(reverbShelfSample0[effectIndex]) < epsilon) reverbShelfSample0[effectIndex] = 0.0;
                     if (!Number.isFinite(reverbShelfSample1[effectIndex]) || Math.abs(reverbShelfSample1[effectIndex]) < epsilon) reverbShelfSample1[effectIndex] = 0.0;

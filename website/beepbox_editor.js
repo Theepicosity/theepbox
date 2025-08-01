@@ -543,6 +543,8 @@ var beepbox = (function (exports) {
     Config.reverbShelfHz = 8000.0;
     Config.reverbShelfGain = Math.pow(2.0, -1.5);
     Config.reverbRange = 32;
+    Config.reverbWetDryMixRange = 24;
+    Config.reverbSendRange = 24;
     Config.reverbDelayBufferSize = 16384;
     Config.reverbDelayBufferMask = _a$1.reverbDelayBufferSize - 1;
     Config.beatsPerBarMin = 1;
@@ -1218,6 +1220,8 @@ var beepbox = (function (exports) {
         { name: "chorus", computeIndex: 46, displayName: "chorus", interleave: false, isFilter: false, maxCount: 1, effect: 1, mdeffect: null, compatibleInstruments: null },
         { name: "echoSustain", computeIndex: 47, displayName: "echo", interleave: false, isFilter: false, maxCount: 1, effect: 6, mdeffect: null, compatibleInstruments: null },
         { name: "reverb", computeIndex: 48, displayName: "reverb", interleave: false, isFilter: false, maxCount: 1, effect: 0, mdeffect: null, compatibleInstruments: null },
+        { name: "reverbWetDryMix", computeIndex: 64, displayName: "reverb wet/dry", interleave: false, isFilter: false, maxCount: 1, effect: 0, mdeffect: null, compatibleInstruments: null },
+        { name: "reverbSend", computeIndex: 65, displayName: "reverb send", interleave: false, isFilter: false, maxCount: 1, effect: 0, mdeffect: null, compatibleInstruments: null },
         { name: "arpeggioSpeed", computeIndex: 49, displayName: "arpeggio speed", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: 4, compatibleInstruments: null },
         { name: "ringModulation", computeIndex: 50, displayName: "ring mod", interleave: false, isFilter: false, maxCount: 1, effect: 7, mdeffect: null, compatibleInstruments: null },
         { name: "ringModulationHz", computeIndex: 51, displayName: "ring mod hz", interleave: false, isFilter: false, maxCount: 1, effect: 7, mdeffect: null, compatibleInstruments: null },
@@ -1269,6 +1273,10 @@ var beepbox = (function (exports) {
             promptName: "Instrument Panning", promptDesc: ["This setting controls the panning of your instrument, just like the panning slider.", "At $LO, your instrument will sound like it is coming fully from the left-ear side. At $MID it will be right in the middle, and at $HI, it will sound like it's on the right.", "[OVERWRITING] [$LO - $HI] [L-R]"] },
         { name: "reverb", pianoName: "Reverb", maxRawVol: _a$1.reverbRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 0, associatedMDEffect: 6, maxIndex: 0,
             promptName: "Instrument Reverb", promptDesc: ["This setting controls the reverb of your insturment, just like the reverb slider.", "At $LO, your instrument will have no reverb. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
+        { name: "reverb wet/dry", pianoName: "Reverb Wet/Dry", maxRawVol: _a$1.reverbWetDryMixRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 0, associatedMDEffect: 6, maxIndex: 0,
+            promptName: "Reverb Wet/Dry", promptDesc: ["This setting controls the wet/dry mix of the instrument reverb.", "At $LO, 100% of the original instrument will come through. At $HI, only the effect will come through.", "[OVERWRITING] [$LO - $HI]"] },
+        { name: "reverb send", pianoName: "Reverb Send", maxRawVol: _a$1.reverbSendRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 0, associatedMDEffect: 6, maxIndex: 0,
+            promptName: "Instrument Reverb", promptDesc: ["This setting controls the send of the instrument reverb.", "At $LO, the instrument will not have any reverb, and at $HI, the instrument will receive maximum reverb.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "distortion", pianoName: "Distortion", maxRawVol: _a$1.distortionRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 3, associatedMDEffect: 6, maxIndex: 0,
             promptName: "Instrument Distortion", promptDesc: ["This setting controls the amount of distortion for your instrument, just like the distortion slider.", "At $LO, your instrument will have no distortion. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "clipping in-gain", pianoName: "Clip In-Gain", maxRawVol: _a$1.distortionRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 11, associatedMDEffect: 6, maxIndex: 0,
@@ -11483,8 +11491,6 @@ li.select2-results__option[role=group] > strong:hover {
     class Effect {
         constructor(type) {
             this.type = 0;
-            this.wetDryMix = 0.5;
-            this.send = 1;
             this.eqFilter = new FilterSettings();
             this.eqFilterType = false;
             this.eqFilterSimpleCut = Config.filterSimpleCutRange - 1;
@@ -11516,6 +11522,8 @@ li.select2-results__option[role=group] > strong:hover {
             this.flangerFeedback = 0;
             this.chorus = 0;
             this.reverb = 0;
+            this.reverbWetDryMix = Config.reverbWetDryMixRange / 2.0;
+            this.reverbSend = Config.reverbSendRange;
             this.echoSustain = 0;
             this.echoDelay = 11;
             this.echoPingPong = Config.panCenter;
@@ -13893,6 +13901,8 @@ li.select2-results__option[role=group] > strong:hover {
                         }
                         else if (effect.type == 0) {
                             buffer.push(base64IntToCharCode[effect.reverb]);
+                            buffer.push(base64IntToCharCode[effect.reverbWetDryMix]);
+                            buffer.push(base64IntToCharCode[effect.reverbSend]);
                         }
                         else if (effect.type == 8) {
                             buffer.push(base64IntToCharCode[effect.granular]);
@@ -15634,6 +15644,14 @@ li.select2-results__option[role=group] > strong:hover {
                                             }
                                             else {
                                                 newEffect.reverb = clamp(0, Config.reverbRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                            }
+                                            if (fromTheepBox) {
+                                                newEffect.reverbWetDryMix = clamp(0, Config.reverbWetDryMixRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                newEffect.reverbSend = clamp(0, Config.reverbSendRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                            }
+                                            else {
+                                                newEffect.reverbWetDryMix = Config.reverbWetDryMixRange / 2.0;
+                                                newEffect.reverbSend = Config.reverbSendRange;
                                             }
                                         }
                                         if (newEffect.type == 8) {
@@ -17888,6 +17906,10 @@ li.select2-results__option[role=group] > strong:hover {
             this.reverbShelfPrevInput1 = 0.0;
             this.reverbShelfPrevInput2 = 0.0;
             this.reverbShelfPrevInput3 = 0.0;
+            this.reverbWetDryMult = 0.0;
+            this.reverbWetDryMultDelta = 0.0;
+            this.reverbSendMult = 0.0;
+            this.reverbSendMultDelta = 0.0;
             this.type = type;
             this.granularGrains = [];
             this.granularMaximumGrains = 256;
@@ -18476,8 +18498,16 @@ li.select2-results__option[role=group] > strong:hover {
             if (usesReverb) {
                 const reverbEnvelopeStart = envelopeStarts[48];
                 const reverbEnvelopeEnd = envelopeEnds[48];
+                const reverbWetDryMixEnvelopeStart = envelopeStarts[64];
+                const reverbWetDryMixEnvelopeEnd = envelopeEnds[64];
+                const reverbSendEnvelopeStart = envelopeStarts[65];
+                const reverbSendEnvelopeEnd = envelopeEnds[65];
                 let useReverbStart = effect.reverb;
                 let useReverbEnd = effect.reverb;
+                let useReverbWetDryMixStart = effect.reverbWetDryMix;
+                let useReverbWetDryMixEnd = effect.reverbWetDryMix;
+                let useReverbSendStart = effect.reverbSend;
+                let useReverbSendEnd = effect.reverbSend;
                 if (synth.isModActive(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex)) {
                     useReverbStart = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, false);
                     useReverbEnd = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, true);
@@ -18486,10 +18516,26 @@ li.select2-results__option[role=group] > strong:hover {
                     useReverbStart *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, false) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
                     useReverbEnd *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, true) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
                 }
+                if (synth.isModActive(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex)) {
+                    useReverbWetDryMixStart = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, false);
+                    useReverbWetDryMixEnd = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, true);
+                }
+                if (synth.isModActive(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex)) {
+                    useReverbSendStart = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, false);
+                    useReverbSendEnd = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, true);
+                }
                 const reverbStart = Math.min(1.0, Math.pow(reverbEnvelopeStart * useReverbStart / Config.reverbRange, 0.667)) * 0.425;
                 const reverbEnd = Math.min(1.0, Math.pow(reverbEnvelopeEnd * useReverbEnd / Config.reverbRange, 0.667)) * 0.425;
+                const reverbWetDryMixStart = reverbWetDryMixEnvelopeStart * useReverbWetDryMixStart / Config.reverbWetDryMixRange * 2.0;
+                const reverbWetDryMixEnd = reverbWetDryMixEnvelopeEnd * useReverbWetDryMixEnd / Config.reverbWetDryMixRange * 2.0;
+                const reverbSendStart = reverbSendEnvelopeStart * useReverbSendStart / Config.reverbSendRange;
+                const reverbSendEnd = reverbSendEnvelopeEnd * useReverbSendEnd / Config.reverbSendRange;
                 this.reverbMult = reverbStart;
                 this.reverbMultDelta = (reverbEnd - reverbStart) / roundedSamplesPerTick;
+                this.reverbWetDryMult = reverbWetDryMixStart;
+                this.reverbWetDryMultDelta = (reverbWetDryMixEnd - reverbWetDryMixStart) / roundedSamplesPerTick;
+                this.reverbSendMult = reverbSendStart;
+                this.reverbSendMultDelta = (reverbSendEnd - reverbSendStart) / roundedSamplesPerTick;
                 maxReverbMult = Math.max(reverbStart, reverbEnd);
                 const shelfRadians = 2.0 * Math.PI * Config.reverbShelfHz / synth.samplesPerSecond;
                 Synth.tempFilterStartCoefficients.highShelf1stOrder(shelfRadians, Config.reverbShelfGain);
@@ -18744,7 +18790,7 @@ li.select2-results__option[role=group] > strong:hover {
             this._modifiedEnvelopeIndices = [];
             this._modifiedEnvelopeCount = 0;
             this.lowpassCutoffDecayVolumeCompensation = 1.0;
-            const length = 64;
+            const length = 66;
             for (let i = 0; i < length; i++) {
                 this.envelopeStarts[i] = 1.0;
                 this.envelopeEnds[i] = 1.0;
@@ -24087,6 +24133,10 @@ li.select2-results__option[role=group] > strong:hover {
 
                 let reverb = [];
                 let reverbDelta = [];
+                let reverbWetDryMult = [];
+                let reverbWetDryMultDelta = [];
+                let reverbSendMult = [];
+                let reverbSendMultDelta = [];
 
                 let reverbShelfA1 = [];
                 let reverbShelfB0 = [];
@@ -24400,6 +24450,10 @@ li.select2-results__option[role=group] > strong:hover {
 
                     reverb[effectIndex] = +effectState.reverbMult;
                     reverbDelta[effectIndex] = +effectState.reverbMultDelta;
+                    reverbWetDryMult[effectIndex] = +effectState.reverbWetDryMult;
+                    reverbWetDryMultDelta[effectIndex] = +effectState.reverbWetDryMultDelta;
+                    reverbSendMult[effectIndex] = +effectState.reverbSendMult;
+                    reverbSendMultDelta[effectIndex] = +effectState.reverbSendMultDelta;
 
                     reverbShelfA1[effectIndex] = +effectState.reverbShelfA1;
                     reverbShelfB0[effectIndex] = +effectState.reverbShelfB0;
@@ -24773,8 +24827,8 @@ li.select2-results__option[role=group] > strong:hover {
                     reverbSample1[effectIndex] = reverbDelayLine[effectIndex][reverbDelayPos1[effectIndex]];
                     reverbSample2[effectIndex] = reverbDelayLine[effectIndex][reverbDelayPos2[effectIndex]];
                     reverbSample3[effectIndex] = reverbDelayLine[effectIndex][reverbDelayPos3[effectIndex]];
-                    reverbTemp0[effectIndex] = -(reverbSample0[effectIndex] + sampleL) + reverbSample1[effectIndex];
-                    reverbTemp1[effectIndex] = -(reverbSample0[effectIndex] + sampleR) - reverbSample1[effectIndex];
+                    reverbTemp0[effectIndex] = -(reverbSample0[effectIndex] + sampleL * reverbSendMult[effectIndex]) + reverbSample1[effectIndex];
+                    reverbTemp1[effectIndex] = -(reverbSample0[effectIndex] + sampleR * reverbSendMult[effectIndex]) - reverbSample1[effectIndex];
                     reverbTemp2[effectIndex] = -reverbSample2[effectIndex] + reverbSample3[effectIndex];
                     reverbTemp3[effectIndex] = -reverbSample2[effectIndex] - reverbSample3[effectIndex];
                     reverbShelfInput0[effectIndex] = (reverbTemp0[effectIndex] + reverbTemp2[effectIndex]) * reverb[effectIndex];
@@ -24794,9 +24848,11 @@ li.select2-results__option[role=group] > strong:hover {
                     reverbDelayLine[effectIndex][reverbDelayPos3[effectIndex]] = reverbShelfSample2[effectIndex] * delayInputMult;
                     reverbDelayLine[effectIndex][reverbDelayPos[effectIndex] ] = reverbShelfSample3[effectIndex] * delayInputMult;
                     reverbDelayPos[effectIndex] = (reverbDelayPos[effectIndex] + 1) & reverbMask;
-                    sampleL += reverbSample1[effectIndex] + reverbSample2[effectIndex] + reverbSample3[effectIndex];
-                    sampleR += reverbSample0[effectIndex] + reverbSample2[effectIndex] - reverbSample3[effectIndex];
-                    reverb[effectIndex] += reverbDelta[effectIndex];`;
+                    sampleL = sampleL * Math.min(1.0, 2.0-reverbWetDryMult[effectIndex]) + (reverbSample1[effectIndex] + reverbSample2[effectIndex] + reverbSample3[effectIndex]) * Math.min(1.0, reverbWetDryMult[effectIndex]);
+                    sampleR = sampleR * Math.min(1.0, 2.0-reverbWetDryMult[effectIndex]) + (reverbSample0[effectIndex] + reverbSample2[effectIndex] - reverbSample3[effectIndex]) * Math.min(1.0, reverbWetDryMult[effectIndex]);
+                    reverb[effectIndex] += reverbDelta[effectIndex];
+                    reverbWetDryMult[effectIndex] += reverbWetDryMultDelta[effectIndex];
+                    reverbSendMult[effectIndex] += reverbSendMultDelta[effectIndex];`;
                     }
                     else if (usesEqFilter && effectState.type == 5) {
                         effectsSource += `
@@ -25104,6 +25160,8 @@ li.select2-results__option[role=group] > strong:hover {
                     Synth.sanitizeDelayLine(reverbDelayLine[effectIndex], reverbDelayPos[effectIndex] + 10907, reverbMask);
                     effectState.reverbDelayPos = reverbDelayPos[effectIndex];
                     effectState.reverbMult = reverb[effectIndex];
+                    effectState.reverbWetDryMult = reverbWetDryMult[effectIndex];
+                    effectState.reverbSendMult = reverbSendMult[effectIndex];
 
                     if (!Number.isFinite(reverbShelfSample0[effectIndex]) || Math.abs(reverbShelfSample0[effectIndex]) < epsilon) reverbShelfSample0[effectIndex] = 0.0;
                     if (!Number.isFinite(reverbShelfSample1[effectIndex]) || Math.abs(reverbShelfSample1[effectIndex]) < epsilon) reverbShelfSample1[effectIndex] = 0.0;
@@ -30935,6 +30993,24 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.reverb = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["reverb"].index, doc.channel, doc.getCurrentInstrument());
+            doc.notifier.changed();
+            this._didSomething();
+        }
+    }
+    class ChangeReverbWetDryMix extends ChangeInstrumentSlider {
+        constructor(doc, effect, newValue) {
+            super(doc);
+            effect.reverbWetDryMix = newValue;
+            doc.synth.unsetMod(Config.modulators.dictionary["reverb wet/dry"].index, doc.channel, doc.getCurrentInstrument());
+            doc.notifier.changed();
+            this._didSomething();
+        }
+    }
+    class ChangeReverbSend extends ChangeInstrumentSlider {
+        constructor(doc, effect, newValue) {
+            super(doc);
+            effect.reverbSend = newValue;
+            doc.synth.unsetMod(Config.modulators.dictionary["reverb send"].index, doc.channel, doc.getCurrentInstrument());
             doc.notifier.changed();
             this._didSomething();
         }
@@ -39729,6 +39805,8 @@ You should be redirected to the song at:<br /><br />
             this.renderEffectRows = [];
             this.chorusSliders = [];
             this.reverbSliders = [];
+            this.reverbWetDryMixSliders = [];
+            this.reverbSendSliders = [];
             this.flangerSliders = [];
             this.flangerSpeedSliders = [];
             this.flangerDepthSliders = [];
@@ -39860,6 +39938,8 @@ You should be redirected to the song at:<br /><br />
                     const effectButtonsText = HTML.div({ style: `width: 50%; color: ${ColorConfig.secondaryText};` }, Config.effectDisplayNames[Config.effectOrder.indexOf(effect.type)]);
                     const chorusSlider = new Slider(HTML.input({ value: effect.chorus, type: "range", min: 0, max: Config.chorusRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeChorus(this._doc, effect, newValue), false);
                     const reverbSlider = new Slider(HTML.input({ value: effect.reverb, type: "range", min: 0, max: Config.reverbRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeReverb(this._doc, effect, newValue), false);
+                    const reverbWetDryMixSlider = new Slider(HTML.input({ value: effect.reverbWetDryMix, type: "range", min: 0, max: Config.reverbWetDryMixRange, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeReverbWetDryMix(this._doc, effect, newValue), true);
+                    const reverbSendSlider = new Slider(HTML.input({ value: effect.reverbSend, type: "range", min: 0, max: Config.reverbSendRange, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeReverbSend(this._doc, effect, newValue), false);
                     const flangerSlider = new Slider(HTML.input({ value: effect.flanger, type: "range", min: 0, max: Config.flangerRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeFlanger(this._doc, effect, newValue), false);
                     const flangerSpeedSlider = new Slider(HTML.input({ value: effect.flangerSpeed, type: "range", min: 0, max: Config.flangerSpeedRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeFlangerSpeed(this._doc, effect, newValue), false);
                     const flangerDepthSlider = new Slider(HTML.input({ value: effect.flangerDepth, type: "range", min: 0, max: Config.flangerDepthRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue, newValue) => new ChangeFlangerDepth(this._doc, effect, newValue), false);
@@ -39906,6 +39986,8 @@ You should be redirected to the song at:<br /><br />
                     const effectButtonsRow = HTML.div({ class: "selectRow", style: `padding-left: 12.5%; max-width: 75%; height: 80%; padding-top: 0.2em;` }, effectButtonsText, moveupButton, movedownButton, minimizeButton, deleteButton);
                     const chorusRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("chorus") }, "Chorus:"), chorusSlider.container);
                     const reverbRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("reverb") }, "Reverb:"), reverbSlider.container);
+                    const reverbWetDryMixRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("reverbWetDryMix") }, "Wet/Dry Mix:"), reverbWetDryMixSlider.container);
+                    const reverbSendRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("reverbSend") }, "Send:"), reverbSendSlider.container);
                     const flangerRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("flanger") }, "Flanger:"), flangerSlider.container);
                     const flangerSpeedRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("flangerSpeed") }, "Speed:"), flangerSpeedSlider.container);
                     const flangerDepthRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("flangerDepth") }, "Depth:"), flangerDepthSlider.container);
@@ -39940,6 +40022,8 @@ You should be redirected to the song at:<br /><br />
                     if (this.renderEffectRows[effectIndex]) {
                         if (effect.type == 0) {
                             reverbRow.style.display = "";
+                            reverbWetDryMixRow.style.display = "";
+                            reverbSendRow.style.display = "";
                         }
                         else if (effect.type == 1) {
                             chorusRow.style.display = "";
@@ -40006,7 +40090,7 @@ You should be redirected to the song at:<br /><br />
                             }
                         }
                     }
-                    const row = HTML.div({ class: "effect-row" }, effectButtonsRow, chorusRow, reverbRow, flangerRow, flangerSpeedRow, flangerDepthRow, flangerFeedbackRow, ringModRow, ringModHzRow, ringModWaveRow, granularRow, grainSizeRow, grainAmountsRow, grainRangeRow, echoSustainRow, echoDelayRow, echoPingPongRow, gainRow, panRow, panDelayRow, panModeRow, distortionRow, clippingTypeRow, clippingInGainRow, clippingThresholdRow, aliasingRow, bitcrusherQuantizationRow, bitcrusherFreqRow, eqFilterButtonsRow, eqFilterEditorRow, eqFilterSimpleCutRow, eqFilterSimplePeakRow);
+                    const row = HTML.div({ class: "effect-row" }, effectButtonsRow, chorusRow, reverbRow, reverbWetDryMixRow, reverbSendRow, flangerRow, flangerSpeedRow, flangerDepthRow, flangerFeedbackRow, ringModRow, ringModHzRow, ringModWaveRow, granularRow, grainSizeRow, grainAmountsRow, grainRangeRow, echoSustainRow, echoDelayRow, echoPingPongRow, gainRow, panRow, panDelayRow, panModeRow, distortionRow, clippingTypeRow, clippingInGainRow, clippingThresholdRow, aliasingRow, bitcrusherQuantizationRow, bitcrusherFreqRow, eqFilterButtonsRow, eqFilterEditorRow, eqFilterSimpleCutRow, eqFilterSimplePeakRow);
                     this.container.appendChild(row);
                     this._rows[effectIndex] = row;
                     this.moveupButtons[effectIndex] = moveupButton;
@@ -40015,6 +40099,8 @@ You should be redirected to the song at:<br /><br />
                     this.deleteButtons[effectIndex] = deleteButton;
                     this.chorusSliders[effectIndex] = chorusSlider;
                     this.reverbSliders[effectIndex] = reverbSlider;
+                    this.reverbWetDryMixSliders[effectIndex] = reverbWetDryMixSlider;
+                    this.reverbSendSliders[effectIndex] = reverbSendSlider;
                     this.flangerSliders[effectIndex] = flangerSlider;
                     this.flangerSpeedSliders[effectIndex] = flangerSpeedSlider;
                     this.flangerDepthSliders[effectIndex] = flangerDepthSlider;
@@ -40056,6 +40142,8 @@ You should be redirected to the song at:<br /><br />
                 const effect = instrument.effects[effectIndex];
                 this.chorusSliders[effectIndex].updateValue(effect.chorus);
                 this.reverbSliders[effectIndex].updateValue(effect.reverb);
+                this.reverbWetDryMixSliders[effectIndex].updateValue(effect.reverbWetDryMix);
+                this.reverbSendSliders[effectIndex].updateValue(effect.reverbSend);
                 this.flangerSliders[effectIndex].updateValue(effect.flanger);
                 this.flangerSpeedSliders[effectIndex].updateValue(effect.flangerSpeed);
                 this.flangerDepthSliders[effectIndex].updateValue(effect.flangerDepth);
@@ -45320,6 +45408,16 @@ You should be redirected to the song at:<br /><br />
                         message = div$5(h2$4("Reverb"), p("Reverb is like a continuous echo effect. A little bit helps instruments sound more natural. Adding a lot of reverb can add sense of depth or mystery, but too much reverb can kinda \"smear\" sounds so that it's harder to distinguish notes or instruments, especially for lower \"bass\" notes."));
                     }
                     break;
+                case "reverbWetDryMix":
+                    {
+                        message = div$5(h2$4("Reverb Wet/Dry Mix"), p("Wet/Dry mix is how much of the effect can be heard, versus how much the original audio can be heard. Towards the left, the signal is more \"dry\", and less of the effect is heard. Towards the right, the signal is more \"wet\", and more of the reverb is heard."));
+                    }
+                    break;
+                case "reverbSend":
+                    {
+                        message = div$5(h2$4("Reverb Send"), p("Send is how much of the signal is passed to the effect. This makes the reverb louder or quieter, but doesn't affect reverb that's already playing. If you want to hear the difference, try adjusting the slider while the song is playing!"));
+                    }
+                    break;
                 case "rhythm":
                     {
                         message = div$5(h2$4("Rhythm"), p("This setting determines how beats are divided. The pattern editor helps you align notes to fractions of a beat based on this setting."), p("If you've already placed some notes but they don't align with the selected rhythm, you can select the \"Snap Notes To Rhythm\" option in the rhythm menu to force the notes in the currently selected pattern(s) to align with the selected rhythm."));
@@ -49518,9 +49616,13 @@ You should be redirected to the song at:<br /><br />
                                 }
                                 if (anyInstrumentReverbs) {
                                     settingList.push("reverb");
+                                    settingList.push("reverb wet/dry");
+                                    settingList.push("reverb send");
                                 }
                                 if (!allInstrumentReverbs) {
                                     unusedSettingList.push("+ reverb");
+                                    unusedSettingList.push("+ reverb wet/dry");
+                                    unusedSettingList.push("+ reverb send");
                                 }
                                 if (anyInstrumentRingMods) {
                                     settingList.push("ring modulation");
@@ -51748,6 +51850,16 @@ You should be redirected to the song at:<br /><br />
                         if (instrument.effects[i] != null && instrument.effects[i].type == 0)
                             index = i;
                     return this.effectEditor.reverbSliders[index];
+                case Config.modulators.dictionary["reverb wet dry mix"].index:
+                    for (let i = 0; i < instrument.effects.length; i++)
+                        if (instrument.effects[i] != null && instrument.effects[i].type == 0)
+                            index = i;
+                    return this.effectEditor.reverbWetDryMixSliders[index];
+                case Config.modulators.dictionary["reverb send"].index:
+                    for (let i = 0; i < instrument.effects.length; i++)
+                        if (instrument.effects[i] != null && instrument.effects[i].type == 0)
+                            index = i;
+                    return this.effectEditor.reverbSendSliders[index];
                 case Config.modulators.dictionary["distortion"].index:
                     for (let i = 0; i < instrument.effects.length; i++)
                         if (instrument.effects[i] != null && instrument.effects[i].type == 3)

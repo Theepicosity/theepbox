@@ -168,6 +168,8 @@ export const enum EnvelopeComputeIndex {
     flangerFeedback,
     clippingInGain,
     clippingThreshold,
+    reverbWetDryMix,
+    reverbSend,
     //Add more here
 
     length,
@@ -971,6 +973,8 @@ export class Config {
     public static readonly reverbShelfHz: number = 8000.0; // The cutoff freq of the shelf filter that is used to decay reverb.
     public static readonly reverbShelfGain: number = Math.pow(2.0, -1.5);
     public static readonly reverbRange: number = 32;
+    public static readonly reverbWetDryMixRange: number = 24;
+    public static readonly reverbSendRange: number = 24;
     public static readonly reverbDelayBufferSize: number = 16384; // TODO: Compute a buffer size based on sample rate.
     public static readonly reverbDelayBufferMask: number = Config.reverbDelayBufferSize - 1; // TODO: Compute a buffer size based on sample rate.
     public static readonly beatsPerBarMin: number = 1;
@@ -1783,6 +1787,8 @@ export class Config {
         { name: "chorus", computeIndex: EnvelopeComputeIndex.chorus, displayName: "chorus", /*perNote:  false,*/                      interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.chorus, mdeffect: null, compatibleInstruments: null },
         { name: "echoSustain", computeIndex: EnvelopeComputeIndex.echoSustain, displayName: "echo", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.echo, mdeffect: null, compatibleInstruments: null },
         { name: "reverb", computeIndex: EnvelopeComputeIndex.reverb, displayName: "reverb", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.reverb, mdeffect: null, compatibleInstruments: null },
+        { name: "reverbWetDryMix", computeIndex: EnvelopeComputeIndex.reverbWetDryMix, displayName: "reverb wet/dry", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.reverb, mdeffect: null, compatibleInstruments: null },
+        { name: "reverbSend", computeIndex: EnvelopeComputeIndex.reverbSend, displayName: "reverb send", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.reverb, mdeffect: null, compatibleInstruments: null },
         { name: "arpeggioSpeed", computeIndex: EnvelopeComputeIndex.arpeggioSpeed, displayName: "arpeggio speed", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: null, mdeffect: MDEffectType.chord, compatibleInstruments: null },
         { name: "ringModulation", computeIndex: EnvelopeComputeIndex.ringModulation, displayName: "ring mod", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.ringModulation, mdeffect: null, compatibleInstruments: null },
         { name: "ringModulationHz", computeIndex: EnvelopeComputeIndex.ringModulationHz, displayName: "ring mod hz", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.ringModulation, mdeffect: null, compatibleInstruments: null },
@@ -1849,6 +1855,10 @@ export class Config {
             promptName: "Instrument Panning", promptDesc: [ "This setting controls the panning of your instrument, just like the panning slider.", "At $LO, your instrument will sound like it is coming fully from the left-ear side. At $MID it will be right in the middle, and at $HI, it will sound like it's on the right.", "[OVERWRITING] [$LO - $HI] [L-R]" ] },
         { name: "reverb", pianoName: "Reverb", maxRawVol: Config.reverbRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.reverb, associatedMDEffect: MDEffectType.length, maxIndex: 0,
             promptName: "Instrument Reverb", promptDesc: [ "This setting controls the reverb of your insturment, just like the reverb slider.", "At $LO, your instrument will have no reverb. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
+        { name: "reverb wet/dry", pianoName: "Reverb Wet/Dry", maxRawVol: Config.reverbWetDryMixRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.reverb, associatedMDEffect: MDEffectType.length, maxIndex: 0,
+            promptName: "Reverb Wet/Dry", promptDesc: [ "This setting controls the wet/dry mix of the instrument reverb.", "At $LO, 100% of the original instrument will come through. At $HI, only the effect will come through.", "[OVERWRITING] [$LO - $HI]"] },
+        { name: "reverb send", pianoName: "Reverb Send", maxRawVol: Config.reverbSendRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.reverb, associatedMDEffect: MDEffectType.length, maxIndex: 0,
+            promptName: "Instrument Reverb", promptDesc: [ "This setting controls the send of the instrument reverb.", "At $LO, the instrument will not have any reverb, and at $HI, the instrument will receive maximum reverb.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "distortion", pianoName: "Distortion", maxRawVol: Config.distortionRange-1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.distortion, associatedMDEffect: MDEffectType.length, maxIndex: 0,
             promptName: "Instrument Distortion", promptDesc: [ "This setting controls the amount of distortion for your instrument, just like the distortion slider.", "At $LO, your instrument will have no distortion. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]" ] },
         { name: "clipping in-gain", pianoName: "Clip In-Gain", maxRawVol: Config.distortionRange-1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.clipping, associatedMDEffect: MDEffectType.length, maxIndex: 0,

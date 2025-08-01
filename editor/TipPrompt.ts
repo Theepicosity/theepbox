@@ -49,6 +49,18 @@ export class TipPrompt implements Prompt {
 					p("Reverb is like a continuous echo effect. A little bit helps instruments sound more natural. Adding a lot of reverb can add sense of depth or mystery, but too much reverb can kinda \"smear\" sounds so that it's harder to distinguish notes or instruments, especially for lower \"bass\" notes."),
 				);
 			} break;
+			case "reverbWetDryMix": {
+				message = div(
+					h2("Reverb Wet/Dry Mix"),
+					p("Wet/Dry mix is how much of the effect can be heard, versus how much the original audio can be heard. Towards the left, the signal is more \"dry\", and less of the effect is heard. Towards the right, the signal is more \"wet\", and more of the reverb is heard."),
+				);
+			} break;
+			case "reverbSend": {
+				message = div(
+					h2("Reverb Send"),
+					p("Send is how much of the signal is passed to the effect. This makes the reverb louder or quieter, but doesn't affect reverb that's already playing. If you want to hear the difference, try adjusting the slider while the song is playing!"),
+				);
+			} break;
 			case "rhythm": {
 				message = div(
 					h2("Rhythm"),

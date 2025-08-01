@@ -226,6 +226,10 @@ export class EffectState {
 	public reverbShelfPrevInput1: number = 0.0;
 	public reverbShelfPrevInput2: number = 0.0;
 	public reverbShelfPrevInput3: number = 0.0;
+	public reverbWetDryMult: number = 0.0;
+	public reverbWetDryMultDelta: number = 0.0;
+	public reverbSendMult: number = 0.0;
+	public reverbSendMultDelta: number = 0.0;
 
 	constructor(type: EffectType) {
 		this.type = type;
@@ -916,9 +920,17 @@ export class EffectState {
 		if (usesReverb) {
 			const reverbEnvelopeStart: number = envelopeStarts[EnvelopeComputeIndex.reverb];
 			const reverbEnvelopeEnd: number = envelopeEnds[EnvelopeComputeIndex.reverb];
+			const reverbWetDryMixEnvelopeStart: number = envelopeStarts[EnvelopeComputeIndex.reverbWetDryMix];
+			const reverbWetDryMixEnvelopeEnd: number = envelopeEnds[EnvelopeComputeIndex.reverbWetDryMix];
+			const reverbSendEnvelopeStart: number = envelopeStarts[EnvelopeComputeIndex.reverbSend];
+			const reverbSendEnvelopeEnd: number = envelopeEnds[EnvelopeComputeIndex.reverbSend];
 
 			let useReverbStart: number = effect.reverb;
 			let useReverbEnd: number = effect.reverb;
+			let useReverbWetDryMixStart: number = effect.reverbWetDryMix;
+			let useReverbWetDryMixEnd: number = effect.reverbWetDryMix;
+			let useReverbSendStart: number = effect.reverbSend;
+			let useReverbSendEnd: number = effect.reverbSend;
 
 			// Check for mod reverb, instrument level
 			if (synth.isModActive(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex)) {
@@ -930,12 +942,29 @@ export class EffectState {
 				useReverbStart *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, false) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
 				useReverbEnd *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, true) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
 			}
+			// Check for mods of other reverb values
+			if (synth.isModActive(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex)) {
+				useReverbWetDryMixStart = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, false);
+				useReverbWetDryMixEnd = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, true);
+			}
+			if (synth.isModActive(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex)) {
+				useReverbSendStart = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, false);
+				useReverbSendEnd = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, true);
+			}
 
 			const reverbStart: number = Math.min(1.0, Math.pow(reverbEnvelopeStart * useReverbStart / Config.reverbRange, 0.667)) * 0.425;
 			const reverbEnd: number = Math.min(1.0, Math.pow(reverbEnvelopeEnd * useReverbEnd / Config.reverbRange, 0.667)) * 0.425;
+			const reverbWetDryMixStart: number = reverbWetDryMixEnvelopeStart * useReverbWetDryMixStart / Config.reverbWetDryMixRange * 2.0;
+			const reverbWetDryMixEnd: number = reverbWetDryMixEnvelopeEnd * useReverbWetDryMixEnd / Config.reverbWetDryMixRange * 2.0;
+			const reverbSendStart: number = reverbSendEnvelopeStart * useReverbSendStart / Config.reverbSendRange;
+			const reverbSendEnd: number = reverbSendEnvelopeEnd * useReverbSendEnd / Config.reverbSendRange;
 
 			this.reverbMult = reverbStart;
 			this.reverbMultDelta = (reverbEnd - reverbStart) / roundedSamplesPerTick;
+			this.reverbWetDryMult = reverbWetDryMixStart;
+			this.reverbWetDryMultDelta = (reverbWetDryMixEnd - reverbWetDryMixStart) / roundedSamplesPerTick;
+			this.reverbSendMult = reverbSendStart;
+			this.reverbSendMultDelta = (reverbSendEnd - reverbSendStart) / roundedSamplesPerTick;
 			maxReverbMult = Math.max(reverbStart, reverbEnd);
 
 			const shelfRadians: number = 2.0 * Math.PI * Config.reverbShelfHz / synth.samplesPerSecond;

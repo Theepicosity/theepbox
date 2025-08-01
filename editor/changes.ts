@@ -4753,6 +4753,26 @@ export class ChangeReverb extends ChangeInstrumentSlider {
     }
 }
 
+export class ChangeReverbWetDryMix extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, effect: Effect, newValue: number) {
+        super(doc);
+        effect.reverbWetDryMix = newValue;
+        doc.synth.unsetMod(Config.modulators.dictionary["reverb wet/dry"].index, doc.channel, doc.getCurrentInstrument());
+        doc.notifier.changed();
+        this._didSomething();
+    }
+}
+
+export class ChangeReverbSend extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, effect: Effect, newValue: number) {
+        super(doc);
+        effect.reverbSend = newValue;
+        doc.synth.unsetMod(Config.modulators.dictionary["reverb send"].index, doc.channel, doc.getCurrentInstrument());
+        doc.notifier.changed();
+        this._didSomething();
+    }
+}
+
 export class ChangeSongReverb extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();

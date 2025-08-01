@@ -4803,6 +4803,10 @@ export class Synth {
 
                 let reverb = [];
                 let reverbDelta = [];
+                let reverbWetDryMult = [];
+                let reverbWetDryMultDelta = [];
+                let reverbSendMult = [];
+                let reverbSendMultDelta = [];
 
                 let reverbShelfA1 = [];
                 let reverbShelfB0 = [];
@@ -5136,6 +5140,10 @@ export class Synth {
 
                     reverb[effectIndex] = +effectState.reverbMult;
                     reverbDelta[effectIndex] = +effectState.reverbMultDelta;
+                    reverbWetDryMult[effectIndex] = +effectState.reverbWetDryMult;
+                    reverbWetDryMultDelta[effectIndex] = +effectState.reverbWetDryMultDelta;
+                    reverbSendMult[effectIndex] = +effectState.reverbSendMult;
+                    reverbSendMultDelta[effectIndex] = +effectState.reverbSendMultDelta;
 
                     reverbShelfA1[effectIndex] = +effectState.reverbShelfA1;
                     reverbShelfB0[effectIndex] = +effectState.reverbShelfB0;
@@ -5512,8 +5520,8 @@ export class Synth {
                     reverbSample1[effectIndex] = reverbDelayLine[effectIndex][reverbDelayPos1[effectIndex]];
                     reverbSample2[effectIndex] = reverbDelayLine[effectIndex][reverbDelayPos2[effectIndex]];
                     reverbSample3[effectIndex] = reverbDelayLine[effectIndex][reverbDelayPos3[effectIndex]];
-                    reverbTemp0[effectIndex] = -(reverbSample0[effectIndex] + sampleL) + reverbSample1[effectIndex];
-                    reverbTemp1[effectIndex] = -(reverbSample0[effectIndex] + sampleR) - reverbSample1[effectIndex];
+                    reverbTemp0[effectIndex] = -(reverbSample0[effectIndex] + sampleL * reverbSendMult[effectIndex]) + reverbSample1[effectIndex];
+                    reverbTemp1[effectIndex] = -(reverbSample0[effectIndex] + sampleR * reverbSendMult[effectIndex]) - reverbSample1[effectIndex];
                     reverbTemp2[effectIndex] = -reverbSample2[effectIndex] + reverbSample3[effectIndex];
                     reverbTemp3[effectIndex] = -reverbSample2[effectIndex] - reverbSample3[effectIndex];
                     reverbShelfInput0[effectIndex] = (reverbTemp0[effectIndex] + reverbTemp2[effectIndex]) * reverb[effectIndex];
@@ -5533,9 +5541,11 @@ export class Synth {
                     reverbDelayLine[effectIndex][reverbDelayPos3[effectIndex]] = reverbShelfSample2[effectIndex] * delayInputMult;
                     reverbDelayLine[effectIndex][reverbDelayPos[effectIndex] ] = reverbShelfSample3[effectIndex] * delayInputMult;
                     reverbDelayPos[effectIndex] = (reverbDelayPos[effectIndex] + 1) & reverbMask;
-                    sampleL += reverbSample1[effectIndex] + reverbSample2[effectIndex] + reverbSample3[effectIndex];
-                    sampleR += reverbSample0[effectIndex] + reverbSample2[effectIndex] - reverbSample3[effectIndex];
-                    reverb[effectIndex] += reverbDelta[effectIndex];`
+                    sampleL = sampleL * Math.min(1.0, 2.0-reverbWetDryMult[effectIndex]) + (reverbSample1[effectIndex] + reverbSample2[effectIndex] + reverbSample3[effectIndex]) * Math.min(1.0, reverbWetDryMult[effectIndex]);
+                    sampleR = sampleR * Math.min(1.0, 2.0-reverbWetDryMult[effectIndex]) + (reverbSample0[effectIndex] + reverbSample2[effectIndex] - reverbSample3[effectIndex]) * Math.min(1.0, reverbWetDryMult[effectIndex]);
+                    reverb[effectIndex] += reverbDelta[effectIndex];
+                    reverbWetDryMult[effectIndex] += reverbWetDryMultDelta[effectIndex];
+                    reverbSendMult[effectIndex] += reverbSendMultDelta[effectIndex];`
                 }
                 else if (usesEqFilter && effectState.type == EffectType.eqFilter) {
                     effectsSource += `
@@ -5882,6 +5892,8 @@ export class Synth {
                     Synth.sanitizeDelayLine(reverbDelayLine[effectIndex], reverbDelayPos[effectIndex] + 10907, reverbMask);
                     effectState.reverbDelayPos = reverbDelayPos[effectIndex];
                     effectState.reverbMult = reverb[effectIndex];
+                    effectState.reverbWetDryMult = reverbWetDryMult[effectIndex];
+                    effectState.reverbSendMult = reverbSendMult[effectIndex];
 
                     if (!Number.isFinite(reverbShelfSample0[effectIndex]) || Math.abs(reverbShelfSample0[effectIndex]) < epsilon) reverbShelfSample0[effectIndex] = 0.0;
                     if (!Number.isFinite(reverbShelfSample1[effectIndex]) || Math.abs(reverbShelfSample1[effectIndex]) < epsilon) reverbShelfSample1[effectIndex] = 0.0;

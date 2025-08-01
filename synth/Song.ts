@@ -986,6 +986,8 @@ export class Song {
                     }
                     else if (effect.type == EffectType.reverb) {
                         buffer.push(base64IntToCharCode[effect.reverb]);
+                        buffer.push(base64IntToCharCode[effect.reverbWetDryMix]);
+                        buffer.push(base64IntToCharCode[effect.reverbSend]);
                     }
                     else if (effect.type == EffectType.granular) {
                         buffer.push(base64IntToCharCode[effect.granular]);
@@ -2832,6 +2834,13 @@ export class Song {
                                     newEffect.reverb = clamp(0, Config.reverbRange, Math.round(base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * Config.reverbRange / 3.0));
                                 } else {
                                     newEffect.reverb = clamp(0, Config.reverbRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                }
+                                if (fromTheepBox) {
+                                    newEffect.reverbWetDryMix = clamp(0, Config.reverbWetDryMixRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                    newEffect.reverbSend = clamp(0, Config.reverbSendRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                } else {
+                                    newEffect.reverbWetDryMix = Config.reverbWetDryMixRange / 2.0;
+                                    newEffect.reverbSend = Config.reverbSendRange;
                                 }
                             }
                             if (newEffect.type == EffectType.granular) {

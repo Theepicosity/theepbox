@@ -5,7 +5,7 @@ import { Instrument } from "../synth/Instrument";
 import { Channel } from "../synth/Channel";
 import { Effect } from "../synth/Effect";
 import { SongDocument } from "./SongDocument";
-import { ChangeChorus, ChangeReverb, ChangeFlanger, ChangeFlangerSpeed, ChangeFlangerDepth, ChangeFlangerFeedback, ChangeRingModChipWave, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeEchoDelay, ChangeEchoSustain, ChangeEchoPingPong, ChangeGain, ChangePan, ChangePanMode, ChangePanDelay, ChangeDistortion, ChangeClippingType, ChangeClippingInGain, ChangeClippingThreshold, ChangeAliasing, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEQFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeRemoveEffects, ChangeReorderEffects } from "./changes";
+import { ChangeChorus, ChangeReverb, ChangeReverbWetDryMix, ChangeReverbSend, ChangeFlanger, ChangeFlangerSpeed, ChangeFlangerDepth, ChangeFlangerFeedback, ChangeRingModChipWave, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeEchoDelay, ChangeEchoSustain, ChangeEchoPingPong, ChangeGain, ChangePan, ChangePanMode, ChangePanDelay, ChangeDistortion, ChangeClippingType, ChangeClippingInGain, ChangeClippingThreshold, ChangeAliasing, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEQFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeRemoveEffects, ChangeReorderEffects } from "./changes";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { Change } from "./Change";
 import { FilterEditor } from "./FilterEditor";
@@ -45,6 +45,8 @@ export class EffectEditor {
 
 	public readonly chorusSliders: Slider[] = [];
 	public readonly reverbSliders: Slider[] = [];
+	public readonly reverbWetDryMixSliders: Slider[] = [];
+	public readonly reverbSendSliders: Slider[] = [];
 	public readonly flangerSliders: Slider[] = [];
 	public readonly flangerSpeedSliders: Slider[] = [];
 	public readonly flangerDepthSliders: Slider[] = [];
@@ -195,6 +197,8 @@ export class EffectEditor {
 
 				const chorusSlider: Slider = new Slider(HTML.input({ value: effect.chorus, type: "range", min: 0, max: Config.chorusRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeChorus(this._doc, effect, newValue), false);
 				const reverbSlider: Slider = new Slider(HTML.input({ value: effect.reverb, type: "range", min: 0, max: Config.reverbRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeReverb(this._doc, effect, newValue), false);
+				const reverbWetDryMixSlider: Slider = new Slider(HTML.input({ value: effect.reverbWetDryMix, type: "range", min: 0, max: Config.reverbWetDryMixRange, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeReverbWetDryMix(this._doc, effect, newValue), true);
+				const reverbSendSlider: Slider = new Slider(HTML.input({ value: effect.reverbSend, type: "range", min: 0, max: Config.reverbSendRange, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeReverbSend(this._doc, effect, newValue), false);
 				const flangerSlider: Slider = new Slider(HTML.input({ value: effect.flanger, type: "range", min: 0, max: Config.flangerRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeFlanger(this._doc, effect, newValue), false);
 				const flangerSpeedSlider: Slider = new Slider(HTML.input({ value: effect.flangerSpeed, type: "range", min: 0, max: Config.flangerSpeedRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeFlangerSpeed(this._doc, effect, newValue), false);
 				const flangerDepthSlider: Slider = new Slider(HTML.input({ value: effect.flangerDepth, type: "range", min: 0, max: Config.flangerDepthRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeFlangerDepth(this._doc, effect, newValue), false);
@@ -251,6 +255,8 @@ export class EffectEditor {
 				const effectButtonsRow: HTMLDivElement = HTML.div({ class: "selectRow", style: `padding-left: 12.5%; max-width: 75%; height: 80%; padding-top: 0.2em;` }, effectButtonsText, moveupButton, movedownButton, minimizeButton, deleteButton);
 				const chorusRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("chorus") }, "Chorus:"), chorusSlider.container);
 				const reverbRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("reverb") }, "Reverb:"), reverbSlider.container);
+				const reverbWetDryMixRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("reverbWetDryMix") }, "Wet/Dry Mix:"), reverbWetDryMixSlider.container);
+				const reverbSendRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("reverbSend") }, "Send:"), reverbSendSlider.container);
 				const flangerRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("flanger") }, "Flanger:"), flangerSlider.container);
 				const flangerSpeedRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("flangerSpeed") }, "Speed:"), flangerSpeedSlider.container);
 				const flangerDepthRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("flangerDepth") }, "Depth:"), flangerDepthSlider.container);
@@ -286,6 +292,8 @@ export class EffectEditor {
 				if (this.renderEffectRows[effectIndex]) {
 					if (effect.type == EffectType.reverb) {
 						reverbRow.style.display = "";
+						reverbWetDryMixRow.style.display = "";
+						reverbSendRow.style.display = "";
 					} else if (effect.type == EffectType.chorus) {
 						chorusRow.style.display = "";
 					} else if (effect.type == EffectType.flanger) {
@@ -345,6 +353,8 @@ export class EffectEditor {
 					effectButtonsRow,
 					chorusRow,
 					reverbRow,
+					reverbWetDryMixRow,
+					reverbSendRow,
 					flangerRow,
 					flangerSpeedRow,
 					flangerDepthRow,
@@ -387,6 +397,8 @@ export class EffectEditor {
 
 				this.chorusSliders[effectIndex] = chorusSlider;
 				this.reverbSliders[effectIndex] = reverbSlider;
+				this.reverbWetDryMixSliders[effectIndex] = reverbWetDryMixSlider;
+				this.reverbSendSliders[effectIndex] = reverbSendSlider;
 				this.flangerSliders[effectIndex] = flangerSlider;
 				this.flangerSpeedSliders[effectIndex] = flangerSpeedSlider;
 				this.flangerDepthSliders[effectIndex] = flangerDepthSlider;
@@ -434,6 +446,8 @@ export class EffectEditor {
 
 			this.chorusSliders[effectIndex].updateValue(effect.chorus);
 			this.reverbSliders[effectIndex].updateValue(effect.reverb);
+			this.reverbWetDryMixSliders[effectIndex].updateValue(effect.reverbWetDryMix);
+			this.reverbSendSliders[effectIndex].updateValue(effect.reverbSend);
 			this.flangerSliders[effectIndex].updateValue(effect.flanger);
 			this.flangerSpeedSliders[effectIndex].updateValue(effect.flangerSpeed);
 			this.flangerDepthSliders[effectIndex].updateValue(effect.flangerDepth);

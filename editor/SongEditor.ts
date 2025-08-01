@@ -2001,6 +2001,12 @@ export class SongEditor {
             case Config.modulators.dictionary["reverb"].index:
                 for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.reverb) index = i;
                 return this.effectEditor.reverbSliders[index];
+            case Config.modulators.dictionary["reverb wet dry mix"].index:
+                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.reverb) index = i;
+                return this.effectEditor.reverbWetDryMixSliders[index];
+            case Config.modulators.dictionary["reverb send"].index:
+                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.reverb) index = i;
+                return this.effectEditor.reverbSendSliders[index];
             case Config.modulators.dictionary["distortion"].index:
                 for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.distortion) index = i;
                 return this.effectEditor.distortionSliders[index];
@@ -3399,9 +3405,13 @@ export class SongEditor {
                         }
                         if (anyInstrumentReverbs) {
                             settingList.push("reverb");
+                            settingList.push("reverb wet/dry");
+                            settingList.push("reverb send");
                         }
                         if (!allInstrumentReverbs) {
                             unusedSettingList.push("+ reverb");
+                            unusedSettingList.push("+ reverb wet/dry");
+                            unusedSettingList.push("+ reverb send");
                         }
                         if (anyInstrumentRingMods) {
                             settingList.push("ring modulation");

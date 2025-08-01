@@ -5,8 +5,8 @@ import { FilterSettings } from "./Filter";
 
 export class Effect {
 	public type: EffectType = EffectType.reverb;
-	public wetDryMix: number = 0.5;
-	public send: number = 1;
+	//public wetDryMix: number = 0.5;
+	//public send: number = 1;
 
 	public eqFilter: FilterSettings = new FilterSettings();
 	public eqFilterType: boolean = false;
@@ -45,6 +45,8 @@ export class Effect {
 	public flangerFeedback: number = 0;
 	public chorus: number = 0;
 	public reverb: number = 0;
+	public reverbWetDryMix: number = Config.reverbWetDryMixRange / 2.0;
+	public reverbSend: number = Config.reverbSendRange;
 	public echoSustain: number = 0;
 	public echoDelay: number = 11;
 	public echoPingPong: number = Config.panCenter;
