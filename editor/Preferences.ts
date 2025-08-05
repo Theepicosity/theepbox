@@ -177,7 +177,7 @@ export class Preferences {
 		this.customTheme = window.localStorage.getItem("customTheme");
         this.customTheme2 = window.localStorage.getItem("customTheme2");
 		this.visibleOctaves = ((<any>window.localStorage.getItem("visibleOctaves")) >>> 0) || Preferences.defaultVisibleOctaves;
-		this.shortcuts = Preferences.defaultShortcuts;
+		this.shortcuts = window.localStorage.getItem("shortcuts") ? JSON.parse(window.localStorage.getItem("shortcuts")) : Preferences.defaultShortcuts;
 		
 		const defaultScale: Scale | undefined = Config.scales.dictionary[window.localStorage.getItem("defaultScale")!];
 		this.defaultScale = (defaultScale != undefined) ? defaultScale.index : 1;
@@ -228,7 +228,7 @@ export class Preferences {
 		window.localStorage.setItem("customTheme2", this.customTheme2!);
 		window.localStorage.setItem("volume", String(this.volume));
 		window.localStorage.setItem("visibleOctaves", String(this.visibleOctaves));
-		//window.localStorage.setItem("shortcuts", this.shortcuts);
+		window.localStorage.setItem("shortcuts", JSON.stringify(this.shortcuts));
 		
 	}
 }

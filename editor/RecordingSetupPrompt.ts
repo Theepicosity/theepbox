@@ -86,7 +86,7 @@ export class RecordingSetupPrompt implements Prompt {
                 div({ class: "selectContainer", style: "width: 50%; margin-left: 1em;" }, this._bassOffset),
             ),
             p("Once you enable the setting, the keyboard layout above will darken to denote the new bass notes. The notes will be recorded with independent timing and this works with MIDI devices, too. Be aware that the octave offset of both used channels will impact how high/low the bass/lead are relative to one another."),
-            p("Recorded notes often overlap such that one note ends after the next note already started. In Slarmoo's Box, these notes get split into multiple notes which may sound different when re-played than they did when you were recording. To fix the sound, you can either manually clean up the notes in the pattern editor, or you could try enabling the \"transition type\" effect on the instrument and setting it to \"continue\"."),
+            p("Recorded notes often overlap such that one note ends after the next note already started. These notes get split into multiple notes which may sound different when re-played than they did when you were recording. To fix the sound, you can either manually clean up the notes in the pattern editor, or you could try enabling the \"transition type\" effect on the instrument and setting it to \"continue\"."),
             div({ style: `width: 100%; height: 80px; background: linear-gradient(rgba(0,0,0,0), ${ColorConfig.editorBackground}); position: sticky; bottom: 0; pointer-events: none;` }),
         ),
         div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" },

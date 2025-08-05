@@ -46,6 +46,7 @@ import { SongDurationPrompt } from "./SongDurationPrompt";
 import { SustainPrompt } from "./SustainPrompt";
 import { SongRecoveryPrompt } from "./SongRecoveryPrompt";
 import { RecordingSetupPrompt } from "./RecordingSetupPrompt";
+import { ShortcutPrompt } from "./ShortcutPrompt";
 import { SpectrumEditor, SpectrumEditorPrompt } from "./SpectrumEditor";
 import { CustomThemePrompt } from "./CustomThemePrompt";
 import { ThemePrompt } from "./ThemePrompt";
@@ -827,6 +828,7 @@ export class SongEditor {
             option({ value: "instrumentImportExport" }, "Enable Import/Export Buttons"),
             option({ value: "displayBrowserUrl" }, "Enable Song Data in URL"),
             option({ value: "closePromptByClickoff" }, "Close Prompts on Click Off"),
+            option({ value: "shortcuts" }, "Shortcuts..."),
             option({ value: "recordingSetup" }, "Note Recording..."),
         ),
         optgroup({ label: "Appearance" },
@@ -2185,7 +2187,6 @@ export class SongEditor {
                     this.prompt = new CustomChipPrompt(this._doc, this);
                     break;
                 case "customEQFilterSettings":
-                    console.log(effectIndex)
                     this.prompt = new CustomFilterPrompt(this._doc, this, false, false, effectIndex);
                     break;
                 case "customNoteFilterSettings":
@@ -2202,6 +2203,9 @@ export class SongEditor {
                     break;
                 case "recordingSetup":
                     this.prompt = new RecordingSetupPrompt(this._doc);
+                    break;
+                case "shortcuts":
+                    this.prompt = new ShortcutPrompt(this._doc);
                     break;
                 case "exportInstrument":
                     this.prompt = new InstrumentExportPrompt(this._doc);//, this);
@@ -2392,6 +2396,7 @@ export class SongEditor {
             (prefs.instrumentImportExport ? textOnIcon : textOffIcon) + "Enable Import/Export Buttons",
             (prefs.displayBrowserUrl ? textOnIcon : textOffIcon) + "Enable Song Data in URL",
             (prefs.closePromptByClickoff ? textOnIcon : textOffIcon) + "Close Prompts on Click Off",
+            textSpacingIcon + "Shortcuts...",
             textSpacingIcon + "Note Recording...",
             textSpacingIcon + "Appearance",
             (prefs.showFifth ? textOnIcon : textOffIcon) + 'Highlight "Fifth" Note',
@@ -5588,6 +5593,9 @@ export class SongEditor {
                 break;
             case "recordingSetup":
                 this._openPrompt("recordingSetup");
+                break;
+            case "shortcuts":
+                this._openPrompt("shortcuts");
                 break;
             case "showOscilloscope":
                 this._doc.prefs.showOscilloscope = !this._doc.prefs.showOscilloscope;
