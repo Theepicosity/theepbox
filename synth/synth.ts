@@ -2661,75 +2661,6 @@ export class Synth {
             throw new Error("Unknown instrument type in computeTone.");
         }
 
-        if ((tone.atNoteStart && !transition.isSeamless && !tone.forceContinueAtStart) || tone.freshlyAllocated) {
-            tone.reset();
-            if (tone.note != null) {
-                tone.chipWaveStartOffset = instrument.chipWaveStartOffset;
-                let runningSampleCount: number = 0;
-                let continueCheck: boolean = true; //tone.forceContinueAtStart should be set here, and not in playTone().....
-                if (tone.note.start == 0 && (transition.isSeamless || tone.note.continuesLastPattern)) { //note extends from other patterns
-                    for (let i: number = this.bar-1; i >= 0; i--) {
-                        if (!continueCheck) break;
-                        let patternIndex = song.channels[channelIndex].bars[i];
-                        if (patternIndex != 0) {
-                            let pattern: Pattern = channel.patterns[patternIndex - 1];
-                            // technically, there is a function called adjacentPatternHasCompatibleInstrumentTransition() which would be very helpful here. however, this function scares me...
-                            if (pattern.notes.length > 0) {
-                                for (let i: number = pattern.notes.length; i > 0; i--) {
-                                    let newNote: Note = pattern.notes[i-1];
-                                    if (newNote.pitches[0] != tone.note.pitches[0] || newNote.end != (pattern.notes[i+1] ? pattern.notes[i+1].start : partsPerBar) || (newNote.start != 0 && (!transition.isSeamless || i == 1)) || (newNote.start == 0 && (!transition.isSeamless || !newNote.continuesLastPattern))) {
-                                        tone.chipWaveStartOffset = channel.instruments[pattern.instruments[0]].chipWaveStartOffset + tone.note.chipWaveStartOffset;
-                                        continueCheck = false;
-                                    }
-                                    if (newNote.pitches[0] == tone.note.pitches[0] && newNote.end == (pattern.notes[i+1] ? pattern.notes[i+1].start : partsPerBar)) {
-                                        //TODO: iterate over each pin in the note and calculate pitch shift if necessary
-                                        // this would require moving this block to *after* the pitch is calculated... pali aaa
-                                        runningSampleCount += samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
-                                        console.log(runningSampleCount)
-                                        console.log(basePitch)
-                                    }
-                                    if (!continueCheck) break;
-                                }
-                            }
-                        }
-                        else break;
-                    }
-                }
-                if (!tone.atNoteStart) { // starting in the middle of a note
-                    if (transition.isSeamless && tone.prevNote != null && tone.prevNote.pitches.length == 1 && tone.prevNote.pitches[0] == tone.note.pitches[0]) {
-                        tone.chipWaveStartOffset += samplesPerTick * Config.ticksPerPart * (currentPart - tone.prevNote.start)
-                    }
-                    else {
-                        tone.chipWaveStartOffset += samplesPerTick * Config.ticksPerPart * (currentPart - tone.note.start);
-                    }
-                    //+ samplesPerTick * Config.ticksPerPart * tone.noteStartPart;
-                }
-                tone.chipWaveStartOffset += runningSampleCount;
-            }
-            instrumentState.envelopeComputer.reset();
-            // advloop addition
-            if (instrument.type == InstrumentType.chip && instrument.isUsingAdvancedLoopControls) {
-                const chipWaveLength = Config.rawRawChipWaves[instrument.chipWave].samples.length - 1;
-                const firstOffset = tone.chipWaveStartOffset / chipWaveLength;
-                // const lastOffset = (chipWaveLength - 0.01) / chipWaveLength;
-                // @TODO: This is silly and I should actually figure out how to
-                // properly keep lastOffset as 1.0 and not get it wrapped back
-                // to 0 once it's in `Synth.loopableChipSynth`.
-                const lastOffset = 0.999999999999999;
-                for (let i = 0; i < Config.maxPitchOrOperatorCount; i++) {
-                    tone.phases[i] = instrument.chipWavePlayBackwards ? Math.max(0, Math.min(lastOffset, firstOffset)) : Math.max(0, firstOffset);
-                    tone.directions[i] = instrument.chipWavePlayBackwards ? -1 : 1;
-                    tone.chipWaveCompletions[i] = 0;
-                    tone.chipWavePrevWavesL[i] = 0;
-                    tone.chipWavePrevWavesR[i] = 0;
-                    tone.chipWaveCompletionsLastWaveL[i] = 0;
-                    tone.chipWaveCompletionsLastWaveR[i] = 0;
-                }
-            }
-            // advloop addition
-        }
-        tone.freshlyAllocated = false;
-
         for (let i: number = 0; i < Config.maxPitchOrOperatorCount; i++) {
             tone.phaseDeltas[i] = 0.0;
             tone.phaseDeltaScales[i] = 0.0;
@@ -3349,6 +3280,79 @@ export class Synth {
             } else {
                 tone.phaseDeltas[0] = startFreq * sampleTime;
                 tone.phaseDeltaScales[0] = basePhaseDeltaScale;
+            }
+
+            if (instrument.type == InstrumentType.chip) {
+
+                if ((tone.atNoteStart && !transition.isSeamless && !tone.forceContinueAtStart) || tone.freshlyAllocated) {
+                    tone.reset();
+                    if (tone.note != null) {
+                        tone.chipWaveStartOffset = instrument.chipWaveStartOffset;
+                        let runningSampleCount: number = 0;
+                        let continueCheck: boolean = true; //tone.forceContinueAtStart should be set here, and not in playTone().....
+                        if (tone.note.start == 0 && (transition.isSeamless || tone.note.continuesLastPattern)) { //note extends from other patterns
+                            for (let i: number = this.bar-1; i >= 0; i--) {
+                                if (!continueCheck) break;
+                                let patternIndex = song.channels[channelIndex].bars[i];
+                                if (patternIndex != 0) {
+                                    let pattern: Pattern = channel.patterns[patternIndex - 1];
+                                    // technically, there is a function called adjacentPatternHasCompatibleInstrumentTransition() which would be very helpful here. however, this function scares me...
+                                    if (pattern.notes.length > 0) {
+                                        for (let i: number = pattern.notes.length; i > 0; i--) {
+                                            let newNote: Note = pattern.notes[i-1];
+                                            if (newNote.pitches[0] != tone.note.pitches[0] || newNote.end != (pattern.notes[i+1] ? pattern.notes[i+1].start : partsPerBar) || (newNote.start != 0 && (!transition.isSeamless || i == 1)) || (newNote.start == 0 && (!transition.isSeamless || !newNote.continuesLastPattern))) {
+                                                tone.chipWaveStartOffset = channel.instruments[pattern.instruments[0]].chipWaveStartOffset + tone.note.chipWaveStartOffset;
+                                                continueCheck = false;
+                                            }
+                                            if (newNote.pitches[0] == tone.note.pitches[0] && newNote.end == (pattern.notes[i+1] ? pattern.notes[i+1].start : partsPerBar)) {
+                                                // TODO list:
+                                                // - make it work with many different pitches (right now it only uses the pitch calculated from the first instrument)
+                                                // - iterate over each pin in the note and calculate pitch shift if necessary
+                                                // - make it work with different sample rates
+                                                runningSampleCount += (startFreq / 0.03728247628879379) * samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
+                                                console.log(runningSampleCount)
+                                            }
+                                            if (!continueCheck) break;
+                                        }
+                                    }
+                                }
+                                else break;
+                            }
+                        }
+                        if (!tone.atNoteStart) { // starting in the middle of a note
+                            if (transition.isSeamless && tone.prevNote != null && tone.prevNote.pitches.length == 1 && tone.prevNote.pitches[0] == tone.note.pitches[0]) {
+                                tone.chipWaveStartOffset += samplesPerTick * Config.ticksPerPart * (currentPart - tone.prevNote.start)
+                            }
+                            else {
+                                tone.chipWaveStartOffset += samplesPerTick * Config.ticksPerPart * (currentPart - tone.note.start);
+                            }
+                            //+ samplesPerTick * Config.ticksPerPart * tone.noteStartPart;
+                        }
+                        tone.chipWaveStartOffset += runningSampleCount;
+                    }
+                    instrumentState.envelopeComputer.reset();
+                    // advloop addition
+                    if (instrument.type == InstrumentType.chip && instrument.isUsingAdvancedLoopControls) {
+                        const chipWaveLength = Config.rawRawChipWaves[instrument.chipWave].samples.length - 1;
+                        const firstOffset = tone.chipWaveStartOffset / chipWaveLength;
+                        // const lastOffset = (chipWaveLength - 0.01) / chipWaveLength;
+                        // @TODO: This is silly and I should actually figure out how to
+                        // properly keep lastOffset as 1.0 and not get it wrapped back
+                        // to 0 once it's in `Synth.loopableChipSynth`.
+                        const lastOffset = 0.999999999999999;
+                        for (let i = 0; i < Config.maxPitchOrOperatorCount; i++) {
+                            tone.phases[i] = instrument.chipWavePlayBackwards ? Math.max(0, Math.min(lastOffset, firstOffset)) : Math.max(0, firstOffset);
+                            tone.directions[i] = instrument.chipWavePlayBackwards ? -1 : 1;
+                            tone.chipWaveCompletions[i] = 0;
+                            tone.chipWavePrevWavesL[i] = 0;
+                            tone.chipWavePrevWavesR[i] = 0;
+                            tone.chipWaveCompletionsLastWaveL[i] = 0;
+                            tone.chipWaveCompletionsLastWaveR[i] = 0;
+                        }
+                    }
+                    // advloop addition
+                }
+                tone.freshlyAllocated = false;
             }
 
             // TODO: make expressionStart and expressionEnd variables earlier and modify those
