@@ -378,7 +378,6 @@ export class TrackEditor {
 
         for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
             const channelRow: ChannelRow = new ChannelRow(this._doc, y, this._doc.song.channels[y].color);
-            console.log(this._doc.song.channels[y].color)
             this._channels[y] = channelRow;
             this._channelRowContainer.appendChild(channelRow.container);
         }

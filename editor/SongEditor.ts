@@ -20,7 +20,7 @@ import { Effect } from "../synth/Effect";
 import { Channel } from "../synth/Channel";
 import { detuneToCents } from "../synth/utils";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
-import { Preferences } from "./Preferences";
+import { Preferences, Shortcut } from "./Preferences";
 import { HarmonicsEditor, HarmonicsEditorPrompt } from "./HarmonicsEditor";
 import { InputBox, Slider } from "./HTMLWrapper";
 import { ImportPrompt } from "./ImportPrompt";
@@ -4012,9 +4012,26 @@ export class SongEditor {
         }
     }
 
+    private _parseShortcut = (event: KeyboardEvent, shortcut: Shortcut, needControlForShortcuts: boolean): number => {
+        // check for keyCodes which very across plaforms
+        let eventKeyCode: number;
+        if (event.keyCode == 173) eventKeyCode = 189;
+        else if (event.keyCode == 61 || event.keyCode == 171) eventKeyCode = 187;
+        else eventKeyCode = event.keyCode;
+        let shortcutKeyCode: number;
+        if (shortcut.keyCode == 173) shortcutKeyCode = 189;
+        else if (shortcut.keyCode == 61 || event.keyCode == 171) shortcutKeyCode = 187;
+        else shortcutKeyCode = shortcut.keyCode;
+        // note that using shortcut.ctrlKey induces a conflict in the hotkeys, which is why is should never be used...!
+        if (eventKeyCode == shortcutKeyCode && (needControlForShortcuts == (event.ctrlKey || event.metaKey) || event.ctrlKey == shortcut.ctrlKey) && event.shiftKey == shortcut.shiftKey) return event.keyCode;
+        else return -1;
+    }
+
     private _whenKeyPressed = (event: KeyboardEvent): void => {
         this._ctrlHeld = event.ctrlKey;
         this._shiftHeld = event.shiftKey;
+
+        const shortcuts = this._doc.prefs.shortcuts;
 
         if (this.prompt) {
             if (this.prompt instanceof CustomChipPrompt || this.prompt instanceof LimiterPrompt || this.prompt instanceof CustomScalePrompt || this.prompt instanceof CustomFilterPrompt) {
@@ -4078,11 +4095,11 @@ export class SongEditor {
             if (!event.ctrlKey && !event.metaKey) {
                 this._keyboardLayout.handleKeyEvent(event, true);
             }
-            if (event.keyCode == 32) { // space
+            if (event.keyCode == this._parseShortcut(event, shortcuts["play"], false)) {
                 this._toggleRecord();
                 event.preventDefault();
                 this.refocusStage();
-            } else if (event.keyCode == 80 && (event.ctrlKey || event.metaKey)) { // p
+            } else if (event.keyCode == this._parseShortcut(event, shortcuts["stopRecording"], true)) {
                 this._toggleRecord();
                 event.preventDefault();
                 this.refocusStage();
@@ -4108,629 +4125,688 @@ export class SongEditor {
             case 17: // Ctrl
                 this._patternEditor.controlMode = true;
                 break;
-            case 32: // space
-                if (event.ctrlKey) {
-                    this._toggleRecord();
-                } else if (event.shiftKey) {
-                    // Jump to mouse
-                    if (this._trackEditor.movePlayheadToMouse() || this._patternEditor.movePlayheadToMouse()) {
-                        if (!this._doc.synth.playing) this._doc.performance.play();
-                    }
-                    if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
-                        this._doc.synth.loopBarStart = -1;
-                        this._doc.synth.loopBarEnd = -1;
-                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
-                    }
-                } else {
-                    this.togglePlay();
+            case this._parseShortcut(event, shortcuts["play"], false):
+                this.togglePlay();
+                event.preventDefault();
+                this.refocusStage();
+                break;
+            case this._parseShortcut(event, shortcuts["record"], true):
+                this._toggleRecord();
+                event.preventDefault();
+                this.refocusStage();
+                break;
+            case this._parseShortcut(event, shortcuts["stopRecording"], true):
+                if (canPlayNotes) break;
+                this._toggleRecord();
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                event.preventDefault();
+                this.refocusStage();
+                break;
+
+            case this._parseShortcut(event, shortcuts["playAtCursor"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                // Jump to mouse
+                if (this._trackEditor.movePlayheadToMouse() || this._patternEditor.movePlayheadToMouse()) {
+                    if (!this._doc.synth.playing) this._doc.performance.play();
+                }
+                if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                    this._doc.synth.loopBarStart = -1;
+                    this._doc.synth.loopBarEnd = -1;
+                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
                 }
                 event.preventDefault();
                 this.refocusStage();
                 break;
-            case 80: // p
-                if (canPlayNotes) break;
-                if (event.ctrlKey || event.metaKey) {
-                    this._toggleRecord();
-                    this._doc.synth.loopBarStart = -1;
-                    this._doc.synth.loopBarEnd = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
 
-                    event.preventDefault();
-                    this.refocusStage();
-                } else if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey) && event.shiftKey) {
-                    location.href = "player/" + (OFFLINE ? "index.html" : "") + "#song=" + this._doc.song.toBase64String();
-                    event.preventDefault();
-                }
-                break;
-            case 192: // `/~
+            case this._parseShortcut(event, shortcuts["openSongPlayer"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (event.shiftKey) {
-                    this._doc.goBackToStart();
-                    this._doc.song.restoreLimiterDefaults();
-                    for (const channel of this._doc.song.channels) {
-                        channel.muted = false;
-                        channel.name = "";
-                    }
-                    this._doc.record(new ChangeSong(this._doc, ""), false, true);
-                } else {
-                    if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                        this._openPrompt("songRecovery");
-                    }
-                }
+                location.href = "player/" + (OFFLINE ? "index.html" : "") + "#song=" + this._doc.song.toBase64String();
                 event.preventDefault();
                 break;
-            case 90: // z
+
+            case this._parseShortcut(event, shortcuts["newSong"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (event.shiftKey) {
-                    this._doc.redo();
-                } else {
-                    this._doc.undo();
+                this._doc.goBackToStart();
+                this._doc.song.restoreLimiterDefaults();
+                for (const channel of this._doc.song.channels) {
+                    channel.muted = false;
+                    channel.name = "";
                 }
+                this._doc.record(new ChangeSong(this._doc, ""), false, true);
                 event.preventDefault();
                 break;
-            case 88: // x
+
+            case this._parseShortcut(event, shortcuts["songRecovery"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._openPrompt("songRecovery");
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["undo"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.undo();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["cutPattern"], needControlForShortcuts):
                 if (canPlayNotes) break;
                 this._doc.selection.cutNotes();
                 event.preventDefault();
                 break;
-            case 89: // y
+
+            case this._parseShortcut(event, shortcuts["redo"], needControlForShortcuts):
                 if (canPlayNotes) break;
                 this._doc.redo();
                 event.preventDefault();
                 break;
-            case 66: // b
+
+            case this._parseShortcut(event, shortcuts["editBeatsPerBar"], needControlForShortcuts):
                 if (canPlayNotes) break;
+                this._openPrompt("beatsPerBar");
+                event.preventDefault();
+                break;
 
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    if (event.shiftKey) {
-                        this._openPrompt("beatsPerBar");
-                    } else {
-                        const leftSel = Math.min(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
-                        const rightSel = Math.max(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
-                        if ((leftSel < this._doc.synth.loopBarStart || this._doc.synth.loopBarStart == -1)
-                            || (rightSel > this._doc.synth.loopBarEnd || this._doc.synth.loopBarEnd == -1)
-                        ) {
-                            this._doc.synth.loopBarStart = leftSel;
-                            this._doc.synth.loopBarEnd = rightSel;
+            case this._parseShortcut(event, shortcuts["loopPattern"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                const leftSel = Math.min(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
+                const rightSel = Math.max(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
+                if ((leftSel < this._doc.synth.loopBarStart || this._doc.synth.loopBarStart == -1)
+                    || (rightSel > this._doc.synth.loopBarEnd || this._doc.synth.loopBarEnd == -1)
+                ) {
+                    this._doc.synth.loopBarStart = leftSel;
+                    this._doc.synth.loopBarEnd = rightSel;
 
-                            if (!this._doc.synth.playing) {
-                                this._doc.synth.snapToBar();
-                                this._doc.performance.play();
-                            }
-                        }
-                        else {
-                            this._doc.synth.loopBarStart = -1;
-                            this._doc.synth.loopBarEnd = -1;
-                        }
-
-                        // Pressed while viewing a different bar than the current synth playhead.
-                        if (this._doc.bar != Math.floor(this._doc.synth.playhead) && this._doc.synth.loopBarStart != -1) {
-
-                            this._doc.synth.goToBar(this._doc.bar);
-                            this._doc.synth.snapToBar();
-                            this._doc.synth.initModFilters(this._doc.song);
-                            this._doc.synth.computeLatestModValues();
-                            if (this._doc.prefs.autoFollow) {
-                                this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
-                            }
-
-                        }
-
-                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
-
+                    if (!this._doc.synth.playing) {
+                        this._doc.synth.snapToBar();
+                        this._doc.performance.play();
                     }
                 }
-                event.preventDefault();
-                break;
-            case 67: // c
-                if (canPlayNotes) break;
-                if (event.shiftKey) {
-                    this._copyInstrument();
-                } else {
-                    this._doc.selection.copy();
-                    this._doc.selection.resetBoxSelection();
-                    this._doc.selection.selectionUpdated();
-                }
-                event.preventDefault();
-                break;
-            case 13: // enter/return
-                this._doc.synth.loopBarStart = -1;
-                this._doc.synth.loopBarEnd = -1;
-                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
-
-                if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
-                    this._doc.selection.insertChannel();
-                } else if (event.shiftKey) {
-                    const width = this._doc.selection.boxSelectionWidth
-                    this._doc.selection.boxSelectionX0 -= width;
-                    this._doc.selection.boxSelectionX1 -= width;
-                    this._doc.selection.insertBars();
-                } else {
-                    this._doc.selection.insertBars();
-                }
-                event.preventDefault();
-                break;
-            case 8: // backspace/delete
-                this._doc.synth.loopBarStart = -1;
-                this._doc.synth.loopBarEnd = -1;
-                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
-
-                if (event.ctrlKey || event.metaKey) {
-                    this._doc.selection.deleteChannel();
-                } else {
-                    this._doc.selection.deleteBars();
-                }
-                this._barScrollBar.animatePlayhead();
-                event.preventDefault();
-                break;
-            case 65: // a
-                if (canPlayNotes) break;
-                if (event.shiftKey) {
-                    this._doc.selection.selectChannel();
-                } else {
-                    this._doc.selection.selectAll();
-                }
-                event.preventDefault();
-                break;
-            case 68: // d
-                if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    //shift d replaces old d functionality, while d will duplicate replacing an unused pattern
-                    //This is for consistency with n (n uses ctrl instead of shift, but this will have to do for now)
-                    this._doc.selection.duplicatePatterns(event.shiftKey ? false : true); 
-                    event.preventDefault();
-                }
-                break;
-            case 69: // e (+shift: eq filter settings)
-                if (canPlayNotes) break;
-                if (event.shiftKey) {
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-                    if (!instrument.noteFilterType && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
-                        this._openPrompt("customNoteFilterSettings");
-                } else if (event.altKey) {
-                    //open / close all envelope dropdowns
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-                    const isAllOpen: boolean = this.envelopeEditor.openExtraSettingsDropdowns.every((x) => { return x == true })
-                    for (let i = 0; i < instrument.envelopeCount; i++) {
-                        if (isAllOpen) this.envelopeEditor.openExtraSettingsDropdowns[i] = false;
-                        else this.envelopeEditor.openExtraSettingsDropdowns[i] = true;
-                    }
-                    this.envelopeEditor.rerenderExtraSettings();
-                    event.preventDefault();
-                } else if (event.ctrlKey) {
-                    // EUCLEDIAN RHYTHM SHORTCUT (E)
-                    this._openPrompt("generateEuclideanRhythm");
-                    event.preventDefault();
-                    break;
-                } else if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    this._openPrompt("customSongEQFilterSettings");
-                }
-                break;
-            case 70: // f
-                if (canPlayNotes) break;
-                if (event.shiftKey) { // if shift+f, move to start of loop bar instead 
-                    
+                else {
                     this._doc.synth.loopBarStart = -1;
                     this._doc.synth.loopBarEnd = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                }
 
-                    this._doc.synth.goToBar(this._doc.song.loopStart);
-                    this._doc.synth.snapToBar();
-                    this._doc.synth.initModFilters(this._doc.song);
-                    this._doc.synth.computeLatestModValues();
-                    if (this._doc.prefs.autoFollow) {
-                        this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
-                    }
-                    event.preventDefault();
-                } else if (event.altKey) {
-                    //open / close all fm dropdowns
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-                    const operatorCount: number = instrument.type == InstrumentType.fm ? 4 : 6;
-                    let isAllOpen: boolean = true;
-                    for (let i = 0; i < operatorCount; i++) {
-                        if (!this._openOperatorDropdowns[i]) isAllOpen = false;
-                    }
-                    for (let i = 0; i < operatorCount; i++) {
-                        if (this._openOperatorDropdowns[i] == false && !isAllOpen || isAllOpen)
-                            this._toggleDropdownMenu(DropdownID.FM, i);
-                    }
-                    event.preventDefault();
-                } else if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-
-                    this._doc.synth.loopBarStart = -1;
-                    this._doc.synth.loopBarEnd = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
-
-                    this._doc.synth.snapToStart();
-                    this._doc.synth.initModFilters(this._doc.song);
-                    this._doc.synth.computeLatestModValues();
-                    if (this._doc.prefs.autoFollow) {
-                        this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
-                    }
-                    event.preventDefault();
-                } 
-                break;
-            case 72: // h
-                if (canPlayNotes) break;
-
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
+                // Pressed while viewing a different bar than the current synth playhead.
+                if (this._doc.bar != Math.floor(this._doc.synth.playhead) && this._doc.synth.loopBarStart != -1) {
 
                     this._doc.synth.goToBar(this._doc.bar);
                     this._doc.synth.snapToBar();
                     this._doc.synth.initModFilters(this._doc.song);
                     this._doc.synth.computeLatestModValues();
-
-                    if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
-                        this._doc.synth.loopBarStart = -1;
-                        this._doc.synth.loopBarEnd = -1;
-                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
-                    }
-
                     if (this._doc.prefs.autoFollow) {
                         this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                     }
-                    event.preventDefault();
-                }
-                break;
-            case 74: // j
-                if (canPlayNotes) break;
-                // Ctrl Alt Shift J: Jummbify - set all prefs to my preferred ones lol
-                if (event.shiftKey && event.ctrlKey && event.altKey) {
-                    this._doc.prefs.autoPlay = false;
-                    this._doc.prefs.autoFollow = false;
-                    this._doc.prefs.enableNotePreview = true;
-                    this._doc.prefs.showFifth = true;
-                    this._doc.prefs.notesOutsideScale = false;
-                    this._doc.prefs.defaultScale = 0;
-                    this._doc.prefs.showLetters = true;
-                    this._doc.prefs.showChannels = true;
-                    this._doc.prefs.showScrollBar = true;
-                    this._doc.prefs.alwaysFineNoteVol = false;
-                    this._doc.prefs.enableChannelMuting = true;
-                    this._doc.prefs.displayBrowserUrl = true;
-                    this._doc.prefs.displayVolumeBar = true;
-                    this._doc.prefs.layout = "wide";
-                    this._doc.prefs.visibleOctaves = 5;
-                    this._doc.prefs.save();
-                    event.preventDefault();
-                    location.reload();
-                } else if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) {
-                    if (event.shiftKey) {
-                        this._doc.selection.hideChannels(false);
-                    } else {
-                        this._doc.selection.showChannels(false);
-                    }
-                    event.preventDefault();
-                }
-                break;
-            case 75: // k
-                if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) {
-                        this._doc.selection.hideChannels(event.shiftKey);
-                        event.preventDefault();
-                    }
-                }
-                break;
-            case 76: // l
-                if (canPlayNotes) break;
-                if (event.shiftKey) {
-                    this._openPrompt("limiterSettings");
-                }
-                else {
-                    this._openPrompt("barCount");
-                }
-                break;
-            case 77: // m
-                if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    if (this._doc.prefs.enableChannelMuting) {
-                        this._doc.selection.muteChannels(event.shiftKey);
-                        event.preventDefault();
-                    }
-                }
-                break;
-            case 78: // n
-                if (canPlayNotes) break;
-                // Find lowest-index unused pattern for current channel
-                // Ctrl+n - lowest-index completely empty pattern
-                // Shift+n - note filter settings
 
-                const group: ChangeGroup = new ChangeGroup();
-
-                if (event.shiftKey) {
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-                    if (!instrument.noteFilterType && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
-                        this._openPrompt("customNoteFilterSettings");
-                    break;
-                }
-                else if (event.ctrlKey) {
-                    let nextEmpty: number = 0;
-                    while (nextEmpty < this._doc.song.patternsPerChannel && this._doc.song.channels[this._doc.channel].patterns[nextEmpty].notes.length > 0)
-                        nextEmpty++;
-
-                    nextEmpty++; // The next empty pattern is actually the one after the found one
-
-                    // Can't set anything if we're at the absolute limit.
-                    if (nextEmpty <= Config.barCountMax) {
-
-                        if (nextEmpty > this._doc.song.patternsPerChannel) {
-
-                            // Add extra empty pattern, if all the rest have something in them.
-                            group.append(new ChangePatternsPerChannel(this._doc, nextEmpty));
-                        }
-
-                        // Change pattern number to lowest-index unused
-                        group.append(new ChangePatternNumbers(this._doc, nextEmpty, this._doc.bar, this._doc.channel, 1, 1));
-
-                        // Auto set the used instruments to the ones you were most recently viewing.
-                        if (this._doc.channel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
-                            this._doc.viewedInstrument[this._doc.channel] = this._doc.recentPatternInstruments[this._doc.channel][0];
-                        }
-                        group.append(new ChangeSetPatternInstruments(this._doc, this._doc.channel, this._doc.recentPatternInstruments[this._doc.channel], this._doc.song.channels[this._doc.channel].patterns[nextEmpty - 1]));
-
-                    }
-                }
-                else {
-                    let nextUnused: number = 1;
-                    while (this._doc.song.channels[this._doc.channel].bars.indexOf(nextUnused) != -1
-                        && nextUnused <= this._doc.song.patternsPerChannel)
-                        nextUnused++;
-
-                    // Can't set anything if we're at the absolute limit.
-                    if (nextUnused <= Config.barCountMax) {
-
-                        if (nextUnused > this._doc.song.patternsPerChannel) {
-
-                            // Add extra empty pattern, if all the rest are used.
-                            group.append(new ChangePatternsPerChannel(this._doc, nextUnused));
-                        }
-
-                        // Change pattern number to lowest-index unused
-                        group.append(new ChangePatternNumbers(this._doc, nextUnused, this._doc.bar, this._doc.channel, 1, 1));
-
-                        // Auto set the used instruments to the ones you were most recently viewing.
-                        if (this._doc.channel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
-                            this._doc.viewedInstrument[this._doc.channel] = this._doc.recentPatternInstruments[this._doc.channel][0];
-                        }
-                        group.append(new ChangeSetPatternInstruments(this._doc, this._doc.channel, this._doc.recentPatternInstruments[this._doc.channel], this._doc.song.channels[this._doc.channel].patterns[nextUnused - 1]));
-
-                    }
                 }
 
-                this._doc.record(group);
-
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
                 event.preventDefault();
                 break;
-            case 81: // q
+
+            case this._parseShortcut(event, shortcuts["copyInstrument"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    if (event.shiftKey) {
-                        this._openPrompt("addExternal");
-                        event.preventDefault();
-                        break;
-                    }
-                    else {
-                        this._openPrompt("channelSettings");
-                        event.preventDefault();
-                        break;
-                    }
-                }
+                this._copyInstrument();
+                event.preventDefault();
                 break;
-            case 83: // s
+
+            case this._parseShortcut(event, shortcuts["copyPattern"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (event.shiftKey && event.ctrlKey && event.altKey) {
-                    // Ctrl Alt Shift S: Slarmooify - set all prefs to my preferred ones lol
-                    this._doc.prefs.autoPlay = false;
-                    this._doc.prefs.autoFollow = true;
-                    this._doc.prefs.enableNotePreview = true;
-                    this._doc.prefs.showFifth = true;
-                    this._doc.prefs.notesOutsideScale = false;
-                    this._doc.prefs.defaultScale = 0;
-                    this._doc.prefs.showLetters = true;
-                    this._doc.prefs.showChannels = true;
-                    this._doc.prefs.showScrollBar = true;
-                    this._doc.prefs.alwaysFineNoteVol = false;
-                    this._doc.prefs.enableChannelMuting = true;
-                    this._doc.prefs.displayBrowserUrl = true;
-                    this._doc.prefs.displayVolumeBar = true;
-                    this._doc.prefs.layout = "tall";
-                    this._doc.prefs.visibleOctaves = 5;
-                    this._doc.prefs.closePromptByClickoff = false;
-                    this._doc.prefs.colorTheme = "slarmoosbox";
-                    this._doc.prefs.frostedGlassBackground = false;
-                    this._doc.prefs.instrumentButtonsAtTop = true;
-                    this._doc.prefs.instrumentCopyPaste = true;
-                    this._doc.prefs.instrumentImportExport = true;
-                    this._doc.prefs.notesFlashWhenPlayed = true;
-                    this._doc.prefs.showOscilloscope = true;
-                    this._doc.prefs.save();
-                    event.preventDefault();
-                    location.reload();
-                } else if (event.ctrlKey || event.metaKey) {
-                    this._openPrompt("export");
-                    event.preventDefault();
-                } else if (this._doc.prefs.enableChannelMuting) {
-                    // JummBox deviation: I like shift+s as just another mute toggle personally.
-                    // Easier to reach than M and the shift+s invert functionality I am overwriting could be 
-                    // obtained with M anyway. Useability-wise you very often want to 'add' channels on to a solo as you work.
-                    if (event.shiftKey) {
-                        this._doc.selection.muteChannels(false);
-                    } else {
-                        this._doc.selection.soloChannels(false);
-                    }
-                    event.preventDefault();
-                }
+                event.preventDefault();
+                this._doc.selection.copy();
+                this._doc.selection.resetBoxSelection();
+                this._doc.selection.selectionUpdated();
                 break;
-            case 79: // o
+
+            case this._parseShortcut(event, shortcuts["insertBarNext"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (event.ctrlKey || event.metaKey) {
-                    this._openPrompt("import");
-                    event.preventDefault();
-                }
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                this._doc.selection.insertBars();
+                event.preventDefault();
                 break;
-            case 86: // v
+
+            case this._parseShortcut(event, shortcuts["insertBarPrev"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if ((event.ctrlKey || event.metaKey) && event.shiftKey && !needControlForShortcuts) {
-                    this._doc.selection.pasteNumbers();
-                } else if (event.shiftKey) {
-                    this._pasteInstrument();
-                } else {
-                    this._doc.selection.pasteNotes();
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                const width = this._doc.selection.boxSelectionWidth;
+                this._doc.selection.boxSelectionX0 -= width;
+                this._doc.selection.boxSelectionX1 -= width;
+                this._doc.selection.insertBars();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["insertChannelNext"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                this._doc.selection.insertChannel();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["insertChannelPrev"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                const height = this._doc.selection.boxSelectionHeight;
+                this._doc.selection.boxSelectionX0 -= height;
+                this._doc.selection.boxSelectionX1 -= height;
+                this._doc.selection.insertBars();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["deleteBar"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                this._doc.selection.deleteBars();
+                this._barScrollBar.animatePlayhead();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["deleteChannel"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                this._doc.selection.deleteChannel();
+                this._barScrollBar.animatePlayhead();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["selectAll"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.selectAll();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["selectChannel"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.selectChannel();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["duplicatePattern"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.duplicatePatterns(true);
+                event.preventDefault();
+                break;
+
+            /*
+            // this is apparently supposed to not replace unused patterns (so like, make brand new patterns instead of "filling in" gaps?) but the part of the code that does this is actually commented out, so i will do the same for this shortcut here.
+            case this._parseShortcut(event, shortcuts["duplicatePatternKeepUnused"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.duplicatePatterns(false);
+                event.preventDefault();
+                break;
+            */
+
+            case this._parseShortcut(event, shortcuts["editSongEQ"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._openPrompt("customSongEQFilterSettings");
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["generateEuclideanRhythm"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._openPrompt("generateEuclideanRhythm");
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["snapPlayheadToBeginning"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+
+                this._doc.synth.snapToStart();
+                this._doc.synth.initModFilters(this._doc.song);
+                this._doc.synth.computeLatestModValues();
+                if (this._doc.prefs.autoFollow) {
+                    this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                 }
                 event.preventDefault();
                 break;
-            case 87: // w
+
+            case this._parseShortcut(event, shortcuts["snapPlayheadToLoopStart"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.synth.loopBarStart = -1;
+                this._doc.synth.loopBarEnd = -1;
+                this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+
+                this._doc.synth.goToBar(this._doc.song.loopStart);
+                this._doc.synth.snapToBar();
+                this._doc.synth.initModFilters(this._doc.song);
+                this._doc.synth.computeLatestModValues();
+                if (this._doc.prefs.autoFollow) {
+                    this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                }
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["openAllFMDropdowns"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                //open / close all fm dropdowns (who uses this???)
+                const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+                const operatorCount: number = instrument.type == InstrumentType.fm ? 4 : 6;
+                let isAllOpen: boolean = true;
+                for (let i = 0; i < operatorCount; i++) {
+                    if (!this._openOperatorDropdowns[i]) isAllOpen = false;
+                }
+                for (let i = 0; i < operatorCount; i++) {
+                    if (this._openOperatorDropdowns[i] == false && !isAllOpen || isAllOpen)
+                        this._toggleDropdownMenu(DropdownID.FM, i);
+                }
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["snapPlayheadToSelected"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.synth.goToBar(this._doc.bar);
+                this._doc.synth.snapToBar();
+                this._doc.synth.initModFilters(this._doc.song);
+                this._doc.synth.computeLatestModValues();
+
+                if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                    this._doc.synth.loopBarStart = -1;
+                    this._doc.synth.loopBarEnd = -1;
+                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                }
+
+                if (this._doc.prefs.autoFollow) {
+                    this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                }
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["jummbify"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.prefs.autoPlay = false;
+                this._doc.prefs.autoFollow = false;
+                this._doc.prefs.enableNotePreview = true;
+                this._doc.prefs.showFifth = true;
+                this._doc.prefs.notesOutsideScale = false;
+                this._doc.prefs.defaultScale = 0;
+                this._doc.prefs.showLetters = true;
+                this._doc.prefs.showChannels = true;
+                this._doc.prefs.showScrollBar = true;
+                this._doc.prefs.alwaysFineNoteVol = false;
+                this._doc.prefs.enableChannelMuting = true;
+                this._doc.prefs.displayBrowserUrl = true;
+                this._doc.prefs.displayVolumeBar = true;
+                this._doc.prefs.layout = "wide";
+                this._doc.prefs.visibleOctaves = 5;
+                this._doc.prefs.save();
+                location.reload();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["hideChannel"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) this._doc.selection.hideChannels(false);
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["onlyShowChannel"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) this._doc.selection.showChannels(false);
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["editLimiter"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._openPrompt("limiterSettings");
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["editSongLength"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._openPrompt("barCount");
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["muteChannel"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting) {
+                    this._doc.selection.muteChannels(false);
+                    event.preventDefault();
+                }
+                break;
+
+            case this._parseShortcut(event, shortcuts["muteAll"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting) {
+                    this._doc.selection.muteChannels(true);
+                    event.preventDefault();
+                }
+                break;
+
+            case this._parseShortcut(event, shortcuts["newPattern"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                let newPatternGroup: ChangeGroup = new ChangeGroup();
+
+                let nextUnused: number = 1;
+                while (this._doc.song.channels[this._doc.channel].bars.indexOf(nextUnused) != -1
+                    && nextUnused <= this._doc.song.patternsPerChannel)
+                    nextUnused++;
+
+                // Can't set anything if we're at the absolute limit.
+                if (nextUnused <= Config.barCountMax) {
+
+                    if (nextUnused > this._doc.song.patternsPerChannel) {
+
+                        // Add extra empty pattern, if all the rest are used.
+                        newPatternGroup.append(new ChangePatternsPerChannel(this._doc, nextUnused));
+                    }
+
+                    // Change pattern number to lowest-index unused
+                    newPatternGroup.append(new ChangePatternNumbers(this._doc, nextUnused, this._doc.bar, this._doc.channel, 1, 1));
+
+                    // Auto set the used instruments to the ones you were most recently viewing.
+                    if (this._doc.channel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
+                        this._doc.viewedInstrument[this._doc.channel] = this._doc.recentPatternInstruments[this._doc.channel][0];
+                    }
+                    newPatternGroup.append(new ChangeSetPatternInstruments(this._doc, this._doc.channel, this._doc.recentPatternInstruments[this._doc.channel], this._doc.song.channels[this._doc.channel].patterns[nextUnused - 1]));
+
+                }
+
+                this._doc.record(newPatternGroup);
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["newPatternFromEmpty"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                let newPatternFromEmptyGroup: ChangeGroup = new ChangeGroup();
+
+                let nextEmpty: number = 0;
+                while (nextEmpty < this._doc.song.patternsPerChannel && this._doc.song.channels[this._doc.channel].patterns[nextEmpty].notes.length > 0)
+                    nextEmpty++;
+
+                nextEmpty++; // The next empty pattern is actually the one after the found one
+
+                // Can't set anything if we're at the absolute limit.
+                if (nextEmpty <= Config.barCountMax) {
+
+                    if (nextEmpty > this._doc.song.patternsPerChannel) {
+
+                        // Add extra empty pattern, if all the rest have something in them.
+                        newPatternFromEmptyGroup.append(new ChangePatternsPerChannel(this._doc, nextEmpty));
+                    }
+
+                    // Change pattern number to lowest-index unused
+                    newPatternFromEmptyGroup.append(new ChangePatternNumbers(this._doc, nextEmpty, this._doc.bar, this._doc.channel, 1, 1));
+
+                    // Auto set the used instruments to the ones you were most recently viewing.
+                    if (this._doc.channel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
+                        this._doc.viewedInstrument[this._doc.channel] = this._doc.recentPatternInstruments[this._doc.channel][0];
+                    }
+                    newPatternFromEmptyGroup.append(new ChangeSetPatternInstruments(this._doc, this._doc.channel, this._doc.recentPatternInstruments[this._doc.channel], this._doc.song.channels[this._doc.channel].patterns[nextEmpty - 1]));
+
+                }
+
+                this._doc.record(newPatternFromEmptyGroup);
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["editCustomSamples"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._openPrompt("addExternal");
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["editChannelSettings"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._openPrompt("channelSettings");
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["slarmooify"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                // Ctrl Alt Shift S: Slarmooify - set all prefs to my preferred ones lol
+                this._doc.prefs.autoPlay = false;
+                this._doc.prefs.autoFollow = true;
+                this._doc.prefs.enableNotePreview = true;
+                this._doc.prefs.showFifth = true;
+                this._doc.prefs.notesOutsideScale = false;
+                this._doc.prefs.defaultScale = 0;
+                this._doc.prefs.showLetters = true;
+                this._doc.prefs.showChannels = true;
+                this._doc.prefs.showScrollBar = true;
+                this._doc.prefs.alwaysFineNoteVol = false;
+                this._doc.prefs.enableChannelMuting = true;
+                this._doc.prefs.displayBrowserUrl = true;
+                this._doc.prefs.displayVolumeBar = true;
+                this._doc.prefs.layout = "tall";
+                this._doc.prefs.visibleOctaves = 5;
+                this._doc.prefs.closePromptByClickoff = false;
+                this._doc.prefs.colorTheme = "slarmoosbox";
+                this._doc.prefs.frostedGlassBackground = false;
+                this._doc.prefs.instrumentButtonsAtTop = true;
+                this._doc.prefs.instrumentCopyPaste = true;
+                this._doc.prefs.instrumentImportExport = true;
+                this._doc.prefs.notesFlashWhenPlayed = true;
+                this._doc.prefs.showOscilloscope = true;
+                this._doc.prefs.save();
+                location.reload();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["export"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._openPrompt("export");
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["soloChannel"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting) {
+                    // since jummbus put a comment here, i might aswell too:
+                    // i dont want ctrl for default keybinds so ive done shift+s for save
+                    // i also dont have aliases for keybinds yet so if you really want shift+s,
+                    // you should just rebind it to that :p ~ theepie
+                    this._doc.selection.soloChannels(false);
+                }
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["import"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._openPrompt("import");
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["pastePatternNumbers"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.pasteNumbers();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["pastePattern"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._pasteInstrument();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["pasteInstrument"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.pasteNotes();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["moveNotesSideways"], needControlForShortcuts):
                 if (canPlayNotes) break;
                 this._openPrompt("moveNotesSideways");
                 break;
-            case 73: // i
-                if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey) && event.shiftKey) {
-                    // Copy the current instrument as a preset to the clipboard.
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-                    const instrumentObject: any = instrument.toJsonObject();
-                    delete instrumentObject["preset"];
-                    // Volume and the panning effect are not included in presets.
-                    delete instrumentObject["volume"];
-                    delete instrumentObject["pan"];
-                    const panningEffectIndex: number = instrumentObject["effects"].indexOf(Config.effectNames[EffectType.panning]);
-                    if (panningEffectIndex != -1) instrumentObject["effects"].splice(panningEffectIndex, 1);
-                    for (let i: number = 0; i < instrumentObject["envelopes"].length; i++) {
-                        const envelope: any = instrumentObject["envelopes"][i];
-                        // If there are any envelopes targeting panning or none, remove those too.
-                        if (envelope["target"] == "panning" || envelope["target"] == "none" || envelope["envelope"] == "none") {
-                            instrumentObject["envelopes"].splice(i, 1);
-                            i--;
-                        }
-                    }
-                    this._copyTextToClipboard(JSON.stringify(instrumentObject));
-                    event.preventDefault();
-                }
-                break;
-            case 82: // r
-                if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    if (event.shiftKey) {
-                        this._randomGenerated(false);
-                    } else if (event.altKey) {
-                        this._randomGenerated(true);
-                    } else {
-                        this._randomPreset();
-                    }
-                    event.preventDefault();
-                }
-                break;
-            case 219: // left brace
-                if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    this._doc.synth.goToPrevBar();
-                    this._doc.synth.initModFilters(this._doc.song);
-                    this._doc.synth.computeLatestModValues();
-                    if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
-                        this._doc.synth.loopBarStart = -1;
-                        this._doc.synth.loopBarEnd = -1;
-                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
-                    }
 
-                    if (this._doc.prefs.autoFollow) {
-                        this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
-                    }
-                    event.preventDefault();
-                }
-                break;
-            case 221: // right brace
+            case this._parseShortcut(event, shortcuts["exportInstrument"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    this._doc.synth.goToNextBar();
-                    this._doc.synth.initModFilters(this._doc.song);
-                    this._doc.synth.computeLatestModValues();
-                    if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
-                        this._doc.synth.loopBarStart = -1;
-                        this._doc.synth.loopBarEnd = -1;
-                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                // Copy the current instrument as a preset to the clipboard.
+                const exportedInstrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+                const instrumentObject: any = exportedInstrument.toJsonObject();
+                delete instrumentObject["preset"];
+                // Volume and the panning effect are not included in presets.
+                delete instrumentObject["volume"];
+                delete instrumentObject["pan"];
+                const panningEffectIndex: number = instrumentObject["effects"].indexOf(Config.effectNames[EffectType.panning]);
+                if (panningEffectIndex != -1) instrumentObject["effects"].splice(panningEffectIndex, 1);
+                for (let i: number = 0; i < instrumentObject["envelopes"].length; i++) {
+                    const envelope: any = instrumentObject["envelopes"][i];
+                    // If there are any envelopes targeting panning or none, remove those too.
+                    if (envelope["target"] == "panning" || envelope["target"] == "none" || envelope["envelope"] == "none") {
+                        instrumentObject["envelopes"].splice(i, 1);
+                        i--;
                     }
+                }
+                this._copyTextToClipboard(JSON.stringify(instrumentObject));
+                event.preventDefault();
+                break;
 
-                    if (this._doc.prefs.autoFollow) {
-                        this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
-                    }
-                    event.preventDefault();
-                }
-                break;
-            case 189: // -
-            case 173: // Firefox -
+            case this._parseShortcut(event, shortcuts["randomInstrument"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    this._doc.selection.transpose(false, event.shiftKey);
-                    event.preventDefault();
-                }
+                // this is buggy for now i think
+                //this._randomGenerated(false);
+                event.preventDefault();
                 break;
-            case 187: // +
-            case 61: // Firefox +
-            case 171: // Some users have this as +? Hmm.
-                if (canPlayNotes) break;
-                if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
-                    this._doc.selection.transpose(true, event.shiftKey);
-                    event.preventDefault();
-                }
-                break;
-            case 38: // up
-                if (event.ctrlKey || event.metaKey) {
-                    this._doc.selection.swapChannels(-1);
-                } else if (event.shiftKey) {
-                    this._doc.selection.boxSelectionY1 = Math.max(0, this._doc.selection.boxSelectionY1 - 1);
-                    this._doc.selection.scrollToEndOfSelection();
-                    this._doc.selection.selectionUpdated();
-                } else {
-                    this._doc.selection.setChannelBar((this._doc.channel - 1 + this._doc.song.getChannelCount()) % this._doc.song.getChannelCount(), this._doc.bar);
-                    this._doc.selection.resetBoxSelection();
-                    //envelopes aren't rerendering when channels are changed so...
-                    this.envelopeEditor.rerenderExtraSettings();
 
+            case this._parseShortcut(event, shortcuts["nextBar"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.synth.goToNextBar();
+                this._doc.synth.initModFilters(this._doc.song);
+                this._doc.synth.computeLatestModValues();
+                if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                    this._doc.synth.loopBarStart = -1;
+                    this._doc.synth.loopBarEnd = -1;
+                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                }
+
+                if (this._doc.prefs.autoFollow) {
+                    this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                }
+                event.preventDefault();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["prevBar"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.synth.goToPrevBar();
+                this._doc.synth.initModFilters(this._doc.song);
+                this._doc.synth.computeLatestModValues();
+                if (Math.floor(this._doc.synth.playhead) < this._doc.synth.loopBarStart || Math.floor(this._doc.synth.playhead) > this._doc.synth.loopBarEnd) {
+                    this._doc.synth.loopBarStart = -1;
+                    this._doc.synth.loopBarEnd = -1;
+                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                }
+
+                if (this._doc.prefs.autoFollow) {
+                    this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                 }
                 event.preventDefault();
                 break;
-            case 40: // down
-                if (event.ctrlKey || event.metaKey) {
-                    this._doc.selection.swapChannels(1);
-                } else if (event.shiftKey) {
-                    this._doc.selection.boxSelectionY1 = Math.min(this._doc.song.getChannelCount() - 1, this._doc.selection.boxSelectionY1 + 1);
-                    this._doc.selection.scrollToEndOfSelection();
-                    this._doc.selection.selectionUpdated();
-                } else {
-                    this._doc.selection.setChannelBar((this._doc.channel + 1) % this._doc.song.getChannelCount(), this._doc.bar);
-                    this._doc.selection.resetBoxSelection();
-                    this.envelopeEditor.rerenderExtraSettings();
-                }
+
+            case this._parseShortcut(event, shortcuts["transposeDown"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.transpose(false, false);
                 event.preventDefault();
                 break;
-            case 37: // left
-                if (event.shiftKey) {
-                    this._doc.selection.boxSelectionX1 = Math.max(0, this._doc.selection.boxSelectionX1 - 1);
-                    this._doc.selection.scrollToEndOfSelection();
-                    this._doc.selection.selectionUpdated();
-                } else {
-                    this._doc.selection.setChannelBar(this._doc.channel, (this._doc.bar + this._doc.song.barCount - 1) % this._doc.song.barCount);
-                    this._doc.selection.resetBoxSelection();
-                }
+
+            case this._parseShortcut(event, shortcuts["transposeUp"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.transpose(true, false);
                 event.preventDefault();
                 break;
-            case 39: // right
-                if (event.shiftKey) {
-                    this._doc.selection.boxSelectionX1 = Math.min(this._doc.song.barCount - 1, this._doc.selection.boxSelectionX1 + 1);
-                    this._doc.selection.scrollToEndOfSelection();
-                    this._doc.selection.selectionUpdated();
-                } else {
-                    this._doc.selection.setChannelBar(this._doc.channel, (this._doc.bar + 1) % this._doc.song.barCount);
-                    this._doc.selection.resetBoxSelection();
-                }
+
+            case this._parseShortcut(event, shortcuts["transposeOctaveDown"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.transpose(false, true);
                 event.preventDefault();
                 break;
-            case 46: // Delete
+
+            case this._parseShortcut(event, shortcuts["transposeOctaveUp"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.transpose(true, true);
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["patternUp"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.setChannelBar((this._doc.channel - 1 + this._doc.song.getChannelCount()) % this._doc.song.getChannelCount(), this._doc.bar);
+                this._doc.selection.resetBoxSelection();
+                //envelopes aren't rerendering when channels are changed so...
+                this.envelopeEditor.rerenderExtraSettings();
+                event.preventDefault();
+                break;
+            case this._parseShortcut(event, shortcuts["selectionUp"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.boxSelectionY1 = Math.max(0, this._doc.selection.boxSelectionY1 - 1);
+                this._doc.selection.scrollToEndOfSelection();
+                this._doc.selection.selectionUpdated();
+                event.preventDefault();
+                break;
+            case this._parseShortcut(event, shortcuts["moveChannelUp"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.swapChannels(-1);
+                event.preventDefault();
+                break;
+            case this._parseShortcut(event, shortcuts["patternDown"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.setChannelBar((this._doc.channel + 1) % this._doc.song.getChannelCount(), this._doc.bar);
+                this._doc.selection.resetBoxSelection();
+                this.envelopeEditor.rerenderExtraSettings();
+                event.preventDefault();
+                break;
+            case this._parseShortcut(event, shortcuts["selectionDown"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.boxSelectionY1 = Math.min(this._doc.song.getChannelCount() - 1, this._doc.selection.boxSelectionY1 + 1);
+                this._doc.selection.scrollToEndOfSelection();
+                this._doc.selection.selectionUpdated();
+                event.preventDefault();
+                break;
+            case this._parseShortcut(event, shortcuts["moveChannelDown"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.swapChannels(1);
+                event.preventDefault();
+                break;
+            case this._parseShortcut(event, shortcuts["patternLeft"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.setChannelBar(this._doc.channel, (this._doc.bar + this._doc.song.barCount - 1) % this._doc.song.barCount);
+                this._doc.selection.resetBoxSelection();
+                event.preventDefault();
+                break;
+            case this._parseShortcut(event, shortcuts["selectionLeft"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.boxSelectionX1 = Math.max(0, this._doc.selection.boxSelectionX1 - 1);
+                this._doc.selection.scrollToEndOfSelection();
+                this._doc.selection.selectionUpdated();
+                event.preventDefault();
+                break;
+            case this._parseShortcut(event, shortcuts["patternRight"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.setChannelBar(this._doc.channel, (this._doc.bar + 1) % this._doc.song.barCount);
+                this._doc.selection.resetBoxSelection();
+                event.preventDefault();
+                break;
+            case this._parseShortcut(event, shortcuts["selectionRight"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.boxSelectionX1 = Math.min(this._doc.song.barCount - 1, this._doc.selection.boxSelectionX1 + 1);
+                this._doc.selection.scrollToEndOfSelection();
+                this._doc.selection.selectionUpdated();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["removePattern"], needControlForShortcuts):
+                if (canPlayNotes) break;
                 this._doc.selection.digits = "";
                 this._doc.selection.nextDigit("0", false, false);
+                event.preventDefault();
                 break;
+
             case 48: // 0
                 if (canPlayNotes) break;
                 this._doc.selection.nextDigit("0", needControlForShortcuts != (event.shiftKey || event.ctrlKey || event.metaKey), event.altKey);
