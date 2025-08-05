@@ -11410,6 +11410,7 @@ var beepbox = (function (exports) {
             this.liveInputSamplesHeld = 0;
             this.lastInterval = 0;
             this.chipWaveStartOffset = 0;
+            this.heldLength = 0;
             this.noiseSample = 0.0;
             this.noiseSampleA = 0.0;
             this.noiseSampleB = 0.0;
@@ -13571,6 +13572,7 @@ var beepbox = (function (exports) {
             const ticksIntoBar = this.getTicksIntoBar();
             const partTimeStart = (ticksIntoBar) / Config.ticksPerPart;
             const partTimeEnd = (ticksIntoBar + 1.0) / Config.ticksPerPart;
+            const partsPerBar = Config.partsPerBeat * song.beatsPerBar;
             const currentPart = this.getCurrentPart();
             let specialIntervalMult = 1.0;
             tone.specialIntervalExpressionMult = 1.0;
@@ -13653,12 +13655,52 @@ var beepbox = (function (exports) {
             }
             if ((tone.atNoteStart && !transition.isSeamless && !tone.forceContinueAtStart) || tone.freshlyAllocated) {
                 tone.reset();
-                if (tone.note != null)
-                    tone.chipWaveStartOffset = tone.note.chipWaveStartOffset;
+                if (tone.note != null) {
+                    tone.chipWaveStartOffset = instrument.chipWaveStartOffset;
+                    let runningSampleCount = 0;
+                    let continueCheck = true;
+                    if (tone.note.start == 0 && (transition.isSeamless || tone.note.continuesLastPattern)) {
+                        for (let i = this.bar - 1; i >= 0; i--) {
+                            if (!continueCheck)
+                                break;
+                            let patternIndex = song.channels[channelIndex].bars[i];
+                            if (patternIndex != 0) {
+                                let pattern = channel.patterns[patternIndex - 1];
+                                if (pattern.notes.length > 0) {
+                                    for (let i = pattern.notes.length; i > 0; i--) {
+                                        let newNote = pattern.notes[i - 1];
+                                        if (newNote.pitches[0] != tone.note.pitches[0] || newNote.end != (pattern.notes[i + 1] ? pattern.notes[i + 1].start : partsPerBar) || (newNote.start != 0 && (!transition.isSeamless || i == 1)) || (newNote.start == 0 && (!transition.isSeamless || !newNote.continuesLastPattern))) {
+                                            tone.chipWaveStartOffset = channel.instruments[pattern.instruments[0]].chipWaveStartOffset;
+                                            continueCheck = false;
+                                        }
+                                        if (newNote.pitches[0] == tone.note.pitches[0] && newNote.end == (pattern.notes[i + 1] ? pattern.notes[i + 1].start : partsPerBar)) {
+                                            runningSampleCount += samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
+                                            console.log(runningSampleCount);
+                                            console.log(basePitch);
+                                        }
+                                        if (!continueCheck)
+                                            break;
+                                    }
+                                }
+                            }
+                            else
+                                break;
+                        }
+                    }
+                    if (!tone.atNoteStart) {
+                        if (transition.isSeamless && tone.prevNote != null && tone.prevNote.pitches.length == 1 && tone.prevNote.pitches[0] == tone.note.pitches[0]) {
+                            tone.chipWaveStartOffset += samplesPerTick * Config.ticksPerPart * (currentPart - tone.prevNote.start);
+                        }
+                        else {
+                            tone.chipWaveStartOffset += samplesPerTick * Config.ticksPerPart * (currentPart - tone.note.start);
+                        }
+                    }
+                    tone.chipWaveStartOffset += runningSampleCount;
+                }
                 instrumentState.envelopeComputer.reset();
                 if (instrument.type == 0 && instrument.isUsingAdvancedLoopControls) {
                     const chipWaveLength = Config.rawRawChipWaves[instrument.chipWave].samples.length - 1;
-                    const firstOffset = (tone.chipWaveStartOffset + instrument.chipWaveStartOffset) / chipWaveLength;
+                    const firstOffset = tone.chipWaveStartOffset / chipWaveLength;
                     const lastOffset = 0.999999999999999;
                     for (let i = 0; i < Config.maxPitchOrOperatorCount; i++) {
                         tone.phases[i] = instrument.chipWavePlayBackwards ? Math.max(0, Math.min(lastOffset, firstOffset)) : Math.max(0, firstOffset);
