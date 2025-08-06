@@ -4300,9 +4300,9 @@ export class SongEditor {
                 this._doc.synth.loopBarEnd = -1;
                 this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
                 const height = this._doc.selection.boxSelectionHeight;
-                this._doc.selection.boxSelectionX0 -= height;
-                this._doc.selection.boxSelectionX1 -= height;
-                this._doc.selection.insertBars();
+                this._doc.selection.boxSelectionY0 -= height;
+                this._doc.selection.boxSelectionY1 -= height;
+                this._doc.selection.insertChannel();
                 event.preventDefault();
                 break;
 
