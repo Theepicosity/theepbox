@@ -699,8 +699,10 @@ var beepbox = (function (exports) {
     Config.filterGainRange = 15;
     Config.filterGainCenter = 7;
     Config.filterGainStep = 1.0 / 2.0;
+    Config.filterQRange = 16;
+    Config.filterQStep = 1.0 / 4.0;
     Config.filterMaxPoints = 8;
-    Config.filterTypeNames = ["low-pass", "high-pass", "peak"];
+    Config.filterTypeNames = ["low-pass", "high-pass", "peak", "low-shelf", "high-shelf"];
     Config.filterMorphCount = 10;
     Config.filterSimpleCutRange = 11;
     Config.filterSimplePeakRange = 8;
@@ -10968,7 +10970,7 @@ li.select2-results__option[role=group] > strong:hover {
         reset() {
             this.controlPointCount = 0;
         }
-        addPoint(type, freqSetting, gainSetting) {
+        addPoint(type, freqSetting, gainSetting, qSetting) {
             let controlPoint;
             if (this.controlPoints.length <= this.controlPointCount) {
                 controlPoint = new FilterControlPoint();
@@ -10979,7 +10981,7 @@ li.select2-results__option[role=group] > strong:hover {
             }
             this.controlPointCount++;
             controlPoint.type = type;
-            controlPoint.set(freqSetting, gainSetting);
+            controlPoint.set(freqSetting, gainSetting, qSetting);
         }
         toJsonObject() {
             const filterArray = [];
@@ -11085,7 +11087,7 @@ li.select2-results__option[role=group] > strong:hover {
                     logGain = Math.min(logGain, -1.0);
                 const convertedGain = Math.pow(2.0, logGain);
                 const gainSetting = FilterControlPoint.getRoundedSettingValueFromLinearGain(convertedGain);
-                this.addPoint(0, freqSetting, gainSetting);
+                this.addPoint(0, freqSetting, gainSetting, 1.0);
             }
             else {
                 const intendedGain = 0.5 / (1.0 - legacyFilterMaxResonance * Math.sqrt(Math.max(0.0, legacyResonanceSetting - 1.0) / (legacyFilterResonanceRange - 2.0)));
@@ -11116,7 +11118,7 @@ li.select2-results__option[role=group] > strong:hover {
                 if (!resonant)
                     legacyFilterGain = Math.min(legacyFilterGain, Math.sqrt(0.5));
                 const gainSetting = FilterControlPoint.getRoundedSettingValueFromLinearGain(legacyFilterGain);
-                this.addPoint(0, freqSetting, gainSetting);
+                this.addPoint(0, freqSetting, gainSetting, 1.0);
             }
             this.controlPoints.length = this.controlPointCount;
         }
@@ -11149,7 +11151,7 @@ li.select2-results__option[role=group] > strong:hover {
                 logGain = -extraOctaves + (logGain + extraOctaves) * 0.82;
                 const convertedGain = Math.pow(2.0, logGain);
                 const gainSetting = FilterControlPoint.getRoundedSettingValueFromLinearGain(convertedGain);
-                this.addPoint(0, freqSetting, gainSetting);
+                this.addPoint(0, freqSetting, gainSetting, 1.0);
             }
             else {
                 const intendedGain = 0.5 / (1.0 - legacyFilterMaxResonance * Math.sqrt(Math.max(0.0, legacyResonanceSetting - 1.0) / (legacyFilterResonanceRange - 2.0)));
@@ -11168,7 +11170,7 @@ li.select2-results__option[role=group] > strong:hover {
                 response.analyze(legacyFilter, curvedRadians);
                 legacyFilterGain = response.magnitude();
                 const gainSetting = FilterControlPoint.getRoundedSettingValueFromLinearGain(legacyFilterGain);
-                this.addPoint(0, freqSetting, gainSetting);
+                this.addPoint(0, freqSetting, gainSetting, 1.0);
             }
         }
     }
@@ -11177,10 +11179,12 @@ li.select2-results__option[role=group] > strong:hover {
             this.freq = 0;
             this.gain = Config.filterGainCenter;
             this.type = 2;
+            this.q = 1.0;
         }
-        set(freqSetting, gainSetting) {
+        set(freqSetting, gainSetting, qSetting) {
             this.freq = freqSetting;
             this.gain = gainSetting;
+            this.q = qSetting;
         }
         getHz() {
             return FilterControlPoint.getHzFromSettingValue(this.freq);
@@ -11194,6 +11198,9 @@ li.select2-results__option[role=group] > strong:hover {
         static getRoundedSettingValueFromHz(hz) {
             return Math.max(0, Math.min(Config.filterFreqRange - 1, Math.round(FilterControlPoint.getSettingValueFromHz(hz))));
         }
+        getQ() {
+            return this.q * Config.filterQStep;
+        }
         getLinearGain(peakMult = 1.0) {
             const power = (this.gain - Config.filterGainCenter) * Config.filterGainStep;
             const neutral = (this.type == 2) ? 0.0 : -0.5;
@@ -11206,6 +11213,7 @@ li.select2-results__option[role=group] > strong:hover {
         toCoefficients(filter, sampleRate, freqMult = 1.0, peakMult = 1.0) {
             const cornerRadiansPerSample = 2.0 * Math.PI * Math.max(Config.filterFreqMinHz, Math.min(Config.filterFreqMaxHz, freqMult * this.getHz())) / sampleRate;
             const linearGain = this.getLinearGain(peakMult);
+            const q = this.getQ();
             switch (this.type) {
                 case 0:
                     filter.lowPass2ndOrderButterworth(cornerRadiansPerSample, linearGain);
@@ -11214,7 +11222,12 @@ li.select2-results__option[role=group] > strong:hover {
                     filter.highPass2ndOrderButterworth(cornerRadiansPerSample, linearGain);
                     break;
                 case 2:
-                    filter.peak2ndOrder(cornerRadiansPerSample, linearGain, 1.0);
+                    filter.peak2ndOrder(cornerRadiansPerSample, linearGain, q);
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    filter.highShelf2ndOrder(cornerRadiansPerSample, linearGain, q);
                     break;
                 default:
                     throw new Error();
@@ -13848,7 +13861,7 @@ li.select2-results__option[role=group] > strong:hover {
                                     buffer.push(base64IntToCharCode[effect.eqFilter.controlPointCount]);
                                     for (let j = 0; j < effect.eqFilter.controlPointCount; j++) {
                                         const point = effect.eqFilter.controlPoints[j];
-                                        buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)]);
+                                        buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)], base64IntToCharCode[Math.round(point.q)]);
                                     }
                                 }
                                 let usingSubFilterBitfield = 0;
@@ -13861,7 +13874,7 @@ li.select2-results__option[role=group] > strong:hover {
                                         buffer.push(base64IntToCharCode[effect.eqSubFilters[j + 1].controlPointCount]);
                                         for (let k = 0; k < effect.eqSubFilters[j + 1].controlPointCount; k++) {
                                             const point = effect.eqSubFilters[j + 1].controlPoints[k];
-                                            buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)]);
+                                            buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)], base64IntToCharCode[Math.round(point.q)]);
                                         }
                                     }
                                 }
@@ -15002,7 +15015,7 @@ li.select2-results__option[role=group] > strong:hover {
                                         }
                                         for (let i = 0; i < instrument.noteFilter.controlPointCount; i++) {
                                             const point = instrument.noteFilter.controlPoints[i];
-                                            point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                            point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         }
@@ -15022,7 +15035,7 @@ li.select2-results__option[role=group] > strong:hover {
                                                 }
                                                 for (let i = 0; i < instrument.noteSubFilters[j + 1].controlPointCount; i++) {
                                                     const point = instrument.noteSubFilters[j + 1].controlPoints[i];
-                                                    point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                    point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                 }
@@ -15051,7 +15064,7 @@ li.select2-results__option[role=group] > strong:hover {
                                         }
                                         for (let i = 0; i < newEffect.eqFilter.controlPointCount; i++) {
                                             const point = newEffect.eqFilter.controlPoints[i];
-                                            point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                            point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         }
@@ -15072,7 +15085,7 @@ li.select2-results__option[role=group] > strong:hover {
                                                     }
                                                     for (let i = 0; i < newEffect.eqSubFilters[j + 1].controlPointCount; i++) {
                                                         const point = newEffect.eqSubFilters[j + 1].controlPoints[i];
-                                                        point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                        point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                         point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                         point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     }
@@ -15384,12 +15397,19 @@ li.select2-results__option[role=group] > strong:hover {
                                     }
                                     for (let i = 0; i < this.eqFilter.controlPointCount; i++) {
                                         const point = this.eqFilter.controlPoints[i];
-                                        point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        if (fromTheepBox)
+                                            point.q = clamp(1, Config.filterQRange + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        else
+                                            point.q = 1 / Config.filterQStep;
                                     }
                                     for (let i = this.eqFilter.controlPointCount; i < originalControlPointCount; i++) {
-                                        charIndex += 3;
+                                        if (fromTheepBox)
+                                            charIndex += 4;
+                                        else
+                                            charIndex += 3;
                                     }
                                     this.eqSubFilters[0] = this.eqFilter;
                                     let usingSubFilterBitfield = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
@@ -15404,12 +15424,19 @@ li.select2-results__option[role=group] > strong:hover {
                                             }
                                             for (let i = 0; i < this.eqSubFilters[j + 1].controlPointCount; i++) {
                                                 const point = this.eqSubFilters[j + 1].controlPoints[i];
-                                                point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                 point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                 point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                if (fromTheepBox)
+                                                    point.q = clamp(1, Config.filterQRange + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                else
+                                                    point.q = 1 / Config.filterQStep;
                                             }
                                             for (let i = this.eqSubFilters[j + 1].controlPointCount; i < originalSubfilterControlPointCount; i++) {
-                                                charIndex += 3;
+                                                if (fromTheepBox)
+                                                    charIndex += 4;
+                                                else
+                                                    charIndex += 3;
                                             }
                                         }
                                     }
@@ -15545,7 +15572,7 @@ li.select2-results__option[role=group] > strong:hover {
                                                 }
                                                 for (let i = 0; i < newEffect.eqFilter.controlPointCount; i++) {
                                                     const point = newEffect.eqFilter.controlPoints[i];
-                                                    point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                    point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                 }
@@ -15565,7 +15592,7 @@ li.select2-results__option[role=group] > strong:hover {
                                                         }
                                                         for (let i = 0; i < newEffect.eqSubFilters[j + 1].controlPointCount; i++) {
                                                             const point = newEffect.eqSubFilters[j + 1].controlPoints[i];
-                                                            point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                            point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                             point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                             point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                         }
@@ -34547,7 +34574,7 @@ li.select2-results__option[role=group] > strong:hover {
         return Math.pow(volumeMult, 0.25) * 127;
     }
 
-    const { button: button$p, div: div$p, h2: h2$o, input: input$i, select: select$d, option: option$d } = HTML;
+    const { button: button$p, div: div$p, h2: h2$o, input: input$j, select: select$d, option: option$d } = HTML;
     function lerp(low, high, t) {
         return low + t * (high - low);
     }
@@ -34575,13 +34602,13 @@ li.select2-results__option[role=group] > strong:hover {
         constructor(_doc) {
             this._doc = _doc;
             this.outputStarted = false;
-            this._fileName = input$i({ type: "text", style: "width: 10em;", value: Config.jsonFormat + "-Song", maxlength: 250, "autofocus": "autofocus" });
+            this._fileName = input$j({ type: "text", style: "width: 10em;", value: Config.jsonFormat + "-Song", maxlength: 250, "autofocus": "autofocus" });
             this._computedSamplesLabel = div$p({ style: "width: 10em;" }, new Text("0:00"));
-            this._enableIntro = input$i({ type: "checkbox" });
-            this._loopDropDown = input$i({ style: "width: 2em;", type: "number", min: "1", max: "4", step: "1" });
-            this._enableOutro = input$i({ type: "checkbox" });
+            this._enableIntro = input$j({ type: "checkbox" });
+            this._loopDropDown = input$j({ style: "width: 2em;", type: "number", min: "1", max: "4", step: "1" });
+            this._enableOutro = input$j({ type: "checkbox" });
             this._formatSelect = select$d({ style: "width: 100%;" }, option$d({ value: "wav" }, "Export to .wav file."), option$d({ value: "mp3" }, "Export to .mp3 file."), option$d({ value: "midi" }, "Export to .mid file."), option$d({ value: "json" }, "Export to .json file."), option$d({ value: "html" }, "Export to .html file."));
-            this._removeWhitespace = input$i({ type: "checkbox" });
+            this._removeWhitespace = input$j({ type: "checkbox" });
             this._removeWhitespaceDiv = div$p({ style: "vertical-align: middle; align-items: center; justify-content: space-between; margin-bottom: 14px;" }, "Remove Whitespace: ", this._removeWhitespace);
             this._cancelButton = button$p({ class: "cancelButton" });
             this._exportButton = button$p({ class: "exportButton", style: "width:45%;" }, "Export");
@@ -35301,12 +35328,12 @@ You should be redirected to the song at:<br /><br />
         0x51,
     ];
 
-    const { button: button$o, div: div$o, span: span$6, h2: h2$n, input: input$h, br: br$4, select: select$c, option: option$c } = HTML;
+    const { button: button$o, div: div$o, span: span$6, h2: h2$n, input: input$i, br: br$4, select: select$c, option: option$c } = HTML;
     class BeatsPerBarPrompt {
         constructor(_doc) {
             this._doc = _doc;
             this._computedSamplesLabel = div$o({ style: "width: 10em;" }, new Text("0:00"));
-            this._beatsStepper = input$h({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
+            this._beatsStepper = input$i({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
             this._conversionStrategySelect = select$c({ style: "width: 100%;" }, option$c({ value: "splice" }, "Splice beats at end of bars."), option$c({ value: "stretch" }, "Stretch notes to fit in bars."), option$c({ value: "overflow" }, "Overflow notes across bars."));
             this._cancelButton = button$o({ class: "cancelButton" });
             this._okayButton = button$o({ class: "okayButton", style: "width:45%;" }, "Okay");
@@ -35373,16 +35400,16 @@ You should be redirected to the song at:<br /><br />
         }
     }
 
-    const { button: button$n, div: div$n, label: label$3, br: br$3, h2: h2$m, input: input$g } = HTML;
+    const { button: button$n, div: div$n, label: label$3, br: br$3, h2: h2$m, input: input$h } = HTML;
     class ChannelSettingsPrompt {
         constructor(_doc) {
             this._doc = _doc;
-            this._patternsStepper = input$g({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
-            this._pitchChannelStepper = input$g({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
-            this._drumChannelStepper = input$g({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
-            this._modChannelStepper = input$g({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
-            this._layeredInstrumentsBox = input$g({ style: "width: 3em; margin-left: 1em;", type: "checkbox" });
-            this._patternInstrumentsBox = input$g({ style: "width: 3em; margin-left: 1em;", type: "checkbox" });
+            this._patternsStepper = input$h({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
+            this._pitchChannelStepper = input$h({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
+            this._drumChannelStepper = input$h({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
+            this._modChannelStepper = input$h({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
+            this._layeredInstrumentsBox = input$h({ style: "width: 3em; margin-left: 1em;", type: "checkbox" });
+            this._patternInstrumentsBox = input$h({ style: "width: 3em; margin-left: 1em;", type: "checkbox" });
             this._cancelButton = button$n({ class: "cancelButton" });
             this._okayButton = button$n({ class: "okayButton", style: "width:45%;" }, "Okay");
             this.container = div$n({ class: "prompt noSelection", style: "width: 250px; text-align: right;" }, h2$m("Channel Settings"), label$3({ style: "display: flex; flex-direction: row; align-items: center; height: 2em; justify-content: flex-end;" }, "Pitch channels:", this._pitchChannelStepper), label$3({ style: "display: flex; flex-direction: row; align-items: center; height: 2em; justify-content: flex-end;" }, "Drum channels:", this._drumChannelStepper), div$n({ style: "display: flex; flex-direction: row; align-items: center; height: 2em; justify-content: flex-end;" }, "Mod channels:", this._modChannelStepper), label$3({ style: "display: flex; flex-direction: row; align-items: center; height: 2em; justify-content: flex-end;" }, "Available patterns per channel:", this._patternsStepper), label$3({ style: "display: flex; flex-direction: row; align-items: center; height: 2em; justify-content: flex-end;" }, "Simultaneous instruments", br$3(), "per channel:", this._layeredInstrumentsBox), label$3({ style: "display: flex; flex-direction: row; align-items: center; height: 2em; justify-content: flex-end;" }, "Different instruments", br$3(), "per pattern:", this._patternInstrumentsBox), div$n({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" }, this._okayButton), this._cancelButton);
@@ -35792,6 +35819,7 @@ You should be redirected to the song at:<br /><br />
             this._renderedPointTypes = -1;
             this._renderedPointFreqs = -1;
             this._renderedPointGains = -1;
+            this._q = 1 / Config.filterQStep;
             this._forSong = false;
             this._whenKeyPressed = (event) => {
                 if (event.keyCode == 90) {
@@ -36104,11 +36132,13 @@ You should be redirected to the song at:<br /><br />
                 if (this._addingPoint) {
                     const gain = Math.max(0, Math.min(Config.filterGainRange - 1, Math.round(this._yToGain(this._mouseY))));
                     const freq = this._findNearestFreqSlot(this._useFilterSettings, this._xToFreq(this._mouseX), -1);
+                    const q = this._q;
                     if (freq >= 0 && freq < Config.filterFreqRange) {
                         const point = new FilterControlPoint();
                         point.type = this._addedType;
                         point.freq = freq;
                         point.gain = gain;
+                        point.q = q;
                         if (this._forSong) {
                             sequence.append(new ChangeSongFilterAddPoint(this._doc, this._useFilterSettings, point, this._useFilterSettings.controlPointCount));
                         }
@@ -36231,7 +36261,7 @@ You should be redirected to the song at:<br /><br />
                     }
                 }
                 if ((this._selectedIndex == i || (this._addingPoint && this._mouseDown && i == this._useFilterSettings.controlPointCount - 1)) && (this._mouseOver || this._mouseDown) && !this._deletingPoint) {
-                    this._label.textContent = (i + 1) + ": " + Config.filterTypeNames[point.type] + (this._larger ? " @" + prettyNumber(point.getHz()) + "Hz" : "");
+                    this._label.textContent = (i + 1) + ": " + Config.filterTypeNames[point.type] + (this._larger ? (point.type == 2 ? " @" + prettyNumber(point.getHz()) + "Hz, Q: " + point.q * Config.filterQStep : " @" + prettyNumber(point.getHz()) + "Hz") : "");
                 }
                 if (this._larger) {
                     this._indicators[i].style.setProperty("display", "");
@@ -36381,6 +36411,14 @@ You should be redirected to the song at:<br /><br />
                 this.swapToSettings(this._subFilters[newIndex], false);
             }
         }
+        changeQ(oldValue, newValue, useHistory = false) {
+            this._q = newValue;
+            if (useHistory) {
+                this.selfUndoSettings.length = this.selfUndoHistoryPos + 1;
+                this.selfUndoSettings.push("chq" + oldValue + "|" + newValue);
+                this.selfUndoHistoryPos++;
+            }
+        }
         _getTargetFilterSettingsForSong(song) {
             let targetSettings = song.tmpEqFilterStart;
             if (targetSettings == null)
@@ -36424,7 +36462,7 @@ You should be redirected to the song at:<br /><br />
                 let pointGains = 0;
                 for (let i = 0; i < this._useFilterSettings.controlPointCount; i++) {
                     const point = this._useFilterSettings.controlPoints[i];
-                    pointTypes = pointTypes * 3 + point.type;
+                    pointTypes = pointTypes * 5 + point.type;
                     pointFreqs = pointFreqs * Config.filterFreqRange + point.freq;
                     pointGains = pointGains * Config.filterGainRange + point.gain;
                 }
@@ -36444,7 +36482,7 @@ You should be redirected to the song at:<br /><br />
         }
     }
 
-    const { button: button$l, div: div$l, h2: h2$k, p: p$8 } = HTML;
+    const { button: button$l, div: div$l, h2: h2$k, p: p$8, input: input$g } = HTML;
     class CustomFilterPrompt {
         constructor(_doc, _songEditor, _useNoteFilter, forSong = false, _effectIndex = 0) {
             this._doc = _doc;
@@ -36455,9 +36493,12 @@ You should be redirected to the song at:<br /><br />
             this.filterData = new FilterSettings;
             this.startingFilterData = new FilterSettings;
             this._subfilterIndex = 0;
+            this._q = 1 / Config.filterQStep;
             this._playButton = button$l({ style: "width: 55%;", type: "button" });
             this._filterButtons = [];
             this._filterButtonContainer = div$l({ class: "instrument-bar", style: "justify-content: center;" });
+            this._qSlider = input$g({ style: `width: 5em; flex-grow: 1; margin: 0;`, type: "range", min: "1", max: Config.filterQRange + 1 + "", value: "4", step: "1" });
+            this._qSliderContainer = div$l({ style: "display: flex; flex-direction: row; align-items: center; height: 2em;" }, div$l({ style: `margin-right: 1%; color: ${ColorConfig.primaryText};` }, "Q:"), div$l({ style: `margin-right: 4.5%;` }, this._qSlider));
             this._cancelButton = button$l({ class: "cancelButton" });
             this._okayButton = button$l({ class: "okayButton", style: "width:45%;" }, "Okay");
             this._filterContainer = div$l({ style: "width: 100%; display: flex; flex-direction: row; align-items: center; justify-content: center;" });
@@ -36477,13 +36518,18 @@ You should be redirected to the song at:<br /><br />
             ]);
             this._filterCopyPasteContainer = div$l({ style: "width: 185px;" }, this._filterCopyButton, this._filterPasteButton);
             this._filterCoordinateText = div$l({ style: "text-align: left; margin-bottom: 0px; font-size: x-small; height: 1.3em; color: " + ColorConfig.secondaryText + ";" }, p$8(""));
-            this.container = div$l({ class: "prompt noSelection", style: "width: 600px;" }, this._editorTitle, div$l({ style: "display: flex; width: 55%; align-self: center; flex-direction: row; align-items: center; justify-content: center;" }, this._playButton), this._filterButtonContainer, this._filterContainer, div$l({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" }, this._okayButton, this._filterCopyPasteContainer), this._cancelButton);
+            this.container = div$l({ class: "prompt noSelection", style: "width: 600px;" }, this._editorTitle, div$l({ style: "display: flex; width: 55%; align-self: center; flex-direction: row; align-items: center; justify-content: center;" }, this._playButton), this._filterButtonContainer, this._qSliderContainer, this._filterContainer, div$l({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" }, this._okayButton, this._filterCopyPasteContainer), this._cancelButton);
             this._setSubfilter = (index, useHistory = true, doSwap = true) => {
                 this._filterButtons[this._subfilterIndex].classList.remove("selected-instrument");
                 if (doSwap)
                     this.filterEditor.swapToSubfilter(this._subfilterIndex, index, useHistory);
                 this._subfilterIndex = index;
                 this._filterButtons[index].classList.add("selected-instrument");
+            };
+            this._changeQ = () => {
+                var value = Number(this._qSlider.value);
+                this.filterEditor.changeQ(this._q, value, true);
+                this._q = value;
             };
             this._copyFilterSettings = () => {
                 const filterCopy = this.forSong
@@ -36574,6 +36620,7 @@ You should be redirected to the song at:<br /><br />
             this._playButton.addEventListener("click", this._togglePlay);
             this._filterCopyButton.addEventListener("click", this._copyFilterSettings);
             this._filterPasteButton.addEventListener("click", this._pasteFilterSettings);
+            this._qSlider.addEventListener("input", this._changeQ);
             this.updatePlayButton();
             let colors = ColorConfig.getChannelColor(this._doc.song, this._doc.song.channels[this._doc.channel].color, this._doc.channel, this._doc.prefs.fixChannelColorOrder);
             this.filterEditor = new FilterEditor(_doc, _useNoteFilter, true, this.forSong, _effectIndex);

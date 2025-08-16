@@ -69,6 +69,8 @@ export class FilterEditor {
     private _renderedPointGains: number = -1;
     //private _renderedKey: number = -1;
 
+    private _q: number = 1 / Config.filterQStep;
+
     private _forSong: boolean = false;
 
     constructor(private _doc: SongDocument, useNoteFilter: boolean = false, larger: boolean = false, forSong: boolean = false, effectIndex: number = 0) {
@@ -341,11 +343,13 @@ export class FilterEditor {
             if (this._addingPoint) {
                 const gain: number = Math.max(0, Math.min(Config.filterGainRange - 1, Math.round(this._yToGain(this._mouseY))));
                 const freq: number = this._findNearestFreqSlot(this._useFilterSettings, this._xToFreq(this._mouseX), -1);
+                const q: number = this._q;
                 if (freq >= 0 && freq < Config.filterFreqRange) {
                     const point: FilterControlPoint = new FilterControlPoint();
                     point.type = this._addedType;
                     point.freq = freq;
                     point.gain = gain;
+                    point.q = q;
 
                     if (this._forSong) {
                         sequence.append(new ChangeSongFilterAddPoint(this._doc, this._useFilterSettings, point, this._useFilterSettings.controlPointCount));
@@ -513,7 +517,7 @@ export class FilterEditor {
                 }
             }
             if ((this._selectedIndex == i || (this._addingPoint && this._mouseDown && i == this._useFilterSettings.controlPointCount - 1)) && (this._mouseOver || this._mouseDown) && !this._deletingPoint) {
-                this._label.textContent = (i + 1) + ": " + Config.filterTypeNames[point.type] + (this._larger ? " @" + prettyNumber(point.getHz()) + "Hz" : "");
+                this._label.textContent = (i + 1) + ": " + Config.filterTypeNames[point.type] + (this._larger ? (point.type == FilterType.peak ? " @" + prettyNumber(point.getHz()) + "Hz, Q: " + point.q * Config.filterQStep : " @" + prettyNumber(point.getHz()) + "Hz") : "");
             }
 
             if (this._larger) {
@@ -608,7 +612,6 @@ export class FilterEditor {
     public undo(): number {
         if (this.selfUndoHistoryPos > 0) {
             this.selfUndoHistoryPos--;
-            // Jump back and load latest state of this subfilter. Also save subfilter settings for current index
             if (this.selfUndoSettings[this.selfUndoHistoryPos + 1] != null && this.selfUndoSettings[this.selfUndoHistoryPos + 1].startsWith("jmp")) {
                 let str: String = this.selfUndoSettings[this.selfUndoHistoryPos + 1];
                 let jumpIndex = +str.substring(3, str.indexOf("|"));
@@ -633,7 +636,6 @@ export class FilterEditor {
     public redo(): number {
         if (this.selfUndoHistoryPos < this.selfUndoSettings.length - 1) {
             this.selfUndoHistoryPos++;
-            // Check if next index in undo queue is a command to jump to a new filter index
             if (this.selfUndoSettings[this.selfUndoHistoryPos].startsWith("jmp")) {
                 let str: String = this.selfUndoSettings[this.selfUndoHistoryPos];
                 let jumpIndex = +str.substring(str.indexOf("|") + 1, str.indexOf(":"));
@@ -695,6 +697,18 @@ export class FilterEditor {
             this.swapToSettings(this._subFilters[newIndex], false);
         }
 
+    }
+
+    public changeQ(oldValue: number, newValue: number, useHistory: boolean = false) {
+        this._q = newValue
+
+        // Record the swap in undo history
+        if (useHistory) {
+            this.selfUndoSettings.length = this.selfUndoHistoryPos + 1;
+            // Swap from|to:filterInitSettings
+            this.selfUndoSettings.push("chq" + oldValue + "|" + newValue);
+            this.selfUndoHistoryPos++;
+        }
     }
 
     private _getTargetFilterSettingsForSong(song: Song): FilterSettings {

@@ -11,7 +11,7 @@ import { FilterSettings } from "../synth/Filter";
 import { ColorConfig } from "./ColorConfig";
 
 //namespace beepbox {
-const { button, div, h2, p } = HTML;
+const { button, div, h2, p, input } = HTML;
 
 export class CustomFilterPrompt implements Prompt {
 
@@ -21,12 +21,23 @@ export class CustomFilterPrompt implements Prompt {
     public startingFilterData: FilterSettings = new FilterSettings;
 
     private _subfilterIndex = 0;
+    private _q: number = 1 / Config.filterQStep;
 
     public readonly _playButton: HTMLButtonElement = button({ style: "width: 55%;", type: "button" });
 
     public readonly _filterButtons: HTMLButtonElement[] = [];
 
     public readonly _filterButtonContainer: HTMLDivElement = div({ class: "instrument-bar", style: "justify-content: center;" });
+
+    public readonly _qSlider: HTMLInputElement = input({ style: `width: 5em; flex-grow: 1; margin: 0;`, type: "range", min: "1", max: Config.filterQRange + 1 + "", value: "4", step: "1" });
+    private readonly _qSliderContainer: HTMLDivElement = div({ style: "display: flex; flex-direction: row; align-items: center; height: 2em;" },
+            div({ style: `margin-right: 1%; color: ${ColorConfig.primaryText};` },
+                "Q:"
+            ),
+            div({ style: `margin-right: 4.5%;` },
+                this._qSlider,
+            )
+        )
 
     private readonly _cancelButton: HTMLButtonElement = button({ class: "cancelButton" });
     private readonly _okayButton: HTMLButtonElement = button({ class: "okayButton", style: "width:45%;" }, "Okay");
@@ -60,6 +71,7 @@ export class CustomFilterPrompt implements Prompt {
             this._playButton
         ),
         this._filterButtonContainer,
+        this._qSliderContainer,
         this._filterContainer,
         div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" },
             this._okayButton,
@@ -68,7 +80,6 @@ export class CustomFilterPrompt implements Prompt {
         this._cancelButton,
     );
 
-    // for some reason that is beyond me, the compiler claims that "'_effectIndex' is declared but its value is never read," which makes no sense because it is used on line 82. some1 with better knowledge than me can tell me why this happens... ~ theepie
     // @ts-ignore
     constructor(private _doc: SongDocument, private _songEditor: SongEditor, private _useNoteFilter: boolean, private forSong: boolean = false, private _effectIndex: number = 0) {
         this._okayButton.addEventListener("click", this._saveChanges);
@@ -76,6 +87,7 @@ export class CustomFilterPrompt implements Prompt {
         this._playButton.addEventListener("click", this._togglePlay);
         this._filterCopyButton.addEventListener("click", this._copyFilterSettings);
         this._filterPasteButton.addEventListener("click", this._pasteFilterSettings);
+        this._qSlider.addEventListener("input", this._changeQ);
         this.updatePlayButton();
         let colors = ColorConfig.getChannelColor(this._doc.song, this._doc.song.channels[this._doc.channel].color, this._doc.channel, this._doc.prefs.fixChannelColorOrder);
 
@@ -120,6 +132,12 @@ export class CustomFilterPrompt implements Prompt {
         if (doSwap) this.filterEditor.swapToSubfilter(this._subfilterIndex, index, useHistory);
         this._subfilterIndex = index;
         this._filterButtons[index].classList.add("selected-instrument");
+    }
+
+    private _changeQ = (): void => {
+        var value: number = Number(this._qSlider.value);
+        this.filterEditor.changeQ(this._q, value, true);
+        this._q = value;
     }
 
     private _copyFilterSettings = (): void => {
@@ -198,6 +216,7 @@ export class CustomFilterPrompt implements Prompt {
         this._playButton.removeEventListener("click", this._togglePlay);
     }
 
+    //TODO: make this work instead with the new keybinding stuff
     public whenKeyPressed = (event: KeyboardEvent): void => {
         if ((<Element>event.target).tagName != "BUTTON" && event.keyCode == 13) { // Enter key
             this._saveChanges();

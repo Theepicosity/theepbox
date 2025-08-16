@@ -685,8 +685,10 @@ var beepbox = (function (exports) {
     Config.filterGainRange = 15;
     Config.filterGainCenter = 7;
     Config.filterGainStep = 1.0 / 2.0;
+    Config.filterQRange = 16;
+    Config.filterQStep = 1.0 / 4.0;
     Config.filterMaxPoints = 8;
-    Config.filterTypeNames = ["low-pass", "high-pass", "peak"];
+    Config.filterTypeNames = ["low-pass", "high-pass", "peak", "low-shelf", "high-shelf"];
     Config.filterMorphCount = 10;
     Config.filterSimpleCutRange = 11;
     Config.filterSimplePeakRange = 8;
@@ -8853,7 +8855,7 @@ var beepbox = (function (exports) {
         reset() {
             this.controlPointCount = 0;
         }
-        addPoint(type, freqSetting, gainSetting) {
+        addPoint(type, freqSetting, gainSetting, qSetting) {
             let controlPoint;
             if (this.controlPoints.length <= this.controlPointCount) {
                 controlPoint = new FilterControlPoint();
@@ -8864,7 +8866,7 @@ var beepbox = (function (exports) {
             }
             this.controlPointCount++;
             controlPoint.type = type;
-            controlPoint.set(freqSetting, gainSetting);
+            controlPoint.set(freqSetting, gainSetting, qSetting);
         }
         toJsonObject() {
             const filterArray = [];
@@ -8970,7 +8972,7 @@ var beepbox = (function (exports) {
                     logGain = Math.min(logGain, -1.0);
                 const convertedGain = Math.pow(2.0, logGain);
                 const gainSetting = FilterControlPoint.getRoundedSettingValueFromLinearGain(convertedGain);
-                this.addPoint(0, freqSetting, gainSetting);
+                this.addPoint(0, freqSetting, gainSetting, 1.0);
             }
             else {
                 const intendedGain = 0.5 / (1.0 - legacyFilterMaxResonance * Math.sqrt(Math.max(0.0, legacyResonanceSetting - 1.0) / (legacyFilterResonanceRange - 2.0)));
@@ -9001,7 +9003,7 @@ var beepbox = (function (exports) {
                 if (!resonant)
                     legacyFilterGain = Math.min(legacyFilterGain, Math.sqrt(0.5));
                 const gainSetting = FilterControlPoint.getRoundedSettingValueFromLinearGain(legacyFilterGain);
-                this.addPoint(0, freqSetting, gainSetting);
+                this.addPoint(0, freqSetting, gainSetting, 1.0);
             }
             this.controlPoints.length = this.controlPointCount;
         }
@@ -9034,7 +9036,7 @@ var beepbox = (function (exports) {
                 logGain = -extraOctaves + (logGain + extraOctaves) * 0.82;
                 const convertedGain = Math.pow(2.0, logGain);
                 const gainSetting = FilterControlPoint.getRoundedSettingValueFromLinearGain(convertedGain);
-                this.addPoint(0, freqSetting, gainSetting);
+                this.addPoint(0, freqSetting, gainSetting, 1.0);
             }
             else {
                 const intendedGain = 0.5 / (1.0 - legacyFilterMaxResonance * Math.sqrt(Math.max(0.0, legacyResonanceSetting - 1.0) / (legacyFilterResonanceRange - 2.0)));
@@ -9053,7 +9055,7 @@ var beepbox = (function (exports) {
                 response.analyze(legacyFilter, curvedRadians);
                 legacyFilterGain = response.magnitude();
                 const gainSetting = FilterControlPoint.getRoundedSettingValueFromLinearGain(legacyFilterGain);
-                this.addPoint(0, freqSetting, gainSetting);
+                this.addPoint(0, freqSetting, gainSetting, 1.0);
             }
         }
     }
@@ -9062,10 +9064,12 @@ var beepbox = (function (exports) {
             this.freq = 0;
             this.gain = Config.filterGainCenter;
             this.type = 2;
+            this.q = 1.0;
         }
-        set(freqSetting, gainSetting) {
+        set(freqSetting, gainSetting, qSetting) {
             this.freq = freqSetting;
             this.gain = gainSetting;
+            this.q = qSetting;
         }
         getHz() {
             return FilterControlPoint.getHzFromSettingValue(this.freq);
@@ -9079,6 +9083,9 @@ var beepbox = (function (exports) {
         static getRoundedSettingValueFromHz(hz) {
             return Math.max(0, Math.min(Config.filterFreqRange - 1, Math.round(FilterControlPoint.getSettingValueFromHz(hz))));
         }
+        getQ() {
+            return this.q * Config.filterQStep;
+        }
         getLinearGain(peakMult = 1.0) {
             const power = (this.gain - Config.filterGainCenter) * Config.filterGainStep;
             const neutral = (this.type == 2) ? 0.0 : -0.5;
@@ -9091,6 +9098,7 @@ var beepbox = (function (exports) {
         toCoefficients(filter, sampleRate, freqMult = 1.0, peakMult = 1.0) {
             const cornerRadiansPerSample = 2.0 * Math.PI * Math.max(Config.filterFreqMinHz, Math.min(Config.filterFreqMaxHz, freqMult * this.getHz())) / sampleRate;
             const linearGain = this.getLinearGain(peakMult);
+            const q = this.getQ();
             switch (this.type) {
                 case 0:
                     filter.lowPass2ndOrderButterworth(cornerRadiansPerSample, linearGain);
@@ -9099,7 +9107,12 @@ var beepbox = (function (exports) {
                     filter.highPass2ndOrderButterworth(cornerRadiansPerSample, linearGain);
                     break;
                 case 2:
-                    filter.peak2ndOrder(cornerRadiansPerSample, linearGain, 1.0);
+                    filter.peak2ndOrder(cornerRadiansPerSample, linearGain, q);
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    filter.highShelf2ndOrder(cornerRadiansPerSample, linearGain, q);
                     break;
                 default:
                     throw new Error();
@@ -11955,7 +11968,7 @@ var beepbox = (function (exports) {
                                     buffer.push(base64IntToCharCode[effect.eqFilter.controlPointCount]);
                                     for (let j = 0; j < effect.eqFilter.controlPointCount; j++) {
                                         const point = effect.eqFilter.controlPoints[j];
-                                        buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)]);
+                                        buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)], base64IntToCharCode[Math.round(point.q)]);
                                     }
                                 }
                                 let usingSubFilterBitfield = 0;
@@ -11968,7 +11981,7 @@ var beepbox = (function (exports) {
                                         buffer.push(base64IntToCharCode[effect.eqSubFilters[j + 1].controlPointCount]);
                                         for (let k = 0; k < effect.eqSubFilters[j + 1].controlPointCount; k++) {
                                             const point = effect.eqSubFilters[j + 1].controlPoints[k];
-                                            buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)]);
+                                            buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)], base64IntToCharCode[Math.round(point.q)]);
                                         }
                                     }
                                 }
@@ -13109,7 +13122,7 @@ var beepbox = (function (exports) {
                                         }
                                         for (let i = 0; i < instrument.noteFilter.controlPointCount; i++) {
                                             const point = instrument.noteFilter.controlPoints[i];
-                                            point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                            point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         }
@@ -13129,7 +13142,7 @@ var beepbox = (function (exports) {
                                                 }
                                                 for (let i = 0; i < instrument.noteSubFilters[j + 1].controlPointCount; i++) {
                                                     const point = instrument.noteSubFilters[j + 1].controlPoints[i];
-                                                    point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                    point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                 }
@@ -13158,7 +13171,7 @@ var beepbox = (function (exports) {
                                         }
                                         for (let i = 0; i < newEffect.eqFilter.controlPointCount; i++) {
                                             const point = newEffect.eqFilter.controlPoints[i];
-                                            point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                            point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         }
@@ -13179,7 +13192,7 @@ var beepbox = (function (exports) {
                                                     }
                                                     for (let i = 0; i < newEffect.eqSubFilters[j + 1].controlPointCount; i++) {
                                                         const point = newEffect.eqSubFilters[j + 1].controlPoints[i];
-                                                        point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                        point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                         point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                         point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     }
@@ -13491,12 +13504,19 @@ var beepbox = (function (exports) {
                                     }
                                     for (let i = 0; i < this.eqFilter.controlPointCount; i++) {
                                         const point = this.eqFilter.controlPoints[i];
-                                        point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        if (fromTheepBox)
+                                            point.q = clamp(1, Config.filterQRange + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        else
+                                            point.q = 1 / Config.filterQStep;
                                     }
                                     for (let i = this.eqFilter.controlPointCount; i < originalControlPointCount; i++) {
-                                        charIndex += 3;
+                                        if (fromTheepBox)
+                                            charIndex += 4;
+                                        else
+                                            charIndex += 3;
                                     }
                                     this.eqSubFilters[0] = this.eqFilter;
                                     let usingSubFilterBitfield = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
@@ -13511,12 +13531,19 @@ var beepbox = (function (exports) {
                                             }
                                             for (let i = 0; i < this.eqSubFilters[j + 1].controlPointCount; i++) {
                                                 const point = this.eqSubFilters[j + 1].controlPoints[i];
-                                                point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                 point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                 point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                if (fromTheepBox)
+                                                    point.q = clamp(1, Config.filterQRange + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                else
+                                                    point.q = 1 / Config.filterQStep;
                                             }
                                             for (let i = this.eqSubFilters[j + 1].controlPointCount; i < originalSubfilterControlPointCount; i++) {
-                                                charIndex += 3;
+                                                if (fromTheepBox)
+                                                    charIndex += 4;
+                                                else
+                                                    charIndex += 3;
                                             }
                                         }
                                     }
@@ -13652,7 +13679,7 @@ var beepbox = (function (exports) {
                                                 }
                                                 for (let i = 0; i < newEffect.eqFilter.controlPointCount; i++) {
                                                     const point = newEffect.eqFilter.controlPoints[i];
-                                                    point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                    point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                     point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                 }
@@ -13672,7 +13699,7 @@ var beepbox = (function (exports) {
                                                         }
                                                         for (let i = 0; i < newEffect.eqSubFilters[j + 1].controlPointCount; i++) {
                                                             const point = newEffect.eqSubFilters[j + 1].controlPoints[i];
-                                                            point.type = clamp(0, 3, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                                            point.type = clamp(0, 5, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                             point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                             point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                                         }
