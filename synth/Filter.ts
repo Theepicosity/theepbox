@@ -291,7 +291,7 @@ export class FilterControlPoint {
     }
 
     public getQ(): number {
-        return this.q * Config.filterQStep;
+        return this.q * Config.filterQStep + Config.filterQStep;
     }
     public getLinearGain(peakMult: number = 1.0): number {
         const power: number = (this.gain - Config.filterGainCenter) * Config.filterGainStep;

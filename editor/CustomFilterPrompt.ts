@@ -29,7 +29,7 @@ export class CustomFilterPrompt implements Prompt {
 
     public readonly _filterButtonContainer: HTMLDivElement = div({ class: "instrument-bar", style: "justify-content: center;" });
 
-    public readonly _qSlider: HTMLInputElement = input({ style: `width: 5em; flex-grow: 1; margin: 0;`, type: "range", min: "1", max: Config.filterQRange + 1 + "", value: "4", step: "1" });
+    public readonly _qSlider: HTMLInputElement = input({ style: `width: 5em; flex-grow: 1; margin: 0;`, type: "range", min: "0", max: (Config.filterQRange - 1) + "", value: "4", step: "1" });
     private readonly _qSliderContainer: HTMLDivElement = div({ style: "display: flex; flex-direction: row; align-items: center; height: 2em;" },
             div({ style: `margin-right: 1%; color: ${ColorConfig.primaryText};` },
                 "Q:"

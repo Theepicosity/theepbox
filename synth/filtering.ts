@@ -387,11 +387,12 @@ export class FilterCoefficients {
 		const sqrtGain: number = Math.sqrt(peakLinearGain);
 		const bandWidth: number = bandWidthScale * cornerRadiansPerSample / (sqrtGain >= 1 ? sqrtGain : 1/sqrtGain);
 		//const bandWidth: number = bandWidthScale * cornerRadiansPerSample / Math.max(sqrtGain, 1.0);
-		const alpha: number = Math.tan(bandWidth * 0.5);
+		const alpha: number = bandWidth * 0.5;
 		const a0: number = 1.0 + alpha / sqrtGain;
 		this.b[0] = (1.0 + alpha * sqrtGain) / a0;
-		this.b[1] = this.a[1] = -2.0 * Math.cos(cornerRadiansPerSample) / a0;
+		this.b[1] = -2.0 * Math.cos(cornerRadiansPerSample) / a0;
 		this.b[2] = (1.0 - alpha * sqrtGain) / a0;
+		this.a[1] = -2.0 * Math.cos(cornerRadiansPerSample) / a0;
 		this.a[2] = (1.0 - alpha / sqrtGain) / a0;
 		this.order = 2;
 	}

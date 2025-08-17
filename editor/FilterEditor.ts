@@ -517,7 +517,7 @@ export class FilterEditor {
                 }
             }
             if ((this._selectedIndex == i || (this._addingPoint && this._mouseDown && i == this._useFilterSettings.controlPointCount - 1)) && (this._mouseOver || this._mouseDown) && !this._deletingPoint) {
-                this._label.textContent = (i + 1) + ": " + Config.filterTypeNames[point.type] + (this._larger ? (point.type == FilterType.peak ? " @" + prettyNumber(point.getHz()) + "Hz, Q: " + point.q * Config.filterQStep : " @" + prettyNumber(point.getHz()) + "Hz") : "");
+                this._label.textContent = (i + 1) + ": " + Config.filterTypeNames[point.type] + (this._larger ? (point.type == FilterType.peak ? " @" + prettyNumber(point.getHz()) + "Hz, Q: " + (point.q * Config.filterQStep + Config.filterQStep) : " @" + prettyNumber(point.getHz()) + "Hz") : "");
             }
 
             if (this._larger) {
