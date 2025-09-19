@@ -2476,6 +2476,7 @@ var beepbox = (function (exports) {
                     lerpedFilter.controlPoints[i].type = filterA.controlPoints[i].type;
                     lerpedFilter.controlPoints[i].freq = filterA.controlPoints[i].freq + (filterB.controlPoints[i].freq - filterA.controlPoints[i].freq) * pos;
                     lerpedFilter.controlPoints[i].gain = filterA.controlPoints[i].gain + (filterB.controlPoints[i].gain - filterA.controlPoints[i].gain) * pos;
+                    lerpedFilter.controlPoints[i].q = filterA.controlPoints[i].q + (filterB.controlPoints[i].q - filterA.controlPoints[i].q) * pos;
                 }
                 lerpedFilter.controlPointCount = filterA.controlPointCount;
                 return lerpedFilter;

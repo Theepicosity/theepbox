@@ -11052,6 +11052,7 @@ li.select2-results__option[role=group] > strong:hover {
                     lerpedFilter.controlPoints[i].type = filterA.controlPoints[i].type;
                     lerpedFilter.controlPoints[i].freq = filterA.controlPoints[i].freq + (filterB.controlPoints[i].freq - filterA.controlPoints[i].freq) * pos;
                     lerpedFilter.controlPoints[i].gain = filterA.controlPoints[i].gain + (filterB.controlPoints[i].gain - filterA.controlPoints[i].gain) * pos;
+                    lerpedFilter.controlPoints[i].q = filterA.controlPoints[i].q + (filterB.controlPoints[i].q - filterA.controlPoints[i].q) * pos;
                 }
                 lerpedFilter.controlPointCount = filterA.controlPointCount;
                 return lerpedFilter;
@@ -52445,7 +52446,7 @@ You should be redirected to the song at:<br /><br />
                         if (instrument.effects[i] != null && instrument.effects[i].type == 0)
                             index = i;
                     return this.effectEditor.reverbSliders[index];
-                case Config.modulators.dictionary["reverb wet dry mix"].index:
+                case Config.modulators.dictionary["reverb wet/dry"].index:
                     for (let i = 0; i < instrument.effects.length; i++)
                         if (instrument.effects[i] != null && instrument.effects[i].type == 0)
                             index = i;
