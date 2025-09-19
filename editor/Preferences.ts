@@ -134,6 +134,7 @@ export class Preferences {
 	public showInstrumentScrollbars: boolean;
 	public closePromptByClickoff: boolean;
 	public frostedGlassBackground: boolean;
+	public shortenerStrategySelect: string;
 
 	public shortcuts: Dictionary<Shortcut>;
 	
@@ -172,6 +173,7 @@ export class Preferences {
 		this.showInstrumentScrollbars = window.localStorage.getItem("showInstrumentScrollbars") == "true";
 		this.closePromptByClickoff = window.localStorage.getItem("closePromptByClickoff") == "true";
 		this.frostedGlassBackground = window.localStorage.getItem("frostedGlassBackground") == "true";
+		this.shortenerStrategySelect = window.localStorage.getItem("shortenerStrategySelect") || "tinyurl";
 		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "pianoAtC";
 		this.bassOffset = (+(<any>window.localStorage.getItem("bassOffset"))) || 0;
 		this.layout = window.localStorage.getItem("layout") || "small+";
@@ -222,6 +224,7 @@ export class Preferences {
 		window.localStorage.setItem("showInstrumentScrollbars", this.showInstrumentScrollbars ? "true" : "false");
 		window.localStorage.setItem("closePromptByClickoff", this.closePromptByClickoff ? "true" : "false");
 		window.localStorage.setItem("frostedGlassBackground", this.frostedGlassBackground ? "true" : "false");
+		window.localStorage.setItem("shortenerStrategySelect", this.shortenerStrategySelect);
 		window.localStorage.setItem("keyboardLayout", this.keyboardLayout);
 		window.localStorage.setItem("bassOffset", String(this.bassOffset));
 		window.localStorage.setItem("layout", this.layout);

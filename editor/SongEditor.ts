@@ -784,7 +784,6 @@ export class SongEditor {
         option({ value: "export" }, "↓ Export Song..."),
         option({ value: "copyUrl" }, "⎘ Copy Song URL"),
         option({ value: "shareUrl" }, "⤳ Share Song URL"),
-        option({ value: "configureShortener" }, "🛠 Customize Url Shortener..."),
         option({ value: "shortenUrl" }, "… Shorten Song URL"),
         option({ value: "viewPlayer" }, "▶ View in Song Player"),
         option({ value: "copyEmbed" }, "⎘ Copy HTML Embed Code"),
@@ -830,24 +829,25 @@ export class SongEditor {
             option({ value: "closePromptByClickoff" }, "Close Prompts on Click Off"),
             option({ value: "shortcuts" }, "Shortcuts..."),
             option({ value: "recordingSetup" }, "Note Recording..."),
+            option({ value: "configureShortener" }, "Customize Url Shortener..."),
         ),
         optgroup({ label: "Appearance" },
-        option({ value: "showFifth" }, 'Highlight "Fifth" Note'),
-        option({ value: "notesFlashWhenPlayed" }, "Notes Flash When Played"),
-        option({ value: "instrumentButtonsAtTop" }, "Instrument Buttons at Top"),
-        option({ value: "frostedGlassBackground" }, "Frosted Glass Prompt Backdrop"),
-        option({ value: "showChannels" }, "Show All Channels"),
-        option({ value: "fixChannelColorOrder" }, "Fix Channel Color Order"),
-        option({ value: "showScrollBar" }, "Show Octave Scroll Bar"),
-        option({ value: "showInstrumentScrollbars" }, "Show Instrument Scrollbars"),
-        option({ value: "showLetters" }, "Show Piano Keys"),
-        option({ value: "displayVolumeBar" }, "Show Playback Volume"),
-        option({ value: "showOscilloscope" }, "Show Oscilloscope"),
-        option({ value: "showSampleLoadingStatus" }, "Show Sample Loading Status"),
-        option({ value: "showDescription" }, "Show Description"),
-        option({ value: "layout" }, "Set Layout..."),
-        option({ value: "colorTheme" }, "Set Theme..."),
-	    option({ value: "customTheme" }, "Custom Theme..."),
+            option({ value: "showFifth" }, 'Highlight "Fifth" Note'),
+            option({ value: "notesFlashWhenPlayed" }, "Notes Flash When Played"),
+            option({ value: "instrumentButtonsAtTop" }, "Instrument Buttons at Top"),
+            option({ value: "frostedGlassBackground" }, "Frosted Glass Prompt Backdrop"),
+            option({ value: "showChannels" }, "Show All Channels"),
+            option({ value: "fixChannelColorOrder" }, "Fix Channel Color Order"),
+            option({ value: "showScrollBar" }, "Show Octave Scroll Bar"),
+            option({ value: "showInstrumentScrollbars" }, "Show Instrument Scrollbars"),
+            option({ value: "showLetters" }, "Show Piano Keys"),
+            option({ value: "displayVolumeBar" }, "Show Playback Volume"),
+            option({ value: "showOscilloscope" }, "Show Oscilloscope"),
+            option({ value: "showSampleLoadingStatus" }, "Show Sample Loading Status"),
+            option({ value: "showDescription" }, "Show Description"),
+            option({ value: "layout" }, "Set Layout..."),
+            option({ value: "colorTheme" }, "Set Theme..."),
+            option({ value: "customTheme" }, "Custom Theme..."),
         ),
     );
     private readonly _scaleSelect: HTMLSelectElement = buildOptions(select(), Config.scales.map(scale => scale.name));
@@ -2398,6 +2398,7 @@ export class SongEditor {
             (prefs.closePromptByClickoff ? textOnIcon : textOffIcon) + "Close Prompts on Click Off",
             textSpacingIcon + "Shortcuts...",
             textSpacingIcon + "Note Recording...",
+            textSpacingIcon + "Customize URL Shortener...",
             textSpacingIcon + "Appearance",
             (prefs.showFifth ? textOnIcon : textOffIcon) + 'Highlight "Fifth" Note',
             (prefs.notesFlashWhenPlayed ? textOnIcon : textOffIcon) + "Notes Flash When Played",
@@ -5448,9 +5449,6 @@ export class SongEditor {
 
                 window.open(shortenerStrategy + encodeURIComponent(new URL("#" + this._doc.song.toBase64String(), location.href).href));
                 break;
-            case "configureShortener":
-                this._openPrompt("configureShortener");
-                break;
             case "viewPlayer":
                 location.href = "player/" + (OFFLINE ? "index.html" : "") + "#song=" + this._doc.song.toBase64String();
                 break;
@@ -5596,6 +5594,9 @@ export class SongEditor {
                 break;
             case "shortcuts":
                 this._openPrompt("shortcuts");
+                break;
+            case "configureShortener":
+                this._openPrompt("configureShortener");
                 break;
             case "showOscilloscope":
                 this._doc.prefs.showOscilloscope = !this._doc.prefs.showOscilloscope;

@@ -25,7 +25,7 @@ export class ShortenerConfigPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
-        const lastStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
+        const lastStrategy: string | null = _doc.prefs.shortenerStrategySelect;
         if (lastStrategy != null) {
             this._shortenerStrategySelect.value = lastStrategy;
         }
@@ -52,8 +52,8 @@ export class ShortenerConfigPrompt implements Prompt {
     }
 
     private _saveChanges = (): void => {
-        window.localStorage.setItem("shortenerStrategySelect", this._shortenerStrategySelect.value);
-        this._doc.prompt = null;
-        this._doc.undo();
+        this._doc.prefs.shortenerStrategySelect = this._shortenerStrategySelect.value
+        this._doc.prefs.save();
+        this._close();
     }
 }
