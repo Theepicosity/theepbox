@@ -2003,7 +2003,7 @@ export class SongEditor {
             case Config.modulators.dictionary["reverb"].index:
                 for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.reverb) index = i;
                 return this.effectEditor.reverbSliders[index];
-            case Config.modulators.dictionary["reverb wet dry mix"].index:
+            case Config.modulators.dictionary["reverb wet/dry"].index:
                 for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.reverb) index = i;
                 return this.effectEditor.reverbWetDryMixSliders[index];
             case Config.modulators.dictionary["reverb send"].index:
