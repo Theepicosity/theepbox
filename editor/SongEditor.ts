@@ -4635,13 +4635,13 @@ export class SongEditor {
 
             case this._parseShortcut(event, shortcuts["pastePattern"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                this._pasteInstrument();
+                this._doc.selection.pasteNotes();
                 event.preventDefault();
                 break;
 
             case this._parseShortcut(event, shortcuts["pasteInstrument"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                this._doc.selection.pasteNotes();
+                this._pasteInstrument();
                 event.preventDefault();
                 break;
 
