@@ -35,7 +35,8 @@ export class FilterSettings {
             filterArray.push({
                 "type": Config.filterTypeNames[point.type],
                 "cutoffHz": Math.round(point.getHz() * 100) / 100,
-                             "linearGain": Math.round(point.getLinearGain() * 10000) / 10000,
+                "linearGain": Math.round(point.getLinearGain() * 10000) / 10000,
+                "Q": point.getQ(),
             });
         }
         return filterArray;
@@ -57,6 +58,11 @@ export class FilterSettings {
                     point.gain = FilterControlPoint.getRoundedSettingValueFromLinearGain(pointObject["linearGain"]);
                 } else {
                     point.gain = Config.filterGainCenter;
+                }
+                if (pointObject["Q"] != undefined) {
+                    point.q = FilterControlPoint.getSettingValueFromQ(pointObject["Q"]);
+                } else {
+                    point.q = 1.0;
                 }
                 this.controlPoints.push(point);
             }
@@ -288,6 +294,9 @@ export class FilterControlPoint {
     }
     public static getRoundedSettingValueFromHz(hz: number): number {
         return Math.max(0, Math.min(Config.filterFreqRange - 1, Math.round(FilterControlPoint.getSettingValueFromHz(hz))));
+    }
+    public static getSettingValueFromQ(q: number): number {
+        return (q - Config.filterQStep) / Config.filterQStep;
     }
 
     public getQ(): number {

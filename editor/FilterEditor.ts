@@ -701,14 +701,6 @@ export class FilterEditor {
 
     public changeQ(oldValue: number, newValue: number, useHistory: boolean = false) {
         this._q = newValue
-
-        // Record the swap in undo history
-        if (useHistory) {
-            this.selfUndoSettings.length = this.selfUndoHistoryPos + 1;
-            // Swap from|to:filterInitSettings
-            this.selfUndoSettings.push("chq" + oldValue + "|" + newValue);
-            this.selfUndoHistoryPos++;
-        }
     }
 
     private _getTargetFilterSettingsForSong(song: Song): FilterSettings {

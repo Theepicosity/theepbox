@@ -10992,6 +10992,7 @@ li.select2-results__option[role=group] > strong:hover {
                     "type": Config.filterTypeNames[point.type],
                     "cutoffHz": Math.round(point.getHz() * 100) / 100,
                     "linearGain": Math.round(point.getLinearGain() * 10000) / 10000,
+                    "Q": point.getQ(),
                 });
             }
             return filterArray;
@@ -11015,6 +11016,12 @@ li.select2-results__option[role=group] > strong:hover {
                     }
                     else {
                         point.gain = Config.filterGainCenter;
+                    }
+                    if (pointObject["Q"] != undefined) {
+                        point.q = FilterControlPoint.getSettingValueFromQ(pointObject["Q"]);
+                    }
+                    else {
+                        point.q = 1.0;
                     }
                     this.controlPoints.push(point);
                 }
@@ -11198,6 +11205,9 @@ li.select2-results__option[role=group] > strong:hover {
         }
         static getRoundedSettingValueFromHz(hz) {
             return Math.max(0, Math.min(Config.filterFreqRange - 1, Math.round(FilterControlPoint.getSettingValueFromHz(hz))));
+        }
+        static getSettingValueFromQ(q) {
+            return (q - Config.filterQStep) / Config.filterQStep;
         }
         getQ() {
             return this.q * Config.filterQStep + Config.filterQStep;
@@ -36456,11 +36466,6 @@ You should be redirected to the song at:<br /><br />
         }
         changeQ(oldValue, newValue, useHistory = false) {
             this._q = newValue;
-            if (useHistory) {
-                this.selfUndoSettings.length = this.selfUndoHistoryPos + 1;
-                this.selfUndoSettings.push("chq" + oldValue + "|" + newValue);
-                this.selfUndoHistoryPos++;
-            }
         }
         _getTargetFilterSettingsForSong(song) {
             let targetSettings = song.tmpEqFilterStart;

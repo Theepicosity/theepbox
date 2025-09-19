@@ -8877,6 +8877,7 @@ var beepbox = (function (exports) {
                     "type": Config.filterTypeNames[point.type],
                     "cutoffHz": Math.round(point.getHz() * 100) / 100,
                     "linearGain": Math.round(point.getLinearGain() * 10000) / 10000,
+                    "Q": point.getQ(),
                 });
             }
             return filterArray;
@@ -8900,6 +8901,12 @@ var beepbox = (function (exports) {
                     }
                     else {
                         point.gain = Config.filterGainCenter;
+                    }
+                    if (pointObject["Q"] != undefined) {
+                        point.q = FilterControlPoint.getSettingValueFromQ(pointObject["Q"]);
+                    }
+                    else {
+                        point.q = 1.0;
                     }
                     this.controlPoints.push(point);
                 }
@@ -9083,6 +9090,9 @@ var beepbox = (function (exports) {
         }
         static getRoundedSettingValueFromHz(hz) {
             return Math.max(0, Math.min(Config.filterFreqRange - 1, Math.round(FilterControlPoint.getSettingValueFromHz(hz))));
+        }
+        static getSettingValueFromQ(q) {
+            return (q - Config.filterQStep) / Config.filterQStep;
         }
         getQ() {
             return this.q * Config.filterQStep + Config.filterQStep;
