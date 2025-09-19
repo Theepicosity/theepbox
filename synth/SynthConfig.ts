@@ -965,6 +965,8 @@ export class Config {
     public static readonly blackKeyNameParents: ReadonlyArray<number> = [-1, 1, -1, 1, -1, 1, -1, -1, 1, -1, 1, -1];
     public static readonly tempoMin: number = 1;
     public static readonly tempoMax: number = 2000;
+    public static readonly speedMin: number = -48;
+    public static readonly speedMax: number = 48;
     public static readonly octaveMin: number = -2;
     public static readonly octaveMax: number = 2;
     public static readonly echoDelayRange: number = 24;

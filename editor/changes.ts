@@ -4663,6 +4663,16 @@ export class ChangeTempo extends Change {
     }
 }
 
+export class ChangeSpeed extends Change {
+    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+        super();
+        doc.song.speed = Math.max(Config.speedMin, Math.min(Config.speedMax, Math.round(newValue)));
+        //doc.synth.unsetMod(Config.modulators.dictionary["tempo"].index);
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
 export class ChangeEchoDelay extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);

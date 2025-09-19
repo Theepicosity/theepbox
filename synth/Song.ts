@@ -403,6 +403,7 @@ export class Song {
     public key: number;
     public octave: number;
     public tempo: number;
+    public speed: number;
     public reverb: number;
     public beatsPerBar: number;
     public barCount: number;
@@ -692,6 +693,7 @@ export class Song {
         this.loopStart = 0;
         this.loopLength = 4;
         this.tempo = 151;
+        this.speed = 0;
         this.reverb = 0;
         this.beatsPerBar = 8;
         this.barCount = 16;
@@ -777,6 +779,7 @@ export class Song {
         buffer.push(SongTagCode.loopStart, base64IntToCharCode[this.loopStart >> 6], base64IntToCharCode[this.loopStart & 0x3f]);
         buffer.push(SongTagCode.loopEnd, base64IntToCharCode[(this.loopLength - 1) >> 6], base64IntToCharCode[(this.loopLength - 1) & 0x3f]);
         buffer.push(SongTagCode.tempo, base64IntToCharCode[this.tempo >> 6], base64IntToCharCode[this.tempo & 0x3F]);
+        //buffer.push(SongTagCode.speed, base64IntToCharCode[(this.speed - Config.speedMin) >> 6], base64IntToCharCode[(this.speed - Config.speedMin) & 0x3F]);
         buffer.push(SongTagCode.beatCount, base64IntToCharCode[this.beatsPerBar - 1]);
         buffer.push(SongTagCode.barCount, base64IntToCharCode[(this.barCount - 1) >> 6], base64IntToCharCode[(this.barCount - 1) & 0x3f]);
         buffer.push(SongTagCode.patternCount, base64IntToCharCode[(this.patternsPerChannel - 1) >> 6], base64IntToCharCode[(this.patternsPerChannel - 1) & 0x3f]);
@@ -1808,6 +1811,12 @@ export class Song {
                     this.tempo = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                 }
                 this.tempo = clamp(Config.tempoMin, Config.tempoMax + 1, this.tempo);
+                if (fromTheepBox) {
+                    //this.speed = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                } else {
+                    this.speed = 24;
+                }
+                this.speed = clamp(Config.speedMin, Config.speedMax, this.speed + Config.speedMin);
             } break;
             case SongTagCode.reverb: {
                 if (beforeNine && fromBeepBox) {
@@ -4288,6 +4297,7 @@ export class Song {
             "beatsPerBar": this.beatsPerBar,
             "ticksPerBeat": Config.rhythms[this.rhythm].stepsPerBeat,
             "beatsPerMinute": this.tempo,
+            "varispeed": this.speed,
             "reverb": this.reverb,
             "masterGain": this.masterGain,
             "compressionThreshold": this.compressionThreshold,
@@ -4715,6 +4725,10 @@ export class Song {
 
         if (jsonObject["beatsPerMinute"] != undefined) {
             this.tempo = clamp(Config.tempoMin, Config.tempoMax + 1, jsonObject["beatsPerMinute"] | 0);
+        }
+
+        if (jsonObject["varispeed"] != undefined) {
+            this.speed = clamp(Config.speedMin, Config.speedMax + 1, jsonObject["varispeed"] | 0);
         }
 
         if (jsonObject["keyOctave"] != undefined) {
