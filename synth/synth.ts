@@ -3309,7 +3309,7 @@ export class Synth {
                                                 // - make it work with many different pitches (right now it only uses the pitch calculated from the first instrument)
                                                 // - iterate over each pin in the note and calculate pitch shift if necessary
                                                 // - make it work with different sample rates
-                                                runningSampleCount += (startFreq / 0.03728247628879379) * samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
+                                                runningSampleCount += samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
                                                 console.log(runningSampleCount)
                                             }
                                             if (!continueCheck) break;

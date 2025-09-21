@@ -30,7 +30,7 @@ export const DefaultShortcuts: Dictionary<Shortcut> = {
 	"cutPattern": { displayName: "Cut Notes", keyCode: 88, shiftKey: false, ctrlKey: false }, // x
 	"editBeatsPerBar": { displayName: "Edit Beats Per Bar", keyCode: 66, shiftKey: true, ctrlKey: false }, // shift + b
 	"loopPattern": { displayName: "Loop Pattern", keyCode: 66, shiftKey: false, ctrlKey: false }, // b
-	"copyInstrument": { displayName: "Copy Instrument", keyCode: 67, shiftKey: false, ctrlKey: false }, // shift + c
+	"copyInstrument": { displayName: "Copy Instrument", keyCode: 67, shiftKey: true, ctrlKey: false }, // shift + c
 	"copyPattern": { displayName: "Copy Notes", keyCode: 67, shiftKey: false, ctrlKey: false }, // c
 	"insertBarNext": { displayName: "Insert Bar After", keyCode: 13, shiftKey: false, ctrlKey: false }, // enter
 	"insertBarPrev": { displayName: "Insert Bar Before", keyCode: 13, shiftKey: true, ctrlKey: false }, // shift + enter
