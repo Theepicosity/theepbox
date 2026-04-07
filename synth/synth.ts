@@ -8301,6 +8301,7 @@ class InstrumentState {
             public chipWavePlayBackwards = false;
             public chipWaveStartOffset = 0;
             // advloop addition
+    public stereoChannels: number = 0;
     public noisePitchFilterMult: number = 1.0;
     public unison: Unison | null = null;
     public unisonVoices: number = 1;
@@ -9121,6 +9122,7 @@ class InstrumentState {
                 this.chipWavePlayBackwards = instrument.chipWavePlayBackwards;
                 this.chipWaveStartOffset = instrument.chipWaveStartOffset;
                // advloop addition
+            this.stereoChannels = Config.chipWaves[instrument.chipWave].stereoChannels || 0;
 
             this.unisonVoices = instrument.unisonVoices;
             this.unisonSpread = instrument.unisonSpread;
