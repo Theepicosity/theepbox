@@ -2999,8 +2999,10 @@ export class ChangeFilterAddPoint extends UndoableChange {
             this._instrument.envelopes[envelopeIndex].target = this._envelopeTargetsAdd[envelopeIndex];
             this._instrument.envelopes[envelopeIndex].index = this._envelopeIndicesAdd[envelopeIndex];
         }
-        this._effect.tmpEqFilterStart = this._effect.eqFilter;
-        this._effect.tmpEqFilterEnd = null;
+        if (this._effect) {
+            this._effect.tmpEqFilterStart = this._effect.eqFilter;
+            this._effect.tmpEqFilterEnd = null;
+        }
         this._instrument.tmpNoteFilterStart = this._instrument.noteFilter;
         this._instrument.tmpNoteFilterEnd = null;
         this._doc.notifier.changed();
@@ -3015,8 +3017,10 @@ export class ChangeFilterAddPoint extends UndoableChange {
             this._instrument.envelopes[envelopeIndex].target = this._envelopeTargetsRemove[envelopeIndex];
             this._instrument.envelopes[envelopeIndex].index = this._envelopeIndicesRemove[envelopeIndex];
         }
-        this._effect.tmpEqFilterStart = this._effect.eqFilter;
-        this._effect.tmpEqFilterEnd = null;
+        if (this._effect) {
+            this._effect.tmpEqFilterStart = this._effect.eqFilter;
+            this._effect.tmpEqFilterEnd = null;
+        }
         this._instrument.tmpNoteFilterStart = this._instrument.noteFilter;
         this._instrument.tmpNoteFilterEnd = null;
         this._doc.notifier.changed();

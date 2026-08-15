@@ -14283,7 +14283,7 @@ var beepbox = (function (exports) {
                                                     continueCheck = false;
                                                 }
                                                 if (newNote.pitches[0] == tone.note.pitches[0] && newNote.end == (pattern.notes[i + 1] ? pattern.notes[i + 1].start : partsPerBar)) {
-                                                    runningSampleCount += (startFreq / 0.03728247628879379) * samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
+                                                    runningSampleCount += samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
                                                     console.log(runningSampleCount);
                                                 }
                                                 if (!continueCheck)
