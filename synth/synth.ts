@@ -3310,7 +3310,7 @@ export class Synth {
                                                 // - iterate over each pin in the note and calculate pitch shift if necessary
                                                 // - make it work with different sample rates
                                                 runningSampleCount += samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
-                                                console.log(runningSampleCount)
+                                                // console.log(runningSampleCount)
                                             }
                                             if (!continueCheck) break;
                                         }
@@ -3328,7 +3328,8 @@ export class Synth {
                             }
                             //+ samplesPerTick * Config.ticksPerPart * tone.noteStartPart;
                         }
-                        tone.chipWaveStartOffset += runningSampleCount;
+                        // disabling this feature for now
+                        // tone.chipWaveStartOffset += runningSampleCount;
                     }
                     instrumentState.envelopeComputer.reset();
                     // advloop addition
@@ -5964,7 +5965,7 @@ export class Synth {
 
             effectsSource += "}";
 
-            console.log(effectsSource);
+            //console.log(effectsSource);
             effectsFunction = new Function("Config", "Synth", effectsSource)(Config, Synth);
             Synth.effectsFunctionCache[signature] = effectsFunction;
         }
