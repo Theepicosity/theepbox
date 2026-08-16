@@ -623,7 +623,7 @@ export class Instrument {
                 instrumentObject["noteSubFilters" + i] = this.noteSubFilters[i]!.toJsonObject();
         }
 
-        //instrumentObject["effects"] = this.effects;
+        instrumentObject["effects"] = this.effects;
         instrumentObject["mdeffects"] = this.mdeffects;
 
         if (effectsIncludeTransition(this.mdeffects)) {
@@ -656,59 +656,6 @@ export class Instrument {
             instrumentObject["vibratoSpeed"] = this.vibratoSpeed;
             instrumentObject["vibratoType"] = this.vibratoType;
         }
-        /*
-        for (let i: number = 0; i < this.effectCount; i++) {
-            let effect: Effect | null = this.effects[i]
-            if (effect == null) continue;
-            if (effect.type == EffectType.eqFilter) {
-                instrumentObject["eqFilterType"] = effect.eqFilterType;
-                instrumentObject["eqSimpleCut"] = effect.eqFilterSimpleCut;
-                instrumentObject["eqSimplePeak"] = effect.eqFilterSimplePeak;
-                instrumentObject["eqFilter"] = effect.eqFilter.toJsonObject();
-
-                for (let j: number = 0; j < Config.filterMorphCount; j++) {
-                    if (effect.eqSubFilters[j] != null)
-                        instrumentObject["eqSubFilters" + j] = effect.eqSubFilters[j]!.toJsonObject();
-                }
-            }
-            else if (effect.type == EffectType.granular) {
-                instrumentObject["granular"] = effect.granular;
-                instrumentObject["grainSize"] = effect.grainSize;
-                instrumentObject["grainAmounts"] = effect.grainAmounts;
-                instrumentObject["grainRange"] = effect.grainRange;
-            }
-            else if (effect.type == EffectType.ringModulation) {
-                instrumentObject["ringMod"] = Math.round(100 * effect.ringModulation / (Config.ringModRange - 1));
-                instrumentObject["ringModHz"] = Math.round(100 * effect.ringModulationHz / (Config.ringModHzRange - 1));
-                instrumentObject["ringModWaveformIndex"] = effect.ringModWaveformIndex;
-                instrumentObject["ringModPulseWidth"] = Math.round(100 * effect.ringModPulseWidth / (Config.pulseWidthRange - 1));
-                instrumentObject["ringModHzOffset"] = Math.round(100 * effect.ringModHzOffset / (Config.rmHzOffsetMax));
-            }
-            else if (effect.type == EffectType.distortion) {
-                instrumentObject["distortion"] = Math.round(100 * effect.distortion / (Config.distortionRange - 1));
-                instrumentObject["aliases"] = this.aliases;
-            }
-            else if (effect.type == EffectType.bitcrusher) {
-                instrumentObject["bitcrusherOctave"] = (Config.bitcrusherFreqRange - 1 - effect.bitcrusherFreq) * Config.bitcrusherOctaveStep;
-                instrumentObject["bitcrusherQuantization"] = Math.round(100 * effect.bitcrusherQuantization / (Config.bitcrusherQuantizationRange - 1));
-            }
-            else if (effect.type == EffectType.panning) {
-                instrumentObject["pan"] = Math.round(100 * (effect.pan - Config.panCenter) / Config.panCenter);
-                instrumentObject["panDelay"] = effect.panDelay;
-            }
-            else if (effect.type == EffectType.chorus) {
-                instrumentObject["chorus"] = Math.round(100 * effect.chorus / (Config.chorusRange - 1));
-            }
-            else if (effect.type == EffectType.echo) {
-                instrumentObject["echoSustain"] = Math.round(100 * effect.echoSustain / (Config.echoSustainRange - 1));
-                instrumentObject["echoDelayBeats"] = Math.round(1000 * (effect.echoDelay + 1) * Config.echoDelayStepTicks / (Config.ticksPerPart * Config.partsPerBeat)) / 1000;
-                instrumentObject["echoPingPong"] = Math.round(100 * (effect.echoPingPong - Config.panCenter) / Config.panCenter);
-            }
-            else if (effect.type == EffectType.reverb) {
-                instrumentObject["reverb"] = Math.round(100 * effect.reverb / (Config.reverbRange - 1));
-            }
-        }
-        */
 
         if (this.type != InstrumentType.drumset) {
             instrumentObject["fadeInSeconds"] = Math.round(10000 * fadeInSettingToSeconds(this.fadeIn)) / 10000;
@@ -930,23 +877,29 @@ export class Instrument {
         //These can probably be condensed with ternary operators
         this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
 
-        if (Array.isArray(instrumentObject["effects"])) {
-            //this.effects = instrumentObject["effects"];
+        if (format == "theepbox") {
+            this.effects = instrumentObject["effects"];
+            this.effectCount = instrumentObject["effects"].length
+        } else if (Array.isArray(instrumentObject["effects"])) {
+            // TODO: allow instrument copy and paste from other mods
+            // this is done by converting each effect into the new format (i.e. a pain)
             /*
+            let effects: number = 0;
             for (let i: number = 0; i < instrumentObject["effects"].length; i++) {
-                this.addEffect(instrumentObject["effects"][i]);
+                effects = effects | (1 << Config.effectNames.indexOf(instrumentObject["effects"][i]));
             }
+            this.effects = (effects & ((1 << EffectType.length) - 1));
             */
         } else {
             // The index of these names is reinterpreted as a bitfield, which relies on reverb and chorus being the first effects!
-            //const legacyEffectsNames: string[] = ["none", "reverb", "chorus", "chorus & reverb"];
-            //this.effects = legacyEffectsNames.indexOf(instrumentObject["effects"]);
-            //if (this.effects == -1) this.effects = (this.type == InstrumentType.noise) ? 0 : 1;
+            const legacyEffectsNames: string[] = ["none", "reverb", "chorus", "chorus & reverb"];
+            this.effects = legacyEffectsNames.indexOf(instrumentObject["effects"]);
+            if (this.effects == -1) this.effects = (this.type == InstrumentType.noise) ? 0 : 1;
         }
         if (instrumentObject["mdeffects"] != undefined) {
             this.mdeffects = instrumentObject["mdeffects"];
         }
-        else this.mdeffects = 0; //TODO: convert old effect list into md effects
+        else this.mdeffects = 0;
 
         this.transition = Config.transitions.dictionary["normal"].index; // default value.
         const transitionProperty: any = instrumentObject["transition"] || instrumentObject["envelope"]; // the transition property used to be called envelope, so check that too.
