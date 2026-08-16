@@ -12059,6 +12059,7 @@ li.select2-results__option[role=group] > strong:hover {
                 if (this.noteSubFilters[i] != null)
                     instrumentObject["noteSubFilters" + i] = this.noteSubFilters[i].toJsonObject();
             }
+            instrumentObject["effects"] = this.effects;
             instrumentObject["mdeffects"] = this.mdeffects;
             if (effectsIncludeTransition(this.mdeffects)) {
                 instrumentObject["transition"] = Config.transitions[this.transition].name;
@@ -12306,7 +12307,12 @@ li.select2-results__option[role=group] > strong:hover {
                 this.volume = 0;
             }
             this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
-            if (Array.isArray(instrumentObject["effects"])) ;
+            if (format == "theepbox") {
+                this.effects = instrumentObject["effects"];
+                this.effectCount = instrumentObject["effects"].length;
+            }
+            else if (Array.isArray(instrumentObject["effects"])) ;
+            else ;
             if (instrumentObject["mdeffects"] != undefined) {
                 this.mdeffects = instrumentObject["mdeffects"];
             }
@@ -20441,18 +20447,24 @@ li.select2-results__option[role=group] > strong:hover {
                     }
                     for (let i = 0; i < tgtInstrumentList.length; i++) {
                         const tgtInstrument = tgtInstrumentList[i];
-                        const tgtEffect = tgtInstrument.effects[0];
                         if (tgtInstrument == null)
                             continue;
                         const str = Config.modulators[instrument.modulators[mod]].name;
+                        let invalidPostEQ = false;
+                        for (let effectIndex = 0; effectIndex < tgtInstrument.effects.length; effectIndex++) {
+                            if (tgtInstrument.effects[effectIndex].type == 5) {
+                                if ((tgtInstrument.effects[effectIndex].eqFilterType && str == "post eq") || (!tgtInstrument.effects[effectIndex].eqFilterType && (str == "post eq cut" || str == "post eq peak"))) {
+                                    invalidPostEQ = true;
+                                }
+                            }
+                        }
                         if (!(Config.modulators[instrument.modulators[mod]].associatedEffect != 12 && !(tgtInstrument.effectsIncludeType(Config.modulators[instrument.modulators[mod]].associatedEffect))) && !(Config.modulators[instrument.modulators[mod]].associatedMDEffect != 6 && !(tgtInstrument.mdeffects & (1 << Config.modulators[instrument.modulators[mod]].associatedMDEffect)))
                             || ((tgtInstrument.type != 1 && tgtInstrument.type != 11) && (str == "fm slider 1" || str == "fm slider 2" || str == "fm slider 3" || str == "fm slider 4" || str == "fm feedback"))
                             || tgtInstrument.type != 11 && (str == "fm slider 5" || str == "fm slider 6")
                             || ((tgtInstrument.type != 6 && tgtInstrument.type != 8) && (str == "pulse width" || str == "decimal offset"))
                             || ((tgtInstrument.type != 8) && (str == "dynamism" || str == "spread" || str == "saw shape"))
                             || (!tgtInstrument.getChord().arpeggiates && (str == "arp speed" || str == "reset arp"))
-                            || (tgtEffect.eqFilterType && str == "post eq")
-                            || (!tgtEffect.eqFilterType && (str == "post eq cut" || str == "post eq peak"))
+                            || invalidPostEQ
                             || (str == "post eq" && Math.floor((instrument.modFilterTypes[mod] + 1) / 2) > tgtInstrument.getLargestControlPointCount(false))
                             || (tgtInstrument.noteFilterType && str == "pre eq")
                             || (!tgtInstrument.noteFilterType && (str == "pre eq cut" || str == "pre eq peak"))
@@ -22860,7 +22872,6 @@ li.select2-results__option[role=group] > strong:hover {
                                                 }
                                                 if (newNote.pitches[0] == tone.note.pitches[0] && newNote.end == (pattern.notes[i + 1] ? pattern.notes[i + 1].start : partsPerBar)) {
                                                     runningSampleCount += samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
-                                                    console.log(runningSampleCount);
                                                 }
                                                 if (!continueCheck)
                                                     break;
@@ -22879,7 +22890,6 @@ li.select2-results__option[role=group] > strong:hover {
                                     tone.chipWaveStartOffset += samplesPerTick * Config.ticksPerPart * (currentPart - tone.note.start);
                                 }
                             }
-                            tone.chipWaveStartOffset += runningSampleCount;
                         }
                         instrumentState.envelopeComputer.reset();
                         if (instrument.type == 0 && instrument.isUsingAdvancedLoopControls) {
@@ -25306,7 +25316,6 @@ li.select2-results__option[role=group] > strong:hover {
                     }
                 }
                 effectsSource += "}";
-                console.log(effectsSource);
                 effectsFunction = new Function("Config", "Synth", effectsSource)(Config, Synth);
                 Synth.effectsFunctionCache[signature] = effectsFunction;
             }
@@ -29147,6 +29156,7 @@ li.select2-results__option[role=group] > strong:hover {
             const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
             const oldValue = instrument.aliases;
             doc.notifier.changed();
+            doc.changedEffect = true;
             if (oldValue != newValue) {
                 instrument.aliases = newValue;
                 instrument.preset = instrument.type;
@@ -29283,6 +29293,7 @@ li.select2-results__option[role=group] > strong:hover {
             effect.ringModulation = newValue;
             doc.notifier.changed();
             doc.synth.unsetMod(Config.modulators.dictionary["ring modulation"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29292,6 +29303,7 @@ li.select2-results__option[role=group] > strong:hover {
             effect.ringModulationHz = newValue;
             doc.notifier.changed();
             doc.synth.unsetMod(Config.modulators.dictionary["ring mod hertz"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29301,6 +29313,7 @@ li.select2-results__option[role=group] > strong:hover {
             if (effect.ringModWaveformIndex != newValue) {
                 effect.ringModWaveformIndex = newValue;
                 doc.notifier.changed();
+                doc.changedEffect = true;
                 this._didSomething();
             }
         }
@@ -29311,6 +29324,7 @@ li.select2-results__option[role=group] > strong:hover {
             effect.granular = newValue;
             doc.notifier.changed();
             doc.synth.unsetMod(Config.modulators.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29320,6 +29334,7 @@ li.select2-results__option[role=group] > strong:hover {
             effect.grainSize = newValue;
             doc.notifier.changed();
             doc.synth.unsetMod(Config.modulators.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29328,6 +29343,8 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.grainAmounts = newValue;
             doc.notifier.changed();
+            doc.synth.unsetMod(Config.modulators.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29336,6 +29353,8 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.grainRange = newValue;
             doc.notifier.changed();
+            doc.synth.unsetMod(Config.modulators.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29345,6 +29364,7 @@ li.select2-results__option[role=group] > strong:hover {
             effect.distortion = newValue;
             doc.notifier.changed();
             doc.synth.unsetMod(Config.modulators.dictionary["distortion"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29353,6 +29373,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.clippingInGain = newValue;
             doc.notifier.changed();
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29361,6 +29382,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.clippingThreshold = newValue;
             doc.notifier.changed();
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29369,6 +29391,7 @@ li.select2-results__option[role=group] > strong:hover {
             super();
             effect.clippingType = newValue;
             doc.notifier.changed();
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29377,6 +29400,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.bitcrusherFreq = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["bit crush"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -29385,6 +29409,7 @@ li.select2-results__option[role=group] > strong:hover {
         constructor(doc, effect, newValue) {
             super(doc);
             doc.synth.unsetMod(Config.modulators.dictionary["freq crush"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             effect.bitcrusherQuantization = newValue;
             doc.notifier.changed();
             this._didSomething();
@@ -29459,6 +29484,7 @@ li.select2-results__option[role=group] > strong:hover {
             effect.eqFilterSimpleCut = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["post eq cut"].index, doc.channel, doc.getCurrentInstrument());
             doc.notifier.changed();
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29468,6 +29494,7 @@ li.select2-results__option[role=group] > strong:hover {
             effect.eqFilterSimplePeak = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["post eq peak"].index, doc.channel, doc.getCurrentInstrument());
             doc.notifier.changed();
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -29576,6 +29603,7 @@ li.select2-results__option[role=group] > strong:hover {
             if (this._effect) {
                 this._effect.tmpEqFilterStart = this._effect.eqFilter;
                 this._effect.tmpEqFilterEnd = null;
+                this._doc.changedEffect = true;
             }
             this._instrument.tmpNoteFilterStart = this._instrument.noteFilter;
             this._instrument.tmpNoteFilterEnd = null;
@@ -29593,6 +29621,7 @@ li.select2-results__option[role=group] > strong:hover {
             if (this._effect) {
                 this._effect.tmpEqFilterStart = this._effect.eqFilter;
                 this._effect.tmpEqFilterEnd = null;
+                this._doc.changedEffect = true;
             }
             this._instrument.tmpNoteFilterStart = this._instrument.noteFilter;
             this._instrument.tmpNoteFilterEnd = null;
@@ -29666,12 +29695,14 @@ li.select2-results__option[role=group] > strong:hover {
             this._point.gain = this._newGain;
             this._instrument.preset = this._instrumentNextPreset;
             this._doc.notifier.changed();
+            this._doc.changedEffect = true;
         }
         _doBackwards() {
             this._point.freq = this._oldFreq;
             this._point.gain = this._oldGain;
             this._instrument.preset = this._instrumentPrevPreset;
             this._doc.notifier.changed();
+            this._doc.changedEffect = true;
         }
     }
     class ChangeSongFilterSettings extends UndoableChange {
@@ -29741,6 +29772,7 @@ li.select2-results__option[role=group] > strong:hover {
             this._instrument.preset = this._instrumentNextPreset;
             this._instrument.clearInvalidEnvelopeTargets();
             this._doc.notifier.changed();
+            this._doc.changedEffect = true;
         }
         _doBackwards() {
             if (this._useNoteFilter) {
@@ -29760,6 +29792,7 @@ li.select2-results__option[role=group] > strong:hover {
             this._instrument.preset = this._instrumentPrevPreset;
             this._instrument.clearInvalidEnvelopeTargets();
             this._doc.notifier.changed();
+            this._doc.changedEffect = true;
         }
     }
     class ChangeFadeInOut extends UndoableChange {
@@ -31049,6 +31082,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.echoDelay = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["echo delay"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31058,6 +31092,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.echoSustain = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["echo"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31067,6 +31102,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.echoPingPong = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["echo ping pong"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31076,6 +31112,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.flanger = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["flanger"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31085,6 +31122,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.flangerSpeed = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["flanger speed"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31094,6 +31132,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.flangerDepth = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["flanger depth"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31103,6 +31142,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.flangerFeedback = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["flanger feedback"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31112,6 +31152,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.chorus = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["chorus"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31121,6 +31162,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.reverb = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["reverb"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31130,6 +31172,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.reverbWetDryMix = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["reverb wet/dry"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31139,6 +31182,7 @@ li.select2-results__option[role=group] > strong:hover {
             super(doc);
             effect.reverbSend = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["reverb send"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31662,6 +31706,7 @@ li.select2-results__option[role=group] > strong:hover {
             super();
             effect.gain = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["gain"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31671,6 +31716,7 @@ li.select2-results__option[role=group] > strong:hover {
             super();
             effect.pan = newValue;
             doc.synth.unsetMod(Config.modulators.dictionary["pan"].index, doc.channel, doc.getCurrentInstrument());
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31679,6 +31725,7 @@ li.select2-results__option[role=group] > strong:hover {
         constructor(doc, effect, newValue) {
             super();
             effect.panDelay = newValue;
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -31687,6 +31734,7 @@ li.select2-results__option[role=group] > strong:hover {
         constructor(doc, effect, newValue) {
             super();
             effect.panMode = newValue;
+            doc.changedEffect = true;
             doc.notifier.changed();
             this._didSomething();
         }
@@ -34070,6 +34118,7 @@ li.select2-results__option[role=group] > strong:hover {
             this.promptEffectIndex = null;
             this.addedEffect = false;
             this.addedEnvelope = false;
+            this.changedEffect = false;
             this.currentPatternIsDirty = false;
             this._recovery = new SongRecovery();
             this._recentChange = null;
@@ -40053,7 +40102,6 @@ You should be redirected to the song at:<br /><br />
             this.ringModHzNums = [];
             this.echoDelayNums = [];
             this._lastChange = null;
-            this._viewedChannel = null;
             this._onChange = (event) => {
                 const ringModWaveSelectIndex = this.ringModWaveSelects.indexOf(event.target);
                 const panModeSelectIndex = this.panModeSelects.indexOf(event.target);
@@ -40088,19 +40136,16 @@ You should be redirected to the song at:<br /><br />
                 const deleteButtonIndex = this.deleteButtons.indexOf(event.target);
                 if (deleteButtonIndex != -1) {
                     this._doc.record(new ChangeRemoveEffects(this._doc, deleteButtonIndex, null));
-                    this.render(true);
                 }
                 else if (moveupButtonIndex != -1) {
                     this._doc.record(new ChangeReorderEffects(this._doc, moveupButtonIndex, true, null));
-                    this.render(true);
                 }
                 else if (movedownButtonIndex != -1) {
                     this._doc.record(new ChangeReorderEffects(this._doc, movedownButtonIndex, false, null));
-                    this.render(true);
                 }
                 else if (minimizeButtonIndex != -1) {
                     this.renderEffectRows[minimizeButtonIndex] = !this.renderEffectRows[minimizeButtonIndex];
-                    this.render(true);
+                    this.render();
                 }
             };
             this._onInput = (event) => {
@@ -40130,7 +40175,6 @@ You should be redirected to the song at:<br /><br />
             this._switchEQFilterType = (simpleFilter, effect) => {
                 const instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
                 this._doc.record(new ChangeEQFilterType(this._doc, effect, instrument, simpleFilter));
-                this.render(true);
             };
             this.container.addEventListener("change", this._onChange);
             this.container.addEventListener("click", this._onClick);
@@ -40138,7 +40182,7 @@ You should be redirected to the song at:<br /><br />
         }
         render(forceRender = false) {
             const instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-            if (instrument.effects.length != this.container.children.length || this._doc.song.channels[this._doc.channel] != this._viewedChannel || forceRender) {
+            if (!this._doc.changedEffect || forceRender) {
                 this.container.replaceChildren();
                 for (let effectIndex = 0; effectIndex < instrument.effectCount; effectIndex++) {
                     const effect = instrument.effects[effectIndex];
@@ -40346,7 +40390,6 @@ You should be redirected to the song at:<br /><br />
                     this.eqFilterSimplePeakSliders[effectIndex] = eqFilterSimplePeakSlider;
                     this.ringModHzNums[effectIndex] = ringModHzNum;
                     this.echoDelayNums[effectIndex] = echoDelayNum;
-                    this._viewedChannel = this._doc.song.channels[this._doc.channel];
                 }
             }
             for (let effectIndex = 0; effectIndex < instrument.effects.length; effectIndex++) {
@@ -40395,6 +40438,7 @@ You should be redirected to the song at:<br /><br />
                 this.ringModHzNums[effectIndex].innerHTML = calculateRingModHertz(effect.ringModulationHz / (Config.ringModHzRange - 1)) + " Hz";
                 this.echoDelayNums[effectIndex].innerHTML = (Math.round((effect.echoDelay + 1) * Config.echoDelayStepTicks / (Config.ticksPerPart * Config.partsPerBeat) * 1000) / 1000) + " beat(s)";
             }
+            this._doc.changedEffect = false;
         }
     }
 
@@ -51695,14 +51739,10 @@ You should be redirected to the song at:<br /><br />
                 this._doc.notifier.changed();
             };
             this._whenSetEffects = () => {
-                const instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-                const oldValue = instrument.effects;
                 const toggleFlag = Config.effectOrder[this._effectsSelect.selectedIndex - 1];
                 this._doc.record(new ChangeToggleEffects(this._doc, toggleFlag, null));
                 this._effectsSelect.selectedIndex = 0;
-                if (instrument.effects.length > oldValue.length) {
-                    this._doc.addedEffect = true;
-                }
+                this._doc.addedEffect = true;
                 this._doc.notifier.changed();
             };
             this._whenSetVibrato = () => {

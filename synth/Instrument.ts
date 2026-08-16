@@ -891,10 +891,13 @@ export class Instrument {
             this.effects = (effects & ((1 << EffectType.length) - 1));
             */
         } else {
+            // ALSO TODO: convert this too!
             // The index of these names is reinterpreted as a bitfield, which relies on reverb and chorus being the first effects!
+            /*
             const legacyEffectsNames: string[] = ["none", "reverb", "chorus", "chorus & reverb"];
             this.effects = legacyEffectsNames.indexOf(instrumentObject["effects"]);
             if (this.effects == -1) this.effects = (this.type == InstrumentType.noise) ? 0 : 1;
+            */
         }
         if (instrumentObject["mdeffects"] != undefined) {
             this.mdeffects = instrumentObject["mdeffects"];

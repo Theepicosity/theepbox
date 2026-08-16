@@ -1817,7 +1817,6 @@ export class ChangeToggleEffects extends Change {
         let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         if (useInstrument != null) instrument = useInstrument;
         instrument.addEffect(effectType);
-        // Remove AA when distortion is turned off.
         this._didSomething();
         doc.notifier.changed();
     }
@@ -2520,6 +2519,7 @@ export class ChangeAliasing extends Change {
         const oldValue = instrument.aliases;
 
         doc.notifier.changed();
+        doc.changedEffect = true;
         if (oldValue != newValue) {
             instrument.aliases = newValue;
             instrument.preset = instrument.type;
@@ -2665,6 +2665,7 @@ export class ChangeRingMod extends ChangeInstrumentSlider {
         effect.ringModulation = newValue;
         doc.notifier.changed();
         doc.synth.unsetMod(Config.modulators.dictionary["ring modulation"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -2675,6 +2676,7 @@ export class ChangeRingModHz extends ChangeInstrumentSlider {
         effect.ringModulationHz = newValue;
         doc.notifier.changed();
         doc.synth.unsetMod(Config.modulators.dictionary["ring mod hertz"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -2685,6 +2687,7 @@ export class ChangeRingModChipWave extends Change {
         if (effect.ringModWaveformIndex != newValue) {
             effect.ringModWaveformIndex = newValue;
             doc.notifier.changed();
+            doc.changedEffect = true;
             this._didSomething();
         }
     }
@@ -2696,6 +2699,7 @@ export class ChangeGranular extends ChangeInstrumentSlider {
         effect.granular = newValue;
         doc.notifier.changed();
         doc.synth.unsetMod(Config.modulators.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -2706,6 +2710,7 @@ export class ChangeGrainSize extends ChangeInstrumentSlider {
         effect.grainSize = newValue;
         doc.notifier.changed();
         doc.synth.unsetMod(Config.modulators.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -2715,7 +2720,8 @@ export class ChangeGrainAmounts extends ChangeInstrumentSlider {
         super(doc);
         effect.grainAmounts = newValue;
         doc.notifier.changed();
-        // doc.synth.unsetMod(Config.modulators.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -2725,7 +2731,8 @@ export class ChangeGrainRange extends ChangeInstrumentSlider {
         super(doc);
         effect.grainRange = newValue;
         doc.notifier.changed();
-        // doc.synth.unsetMod(Config.modulators.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.modulators.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -2736,6 +2743,7 @@ export class ChangeDistortion extends ChangeInstrumentSlider {
         effect.distortion = newValue;
         doc.notifier.changed();
         doc.synth.unsetMod(Config.modulators.dictionary["distortion"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -2745,6 +2753,7 @@ export class ChangeClippingInGain extends ChangeInstrumentSlider {
         super(doc);
         effect.clippingInGain = newValue;
         doc.notifier.changed();
+        doc.changedEffect = true;
         //doc.synth.unsetMod(Config.modulators.dictionary["clipping ingain"].index, doc.channel, doc.getCurrentInstrument());
         this._didSomething();
     }
@@ -2755,6 +2764,7 @@ export class ChangeClippingThreshold extends ChangeInstrumentSlider {
         super(doc);
         effect.clippingThreshold = newValue;
         doc.notifier.changed();
+        doc.changedEffect = true;
         //doc.synth.unsetMod(Config.modulators.dictionary["clipping threshold"].index, doc.channel, doc.getCurrentInstrument());
         this._didSomething();
     }
@@ -2765,6 +2775,7 @@ export class ChangeClippingType extends Change {
         super();
         effect.clippingType = newValue;
         doc.notifier.changed();
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -2774,6 +2785,7 @@ export class ChangeBitcrusherFreq extends ChangeInstrumentSlider {
         super(doc);
         effect.bitcrusherFreq = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["bit crush"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -2783,6 +2795,7 @@ export class ChangeBitcrusherQuantization extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         doc.synth.unsetMod(Config.modulators.dictionary["freq crush"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         effect.bitcrusherQuantization = newValue;
         doc.notifier.changed();
         this._didSomething();
@@ -2863,6 +2876,7 @@ export class ChangeEQFilterSimpleCut extends ChangeInstrumentSlider {
         effect.eqFilterSimpleCut = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["post eq cut"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -2873,6 +2887,7 @@ export class ChangeEQFilterSimplePeak extends ChangeInstrumentSlider {
         effect.eqFilterSimplePeak = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["post eq peak"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
+        doc.changedEffect = true;
         this._didSomething();
     }
 }
@@ -3002,6 +3017,7 @@ export class ChangeFilterAddPoint extends UndoableChange {
         if (this._effect) {
             this._effect.tmpEqFilterStart = this._effect.eqFilter;
             this._effect.tmpEqFilterEnd = null;
+            this._doc.changedEffect = true;
         }
         this._instrument.tmpNoteFilterStart = this._instrument.noteFilter;
         this._instrument.tmpNoteFilterEnd = null;
@@ -3020,6 +3036,7 @@ export class ChangeFilterAddPoint extends UndoableChange {
         if (this._effect) {
             this._effect.tmpEqFilterStart = this._effect.eqFilter;
             this._effect.tmpEqFilterEnd = null;
+            this._doc.changedEffect = true;
         }
         this._instrument.tmpNoteFilterStart = this._instrument.noteFilter;
         this._instrument.tmpNoteFilterEnd = null;
@@ -3125,6 +3142,7 @@ export class ChangeFilterMovePoint extends UndoableChange {
         this._point.gain = this._newGain;
         this._instrument.preset = this._instrumentNextPreset;
         this._doc.notifier.changed();
+        this._doc.changedEffect = true;
     }
 
     protected _doBackwards(): void {
@@ -3132,6 +3150,7 @@ export class ChangeFilterMovePoint extends UndoableChange {
         this._point.gain = this._oldGain;
         this._instrument.preset = this._instrumentPrevPreset;
         this._doc.notifier.changed();
+        this._doc.changedEffect = true;
     }
 }
 
@@ -3224,6 +3243,7 @@ export class ChangeFilterSettings extends UndoableChange {
         this._instrument.preset = this._instrumentNextPreset;
         this._instrument.clearInvalidEnvelopeTargets();
         this._doc.notifier.changed();
+        this._doc.changedEffect = true;
     }
 
     protected _doBackwards(): void {
@@ -3243,6 +3263,7 @@ export class ChangeFilterSettings extends UndoableChange {
         this._instrument.preset = this._instrumentPrevPreset;
         this._instrument.clearInvalidEnvelopeTargets();
         this._doc.notifier.changed();
+        this._doc.changedEffect = true;
     }
 }
 
@@ -4672,6 +4693,7 @@ export class ChangeEchoDelay extends ChangeInstrumentSlider {
         super(doc);
         effect.echoDelay = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["echo delay"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4682,6 +4704,7 @@ export class ChangeEchoSustain extends ChangeInstrumentSlider {
         super(doc);
         effect.echoSustain = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["echo"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4692,6 +4715,7 @@ export class ChangeEchoPingPong extends ChangeInstrumentSlider {
         super(doc);
         effect.echoPingPong = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["echo ping pong"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4702,6 +4726,7 @@ export class ChangeFlanger extends ChangeInstrumentSlider {
         super(doc);
         effect.flanger = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["flanger"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4712,6 +4737,7 @@ export class ChangeFlangerSpeed extends ChangeInstrumentSlider {
         super(doc);
         effect.flangerSpeed = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["flanger speed"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4722,6 +4748,7 @@ export class ChangeFlangerDepth extends ChangeInstrumentSlider {
         super(doc);
         effect.flangerDepth = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["flanger depth"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4732,6 +4759,7 @@ export class ChangeFlangerFeedback extends ChangeInstrumentSlider {
         super(doc);
         effect.flangerFeedback = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["flanger feedback"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4742,6 +4770,7 @@ export class ChangeChorus extends ChangeInstrumentSlider {
         super(doc);
         effect.chorus = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["chorus"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4752,6 +4781,7 @@ export class ChangeReverb extends ChangeInstrumentSlider {
         super(doc);
         effect.reverb = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["reverb"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4762,6 +4792,7 @@ export class ChangeReverbWetDryMix extends ChangeInstrumentSlider {
         super(doc);
         effect.reverbWetDryMix = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["reverb wet/dry"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -4772,6 +4803,7 @@ export class ChangeReverbSend extends ChangeInstrumentSlider {
         super(doc);
         effect.reverbSend = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["reverb send"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -5373,6 +5405,7 @@ export class ChangeGain extends Change {
         super();
         effect.gain = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["gain"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -5383,6 +5416,7 @@ export class ChangePan extends Change {
         super();
         effect.pan = newValue;
         doc.synth.unsetMod(Config.modulators.dictionary["pan"].index, doc.channel, doc.getCurrentInstrument());
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -5392,6 +5426,7 @@ export class ChangePanDelay extends Change {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super();
         effect.panDelay = newValue;
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }
@@ -5401,6 +5436,7 @@ export class ChangePanMode extends Change {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super();
         effect.panMode = newValue;
+        doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
     }

@@ -5364,14 +5364,10 @@ export class SongEditor {
     }
 
     private _whenSetEffects = (): void => {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-        const oldValue: (Effect | null)[] = instrument.effects;
         const toggleFlag: number = Config.effectOrder[this._effectsSelect.selectedIndex - 1];
         this._doc.record(new ChangeToggleEffects(this._doc, toggleFlag, null));
         this._effectsSelect.selectedIndex = 0;
-        if (instrument.effects.length > oldValue.length) {
-            this._doc.addedEffect = true;
-        }
+        this._doc.addedEffect = true;
         this._doc.notifier.changed();
     }
 

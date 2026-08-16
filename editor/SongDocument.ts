@@ -56,6 +56,7 @@ export class SongDocument {
 
     public addedEffect: boolean = false;
     public addedEnvelope: boolean = false;
+    public changedEffect: boolean = false;
     public currentPatternIsDirty: boolean = false;
     public modRecordingHandler: () => void;
 
@@ -253,7 +254,7 @@ export class SongDocument {
 		if (state == null) throw new Error("History state is null.");
 			
 		// Abort if we've already handled the current state. 
-		if (state.sequenceNumber == this._sequenceNumber) return;
+        if (state.sequenceNumber == this._sequenceNumber) return;
 			
 		this.bar = state.bar;
 		this.channel = state.channel;

@@ -2,7 +2,6 @@
 
 import { Config, EffectType, calculateRingModHertz } from "../synth/SynthConfig";
 import { Instrument } from "../synth/Instrument";
-import { Channel } from "../synth/Channel";
 import { Effect } from "../synth/Effect";
 import { SongDocument } from "./SongDocument";
 import { ChangeChorus, ChangeReverb, ChangeReverbWetDryMix, ChangeReverbSend, ChangeFlanger, ChangeFlangerSpeed, ChangeFlangerDepth, ChangeFlangerFeedback, ChangeRingModChipWave, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeEchoDelay, ChangeEchoSustain, ChangeEchoPingPong, ChangeGain, ChangePan, ChangePanMode, ChangePanDelay, ChangeDistortion, ChangeClippingType, ChangeClippingInGain, ChangeClippingThreshold, ChangeAliasing, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEQFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeRemoveEffects, ChangeReorderEffects } from "./changes";
@@ -86,7 +85,6 @@ export class EffectEditor {
 	public readonly echoDelayNums: HTMLParagraphElement[] = [];
 
 	private _lastChange: Change | null = null;
-	private _viewedChannel: Channel | null = null;
 
 	constructor(private _doc: SongDocument, private _openPrompt: Function) {
 		this.container.addEventListener("change", this._onChange);
@@ -126,19 +124,16 @@ export class EffectEditor {
 		const deleteButtonIndex: number = this.deleteButtons.indexOf(<any>event.target);
 		if (deleteButtonIndex != -1) {
 			this._doc.record(new ChangeRemoveEffects(this._doc, deleteButtonIndex, null));
-			this.render(true)
 		}
 		else if (moveupButtonIndex != -1) {
 			this._doc.record(new ChangeReorderEffects(this._doc, moveupButtonIndex, true, null));
-			this.render(true)
 		}
 		else if (movedownButtonIndex != -1) {
 			this._doc.record(new ChangeReorderEffects(this._doc, movedownButtonIndex, false, null));
-			this.render(true)
 		}
 		else if (minimizeButtonIndex != -1) {
 			this.renderEffectRows[minimizeButtonIndex] = !this.renderEffectRows[minimizeButtonIndex]
-			this.render(true)
+			this.render();
 		}
 	}
 
@@ -177,13 +172,12 @@ export class EffectEditor {
 	private _switchEQFilterType = (simpleFilter: boolean, effect: Effect): void => {
 		const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
 		this._doc.record(new ChangeEQFilterType(this._doc, effect, instrument, simpleFilter));
-		this.render(true)
 	}
 
 	public render(forceRender: boolean = false): void {
 		const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
 
-		if (instrument.effects.length != this.container.children.length || this._doc.song.channels[this._doc.channel] != this._viewedChannel || forceRender) {
+		if (!this._doc.changedEffect || forceRender) {
 			this.container.replaceChildren();
 			for (let effectIndex: number = 0; effectIndex < instrument.effectCount; effectIndex++) {
 				const effect: Effect = instrument.effects[effectIndex];
@@ -436,8 +430,6 @@ export class EffectEditor {
 				this.echoDelayNums[effectIndex] = echoDelayNum;
 				//this.grainRangeNums[effectIndex] = grainRangeNum;
 				//this.grainSizeNums[effectIndex] = grainSizeNum;
-
-				this._viewedChannel = this._doc.song.channels[this._doc.channel];
 			}
 		}
 
@@ -488,5 +480,7 @@ export class EffectEditor {
 			this.ringModHzNums[effectIndex].innerHTML = calculateRingModHertz(effect.ringModulationHz / (Config.ringModHzRange - 1)) + " Hz";
 			this.echoDelayNums[effectIndex].innerHTML = (Math.round((effect.echoDelay + 1) * Config.echoDelayStepTicks / (Config.ticksPerPart * Config.partsPerBeat) * 1000) / 1000) + " beat(s)";
 		}
+
+        this._doc.changedEffect = false;
 	}
 }

@@ -9884,6 +9884,7 @@ var beepbox = (function (exports) {
                 if (this.noteSubFilters[i] != null)
                     instrumentObject["noteSubFilters" + i] = this.noteSubFilters[i].toJsonObject();
             }
+            instrumentObject["effects"] = this.effects;
             instrumentObject["mdeffects"] = this.mdeffects;
             if (effectsIncludeTransition(this.mdeffects)) {
                 instrumentObject["transition"] = Config.transitions[this.transition].name;
@@ -10131,7 +10132,12 @@ var beepbox = (function (exports) {
                 this.volume = 0;
             }
             this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
-            if (Array.isArray(instrumentObject["effects"])) ;
+            if (format == "theepbox") {
+                this.effects = instrumentObject["effects"];
+                this.effectCount = instrumentObject["effects"].length;
+            }
+            else if (Array.isArray(instrumentObject["effects"])) ;
+            else ;
             if (instrumentObject["mdeffects"] != undefined) {
                 this.mdeffects = instrumentObject["mdeffects"];
             }
@@ -18548,18 +18554,24 @@ var beepbox = (function (exports) {
                     }
                     for (let i = 0; i < tgtInstrumentList.length; i++) {
                         const tgtInstrument = tgtInstrumentList[i];
-                        const tgtEffect = tgtInstrument.effects[0];
                         if (tgtInstrument == null)
                             continue;
                         const str = Config.modulators[instrument.modulators[mod]].name;
+                        let invalidPostEQ = false;
+                        for (let effectIndex = 0; effectIndex < tgtInstrument.effects.length; effectIndex++) {
+                            if (tgtInstrument.effects[effectIndex].type == 5) {
+                                if ((tgtInstrument.effects[effectIndex].eqFilterType && str == "post eq") || (!tgtInstrument.effects[effectIndex].eqFilterType && (str == "post eq cut" || str == "post eq peak"))) {
+                                    invalidPostEQ = true;
+                                }
+                            }
+                        }
                         if (!(Config.modulators[instrument.modulators[mod]].associatedEffect != 12 && !(tgtInstrument.effectsIncludeType(Config.modulators[instrument.modulators[mod]].associatedEffect))) && !(Config.modulators[instrument.modulators[mod]].associatedMDEffect != 6 && !(tgtInstrument.mdeffects & (1 << Config.modulators[instrument.modulators[mod]].associatedMDEffect)))
                             || ((tgtInstrument.type != 1 && tgtInstrument.type != 11) && (str == "fm slider 1" || str == "fm slider 2" || str == "fm slider 3" || str == "fm slider 4" || str == "fm feedback"))
                             || tgtInstrument.type != 11 && (str == "fm slider 5" || str == "fm slider 6")
                             || ((tgtInstrument.type != 6 && tgtInstrument.type != 8) && (str == "pulse width" || str == "decimal offset"))
                             || ((tgtInstrument.type != 8) && (str == "dynamism" || str == "spread" || str == "saw shape"))
                             || (!tgtInstrument.getChord().arpeggiates && (str == "arp speed" || str == "reset arp"))
-                            || (tgtEffect.eqFilterType && str == "post eq")
-                            || (!tgtEffect.eqFilterType && (str == "post eq cut" || str == "post eq peak"))
+                            || invalidPostEQ
                             || (str == "post eq" && Math.floor((instrument.modFilterTypes[mod] + 1) / 2) > tgtInstrument.getLargestControlPointCount(false))
                             || (tgtInstrument.noteFilterType && str == "pre eq")
                             || (!tgtInstrument.noteFilterType && (str == "pre eq cut" || str == "pre eq peak"))
@@ -20967,7 +20979,6 @@ var beepbox = (function (exports) {
                                                 }
                                                 if (newNote.pitches[0] == tone.note.pitches[0] && newNote.end == (pattern.notes[i + 1] ? pattern.notes[i + 1].start : partsPerBar)) {
                                                     runningSampleCount += samplesPerTick * Config.ticksPerPart * (newNote.end - newNote.start);
-                                                    console.log(runningSampleCount);
                                                 }
                                                 if (!continueCheck)
                                                     break;
@@ -20986,7 +20997,6 @@ var beepbox = (function (exports) {
                                     tone.chipWaveStartOffset += samplesPerTick * Config.ticksPerPart * (currentPart - tone.note.start);
                                 }
                             }
-                            tone.chipWaveStartOffset += runningSampleCount;
                         }
                         instrumentState.envelopeComputer.reset();
                         if (instrument.type == 0 && instrument.isUsingAdvancedLoopControls) {
@@ -23413,7 +23423,6 @@ var beepbox = (function (exports) {
                     }
                 }
                 effectsSource += "}";
-                console.log(effectsSource);
                 effectsFunction = new Function("Config", "Synth", effectsSource)(Config, Synth);
                 Synth.effectsFunctionCache[signature] = effectsFunction;
             }
