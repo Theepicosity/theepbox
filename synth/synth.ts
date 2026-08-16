@@ -466,9 +466,16 @@ export class Synth {
                 }
                 for (let i: number = 0; i < tgtInstrumentList.length; i++) {
                     const tgtInstrument: Instrument | null = tgtInstrumentList[i];
-                    const tgtEffect: Effect = tgtInstrument.effects[0] as Effect;
                     if (tgtInstrument == null) continue;
                     const str: string = Config.modulators[instrument.modulators[mod]].name;
+                    let invalidPostEQ: boolean = false;
+                    for (let effectIndex: number = 0; effectIndex < tgtInstrument.effects.length; effectIndex++) {
+                        if (tgtInstrument.effects[effectIndex].type == EffectType.eqFilter) {
+                            if ((tgtInstrument.effects[effectIndex].eqFilterType && str == "post eq") || (!tgtInstrument.effects[effectIndex].eqFilterType && (str == "post eq cut" || str == "post eq peak"))) {
+                                invalidPostEQ = true;
+                            }
+                        }
+                    }
                     // Check effects
                     if (!(Config.modulators[instrument.modulators[mod]].associatedEffect != EffectType.length && !(tgtInstrument.effectsIncludeType(Config.modulators[instrument.modulators[mod]].associatedEffect))) && !(Config.modulators[instrument.modulators[mod]].associatedMDEffect != MDEffectType.length && !(tgtInstrument.mdeffects & (1 << Config.modulators[instrument.modulators[mod]].associatedMDEffect)))
                         // Instrument type specific
@@ -479,8 +486,7 @@ export class Synth {
                         // Arp check
                         || (!tgtInstrument.getChord().arpeggiates && (str == "arp speed" || str == "reset arp"))
                         // EQ Filter check
-                        || (tgtEffect.eqFilterType && str == "post eq")
-                        || (!tgtEffect.eqFilterType && (str == "post eq cut" || str == "post eq peak"))
+                        || invalidPostEQ
                         || (str == "post eq" && Math.floor((instrument.modFilterTypes[mod] + 1) / 2) > tgtInstrument.getLargestControlPointCount(false))
                         // Note Filter check
                         || (tgtInstrument!.noteFilterType && str == "pre eq")
