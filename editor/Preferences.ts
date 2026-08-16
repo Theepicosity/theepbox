@@ -43,7 +43,7 @@ export const DefaultShortcuts: Dictionary<Shortcut> = {
 	"duplicatePattern": { displayName: "Duplicate Pattern", keyCode: 68, shiftKey: false, ctrlKey: false }, // d
 	"editSongEQ": { displayName: "Edit Song EQ", keyCode: 69, shiftKey: false, ctrlKey: false }, // e
 	"generateEuclideanRhythm": { displayName: "Generate Euclidean Rhythm", keyCode: 69, shiftKey: true, ctrlKey: false }, // shift + e
-	"snapPlayheadToBeginning": { displayName: "Snap Playhead To Beginning", keyCode: 70, shiftKey: true, ctrlKey: false }, // f
+	"snapPlayheadToBeginning": { displayName: "Snap Playhead To Beginning", keyCode: 70, shiftKey: false, ctrlKey: false }, // f
 	"snapPlayheadToLoopStart": { displayName: "Snap Playhead To Loop Start", keyCode: 70, shiftKey: true, ctrlKey: false }, // shift + f
 	"openAllFMDropdowns": { displayName: "Open All FM Dropdowns", keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
 	"snapPlayheadToSelected": { displayName: "Snap Playhead To Selected Pattern", keyCode: 72, shiftKey: false, ctrlKey: false }, // h
