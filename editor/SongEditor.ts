@@ -5274,8 +5274,13 @@ export class SongEditor {
     }
 
     private _whenClickModTarget = (mod: number): void => {
+        const channelIndex: number = this._doc.channel;
+        const channel: Channel = this._doc.song.channels[this._doc.channel];
+        const instrumentIndex: number = this._doc.getCurrentInstrument();
+        const instrument: Instrument = channel.instruments[instrumentIndex];
+
         if (this._modChannelBoxes[mod].selectedIndex >= 2) {
-            this._doc.selection.setChannelBar(this._modChannelBoxes[mod].selectedIndex - 2, this._doc.bar);
+            this._doc.selection.setChannelBar(instrument.modChannels[mod][0], this._doc.bar);
         }
     }
 
@@ -5290,9 +5295,11 @@ export class SongEditor {
                     const modInstrumentIdx: number = modChannel.patterns[patternIdx - 1].instruments[0];
                     const modInstrument: Instrument = modChannel.instruments[modInstrumentIdx];
                     for (let mod: number = 0; mod < Config.modCount; mod++) {
-                        if (modInstrument.modChannels[mod][0] == channelIndex && (modInstrument.modInstruments[mod][0] == instrumentIndex || modInstrument.modInstruments[mod][0] >= this._doc.song.channels[channelIndex].instruments.length)) {
-                            this._doc.selection.setChannelBar(modChannelIdx, this._doc.bar);
-                            return;
+                        for (let modTarget: number = 0; modTarget < modInstrument.modChannels[mod].length; modTarget++) {
+                            if (modInstrument.modChannels[mod][modTarget] == channelIndex && (modInstrument.modInstruments[mod][modTarget] == instrumentIndex || modInstrument.modInstruments[mod][modTarget] >= this._doc.song.channels[channelIndex].instruments.length)) {
+                                this._doc.selection.setChannelBar(modChannelIdx, this._doc.bar);
+                                return;
+                            }
                         }
                     }
                 }
