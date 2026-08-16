@@ -3452,8 +3452,9 @@ export class SongEditor {
 
                     buildOptions(this._modSetBoxes[mod], settingList);
                     if (unusedSettingList.length > 0) {
-                        this._modSetBoxes[mod].appendChild(option({ selected: false, disabled: true, value: "Add Effect" }, "Add Effect"));
-                        buildOptions(this._modSetBoxes[mod], unusedSettingList);
+                        // TODO: make this work!
+                        // this._modSetBoxes[mod].appendChild(option({ selected: false, disabled: true, value: "Add Effect" }, "Add Effect"));
+                        // buildOptions(this._modSetBoxes[mod], unusedSettingList);
                     }
 
                     let setIndex: number = settingList.indexOf(Config.modulators[instrument.modulators[mod]].name);
