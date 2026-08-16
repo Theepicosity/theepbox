@@ -5275,7 +5275,6 @@ export class SongEditor {
     }
 
     private _whenClickModTarget = (mod: number): void => {
-        const channelIndex: number = this._doc.channel;
         const channel: Channel = this._doc.song.channels[this._doc.channel];
         const instrumentIndex: number = this._doc.getCurrentInstrument();
         const instrument: Instrument = channel.instruments[instrumentIndex];

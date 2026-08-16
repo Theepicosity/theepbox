@@ -40057,6 +40057,7 @@ You should be redirected to the song at:<br /><br />
             this._doc = _doc;
             this._openPrompt = _openPrompt;
             this.container = HTML.div({ class: "effectEditor" });
+            this._effectRows = [];
             this._rows = [];
             this.moveupButtons = [];
             this.movedownButtons = [];
@@ -40139,13 +40140,28 @@ You should be redirected to the song at:<br /><br />
                 }
                 else if (moveupButtonIndex != -1) {
                     this._doc.record(new ChangeReorderEffects(this._doc, moveupButtonIndex, true, null));
+                    if (moveupButtonIndex - 1 >= 0) {
+                        let temp = this.renderEffectRows[moveupButtonIndex - 1];
+                        this.renderEffectRows[moveupButtonIndex - 1] = this.renderEffectRows[moveupButtonIndex];
+                        this.renderEffectRows[moveupButtonIndex] = temp;
+                    }
                 }
                 else if (movedownButtonIndex != -1) {
                     this._doc.record(new ChangeReorderEffects(this._doc, movedownButtonIndex, false, null));
+                    if (movedownButtonIndex + 1 < this.renderEffectRows.length) {
+                        let temp = this.renderEffectRows[movedownButtonIndex + 1];
+                        this.renderEffectRows[movedownButtonIndex + 1] = this.renderEffectRows[movedownButtonIndex];
+                        this.renderEffectRows[movedownButtonIndex] = temp;
+                    }
                 }
                 else if (minimizeButtonIndex != -1) {
                     this.renderEffectRows[minimizeButtonIndex] = !this.renderEffectRows[minimizeButtonIndex];
-                    this.render();
+                    if (!this.renderEffectRows[minimizeButtonIndex]) {
+                        this._effectRows[minimizeButtonIndex].style.display = "none";
+                    }
+                    else {
+                        this._effectRows[minimizeButtonIndex].style.display = "";
+                    }
                 }
             };
             this._onInput = (event) => {
@@ -40274,79 +40290,82 @@ You should be redirected to the song at:<br /><br />
                     const eqFilterSimplePeakRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("filterPeak") }, "Filter Peak:"), eqFilterSimplePeakSlider.container);
                     if (this.renderEffectRows[effectIndex] == null)
                         this.renderEffectRows[effectIndex] = true;
-                    if (this.renderEffectRows[effectIndex]) {
-                        if (effect.type == 0) {
-                            reverbRow.style.display = "";
-                            reverbWetDryMixRow.style.display = "";
-                            reverbSendRow.style.display = "";
+                    if (effect.type == 0) {
+                        reverbRow.style.display = "";
+                        reverbWetDryMixRow.style.display = "";
+                        reverbSendRow.style.display = "";
+                    }
+                    else if (effect.type == 1) {
+                        chorusRow.style.display = "";
+                    }
+                    else if (effect.type == 10) {
+                        flangerRow.style.display = "";
+                        flangerSpeedRow.style.display = "";
+                        flangerDepthRow.style.display = "";
+                        flangerFeedbackRow.style.display = "";
+                    }
+                    else if (effect.type == 7) {
+                        ringModRow.style.display = "";
+                        ringModHzRow.style.display = "";
+                        ringModWaveRow.style.display = "";
+                    }
+                    else if (effect.type == 8) {
+                        granularRow.style.display = "";
+                        grainSizeRow.style.display = "";
+                        grainAmountsRow.style.display = "";
+                        grainRangeRow.style.display = "";
+                    }
+                    else if (effect.type == 6) {
+                        echoSustainRow.style.display = "";
+                        echoDelayRow.style.display = "";
+                        echoPingPongRow.style.display = "";
+                    }
+                    else if (effect.type == 9) {
+                        gainRow.style.display = "";
+                    }
+                    else if (effect.type == 2) {
+                        panRow.style.display = "";
+                        panDelayRow.style.display = "";
+                        panModeRow.style.display = "";
+                    }
+                    else if (effect.type == 3) {
+                        distortionRow.style.display = "";
+                        aliasingRow.style.display = "";
+                    }
+                    else if (effect.type == 11) {
+                        clippingTypeRow.style.display = "";
+                        clippingInGainRow.style.display = "";
+                        clippingThresholdRow.style.display = "";
+                    }
+                    else if (effect.type == 4) {
+                        bitcrusherQuantizationRow.style.display = "";
+                        bitcrusherFreqRow.style.display = "";
+                    }
+                    else if (effect.type == 5) {
+                        eqFilterButtonsRow.style.display = "";
+                        if (effect.eqFilterType) {
+                            eqFilterSimpleButton.classList.remove("deactivated");
+                            eqFilterAdvancedButton.classList.add("deactivated");
+                            eqFilterEditorRow.style.display = "none";
+                            eqFilterSimpleCutRow.style.display = "";
+                            eqFilterSimplePeakRow.style.display = "";
                         }
-                        else if (effect.type == 1) {
-                            chorusRow.style.display = "";
-                        }
-                        else if (effect.type == 10) {
-                            flangerRow.style.display = "";
-                            flangerSpeedRow.style.display = "";
-                            flangerDepthRow.style.display = "";
-                            flangerFeedbackRow.style.display = "";
-                        }
-                        else if (effect.type == 7) {
-                            ringModRow.style.display = "";
-                            ringModHzRow.style.display = "";
-                            ringModWaveRow.style.display = "";
-                        }
-                        else if (effect.type == 8) {
-                            granularRow.style.display = "";
-                            grainSizeRow.style.display = "";
-                            grainAmountsRow.style.display = "";
-                            grainRangeRow.style.display = "";
-                        }
-                        else if (effect.type == 6) {
-                            echoSustainRow.style.display = "";
-                            echoDelayRow.style.display = "";
-                            echoPingPongRow.style.display = "";
-                        }
-                        else if (effect.type == 9) {
-                            gainRow.style.display = "";
-                        }
-                        else if (effect.type == 2) {
-                            panRow.style.display = "";
-                            panDelayRow.style.display = "";
-                            panModeRow.style.display = "";
-                        }
-                        else if (effect.type == 3) {
-                            distortionRow.style.display = "";
-                            aliasingRow.style.display = "";
-                        }
-                        else if (effect.type == 11) {
-                            clippingTypeRow.style.display = "";
-                            clippingInGainRow.style.display = "";
-                            clippingThresholdRow.style.display = "";
-                        }
-                        else if (effect.type == 4) {
-                            bitcrusherQuantizationRow.style.display = "";
-                            bitcrusherFreqRow.style.display = "";
-                        }
-                        else if (effect.type == 5) {
-                            eqFilterButtonsRow.style.display = "";
-                            if (effect.eqFilterType) {
-                                eqFilterSimpleButton.classList.remove("deactivated");
-                                eqFilterAdvancedButton.classList.add("deactivated");
-                                eqFilterEditorRow.style.display = "none";
-                                eqFilterSimpleCutRow.style.display = "";
-                                eqFilterSimplePeakRow.style.display = "";
-                            }
-                            else {
-                                eqFilterSimpleButton.classList.add("deactivated");
-                                eqFilterAdvancedButton.classList.remove("deactivated");
-                                eqFilterEditorRow.style.display = "";
-                                eqFilterEditor.render();
-                                eqFilterSimpleCutRow.style.display = "none";
-                                eqFilterSimplePeakRow.style.display = "none";
-                            }
+                        else {
+                            eqFilterSimpleButton.classList.add("deactivated");
+                            eqFilterAdvancedButton.classList.remove("deactivated");
+                            eqFilterEditorRow.style.display = "";
+                            eqFilterEditor.render();
+                            eqFilterSimpleCutRow.style.display = "none";
+                            eqFilterSimplePeakRow.style.display = "none";
                         }
                     }
-                    const row = HTML.div({ class: "effect-row" }, effectButtonsRow, chorusRow, reverbRow, reverbWetDryMixRow, reverbSendRow, flangerRow, flangerSpeedRow, flangerDepthRow, flangerFeedbackRow, ringModRow, ringModHzRow, ringModWaveRow, granularRow, grainSizeRow, grainAmountsRow, grainRangeRow, echoSustainRow, echoDelayRow, echoPingPongRow, gainRow, panRow, panDelayRow, panModeRow, distortionRow, clippingTypeRow, clippingInGainRow, clippingThresholdRow, aliasingRow, bitcrusherQuantizationRow, bitcrusherFreqRow, eqFilterButtonsRow, eqFilterEditorRow, eqFilterSimpleCutRow, eqFilterSimplePeakRow);
+                    const effectRow = HTML.div({ class: "effect-editor-row" }, chorusRow, reverbRow, reverbWetDryMixRow, reverbSendRow, flangerRow, flangerSpeedRow, flangerDepthRow, flangerFeedbackRow, ringModRow, ringModHzRow, ringModWaveRow, granularRow, grainSizeRow, grainAmountsRow, grainRangeRow, echoSustainRow, echoDelayRow, echoPingPongRow, gainRow, panRow, panDelayRow, panModeRow, distortionRow, clippingTypeRow, clippingInGainRow, clippingThresholdRow, aliasingRow, bitcrusherQuantizationRow, bitcrusherFreqRow, eqFilterButtonsRow, eqFilterEditorRow, eqFilterSimpleCutRow, eqFilterSimplePeakRow);
+                    if (!this.renderEffectRows[effectIndex]) {
+                        effectRow.style.display = "none";
+                    }
+                    const row = HTML.div({ class: "effect-row" }, effectButtonsRow, effectRow);
                     this.container.appendChild(row);
+                    this._effectRows[effectIndex] = effectRow;
                     this._rows[effectIndex] = row;
                     this.moveupButtons[effectIndex] = moveupButton;
                     this.movedownButtons[effectIndex] = movedownButton;
@@ -49958,7 +49977,6 @@ You should be redirected to the song at:<br /><br />
                             while (this._modSetBoxes[mod].firstChild)
                                 this._modSetBoxes[mod].remove(0);
                             const settingList = [];
-                            const unusedSettingList = [];
                             settingList.push("none");
                             if (instrument.modChannels[mod][0] == -1) {
                                 settingList.push("song volume");
@@ -49973,7 +49991,6 @@ You should be redirected to the song at:<br /><br />
                                 settingList.push("post volume");
                                 let tgtInstrumentTypes = [];
                                 let anyInstrumentAdvancedEQ = false, anyInstrumentSimpleEQ = false, anyInstrumentAdvancedNote = false, anyInstrumentSimpleNote = false, anyInstrumentArps = false, anyInstrumentPitchShifts = false, anyInstrumentDetunes = false, anyInstrumentVibratos = false, anyInstrumentEQFilters = false, anyInstrumentDistorts = false, anyInstrumentClips = false, anyInstrumentBitcrushes = false, anyInstrumentGain = false, anyInstrumentPans = false, anyInstrumentFlanger = false, anyInstrumentChorus = false, anyInstrumentEchoes = false, anyInstrumentReverbs = false, anyInstrumentRingMods = false, anyInstrumentGranulars = false, anyInstrumentHasEnvelopes = false;
-                                let allInstrumentPitchShifts = true, allInstrumentEQFilters = true, allInstrumentDetunes = true, allInstrumentVibratos = true, allInstrumentDistorts = true, allInstrumentClips = true, allInstrumentBitcrushes = true, allInstrumentGain = true, allInstrumentPans = true, allInstrumentFlanger = false, allInstrumentChorus = true, allInstrumentEchoes = true, allInstrumentReverbs = true, allInstrumentRingMods = true, allInstrumentGranulars = true;
                                 for (let i = 0; i < instrument.modChannels[mod].length; i++) {
                                     let channel = this._doc.song.channels[instrument.modChannels[mod][i]];
                                     let instrumentIndex = instrument.modInstruments[mod][i];
@@ -49989,20 +50006,11 @@ You should be redirected to the song at:<br /><br />
                                     if (effectsIncludePitchShift(channel.instruments[instrumentIndex].mdeffects)) {
                                         anyInstrumentPitchShifts = true;
                                     }
-                                    else {
-                                        allInstrumentPitchShifts = false;
-                                    }
                                     if (effectsIncludeDetune(channel.instruments[instrumentIndex].mdeffects)) {
                                         anyInstrumentDetunes = true;
                                     }
-                                    else {
-                                        allInstrumentDetunes = false;
-                                    }
                                     if (effectsIncludeVibrato(channel.instruments[instrumentIndex].mdeffects)) {
                                         anyInstrumentVibratos = true;
-                                    }
-                                    else {
-                                        allInstrumentVibratos = false;
                                     }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(5)) {
                                         anyInstrumentEQFilters = true;
@@ -50014,74 +50022,38 @@ You should be redirected to the song at:<br /><br />
                                                 anyInstrumentAdvancedEQ = true;
                                         }
                                     }
-                                    else {
-                                        allInstrumentEQFilters = false;
-                                    }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(3)) {
                                         anyInstrumentDistorts = true;
-                                    }
-                                    else {
-                                        allInstrumentDistorts = false;
                                     }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(11)) {
                                         anyInstrumentClips = true;
                                     }
-                                    else {
-                                        allInstrumentClips = false;
-                                    }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(4)) {
                                         anyInstrumentBitcrushes = true;
-                                    }
-                                    else {
-                                        allInstrumentBitcrushes = false;
                                     }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(2)) {
                                         anyInstrumentPans = true;
                                     }
-                                    else {
-                                        allInstrumentPans = false;
-                                    }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(9)) {
                                         anyInstrumentGain = true;
-                                    }
-                                    else {
-                                        allInstrumentGain = false;
                                     }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(10)) {
                                         anyInstrumentFlanger = true;
                                     }
-                                    else {
-                                        allInstrumentFlanger = false;
-                                    }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(10)) {
                                         anyInstrumentChorus = true;
-                                    }
-                                    else {
-                                        allInstrumentChorus = false;
                                     }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(6)) {
                                         anyInstrumentEchoes = true;
                                     }
-                                    else {
-                                        allInstrumentEchoes = false;
-                                    }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(0)) {
                                         anyInstrumentReverbs = true;
-                                    }
-                                    else {
-                                        allInstrumentReverbs = false;
                                     }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(7)) {
                                         anyInstrumentRingMods = true;
                                     }
-                                    else {
-                                        allInstrumentRingMods = false;
-                                    }
                                     if (channel.instruments[instrumentIndex].effectsIncludeType(8)) {
                                         anyInstrumentGranulars = true;
-                                    }
-                                    else {
-                                        allInstrumentGranulars = false;
                                     }
                                     if (channel.instruments[instrumentIndex].envelopes.length > 0) {
                                         anyInstrumentHasEnvelopes = true;
@@ -50122,24 +50094,13 @@ You should be redirected to the song at:<br /><br />
                                 if (anyInstrumentPitchShifts) {
                                     settingList.push("pitch shift");
                                 }
-                                if (!allInstrumentPitchShifts) {
-                                    unusedSettingList.push("+ pitch shift");
-                                }
                                 if (anyInstrumentDetunes) {
                                     settingList.push("detune");
-                                }
-                                if (!allInstrumentDetunes) {
-                                    unusedSettingList.push("+ detune");
                                 }
                                 if (anyInstrumentVibratos) {
                                     settingList.push("vibrato depth");
                                     settingList.push("vibrato speed");
                                     settingList.push("vibrato delay");
-                                }
-                                if (!allInstrumentVibratos) {
-                                    unusedSettingList.push("+ vibrato depth");
-                                    unusedSettingList.push("+ vibrato speed");
-                                    unusedSettingList.push("+ vibrato delay");
                                 }
                                 if (anyInstrumentAdvancedNote) {
                                     settingList.push("pre eq");
@@ -50157,43 +50118,23 @@ You should be redirected to the song at:<br /><br />
                                         settingList.push("post eq peak");
                                     }
                                 }
-                                if (!allInstrumentEQFilters)
-                                    unusedSettingList.push("+ post eq");
                                 if (anyInstrumentDistorts) {
                                     settingList.push("distortion");
-                                }
-                                if (!allInstrumentDistorts) {
-                                    unusedSettingList.push("+ distortion");
                                 }
                                 if (anyInstrumentClips) {
                                     settingList.push("clipping in-gain");
                                     settingList.push("clipping threshold");
                                 }
-                                if (!allInstrumentClips) {
-                                    unusedSettingList.push("+ clipping in-gain");
-                                    unusedSettingList.push("+ clipping threshold");
-                                }
                                 if (anyInstrumentBitcrushes) {
                                     settingList.push("bit crush");
                                     settingList.push("freq crush");
                                 }
-                                if (!allInstrumentBitcrushes) {
-                                    unusedSettingList.push("+ bit crush");
-                                    unusedSettingList.push("+ freq crush");
-                                }
                                 if (anyInstrumentGain) {
                                     settingList.push("gain");
-                                }
-                                if (!allInstrumentGain) {
-                                    unusedSettingList.push("+ gain");
                                 }
                                 if (anyInstrumentPans) {
                                     settingList.push("pan");
                                     settingList.push("pan delay");
-                                }
-                                if (!allInstrumentPans) {
-                                    unusedSettingList.push("+ pan");
-                                    unusedSettingList.push("+ pan delay");
                                 }
                                 if (anyInstrumentFlanger) {
                                     settingList.push("flanger");
@@ -50201,57 +50142,28 @@ You should be redirected to the song at:<br /><br />
                                     settingList.push("flanger depth");
                                     settingList.push("flanger feedback");
                                 }
-                                if (!allInstrumentFlanger) {
-                                    unusedSettingList.push("+ flanger");
-                                    unusedSettingList.push("+ flanger speed");
-                                    unusedSettingList.push("+ flanger depth");
-                                    unusedSettingList.push("+ flanger feedback");
-                                }
                                 if (anyInstrumentChorus) {
                                     settingList.push("chorus");
-                                }
-                                if (!allInstrumentChorus) {
-                                    unusedSettingList.push("+ chorus");
                                 }
                                 if (anyInstrumentEchoes) {
                                     settingList.push("echo");
                                     settingList.push("echo delay");
                                     settingList.push("echo ping pong");
                                 }
-                                if (!allInstrumentEchoes) {
-                                    unusedSettingList.push("+ echo");
-                                    unusedSettingList.push("+ echo delay");
-                                    unusedSettingList.push("+ echo ping pong");
-                                }
                                 if (anyInstrumentReverbs) {
                                     settingList.push("reverb");
                                     settingList.push("reverb wet/dry");
                                     settingList.push("reverb send");
                                 }
-                                if (!allInstrumentReverbs) {
-                                    unusedSettingList.push("+ reverb");
-                                    unusedSettingList.push("+ reverb wet/dry");
-                                    unusedSettingList.push("+ reverb send");
-                                }
                                 if (anyInstrumentRingMods) {
                                     settingList.push("ring modulation");
                                     settingList.push("ring mod hertz");
-                                }
-                                if (!allInstrumentRingMods) {
-                                    unusedSettingList.push("+ ring modulation");
-                                    unusedSettingList.push("+ ring mod hertz");
                                 }
                                 if (anyInstrumentGranulars) {
                                     settingList.push("granular");
                                     settingList.push("grain freq");
                                     settingList.push("grain size");
                                     settingList.push("grain range");
-                                }
-                                if (!allInstrumentGranulars) {
-                                    unusedSettingList.push("+ granular");
-                                    unusedSettingList.push("+ grain freq");
-                                    unusedSettingList.push("+ grain size");
-                                    unusedSettingList.push("+ grain range");
                                 }
                                 if (anyInstrumentHasEnvelopes) {
                                     settingList.push("envelope speed");
@@ -50262,10 +50174,6 @@ You should be redirected to the song at:<br /><br />
                                 }
                             }
                             buildOptions(this._modSetBoxes[mod], settingList);
-                            if (unusedSettingList.length > 0) {
-                                this._modSetBoxes[mod].appendChild(option({ selected: false, disabled: true, value: "Add Effect" }, "Add Effect"));
-                                buildOptions(this._modSetBoxes[mod], unusedSettingList);
-                            }
                             let setIndex = settingList.indexOf(Config.modulators[instrument.modulators[mod]].name);
                             if (setIndex == -1) {
                                 this._modSetBoxes[mod].insertBefore(option({ value: Config.modulators[instrument.modulators[mod]].name, style: "color: red;" }, Config.modulators[instrument.modulators[mod]].name), this._modSetBoxes[mod].children[0]);
@@ -51663,8 +51571,11 @@ You should be redirected to the song at:<br /><br />
                 this._piano.forceRender();
             };
             this._whenClickModTarget = (mod) => {
+                const channel = this._doc.song.channels[this._doc.channel];
+                const instrumentIndex = this._doc.getCurrentInstrument();
+                const instrument = channel.instruments[instrumentIndex];
                 if (this._modChannelBoxes[mod].selectedIndex >= 2) {
-                    this._doc.selection.setChannelBar(this._modChannelBoxes[mod].selectedIndex - 2, this._doc.bar);
+                    this._doc.selection.setChannelBar(instrument.modChannels[mod][0], this._doc.bar);
                 }
             };
             this._whenClickJumpToModTarget = () => {
@@ -51678,9 +51589,11 @@ You should be redirected to the song at:<br /><br />
                             const modInstrumentIdx = modChannel.patterns[patternIdx - 1].instruments[0];
                             const modInstrument = modChannel.instruments[modInstrumentIdx];
                             for (let mod = 0; mod < Config.modCount; mod++) {
-                                if (modInstrument.modChannels[mod][0] == channelIndex && (modInstrument.modInstruments[mod][0] == instrumentIndex || modInstrument.modInstruments[mod][0] >= this._doc.song.channels[channelIndex].instruments.length)) {
-                                    this._doc.selection.setChannelBar(modChannelIdx, this._doc.bar);
-                                    return;
+                                for (let modTarget = 0; modTarget < modInstrument.modChannels[mod].length; modTarget++) {
+                                    if (modInstrument.modChannels[mod][modTarget] == channelIndex && (modInstrument.modInstruments[mod][modTarget] == instrumentIndex || modInstrument.modInstruments[mod][modTarget] >= this._doc.song.channels[channelIndex].instruments.length)) {
+                                        this._doc.selection.setChannelBar(modChannelIdx, this._doc.bar);
+                                        return;
+                                    }
                                 }
                             }
                         }

@@ -33,6 +33,7 @@ function setSelectedValue(menu: HTMLSelectElement, value: number, isSelect2: boo
 export class EffectEditor {
 	public readonly container: HTMLElement = HTML.div({ class: "effectEditor" });
 
+	private readonly _effectRows: HTMLDivElement[] = [];
 	private readonly _rows: HTMLDivElement[] = [];
 
 	public readonly moveupButtons: HTMLButtonElement[] = [];
@@ -127,13 +128,27 @@ export class EffectEditor {
 		}
 		else if (moveupButtonIndex != -1) {
 			this._doc.record(new ChangeReorderEffects(this._doc, moveupButtonIndex, true, null));
+			if (moveupButtonIndex - 1 >= 0) {
+				let temp = this.renderEffectRows[moveupButtonIndex-1];
+				this.renderEffectRows[moveupButtonIndex-1] = this.renderEffectRows[moveupButtonIndex];
+				this.renderEffectRows[moveupButtonIndex] = temp;
+			}
 		}
 		else if (movedownButtonIndex != -1) {
 			this._doc.record(new ChangeReorderEffects(this._doc, movedownButtonIndex, false, null));
+			if (movedownButtonIndex + 1 < this.renderEffectRows.length) {
+				let temp = this.renderEffectRows[movedownButtonIndex+1];
+				this.renderEffectRows[movedownButtonIndex+1] = this.renderEffectRows[movedownButtonIndex];
+				this.renderEffectRows[movedownButtonIndex] = temp;
+			}
 		}
 		else if (minimizeButtonIndex != -1) {
 			this.renderEffectRows[minimizeButtonIndex] = !this.renderEffectRows[minimizeButtonIndex]
-			this.render();
+			if (!this.renderEffectRows[minimizeButtonIndex]) {
+				this._effectRows[minimizeButtonIndex].style.display = "none";
+			} else {
+				this._effectRows[minimizeButtonIndex].style.display = "";
+			}
 		}
 	}
 
@@ -283,68 +298,65 @@ export class EffectEditor {
 
 				if (this.renderEffectRows[effectIndex] == null) this.renderEffectRows[effectIndex] = true
 
-				if (this.renderEffectRows[effectIndex]) {
-					if (effect.type == EffectType.reverb) {
-						reverbRow.style.display = "";
-						reverbWetDryMixRow.style.display = "";
-						reverbSendRow.style.display = "";
-					} else if (effect.type == EffectType.chorus) {
-						chorusRow.style.display = "";
-					} else if (effect.type == EffectType.flanger) {
-						flangerRow.style.display = "";
-						flangerSpeedRow.style.display = "";
-						flangerDepthRow.style.display = "";
-						flangerFeedbackRow.style.display = "";
-					} else if (effect.type == EffectType.ringModulation) {
-						ringModRow.style.display = "";
-						ringModHzRow.style.display = "";
-						ringModWaveRow.style.display = "";
-					} else if (effect.type == EffectType.granular) {
-						granularRow.style.display = "";
-						grainSizeRow.style.display = "";
-						grainAmountsRow.style.display = "";
-						grainRangeRow.style.display = "";
-					} else if (effect.type == EffectType.echo) {
-						echoSustainRow.style.display = "";
-						echoDelayRow.style.display = "";
-						echoPingPongRow.style.display = "";
-					} else if (effect.type == EffectType.gain) {
-						gainRow.style.display = "";
-					} else if (effect.type == EffectType.panning) {
-						panRow.style.display = "";
-						panDelayRow.style.display = "";
-						panModeRow.style.display = "";
-					} else if (effect.type == EffectType.distortion) {
-						distortionRow.style.display = "";
-						aliasingRow.style.display = "";
-					} else if (effect.type == EffectType.clipping) {
-						clippingTypeRow.style.display = "";
-						clippingInGainRow.style.display = "";
-						clippingThresholdRow.style.display = "";
-					} else if (effect.type == EffectType.bitcrusher) {
-						bitcrusherQuantizationRow.style.display = "";
-						bitcrusherFreqRow.style.display = "";
-					} else if (effect.type == EffectType.eqFilter) {
-						eqFilterButtonsRow.style.display = "";
-						if (effect.eqFilterType) {
-							eqFilterSimpleButton.classList.remove("deactivated");
-							eqFilterAdvancedButton.classList.add("deactivated");
-							eqFilterEditorRow.style.display = "none";
-							eqFilterSimpleCutRow.style.display = "";
-							eqFilterSimplePeakRow.style.display = "";
-						} else {
-							eqFilterSimpleButton.classList.add("deactivated");
-							eqFilterAdvancedButton.classList.remove("deactivated");
-							eqFilterEditorRow.style.display = "";
-							eqFilterEditor.render();
-							eqFilterSimpleCutRow.style.display = "none";
-							eqFilterSimplePeakRow.style.display = "none";
-						}
+				if (effect.type == EffectType.reverb) {
+					reverbRow.style.display = "";
+					reverbWetDryMixRow.style.display = "";
+					reverbSendRow.style.display = "";
+				} else if (effect.type == EffectType.chorus) {
+					chorusRow.style.display = "";
+				} else if (effect.type == EffectType.flanger) {
+					flangerRow.style.display = "";
+					flangerSpeedRow.style.display = "";
+					flangerDepthRow.style.display = "";
+					flangerFeedbackRow.style.display = "";
+				} else if (effect.type == EffectType.ringModulation) {
+					ringModRow.style.display = "";
+					ringModHzRow.style.display = "";
+					ringModWaveRow.style.display = "";
+				} else if (effect.type == EffectType.granular) {
+					granularRow.style.display = "";
+					grainSizeRow.style.display = "";
+					grainAmountsRow.style.display = "";
+					grainRangeRow.style.display = "";
+				} else if (effect.type == EffectType.echo) {
+					echoSustainRow.style.display = "";
+					echoDelayRow.style.display = "";
+					echoPingPongRow.style.display = "";
+				} else if (effect.type == EffectType.gain) {
+					gainRow.style.display = "";
+				} else if (effect.type == EffectType.panning) {
+					panRow.style.display = "";
+					panDelayRow.style.display = "";
+					panModeRow.style.display = "";
+				} else if (effect.type == EffectType.distortion) {
+					distortionRow.style.display = "";
+					aliasingRow.style.display = "";
+				} else if (effect.type == EffectType.clipping) {
+					clippingTypeRow.style.display = "";
+					clippingInGainRow.style.display = "";
+					clippingThresholdRow.style.display = "";
+				} else if (effect.type == EffectType.bitcrusher) {
+					bitcrusherQuantizationRow.style.display = "";
+					bitcrusherFreqRow.style.display = "";
+				} else if (effect.type == EffectType.eqFilter) {
+					eqFilterButtonsRow.style.display = "";
+					if (effect.eqFilterType) {
+						eqFilterSimpleButton.classList.remove("deactivated");
+						eqFilterAdvancedButton.classList.add("deactivated");
+						eqFilterEditorRow.style.display = "none";
+						eqFilterSimpleCutRow.style.display = "";
+						eqFilterSimplePeakRow.style.display = "";
+					} else {
+						eqFilterSimpleButton.classList.add("deactivated");
+						eqFilterAdvancedButton.classList.remove("deactivated");
+						eqFilterEditorRow.style.display = "";
+						eqFilterEditor.render();
+						eqFilterSimpleCutRow.style.display = "none";
+						eqFilterSimplePeakRow.style.display = "none";
 					}
 				}
 
-				const row: HTMLDivElement = HTML.div({ class: "effect-row" },
-					effectButtonsRow,
+				const effectRow: HTMLDivElement = HTML.div({ class: "effect-editor-row" },
 					chorusRow,
 					reverbRow,
 					reverbWetDryMixRow,
@@ -380,8 +392,18 @@ export class EffectEditor {
 					eqFilterSimplePeakRow,
 				);
 
+				if (!this.renderEffectRows[effectIndex]) {
+					effectRow.style.display = "none";
+				}
+
+				const row: HTMLDivElement = HTML.div({ class: "effect-row" },
+					effectButtonsRow,
+					effectRow
+				);
+
 				this.container.appendChild(row);
 
+				this._effectRows[effectIndex] = effectRow;
 				this._rows[effectIndex] = row;
 
 				this.moveupButtons[effectIndex] = moveupButton;
