@@ -139,13 +139,13 @@ export class TipPrompt implements Prompt {
 			case "instrumentType": {
 				message = div(
 					h2("Instrument Type"),
-					p("theepbox comes with many instrument presets, try them out! You can also create your own custom instruments!"),
-					p("There are also options for generating random instruments towards the top of the instrument type menu and for copying and pasting instrument settings in preferences."),
+					p("theepbox comes with many instrument types so you can make new instruments!"),
+					p("There are also options for copying, pasting, and importing instrument settings in preferences."),
 				);
 			} break;
 			case "eqFilter": {
 				message = div(
-					h2("EQ Filter"),
+					h2("Post EQ"),
 					p("Filters are a way of emphasizing or diminishing different parts of a sound. Musical notes have a fundamental (base) frequency, but the sound of a musical note also has parts at higher frequencies and filters can adjust the volume of each of these parts based on their frequency."),
 					p("Click in the filter editor to insert, delete, or drag a filter control point. The horizontal position of the point determines which frequencies it affects, and the vertical position determines how the volume is affected at that frequency."),
 					p("Insert a new point on the left side of the filter editor to add a \"high-pass\" filter point, which additionally reduces the volume of lower frequencies, or insert a new point on the right side to add a \"low-pass\" filter point which reduces the volume of higher frequencies."),
@@ -154,7 +154,7 @@ export class TipPrompt implements Prompt {
 			} break;
 			case "noteFilter": {
 				message = div(
-					h2("EQ Filter"),
+					h2("Pre EQ"),
 					p("Filters are a way of emphasizing or diminishing different parts of a sound. Musical notes have a fundamental (base) frequency, but the sound of a musical note also has parts at higher frequencies and filters can adjust the volume of each of these parts based on their frequency."),
 					p("Click in the filter editor to insert, delete, or drag a filter control point. The horizontal position of the point determines which frequencies it affects, and the vertical position determines how the volume is affected at that frequency."),
 					p("Insert a new point on the left side of the filter editor to add a \"high-pass\" filter point, which additionally reduces the volume of lower frequencies, or insert a new point on the right side to add a \"low-pass\" filter point which reduces the volume of higher frequencies."),
@@ -402,7 +402,7 @@ export class TipPrompt implements Prompt {
 					h2("Distortion"),
 					p("This is the famous electric guitar effect! However, there are some things to be aware of."),
 					p("First, most chords don't sound right when combined with heavy distortion. The only chords commonly used with distorted electric guitars are \"power chords\" which consist of a root note, a \"fifth\" note above that, and/or any octaves of those two notes."),
-					p("Second, the distortion sound depends a lot on filtering. In particular, I recommend enabling the note filter effect, and adding both high-pass and low-pass points to the note filter. (Note filters are applied first, then distortion which transforms the sound based on that filtering, then the EQ filter is applied last.)"),
+					p("Second, the distortion sound depends a lot on filtering. Putting EQ before or after the distortion produces novel results!"),
 					p("Finally, I recommend adjusting the fade-out setting to allow the end of each note to overlap a little bit with the beginning of the next, but not too much!"),
 				);
 			} break;
@@ -417,6 +417,7 @@ export class TipPrompt implements Prompt {
 						li("Wave folding uses a periodic sine wave as a transfer function, causing the wave to fold back in on itself and producing interesting type of distortion."),
 						li("Wave wrapping uses a modulo operation as a transfer function, causing extremely harsh and bright distortion."),
 					),
+					p("Be warned that clipping can change the amount of gain your instrument has, causing it to sound quieter or louder than you might expect."),
 				);
 			} break;
 			case "clippingInGain": {
