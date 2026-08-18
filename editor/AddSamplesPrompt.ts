@@ -502,7 +502,7 @@ export class AddSamplesPrompt {
                 let chipWaveStartOffset: number | null = null;
                 let chipWaveLoopMode: number = 0;
                 let chipWavePlayBackwards: boolean = false;
-                let stereoChannels: number = 0;
+                let stereoChannels: number = 2;
                 let optionsStartIndex: number = url.indexOf("!");
                 let optionsEndIndex: number = -1;
                 let parsedSampleOptions: boolean = false;
@@ -534,7 +534,7 @@ export class AddSamplesPrompt {
                             } else if (optionCode === "e") {
                                 chipWavePlayBackwards = true;
                             } else if (optionCode === "m") {
-                                stereoChannels = parseIntWithDefault(optionData, 0);
+                                stereoChannels = parseIntWithDefault(optionData, 2);
                             }
                         }
                         urlSliced = url.slice(optionsEndIndex + 1, url.length);
@@ -610,7 +610,7 @@ export class AddSamplesPrompt {
         if (chipWaveStartOffset != null) options.push("c" + chipWaveStartOffset);
         if (chipWaveLoopMode != 0) options.push("d" + chipWaveLoopMode);
         if (chipWavePlayBackwards) options.push("e");
-        if (stereoChannels != 0) options.push("m" + stereoChannels);
+        if (stereoChannels != 2) options.push("m" + stereoChannels);
         if (isBundledSamplePack || options.length <= 0) {
             return url;
         } else {

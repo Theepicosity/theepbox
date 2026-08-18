@@ -3970,7 +3970,7 @@ export class Song {
         let presetChipWaveStartOffset: number | null = null;
         let presetChipWaveLoopMode: number = 0;
         let presetChipWavePlayBackwards: boolean = false;
-        let stereoChannels: number = 0;
+        let stereoChannels: number = 2;
 
         let parsedSampleOptions: boolean = false;
         let optionsStartIndex: number = url.indexOf("!");
@@ -4013,7 +4013,7 @@ export class Song {
                         presetChipWavePlayBackwards = true;
                         presetIsUsingAdvancedLoopControls = true;
                     } else if (optionCode === "m") {
-                        stereoChannels = parseIntWithDefault(optionData, 0);
+                        stereoChannels = parseIntWithDefault(optionData, 2);
                     }
                 }
                 urlSliced = url.slice(optionsEndIndex + 1, url.length);
@@ -4105,7 +4105,7 @@ export class Song {
                 if (presetChipWaveLoopMode != 0) namedOptions.push("d" + presetChipWaveLoopMode);
                 if (presetChipWavePlayBackwards) namedOptions.push("e");
             }
-            if (stereoChannels !== 0) namedOptions.push("m" + stereoChannels);
+            if (stereoChannels !== 2) namedOptions.push("m" + stereoChannels);
             if (namedOptions.length > 0) {
                 urlWithNamedOptions = "!" + namedOptions.join(",") + "!" + urlSliced;
             }
