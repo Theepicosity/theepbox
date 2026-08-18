@@ -623,7 +623,10 @@ export class Instrument {
                 instrumentObject["noteSubFilters" + i] = this.noteSubFilters[i]!.toJsonObject();
         }
 
-        instrumentObject["effects"] = this.effects;
+        instrumentObject["effects"] = [];
+        for (let i: number = 0; i < this.effects.length; i++) {
+            instrumentObject["effects"][i] = this.effects[i]!.toJsonObject();
+        }
         instrumentObject["mdeffects"] = this.mdeffects;
 
         if (effectsIncludeTransition(this.mdeffects)) {
@@ -878,10 +881,15 @@ export class Instrument {
         this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
 
         if (format == "theepbox") {
-            this.effects = instrumentObject["effects"];
-            this.effectCount = instrumentObject["effects"].length
+            if (instrumentObject["effects"] != undefined) {
+                for (let i: number = 0; i < instrumentObject["effects"].length; i++) {
+                    this.effects[i] = new Effect;
+                    this.effects[i].fromJsonObject(instrumentObject["effects"][i]);
+                }
+                this.effectCount = instrumentObject["effects"].length
+            }
         } else if (Array.isArray(instrumentObject["effects"])) {
-            // TODO: allow instrument copy and paste from other mods
+            // TODO: allow instrument import from other mods
             // this is done by converting each effect into the new format (i.e. a pain)
             /*
             let effects: number = 0;

@@ -86,7 +86,7 @@ export class EnvelopeSettings {
 
         let envelope: Envelope = Config.envelopes.dictionary["none"];
         let isTremolo2: Boolean = false;
-        if (format == "slarmoosbox") {
+        if (format == "slarmoosbox" || format == "theepbox") {
             if (envelopeObject["envelope"] == "tremolo2") {
                 envelope = Config.newEnvelopes[EnvelopeType.lfo];
                 isTremolo2 = true;
