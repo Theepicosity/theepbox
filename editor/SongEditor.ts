@@ -4030,7 +4030,7 @@ export class SongEditor {
         else if (shortcut.keyCode == 61 || event.keyCode == 171) shortcutKeyCode = 187;
         else shortcutKeyCode = shortcut.keyCode;
         // note that using shortcut.ctrlKey induces a conflict in the hotkeys, which is why is should never be used...!
-        if (eventKeyCode == shortcutKeyCode && (needControlForShortcuts == (event.ctrlKey || event.metaKey) || event.ctrlKey == shortcut.ctrlKey) && event.shiftKey == shortcut.shiftKey) return event.keyCode;
+        if (eventKeyCode == shortcutKeyCode && (needControlForShortcuts == (event.ctrlKey || event.metaKey) || (event.ctrlKey || event.metaKey) == shortcut.ctrlKey) && event.shiftKey == shortcut.shiftKey) return event.keyCode;
         else return -1;
     }
 
