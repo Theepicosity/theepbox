@@ -172,6 +172,7 @@ export const enum EnvelopeComputeIndex {
     clippingThreshold,
     reverbWetDryMix,
     reverbSend,
+    echoPingPong,
     //Add more here
 
     length,
@@ -1801,6 +1802,7 @@ export class Config {
         { name: "grainSize", computeIndex: EnvelopeComputeIndex.grainSize, displayName: "grain size", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.granular, mdeffect: null, compatibleInstruments: null },
         { name: "grainRange", computeIndex: EnvelopeComputeIndex.grainRange, displayName: "grain range", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.granular, mdeffect: null, compatibleInstruments: null },
         { name: "echoDelay", computeIndex: EnvelopeComputeIndex.echoDelay, displayName: "echo delay", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.echo, mdeffect: null, compatibleInstruments: null },
+        { name: "echoPingPong", computeIndex: EnvelopeComputeIndex.echoPingPong, displayName: "echo ping pong", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.echo, mdeffect: null, compatibleInstruments: null },
         // Controlling filter gain is less obvious and intuitive than controlling filter freq, so to avoid confusion I've disabled it for now...
         //{name: "noteFilterGain",         computeIndex:       EnvelopeComputeIndex.noteFilterGain0,        displayName: "n. filter # vol",  /*perNote:  true,*/ interleave: false, isFilter:  true, range: Config.filterGainRange,             maxCount: Config.filterMaxPoints, effect: EffectType.eqFilter, compatibleInstruments: null},
         /*

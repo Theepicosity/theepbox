@@ -70,7 +70,7 @@ export class Effect {
 			}
 		} else if (this.type == EffectType.gain) {
 			effectObject["gain"] = this.gain;
-		} else if (this.type == EffectType.pan) {
+		} else if (this.type == EffectType.panning) {
 			effectObject["pan"] = this.pan;
 			effectObject["panDelay"] = this.panDelay;
 			effectObject["panMode"] = this.panMode;
@@ -142,7 +142,7 @@ export class Effect {
 			}
 		} else if (this.type == EffectType.gain) {
 			this.gain = effectObject["gain"];
-		} else if (this.type == EffectType.pan) {
+		} else if (this.type == EffectType.panning) {
 			this.pan = effectObject["pan"];
 			this.panDelay = effectObject["panDelay"];
 			this.panMode = effectObject["panMode"];

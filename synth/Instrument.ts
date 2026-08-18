@@ -883,7 +883,7 @@ export class Instrument {
         if (format == "theepbox") {
             if (instrumentObject["effects"] != undefined) {
                 for (let i: number = 0; i < instrumentObject["effects"].length; i++) {
-                    this.effects[i] = new Effect;
+                    this.effects[i] = new Effect(0);
                     this.effects[i].fromJsonObject(instrumentObject["effects"][i]);
                 }
                 this.effectCount = instrumentObject["effects"].length

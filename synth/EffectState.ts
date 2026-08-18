@@ -202,6 +202,7 @@ export class EffectState {
 	public echoMult: number = 0.0;
 	public echoMultDelta: number = 0.0;
 	public echoPingPong: number = 0.0;
+	public echoPingPongDelta: number = 0.0;
 	public echoShelfA1: number = 0.0;
 	public echoShelfB0: number = 0.0;
 	public echoShelfB1: number = 0.0;
@@ -905,8 +906,18 @@ export class EffectState {
 			this.echoDelayOffsetRatio = 0.0;
 			this.echoDelayOffsetRatioDelta = 1.0 / roundedSamplesPerTick;
 
-			this.echoPingPong = ((effect.echoPingPong / Config.panMax) - 0.5) * 2;
-			//const echoPingPongEnd
+			const echoPingPongEnvelopeStart: number = envelopeStarts[EnvelopeComputeIndex.echoPingPong];
+			const echoPingPongEnvelopeEnd: number = envelopeEnds[EnvelopeComputeIndex.echoPingPong];
+			let useEchoPingPongStart: number = effect.echoPingPong;
+			let useEchoPingPongEnd: number = effect.echoPingPong;
+			if (synth.isModActive(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex)) {
+				useEchoPingPongStart = synth.getModValue(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, false) * echoPingPongEnvelopeStart;
+				useEchoPingPongEnd = synth.getModValue(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, true) * echoPingPongEnvelopeEnd;
+			}
+			const echoPingPongStart: number = ((useEchoPingPongStart / Config.panMax) - 0.5) * echoPingPongEnvelopeStart * 2;
+			const echoPingPongEnd: number = ((useEchoPingPongEnd / Config.panMax) - 0.5) * echoPingPongEnvelopeEnd * 2;
+			this.echoPingPong = echoPingPongStart;
+			this.echoPingPongDelta = Math.max(0.0, (echoPingPongEnd - echoPingPongStart) / roundedSamplesPerTick);
 
 			const shelfRadians: number = 2.0 * Math.PI * Config.echoShelfHz / synth.samplesPerSecond;
 			Synth.tempFilterStartCoefficients.highShelf1stOrder(shelfRadians, Config.echoShelfGain);

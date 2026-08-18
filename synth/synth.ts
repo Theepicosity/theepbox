@@ -4824,6 +4824,7 @@ export class Synth {
                 let echoDelayOffsetRatio = [];
                 let echoDelayOffsetRatioDelta = [];
                 let echoPingPong = [];
+                let echoPingPongDelta = [];
 
                 let echoShelfA1 = [];
                 let echoShelfB0 = [];
@@ -5174,6 +5175,7 @@ export class Synth {
                     echoDelayOffsetRatio[effectIndex] = +effectState.echoDelayOffsetRatio;
                     echoDelayOffsetRatioDelta[effectIndex] = +effectState.echoDelayOffsetRatioDelta;
                     echoPingPong[effectIndex] = effectState.echoPingPong;
+                    echoPingPongDelta[effectIndex] = effectState.echoPingPongDelta;
 
                     echoShelfA1[effectIndex] = +effectState.echoShelfA1;
                     echoShelfB0[effectIndex] = +effectState.echoShelfB0;
@@ -5924,6 +5926,7 @@ export class Synth {
                     effectState.echoDelayPosL = echoDelayPosL[effectIndex];
                     effectState.echoDelayPosR = echoDelayPosR[effectIndex];
                     effectState.echoMult = echoMult[effectIndex];
+                    effectState.echoPingPong = echoPingPong[effectIndex];
                     effectState.echoDelayOffsetRatio = echoDelayOffsetRatio[effectIndex];
 
                     if (!Number.isFinite(echoShelfSampleL[effectIndex]) || Math.abs(echoShelfSampleL[effectIndex]) < epsilon) echoShelfSampleL[effectIndex] = 0.0;
