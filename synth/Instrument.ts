@@ -1521,7 +1521,11 @@ export class Instrument {
             }
         }
         else {
-            largest = this.effects[0]!.eqFilter.controlPointCount;
+            if (this.effects.length > 0) {
+                largest = this.effects[0]!.eqFilter.controlPointCount;
+            } else {
+                largest = 0
+            }
             for (let effectIndex: number = 0; effectIndex < this.effectCount; effectIndex++) {
                 if (this.effects[effectIndex] != null && this.effects[effectIndex]!.type == EffectType.eqFilter) {
                     for (let i: number = 0; i < Config.filterMorphCount; i++) {

@@ -477,7 +477,7 @@ export class Synth {
                         }
                     }
                     // Check effects
-                    if (!(Config.modulators[instrument.modulators[mod]].associatedEffect != EffectType.length && !(tgtInstrument.effectsIncludeType(Config.modulators[instrument.modulators[mod]].associatedEffect))) && !(Config.modulators[instrument.modulators[mod]].associatedMDEffect != MDEffectType.length && !(tgtInstrument.mdeffects & (1 << Config.modulators[instrument.modulators[mod]].associatedMDEffect)))
+                    if (!((Config.modulators[instrument.modulators[mod]].associatedEffect != EffectType.length && !(tgtInstrument.effectsIncludeType(Config.modulators[instrument.modulators[mod]].associatedEffect))) && !(Config.modulators[instrument.modulators[mod]].associatedMDEffect != MDEffectType.length && !(tgtInstrument.mdeffects & (1 << Config.modulators[instrument.modulators[mod]].associatedMDEffect)))
                         // Instrument type specific
                         || ((tgtInstrument.type != InstrumentType.fm && tgtInstrument.type != InstrumentType.fm6op) && (str == "fm slider 1" || str == "fm slider 2" || str == "fm slider 3" || str == "fm slider 4" || str == "fm feedback"))
                         || tgtInstrument.type != InstrumentType.fm6op && (str == "fm slider 5" || str == "fm slider 6")
@@ -491,7 +491,7 @@ export class Synth {
                         // Note Filter check
                         || (tgtInstrument!.noteFilterType && str == "pre eq")
                         || (!tgtInstrument!.noteFilterType && (str == "pre eq cut" || str == "pre eq peak"))
-                        || (str == "pre eq" && Math.floor((instrument.modFilterTypes[mod] + 1) / 2) > tgtInstrument.getLargestControlPointCount(true))) {
+                        || (str == "pre eq" && Math.floor((instrument.modFilterTypes[mod] + 1) / 2) > tgtInstrument.getLargestControlPointCount(true)))) {
 
                         instrument.invalidModulators[mod] = false;
                         i = tgtInstrumentList.length;
@@ -2757,14 +2757,14 @@ export class Synth {
             let endSimpleGain: number = instrument.noteFilterSimplePeak;
             let filterChanges: boolean = false;
 
-            if (this.isModActive(Config.modulators.dictionary["note filt cut"].index, channelIndex, tone.instrumentIndex)) {
-                startSimpleFreq = this.getModValue(Config.modulators.dictionary["note filt cut"].index, channelIndex, tone.instrumentIndex, false);
-                endSimpleFreq = this.getModValue(Config.modulators.dictionary["note filt cut"].index, channelIndex, tone.instrumentIndex, true);
+            if (this.isModActive(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex)) {
+                startSimpleFreq = this.getModValue(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, false);
+                endSimpleFreq = this.getModValue(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, true);
                 filterChanges = true;
             }
-            if (this.isModActive(Config.modulators.dictionary["note filt peak"].index, channelIndex, tone.instrumentIndex)) {
-                startSimpleGain = this.getModValue(Config.modulators.dictionary["note filt peak"].index, channelIndex, tone.instrumentIndex, false);
-                endSimpleGain = this.getModValue(Config.modulators.dictionary["note filt peak"].index, channelIndex, tone.instrumentIndex, true);
+            if (this.isModActive(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex)) {
+                startSimpleGain = this.getModValue(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, false);
+                endSimpleGain = this.getModValue(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, true);
                 filterChanges = true;
             }
 

@@ -583,14 +583,14 @@ export class EffectState {
 
 				let filterChanges: boolean = false;
 
-				if (synth.isModActive(Config.modulators.dictionary["eq filt cut"].index, channelIndex, instrumentIndex)) {
-					startSimpleFreq = synth.getModValue(Config.modulators.dictionary["eq filt cut"].index, channelIndex, instrumentIndex, false);
-					endSimpleFreq = synth.getModValue(Config.modulators.dictionary["eq filt cut"].index, channelIndex, instrumentIndex, true);
+				if (synth.isModActive(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex)) {
+					startSimpleFreq = synth.getModValue(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, false);
+					endSimpleFreq = synth.getModValue(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, true);
 					filterChanges = true;
 				}
-				if (synth.isModActive(Config.modulators.dictionary["eq filt peak"].index, channelIndex, instrumentIndex)) {
-					startSimpleGain = synth.getModValue(Config.modulators.dictionary["eq filt peak"].index, channelIndex, instrumentIndex, false);
-					endSimpleGain = synth.getModValue(Config.modulators.dictionary["eq filt peak"].index, channelIndex, instrumentIndex, true);
+				if (synth.isModActive(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex)) {
+					startSimpleGain = synth.getModValue(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, false);
+					endSimpleGain = synth.getModValue(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, true);
 					filterChanges = true;
 				}
 

@@ -1843,13 +1843,16 @@ export class SongEditor {
     }
 
     private _modSliderUpdate(): void {
+        let instrumentIndex: number = this._doc.getCurrentInstrument();
+        let instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[instrumentIndex];
 
         if (!this._doc.synth.playing) {
             this._hasActiveModSliders = false;
             this._songEqFilterEditor.render();
 
             for (let setting: number = 0; setting < Config.modulators.length; setting++) {
-                for (let index: number = 0; index <= Config.modulators[setting].maxIndex; index++) {
+                const maxIndex = Math.max(Config.modulators[setting].maxIndex, instrument.effects.length)
+                for (let index: number = 0; index <= maxIndex; index++) {
                     if (this._showModSliders[setting][index] == true) {
                         this._showModSliders[setting][index] = false;
                         this._newShowModSliders[setting][index] = false;
@@ -1864,19 +1867,16 @@ export class SongEditor {
             }
         } else {
 
-            let instrument: number = this._doc.getCurrentInstrument();
-            const anyModActive: boolean = this._doc.synth.isAnyModActive(this._doc.channel, instrument);
+            const anyModActive: boolean = this._doc.synth.isAnyModActive(this._doc.channel, instrumentIndex);
 
             // Check and update mod values on sliders
             if (anyModActive) {
 
-                let instrument: number = this._doc.getCurrentInstrument();
-
-                function updateModSlider(editor: SongEditor, slider: Slider, setting: number, channel: number, instrument: number, index: number): boolean {
-                    if (editor._doc.synth.isModActive(setting, channel, instrument)) {
+                function updateModSlider(editor: SongEditor, slider: Slider, setting: number, channel: number, instrumentIndex: number, index: number): boolean {
+                    if (editor._doc.synth.isModActive(setting, channel, instrumentIndex)) {
                         if (Config.modulators[setting].maxIndex > 0) {
                             //detect that the mod actually does need updating for the specific index
-                            const envelope = editor._doc.synth.song!.channels[channel].instruments[instrument].envelopes[index];
+                            const envelope = editor._doc.synth.song!.channels[channel].instruments[instrumentIndex].envelopes[index];
                             switch (setting) {
                                 case Config.modulators.dictionary["individual envelope speed"].index: {
                                     if (envelope.tempEnvelopeSpeed == null) {
@@ -1898,7 +1898,7 @@ export class SongEditor {
                                 }
                             }
                         }
-                        let currentVal: number = (editor._doc.synth.getModValue(setting, channel, instrument, false) - Config.modulators[setting].convertRealFactor) / Config.modulators[setting].maxRawVol;
+                        let currentVal: number = (editor._doc.synth.getModValue(setting, channel, instrumentIndex, false) - Config.modulators[setting].convertRealFactor) / Config.modulators[setting].maxRawVol;
 
                         if (Config.modulators[setting].invertSliderIndicator == true) {
                             currentVal = 1 - currentVal;
@@ -1915,7 +1915,8 @@ export class SongEditor {
 
                 // Set mod sliders to present values
                 for (let setting: number = 0; setting < Config.modulators.length; setting++) {
-                    for (let index: number = 0; index <= Config.modulators[setting].maxIndex; index++) {
+                    const maxIndex = Math.max(Config.modulators[setting].maxIndex, instrument.effects.length)
+                    for (let index: number = 0; index <= maxIndex; index++) {
                         // Set to last value
                         this._newShowModSliders[setting][index] = Boolean(this._showModSliders[setting][index]);
 
@@ -1923,7 +1924,7 @@ export class SongEditor {
                         let slider: Slider | null = this.getSliderForModSetting(setting, index);
 
                         if (slider != null) {
-                            this._newShowModSliders[setting][index] = updateModSlider(this, slider, setting, this._doc.channel, instrument, index);
+                            this._newShowModSliders[setting][index] = updateModSlider(this, slider, setting, this._doc.channel, instrumentIndex, index);
                         }
                     }
                 }
@@ -1944,7 +1945,8 @@ export class SongEditor {
                 let anySliderActive: boolean = false;
 
                 for (let setting: number = 0; setting < Config.modulators.length; setting++) {
-                    for (let index: number = 0; index <= Config.modulators[setting].maxIndex; index++) {
+                    const maxIndex = Math.max(Config.modulators[setting].maxIndex, instrument.effects.length)
+                    for (let index: number = 0; index <= maxIndex; index++) {
                         if (this._newShowModSliders[setting][index] != this._showModSliders[setting][index]) {
                             this._showModSliders[setting][index] = this._newShowModSliders[setting][index];
                             let slider: Slider | null = this.getSliderForModSetting(setting, index);
@@ -1976,13 +1978,10 @@ export class SongEditor {
 
     public getSliderForModSetting(setting: number, index?: number): Slider | null {
         index = index == undefined ? 1 : index;
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
         switch (setting) {
             case Config.modulators.dictionary["gain"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.gain) index = i;
                 return this.effectEditor.gainSliders[index];
             case Config.modulators.dictionary["pan"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.panning) index = i;
                 return this.effectEditor.panSliders[index];
             case Config.modulators.dictionary["detune"].index:
                 return this._detuneSlider;
@@ -2001,22 +2000,16 @@ export class SongEditor {
             case Config.modulators.dictionary["decimal offset"].index:
                 return this._decimalOffsetSlider;
             case Config.modulators.dictionary["reverb"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.reverb) index = i;
                 return this.effectEditor.reverbSliders[index];
             case Config.modulators.dictionary["reverb wet/dry"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.reverb) index = i;
                 return this.effectEditor.reverbWetDryMixSliders[index];
             case Config.modulators.dictionary["reverb send"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.reverb) index = i;
                 return this.effectEditor.reverbSendSliders[index];
             case Config.modulators.dictionary["distortion"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.distortion) index = i;
                 return this.effectEditor.distortionSliders[index];
             case Config.modulators.dictionary["clipping in-gain"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.clipping) index = i;
                 return this.effectEditor.clippingInGainSliders[index];
             case Config.modulators.dictionary["clipping threshold"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.clipping) index = i;
                 return this.effectEditor.clippingThresholdSliders[index];
             case Config.modulators.dictionary["pre volume"].index:
                 // So, this should technically not affect this slider, but it will look better as legacy songs used this mod as 'volume'.
@@ -2035,53 +2028,40 @@ export class SongEditor {
             case Config.modulators.dictionary["arp speed"].index:
                 return this._arpeggioSpeedSlider;
             case Config.modulators.dictionary["pan delay"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.panning) index = i;
                 return this.effectEditor.panDelaySliders[index];
             case Config.modulators.dictionary["tempo"].index:
                 return this._tempoSlider;
             case Config.modulators.dictionary["song volume"].index:
                 return this._volumeSlider;
             case Config.modulators.dictionary["post eq cut"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.eqFilter) index = i;
                 return this.effectEditor.eqFilterSimpleCutSliders[index];
             case Config.modulators.dictionary["post eq peak"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.eqFilter) index = i;
                 return this.effectEditor.eqFilterSimplePeakSliders[index];
             case Config.modulators.dictionary["pre eq cut"].index:
                 return this._noteFilterSimpleCutSlider;
             case Config.modulators.dictionary["pre eq peak"].index:
                 return this._noteFilterSimplePeakSlider;
             case Config.modulators.dictionary["bit crush"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.bitcrusher) index = i;
                 return this.effectEditor.bitcrusherQuantizationSliders[index];
             case Config.modulators.dictionary["freq crush"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.bitcrusher) index = i;
                 return this.effectEditor.bitcrusherFreqSliders[index];
             case Config.modulators.dictionary["pitch shift"].index:
                 return this._pitchShiftSlider;
             case Config.modulators.dictionary["flanger"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.flanger) index = i;
                 return this.effectEditor.flangerSliders[index];
             case Config.modulators.dictionary["flanger speed"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.flanger) index = i;
                 return this.effectEditor.flangerSpeedSliders[index];
             case Config.modulators.dictionary["flanger depth"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.flanger) index = i;
                 return this.effectEditor.flangerDepthSliders[index];
             case Config.modulators.dictionary["flanger feedback"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.flanger) index = i;
                 return this.effectEditor.flangerFeedbackSliders[index];
             case Config.modulators.dictionary["chorus"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.chorus) index = i;
                 return this.effectEditor.chorusSliders[index];
             case Config.modulators.dictionary["echo"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.echo) index = i;
                 return this.effectEditor.echoSustainSliders[index];
             case Config.modulators.dictionary["echo delay"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.echo) index = i;
                 return this.effectEditor.echoDelaySliders[index];
             case Config.modulators.dictionary["echo ping pong"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.echo) index = i;
                 return this.effectEditor.echoPingPongSliders[index];
             case Config.modulators.dictionary["sustain"].index:
                 return this._stringSustainSlider;
@@ -2104,22 +2084,16 @@ export class SongEditor {
             case Config.modulators.dictionary["individual envelope upper bound"].index:
                 return this.envelopeEditor.perEnvelopeUpperBoundSliders[index];
             case Config.modulators.dictionary["ring modulation"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.ringModulation) index = i;
                 return this.effectEditor.ringModSliders[index]
             case Config.modulators.dictionary["ring mod hertz"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.ringModulation) index = i;
                 return this.effectEditor.ringModHzSliders[index]
             case Config.modulators.dictionary["granular"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.granular) index = i;
                 return this.effectEditor.granularSliders[index];
             case Config.modulators.dictionary["grain freq"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.granular) index = i;
                 return this.effectEditor.grainAmountsSliders[index];
             case Config.modulators.dictionary["grain size"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.granular) index = i;
                 return this.effectEditor.grainSizeSliders[index];
             case Config.modulators.dictionary["grain range"].index:
-                for (let i: number = 0; i < instrument.effects.length; i++) if (instrument.effects[i] != null && instrument.effects[i]!.type == EffectType.granular) index = i;
                 return this.effectEditor.grainRangeSliders[index];
             default:
                 return null;
@@ -3514,24 +3488,22 @@ export class SongEditor {
                     for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
                         let modChannel: Channel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod][i])];
                         let tmpCount: number = -1;
-                        if (useInstrument >= modChannel.instruments.length) {
-                            // Use greatest number of dots among all instruments if setting is 'all' or 'active'. If it won't have an effect on one, no worry.
-                            for (let i: number = 0; i < modChannel.instruments.length; i++) {
-                                if (filterType == "post eq") {
-                                    for (let j: number = 0; j < modChannel.instruments[i].effects.length; j++) {
-                                        if (modChannel.instruments[i].effects[j] == null) continue;
-                                        let effect: Effect = modChannel.instruments[i].effects[j] as Effect;
-                                        if (effect.type == EffectType.eqFilter && effect.eqFilter.controlPointCount > tmpCount) {
-                                            tmpCount = effect.eqFilter.controlPointCount;
-                                            useInstrument = i;
-                                            useEffect = j;
-                                        }
+                        for (let j: number = 0; j < modChannel.instruments.length; j++) {
+                            if (filterType == "post eq") {
+                                for (let k: number = 0; k < modChannel.instruments[k].effects.length; j++) {
+                                    if (modChannel.instruments[j].effects[k] == null) continue;
+                                    let effect: Effect = modChannel.instruments[j].effects[k] as Effect;
+                                    if (effect.type == EffectType.eqFilter && effect.eqFilter.controlPointCount > tmpCount) {
+                                        tmpCount = effect.eqFilter.controlPointCount;
+                                        useInstrument = j;
+                                        useEffect = k;
                                     }
-                                } else {
-                                    if (modChannel.instruments[i].noteFilter.controlPointCount > tmpCount) {
-                                        tmpCount = modChannel.instruments[i].noteFilter.controlPointCount;
-                                        useInstrument = i;
-                                    }
+                                }
+                            } else {
+                                if (modChannel.instruments[j].noteFilter.controlPointCount > tmpCount) {
+                                    tmpCount = modChannel.instruments[j].noteFilter.controlPointCount;
+                                    useInstrument = j;
+                                    useEffect = null;
                                 }
                             }
                         }
@@ -3546,7 +3518,7 @@ export class SongEditor {
 
                         let effect: Effect = modChannel.instruments[useInstrument].effects[useEffect] as Effect;
 
-                        const isSimple: boolean = useSongEq ? false : (filterType == "post eq" ? effect.eqFilterType : channel.instruments[useInstrument].noteFilterType);
+                        const isSimple: boolean = useSongEq ? false : (filterType == "pre eq" ? modChannel.instruments[useInstrument].noteFilterType : effect.eqfilterType);
                         if (isSimple)
                             dotCount = 0;
                         if (useSongEq) {
@@ -3595,6 +3567,7 @@ export class SongEditor {
                     $("#modFilterText" + mod).get(0)!.style.display = "none";
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "0.9em");
                 }
+                instrument.invalidModulators[mod]
 
                 let envelopes: string = Config.modulators[instrument.modulators[mod]].name;
                 if (envelopes == "individual envelope speed" || envelopes == "reset envelope" || envelopes == "individual envelope lower bound" || envelopes == "individual envelope upper bound") {

@@ -3579,10 +3579,10 @@ export class Song {
                                         // Check if there is no filter dot on prospective filter. If so, add a low pass at max possible freq.
 
                                         if (forNoteFilter) {
-                                            instrument.modulators[mod] = Config.modulators.dictionary["note filt cut"].index;
+                                            instrument.modulators[mod] = Config.modulators.dictionary["pre eq cut"].index;
                                         }
                                         else {
-                                            instrument.modulators[mod] = Config.modulators.dictionary["eq filt cut"].index;
+                                            instrument.modulators[mod] = Config.modulators.dictionary["post eq cut"].index;
                                         }
 
                                         instrument.modFilterTypes[mod] = 1; // Dot 1 X
@@ -3591,10 +3591,10 @@ export class Song {
                                     else if (instrument.modulators[mod] == 8) {
                                         // Legacy filter peak index
                                         if (forNoteFilter) {
-                                            instrument.modulators[mod] = Config.modulators.dictionary["note filt peak"].index;
+                                            instrument.modulators[mod] = Config.modulators.dictionary["pre eq peak"].index;
                                         }
                                         else {
-                                            instrument.modulators[mod] = Config.modulators.dictionary["eq filt peak"].index;
+                                            instrument.modulators[mod] = Config.modulators.dictionary["post eq peak"].index;
                                         }
 
                                         instrument.modFilterTypes[mod] = 2; // Dot 1 Y

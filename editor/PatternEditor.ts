@@ -759,7 +759,7 @@ export class PatternEditor {
                             if (thisRef._doc.getCurrentInstrument() == instrument.modInstruments[mod][channelIndex]
                                 || instrument.modInstruments[mod][channelIndex] >= thisRef._doc.song.channels[thisRef._doc.channel].instruments.length) {
                                 // If it's an eq/note filter target, one additional step is performed to see if it matches the right modFilterType.
-                                if (modFilterIndex != undefined && (applyToMod == Config.modulators.dictionary["eq filter"].index || applyToMod == Config.modulators.dictionary["note filter"].index)) {
+                                if (modFilterIndex != undefined && (applyToMod == Config.modulators.dictionary["post eq"].index || applyToMod == Config.modulators.dictionary["pre eq"].index)) {
                                     if (instrument.modFilterTypes[mod] == modFilterIndex)
                                         return [instrumentIndex, mod];
                                 } else if (modEnvIndex != undefined && applyToMod == Config.modulators.dictionary["individual envelope speed"].index ||
@@ -952,7 +952,7 @@ export class PatternEditor {
         /* Song reverb - a casualty of splitting to reverb per instrument, it's not modulate-able via slider!
         else if (change instanceof ChangeSongReverb) { } */
         else if (change instanceof ChangeVolume) {
-            var modulator = Config.modulators.dictionary["mix volume"];
+            var modulator = Config.modulators.dictionary["post volume"];
             applyToMods.push(modulator.index);
             if (toApply) applyValues.push(instrument.volume - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
@@ -1203,7 +1203,7 @@ export class PatternEditor {
             let modulatorIndex;
 
             if (useChange.useNoteFilter) {
-                modulatorIndex = Config.modulators.dictionary["note filter"].index;
+                modulatorIndex = Config.modulators.dictionary["pre eq"].index;
 
                 if (instrument.tmpNoteFilterEnd == null) {
                     instrument.tmpNoteFilterStart = new FilterSettings();
@@ -1218,7 +1218,7 @@ export class PatternEditor {
                 }
             }
             else {
-                modulatorIndex = Config.modulators.dictionary["eq filter"].index;
+                modulatorIndex = Config.modulators.dictionary["post eq"].index;
                 for (let i: number = 0; i < instrument.effects.length; i++) {
                     let effect: Effect = instrument.effects[i] as Effect;
                     useFilter = effect.eqFilter;
@@ -1312,7 +1312,7 @@ export class PatternEditor {
         else if (change instanceof ChangeEQFilterSimpleCut) {
             for (let i: number = 0; i < instrument.effects.length; i++) {
                 let effect: Effect = instrument.effects[i] as Effect;
-                var modulator = Config.modulators.dictionary["eq filt cut"];
+                var modulator = Config.modulators.dictionary["post eq cut"];
                 applyToMods.push(modulator.index);
                 if (toApply) applyValues.push(effect.eqFilterSimpleCut - modulator.convertRealFactor);
                 // Move the actual value back, since we just want to update the modulated value and not the base slider.
@@ -1325,7 +1325,7 @@ export class PatternEditor {
         else if (change instanceof ChangeEQFilterSimplePeak) {
             for (let i: number = 0; i < instrument.effects.length; i++) {
                 let effect: Effect = instrument.effects[i] as Effect;
-                var modulator = Config.modulators.dictionary["eq filt peak"];
+                var modulator = Config.modulators.dictionary["post eq peak"];
                 applyToMods.push(modulator.index);
                 if (toApply) applyValues.push(effect.eqFilterSimplePeak - modulator.convertRealFactor);
                 // Move the actual value back, since we just want to update the modulated value and not the base slider.
@@ -1336,7 +1336,7 @@ export class PatternEditor {
             }
         }
         else if (change instanceof ChangeNoteFilterSimpleCut) {
-            var modulator = Config.modulators.dictionary["note filt cut"];
+            var modulator = Config.modulators.dictionary["pre eq cut"];
             applyToMods.push(modulator.index);
             if (toApply) applyValues.push(instrument.noteFilterSimpleCut - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
@@ -1346,7 +1346,7 @@ export class PatternEditor {
             }
         }
         else if (change instanceof ChangeNoteFilterSimplePeak) {
-            var modulator = Config.modulators.dictionary["note filt peak"];
+            var modulator = Config.modulators.dictionary["pre eq peak"];
             applyToMods.push(modulator.index);
             if (toApply) applyValues.push(instrument.noteFilterSimplePeak - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
@@ -1581,18 +1581,8 @@ export class PatternEditor {
                                     }
                                     instrument.modChannels[mod][0] = -1; // Song
                                 } else {
-                                    instrument.modChannels[mod][instrument.modChannels[mod].length] = this._doc.channel;
-
-                                    if (this._doc.song.channels[this._doc.channel].instruments.length > 1) {
-                                        // Ctrl key or Shift key: set the new mod target to "active" modulation for the most flexibility, if there's more than one instrument in the channel.
-                                        if (!this.controlMode || !this.shiftMode)
-                                            instrument.modInstruments[mod][instrument.modChannels[mod].length] = this._doc.song.channels[this._doc.channel].instruments.length + 1;
-                                        // Control+Shift key: Set the new mod target to the currently viewed instrument only.
-                                        else
-                                            instrument.modInstruments[mod][instrument.modChannels[mod].length] = this._doc.getCurrentInstrument();
-                                    }
-                                    else
-                                        instrument.modInstruments[mod][instrument.modChannels[mod].length] = 0;
+                                    instrument.modChannels[mod] = [this._doc.channel];
+                                    instrument.modInstruments[mod] = [this._doc.getCurrentInstrument()];
 
                                     // Filter dot. Add appropriate filter target settings (dot# X and dot# Y mod).
                                     if (applyToFilterTargets.length > applyIndex) {
@@ -1638,31 +1628,27 @@ export class PatternEditor {
                 // Explicitly set the mod to the applied value, just in case the note we add isn't picked up in the next synth run.
                 const modNoteIndex: number = Config.modCount - 1 - usedModIndices[i];
                 const usedInstrument: Instrument = usedInstruments[i];
-                if (usedInstrument.modChannels[usedModIndices[i]][instrument.modChannels[modNoteIndex].length] >= -1) {
+                console.log(instrument)
+                console.log(usedInstrument)
+                if (usedInstrument.modChannels[usedModIndices[i]][0] >= -1) {
                     // Generate list of used instruments
                     let usedNewInstrumentIndices: number[] = [];
                     if (Config.modulators[applyToMods[applyIndex]].forSong) {
                         // Instrument doesn't matter for song, just push a random index to run the modsynth once
                         usedNewInstrumentIndices.push(0);
                     } else {
-                        // All
-                        if (usedInstrument.modInstruments[usedModIndices[i]][0] == this._doc.synth.song!.channels[usedInstrument.modChannels[usedModIndices[i]][0]].instruments.length) {
-                            for (let k: number = 0; k < this._doc.synth.song!.channels[usedInstrument.modChannels[usedModIndices[i]][0]].instruments.length; k++) {
-                                usedNewInstrumentIndices.push(k);
-                            }
+
+                        for (let j: number = 0; j < usedInstrument.modChannels[usedModIndices[i]].length; j++) {
+                            usedNewInstrumentIndices.push(usedInstrument.modInstruments[usedModIndices[i]][j]);
                         }
-                        // Active
-                        else if (usedInstrument.modInstruments[usedModIndices[i]][0] > this._doc.synth.song!.channels[usedInstrument.modChannels[usedModIndices[i]][0]].instruments.length) {
-                            if (this._doc.synth.song!.getPattern(usedInstrument.modChannels[usedModIndices[i]][0], currentBar) != null)
-                                usedNewInstrumentIndices = this._doc.synth.song!.getPattern(usedInstrument.modChannels[usedModIndices[i]][0], currentBar)!.instruments;
-                        } else {
-                            usedNewInstrumentIndices.push(usedInstrument.modInstruments[usedModIndices[i]][instrument.modChannels[modNoteIndex].length]);
-                        }
+
                     }
 
-                    for (let instrumentIndex: number = 0; instrumentIndex < usedNewInstrumentIndices.length; instrumentIndex++) {
-                        this._doc.synth.setModValue(applyValues[applyIndex], applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]][instrument.modChannels[modNoteIndex].length], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
-                        this._doc.synth.forceHoldMods(applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]][instrument.modChannels[modNoteIndex].length], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
+                    for (let channelIndex: number = 0; channelIndex < usedNewInstrumentIndices.length; channelIndex++) {
+                        for (let instrumentIndex: number = 0; instrumentIndex < usedNewInstrumentIndices.length; instrumentIndex++) {
+                            this._doc.synth.setModValue(applyValues[applyIndex], applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]][channelIndex], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
+                            this._doc.synth.forceHoldMods(applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]][channelIndex], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
+                        }
                     }
                 }
 
