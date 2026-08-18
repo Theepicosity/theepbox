@@ -197,10 +197,10 @@ export class EffectEditor {
 			for (let effectIndex: number = 0; effectIndex < instrument.effectCount; effectIndex++) {
 				const effect: Effect = instrument.effects[effectIndex];
 
-				const moveupButton: HTMLButtonElement = HTML.button({ type: "button", class: "moveup-effect", style: "width: 16px; height: 70%; font-size: small; flex: 1; margin-left:0.2em;" }, "🞁");
-				const movedownButton: HTMLButtonElement = HTML.button({ type: "button", class: "movedown-effect", style: "width: 16px; height: 70%; font-size: small; flex: 1; margin-left:0.2em;" }, "🞃");
-				const minimizeButton: HTMLButtonElement = HTML.button({ type: "button", class: "minimize-effect", style: "width: 16px; height: 70%; font-size: small; flex: 1; margin-left:0.2em;" }, "-");
-				const deleteButton: HTMLButtonElement = HTML.button({ type: "button", class: "delete-effect", style: "width: 16px; height: 70%; font-size: small; flex: 1; margin-left:0.2em;" }, "x");
+				const moveupButton: HTMLButtonElement = HTML.button({ type: "button", class: "moveup-effect", style: "margin-left:0em; height:2em; width: 16px; padding: 0px; margin-left:0.5em; font-size: 8px;" }, "▲");
+				const movedownButton: HTMLButtonElement = HTML.button({ type: "button", class: "movedown-effect", style: "margin-left:0em; height:2em; width: 16px; padding: 0px; margin-left:0.5em; font-size: 8px;" }, "▼");
+				const minimizeButton: HTMLButtonElement = HTML.button({ type: "button", class: "minimize-effect", style: "margin-left:0em; height:2em; width: 16px; padding: 0px; margin-left:0.5em; font-size: 8px;" }, "−");
+				const deleteButton: HTMLButtonElement = HTML.button({ type: "button", class: "delete-effect", style: "margin-left:0em; height:2em; width: 16px; padding: 0px; margin-left:0.5em; font-size: 8px;" }, "🗙");
 
 				const effectButtonsText: HTMLDivElement = HTML.div({ style: `width: 50%; color: ${ColorConfig.secondaryText};` }, Config.effectDisplayNames[Config.effectOrder.indexOf(effect.type)]);
 
