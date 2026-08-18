@@ -66,6 +66,7 @@ export class FilterEditor {
     private _renderedPointCount: number = -1;
     private _renderedPointTypes: number = -1;
     private _renderedPointFreqs: number = -1;
+    private _renderedPointQs: number = -1;
     private _renderedPointGains: number = -1;
     //private _renderedKey: number = -1;
 
@@ -753,22 +754,26 @@ export class FilterEditor {
 
             let pointTypes: number = 0;
             let pointFreqs: number = 0;
+            let pointQs: number = 0;
             let pointGains: number = 0;
             for (let i: number = 0; i < this._useFilterSettings.controlPointCount; i++) {
                 const point: FilterControlPoint = this._useFilterSettings.controlPoints[i];
                 pointTypes = pointTypes * FilterType.length + point.type;
                 pointFreqs = pointFreqs * Config.filterFreqRange + point.freq;
+                pointQs = pointQs * Config.filterQRange + point.q;
                 pointGains = pointGains * Config.filterGainRange + point.gain;
             }
             if (this._renderedSelectedIndex != this._selectedIndex ||
                 this._renderedPointCount != this._useFilterSettings.controlPointCount ||
                 this._renderedPointTypes != pointTypes ||
                 this._renderedPointFreqs != pointFreqs ||
+                this._renderedPointQs != pointQs ||
                 this._renderedPointGains != pointGains) {
                 this._renderedSelectedIndex = this._selectedIndex;
                 this._renderedPointCount = this._useFilterSettings.controlPointCount;
                 this._renderedPointTypes = pointTypes;
                 this._renderedPointFreqs = pointFreqs;
+                this._renderedPointQs = pointQs;
                 this._renderedPointGains = pointGains;
                 this._updatePath();
             }

@@ -3687,7 +3687,7 @@ export class SongEditor {
             this._songEqFilterEditor.render();
         }
         for (let i: number = 0; i < this.effectEditor.eqFilterEditors.length; i++) {
-            if (this._doc.synth.isFilterModActive(false, 0, 0, true)) {
+            if (this._doc.synth.isFilterModActive(false, this._doc.channel, this._doc.getCurrentInstrument())) {
                 this.effectEditor.eqFilterEditors[i].render(true, this._ctrlHeld || this._shiftHeld);
             } else {
                 this.effectEditor.eqFilterEditors[i].render();
@@ -4972,8 +4972,8 @@ export class SongEditor {
         // ...and barscrollbar playhead
         this._barScrollBar.animatePlayhead();
         // ...and filters
-        for (let i: number = 0; i < this.effectEditor.eqFilterEditors.length; i++) {
-            if (this._doc.synth.isFilterModActive(false, this._doc.channel, this._doc.getCurrentInstrument())) {
+        if (this._doc.synth.isFilterModActive(false, this._doc.channel, this._doc.getCurrentInstrument())) {
+            for (let i: number = 0; i < this.effectEditor.eqFilterEditors.length; i++) {
                 this.effectEditor.eqFilterEditors[i].render(true, this._ctrlHeld || this._shiftHeld);
             }
         }

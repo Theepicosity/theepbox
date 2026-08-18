@@ -1046,10 +1046,7 @@ export class Synth {
                     return true;
             } else {
                 for (let i: number = 0; i < instrument.effects.length; i++) {
-                    let effect: Effect = instrument.effects[i] as Effect
-                    if (effect.eqFilterType)
-                        return false;
-                    if (effect.tmpEqFilterEnd != null)
+                    if (!instrument.effects[i].eqFilterType && instrument.effects[i].tmpEqFilterEnd != null)
                         return true;
                 }
             }
