@@ -1904,7 +1904,7 @@ export class SongEditor {
                             currentVal = 1 - currentVal;
                         }
 
-                        if (currentVal != editor._modSliderValues[setting][index]) {
+                        if (currentVal != editor._modSliderValues[setting][index] || !Object.hasOwn(slider.container.style, '--mod-position')) {
                             editor._modSliderValues[setting][index] = currentVal;
                             slider.container.style.setProperty("--mod-position", (currentVal * 96.0 + 2.0) + "%");
                         }
