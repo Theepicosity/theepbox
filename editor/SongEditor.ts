@@ -3240,7 +3240,7 @@ export class SongEditor {
                             else {
                                 allInstrumentFlanger = false;
                             }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.flanger)) {
+                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.chorus)) {
                                 anyInstrumentChorus = true;
                             }
                             else {
