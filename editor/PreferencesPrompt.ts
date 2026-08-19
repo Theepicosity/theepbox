@@ -4,7 +4,7 @@ import { Config } from "../synth/SynthConfig";
 import { EditorConfig } from "./EditorConfig";
 import { PatternEditor } from "./PatternEditor";
 import { SongDocument } from "./SongDocument";
-import { Shortcut, DefaultShortcuts } from "./Preferences";
+import { Shortcut, DefaultShortcuts, ShortcutCategory } from "./Preferences";
 import { Prompt } from "./Prompt";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { ColorConfig } from "./ColorConfig";
@@ -12,7 +12,7 @@ import { KeyboardLayout } from "./KeyboardLayout";
 import { Piano } from "./Piano";
 import { Layout } from "./Layout";
 
-const { button, label, div, p, h2, form, input, select, option, optgroup } = HTML;
+const { button, label, div, p, h2, h3, form, input, select, option, optgroup } = HTML;
 
 function buildOptions(menu: HTMLSelectElement, items: ReadonlyArray<string | number>): HTMLSelectElement {
 	for (let index: number = 0; index < items.length; index++) {
@@ -1050,32 +1050,38 @@ export class PreferencesPrompt implements Prompt {
 
 	private _renderShortcuts = (): void => {
 		this._shortcutLabels.replaceChildren();
-		let i: string;
-		for (i in this._shortcuts) {
-			if (this._defaultShortcuts[i]) {
-				const ctrlKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
-				const shiftKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
-				const recordRebindButton: HTMLButtonElement = button({ style: "height: auto; margin: 1em;" }, "Hold to Rebind");
+		for (let categoryIndex: number = 0; categoryIndex < ShortcutCategory._length; categoryIndex++) {
+			this._shortcutLabels.appendChild(div({ style: `display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;` },
+				h3({style: "text-align: center; width: 100%;"}, ["Playback", "Edit", "Selection", "Settings", "File"][categoryIndex])
+			))
+			let i: string;
+			for (i in this._shortcuts) {
+				if (this._defaultShortcuts[i] && this._defaultShortcuts[i].category == categoryIndex) {
+					console.log(this._defaultShortcuts[i].category)
+					const ctrlKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
+					const shiftKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
+					const recordRebindButton: HTMLButtonElement = button({ style: "height: auto; margin: 1em;" }, "Hold to Rebind");
 
-				ctrlKeyBox.checked = this._shortcuts[i].ctrlKey;
-				shiftKeyBox.checked = this._shortcuts[i].shiftKey;
+					ctrlKeyBox.checked = this._shortcuts[i].ctrlKey;
+					shiftKeyBox.checked = this._shortcuts[i].shiftKey;
 
-				this._shortcutLabels.appendChild(div({ style: `display: flex; flex-direction: row; height: 2em; justify-content: space-between; align-items: center; margin: 2px; border: 2px solid ${ColorConfig.uiWidgetBackground}; border-radius: 4px;` },
-					p({style: "margin: 1em;"}, this._shortcuts[i].displayName),
-					div({style: "display: flex; flex-direction: row; width: 60%;"},
-						div( "ctrl", ctrlKeyBox),
-						div( "shift", shiftKeyBox),
-						div( recordRebindButton),
-						div({ style: "margin: 1em" }, keyboardMap[this._shortcuts[i].keyCode]),
-					),
-				));
-				ctrlKeyBox.dataset.index = i;
-				shiftKeyBox.dataset.index = i;
-				recordRebindButton.dataset.index = i;
-				ctrlKeyBox.addEventListener("change", this._whenSetCtrlKey);
-				shiftKeyBox.addEventListener("change", this._whenSetShiftKey);
-				recordRebindButton.addEventListener("mousedown", this._whenSetRebind);
-				recordRebindButton.addEventListener("click", this._whenRecordRebind);
+					this._shortcutLabels.appendChild(div({ style: `display: flex; flex-direction: row; height: 2em; justify-content: space-between; align-items: center; margin: 2px; border: 2px solid ${ColorConfig.uiWidgetBackground}; border-radius: 4px;` },
+						p({style: "margin: 1em;"}, this._shortcuts[i].displayName),
+						div({style: "display: flex; flex-direction: row; width: 60%;"},
+							div( "ctrl", ctrlKeyBox),
+							div( "shift", shiftKeyBox),
+							div( recordRebindButton),
+							div({ style: "margin: 1em" }, keyboardMap[this._shortcuts[i].keyCode]),
+						),
+					));
+					ctrlKeyBox.dataset.index = i;
+					shiftKeyBox.dataset.index = i;
+					recordRebindButton.dataset.index = i;
+					ctrlKeyBox.addEventListener("change", this._whenSetCtrlKey);
+					shiftKeyBox.addEventListener("change", this._whenSetShiftKey);
+					recordRebindButton.addEventListener("mousedown", this._whenSetRebind);
+					recordRebindButton.addEventListener("click", this._whenRecordRebind);
+				}
 			}
 		}
 	}

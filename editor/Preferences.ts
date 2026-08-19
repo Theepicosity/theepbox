@@ -5,10 +5,20 @@ import {ColorConfig} from "../editor/ColorConfig";
 
 export interface Shortcut {
 	displayName: string;
+	category: number;
 	keyCode: number;
 	shiftKey: boolean;
 	ctrlKey: boolean;
 	//you are never supposed to have to hold the control key for a shortcut (with the only exception being ctrl+space and ctrl+p for recording) however many mods include shortcuts which violate this rule...
+}
+
+export const enum ShortcutCategory {
+	playback,
+	edit,
+	selection,
+	settings,
+	file,
+	_length,
 }
 
 interface Dictionary<T> {
@@ -16,74 +26,74 @@ interface Dictionary<T> {
 }
 
 export const DefaultShortcuts: Dictionary<Shortcut> = {
-	"play": { displayName: "Play", keyCode: 32, shiftKey: false, ctrlKey: false }, // space
-	"playAtCursor": { displayName: "Play At Cursor", keyCode: 32, shiftKey: true, ctrlKey: false }, // shift + space
-	"record": { displayName: "Record", keyCode: 32, shiftKey: false, ctrlKey: true }, // ctrl + space
-	"stopRecording": { displayName: "Stop Recording", keyCode: 80, shiftKey: false, ctrlKey: true }, // ctrl + p
-	"openSongPlayer": { displayName: "Open in Song Player", keyCode: 80, shiftKey: true, ctrlKey: false }, // shift + p
-	"newSong": { displayName: "New Song", keyCode: 192, shiftKey: true, ctrlKey: false }, // shift + `
-	"songRecovery": { displayName: "Open Song Recovery", keyCode: 192, shiftKey: false, ctrlKey: false }, // ` very conveniently the same key as "new song"
-	"undo": { displayName: "Undo", keyCode: 90, shiftKey: false, ctrlKey: false }, // z
-	"redo": { displayName: "Redo", keyCode: 89, shiftKey: false, ctrlKey: false }, // y
-	"cutPattern": { displayName: "Cut Notes", keyCode: 88, shiftKey: false, ctrlKey: false }, // x
-	"editBeatsPerBar": { displayName: "Edit Beats Per Bar", keyCode: 66, shiftKey: true, ctrlKey: false }, // shift + b
-	"loopPattern": { displayName: "Loop Pattern", keyCode: 66, shiftKey: false, ctrlKey: false }, // b
-	"copyInstrument": { displayName: "Copy Instrument", keyCode: 67, shiftKey: true, ctrlKey: false }, // shift + c
-	"copyPattern": { displayName: "Copy Notes", keyCode: 67, shiftKey: false, ctrlKey: false }, // c
-	"insertBarNext": { displayName: "Insert Bar After", keyCode: 13, shiftKey: false, ctrlKey: false }, // enter
-	"insertBarPrev": { displayName: "Insert Bar Before", keyCode: 13, shiftKey: true, ctrlKey: false }, // shift + enter
-	"insertChannelNext": { displayName: "Insert Channel After", keyCode: 13, shiftKey: false, ctrlKey: true }, // ctrl + enter
-	"insertChannelPrev": { displayName: "Insert Channel Before", keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
-	"deleteBar": { displayName: "Delete Bar", keyCode: 8, shiftKey: false, ctrlKey: false }, // backspace
-	"deleteChannel": { displayName: "Delete Channel", keyCode: 8, shiftKey: false, ctrlKey: true }, // ctrl + backspace
-	"selectAll": { displayName: "Select All", keyCode: 65, shiftKey: false, ctrlKey: false }, // a
-	"selectChannel": { displayName: "Select Channel", keyCode: 65, shiftKey: true, ctrlKey: false }, // shift + a
-	"duplicatePattern": { displayName: "Duplicate Pattern", keyCode: 68, shiftKey: false, ctrlKey: false }, // d
-	"editSongEQ": { displayName: "Edit Song EQ", keyCode: 69, shiftKey: false, ctrlKey: false }, // e
-	"generateEuclideanRhythm": { displayName: "Generate Euclidean Rhythm", keyCode: 69, shiftKey: true, ctrlKey: false }, // shift + e
-	"snapPlayheadToBeginning": { displayName: "Snap Playhead To Beginning", keyCode: 70, shiftKey: false, ctrlKey: false }, // f
-	"snapPlayheadToLoopStart": { displayName: "Snap Playhead To Loop Start", keyCode: 70, shiftKey: true, ctrlKey: false }, // shift + f
-	"openAllFMDropdowns": { displayName: "Open All FM Dropdowns", keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
-	"snapPlayheadToSelected": { displayName: "Snap Playhead To Selected Pattern", keyCode: 72, shiftKey: false, ctrlKey: false }, // h
-	"hideChannel": { displayName: "Hide Channel", keyCode: 75, shiftKey: true, ctrlKey: false }, // k
-	"onlyShowChannel": { displayName: "Only Show Channel", keyCode: 74, shiftKey: false, ctrlKey: false }, // j
-	"editLimiter": { displayName: "Edit Limiter Options", keyCode: 76, shiftKey: true, ctrlKey: false }, // shift + l
-	"editSongLength": { displayName: "Edit Song Length", keyCode: 76, shiftKey: false, ctrlKey: false }, // l
-	"muteChannel": { displayName: "Mute Channel", keyCode: 77, shiftKey: false, ctrlKey: false }, // m
-	"muteAll": { displayName: "Mute All", keyCode: 77, shiftKey: true, ctrlKey: false }, // shift + m
-	"newPattern": { displayName: "New Pattern", keyCode: 78, shiftKey: false, ctrlKey: false }, // n
-	"newPatternFromEmpty": { displayName: "New Pattern From Empty", keyCode: 78, shiftKey: true, ctrlKey: false }, // shift + n
-	"editChannelSettings": { displayName: "Edit Channel Settings", keyCode: 81, shiftKey: false, ctrlKey: false }, // q
-	"editCustomSamples": { displayName: "Edit Custom Samples", keyCode: 81, shiftKey: true, ctrlKey: false }, // shift + q
-	"soloChannel": { displayName: "Solo Channel", keyCode: 83, shiftKey: false, ctrlKey: false }, // s
-	"export": { displayName: "Export", keyCode: 83, shiftKey: true, ctrlKey: false }, // shift + s
-	"import": { displayName: "Import", keyCode: 79, shiftKey: true, ctrlKey: false }, // shift + o
-	"pastePattern": { displayName: "Paste Notes", keyCode: 86, shiftKey: false, ctrlKey: false }, // v
-	"pasteInstrument": { displayName: "Paste Instrument", keyCode: 86, shiftKey: true, ctrlKey: false }, // shift + v
-	"pastePatternNumbers": { displayName: "Paste Pattern Number", keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
-	"moveNotesSideways": { displayName: "Move Notes Sideways", keyCode: 87, shiftKey: false, ctrlKey: false }, // w
-	"exportInstrument": { displayName: "Export Instrument", keyCode: 73, shiftKey: true, ctrlKey: false }, // shift + i
-	//"randomInstrument": { displayName: "Random Instrument", keyCode: 82, shiftKey: false, ctrlKey: false }, // r
-	"nextBar": { displayName: "Next Bar", keyCode: 221, shiftKey: false, ctrlKey: false }, // ]
-	"prevBar": { displayName: "Previous Bar", keyCode: 219, shiftKey: false, ctrlKey: false }, // [
-	"transposeDown": { displayName: "Transpose Down", keyCode: 189, shiftKey: false, ctrlKey: false }, // -
-	"transposeUp": { displayName: "Transpose Up", keyCode: 187, shiftKey: false, ctrlKey: false }, // +
-	"transposeOctaveDown": { displayName: "Transpose Octave Down", keyCode: 189, shiftKey: true, ctrlKey: false }, // shift + -
-	"transposeOctaveUp": { displayName: "Transpose Octave Up", keyCode: 187, shiftKey: true, ctrlKey: false }, // shift + +
-	"removePattern": { displayName: "Remove Pattern", keyCode: 46, shiftKey: false, ctrlKey: false }, // delete
-	"patternUp": { displayName: "Move Up", keyCode: 38, shiftKey: false, ctrlKey: false }, // up
-	"selectionUp": { displayName: "Extend Selection Up", keyCode: 38, shiftKey: true, ctrlKey: false }, // shift + up
-	"moveChannelUp": { displayName: "Move Channel Up", keyCode: 38, shiftKey: false, ctrlKey: true }, // ctrl + up
-	"patternDown": { displayName: "Move Down", keyCode: 40, shiftKey: false, ctrlKey: false }, // down
-	"selectionDown": { displayName: "Extend Selection Down", keyCode: 40, shiftKey: true, ctrlKey: false }, // shift + down
-	"moveChannelDown": { displayName: "Move Channel Down", keyCode: 40, shiftKey: false, ctrlKey: true }, // ctrl + down
-	"patternLeft": { displayName: "Move Left", keyCode: 37, shiftKey: false, ctrlKey: false }, // left
-	"selectionLeft": { displayName: "Extend Selection Left", keyCode: 37, shiftKey: true, ctrlKey: false }, // shift + left
-	"patternRight": { displayName: "Move Right", keyCode: 39, shiftKey: false, ctrlKey: false }, // right
-	"selectionRight": { displayName: "Extend Selection Right", keyCode: 39, shiftKey: true, ctrlKey: false }, // shift + right
+	"play": { displayName: "Play", category: ShortcutCategory.playback, keyCode: 32, shiftKey: false, ctrlKey: false }, // space
+	"playAtCursor": { displayName: "Play At Cursor", category: ShortcutCategory.playback, keyCode: 32, shiftKey: true, ctrlKey: false }, // shift + space
+	"record": { displayName: "Record", category: ShortcutCategory.playback, keyCode: 32, shiftKey: false, ctrlKey: true }, // ctrl + space
+	"stopRecording": { displayName: "Stop Recording", category: ShortcutCategory.playback, keyCode: 80, shiftKey: false, ctrlKey: true }, // ctrl + p
+	"openSongPlayer": { displayName: "Open in Song Player", category: ShortcutCategory.file, keyCode: 80, shiftKey: true, ctrlKey: false }, // shift + p
+	"newSong": { displayName: "New Song", category: ShortcutCategory.file, keyCode: 192, shiftKey: true, ctrlKey: false }, // shift + `
+	"songRecovery": { displayName: "Open Song Recovery", category: ShortcutCategory.file, keyCode: 192, shiftKey: false, ctrlKey: false }, // ` very conveniently the same key as "new song"
+	"undo": { displayName: "Undo", category: ShortcutCategory.edit, keyCode: 90, shiftKey: false, ctrlKey: false }, // z
+	"redo": { displayName: "Redo", category: ShortcutCategory.edit, keyCode: 89, shiftKey: false, ctrlKey: false }, // y
+	"cutPattern": { displayName: "Cut Notes", category: ShortcutCategory.edit, keyCode: 88, shiftKey: false, ctrlKey: false }, // x
+	"editBeatsPerBar": { displayName: "Edit Beats Per Bar", category: ShortcutCategory.settings, keyCode: 66, shiftKey: true, ctrlKey: false }, // shift + b
+	"loopPattern": { displayName: "Loop Pattern", category: ShortcutCategory.playback, keyCode: 66, shiftKey: false, ctrlKey: false }, // b
+	"copyInstrument": { displayName: "Copy Instrument", category: ShortcutCategory.edit, keyCode: 67, shiftKey: true, ctrlKey: false }, // shift + c
+	"copyPattern": { displayName: "Copy Notes", category: ShortcutCategory.edit, keyCode: 67, shiftKey: false, ctrlKey: false }, // c
+	"insertBarNext": { displayName: "Insert Bar After", category: ShortcutCategory.edit, keyCode: 13, shiftKey: false, ctrlKey: false }, // enter
+	"insertBarPrev": { displayName: "Insert Bar Before", category: ShortcutCategory.edit, keyCode: 13, shiftKey: true, ctrlKey: false }, // shift + enter
+	"insertChannelNext": { displayName: "Insert Channel After", category: ShortcutCategory.edit, keyCode: 13, shiftKey: false, ctrlKey: true }, // ctrl + enter
+	"insertChannelPrev": { displayName: "Insert Channel Before", category: ShortcutCategory.edit, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
+	"deleteBar": { displayName: "Delete Bar", category: ShortcutCategory.edit, keyCode: 8, shiftKey: false, ctrlKey: false }, // backspace
+	"deleteChannel": { displayName: "Delete Channel", category: ShortcutCategory.edit, keyCode: 8, shiftKey: false, ctrlKey: true }, // ctrl + backspace
+	"selectAll": { displayName: "Select All", category: ShortcutCategory.edit, keyCode: 65, shiftKey: false, ctrlKey: false }, // a
+	"selectChannel": { displayName: "Select Channel", category: ShortcutCategory.edit, keyCode: 65, shiftKey: true, ctrlKey: false }, // shift + a
+	"duplicatePattern": { displayName: "Duplicate Pattern", category: ShortcutCategory.edit, keyCode: 68, shiftKey: false, ctrlKey: false }, // d
+	"editSongEQ": { displayName: "Edit Song EQ", category: ShortcutCategory.settings, keyCode: 69, shiftKey: false, ctrlKey: false }, // e
+	"generateEuclideanRhythm": { displayName: "Generate Euclidean Rhythm", category: ShortcutCategory.edit, keyCode: 69, shiftKey: true, ctrlKey: false }, // shift + e
+	"snapPlayheadToBeginning": { displayName: "Snap Playhead To Beginning", category: ShortcutCategory.playback, keyCode: 70, shiftKey: false, ctrlKey: false }, // f
+	"snapPlayheadToLoopStart": { displayName: "Snap Playhead To Loop Start", category: ShortcutCategory.playback, keyCode: 70, shiftKey: true, ctrlKey: false }, // shift + f
+	"nextBar": { displayName: "Next Bar", category: ShortcutCategory.playback, keyCode: 221, shiftKey: false, ctrlKey: false }, // ]
+	"prevBar": { displayName: "Previous Bar", category: ShortcutCategory.playback, keyCode: 219, shiftKey: false, ctrlKey: false }, // [
+	"openAllFMDropdowns": { displayName: "Open All FM Dropdowns", category: ShortcutCategory.settings, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
+	"snapPlayheadToSelected": { displayName: "Snap Playhead To Selected Pattern", category: ShortcutCategory.playback, keyCode: 72, shiftKey: false, ctrlKey: false }, // h
+	"hideChannel": { displayName: "Hide Channel", category: ShortcutCategory.playback, keyCode: 75, shiftKey: true, ctrlKey: false }, // k
+	"onlyShowChannel": { displayName: "Only Show Channel", category: ShortcutCategory.playback, keyCode: 74, shiftKey: false, ctrlKey: false }, // j
+	"editLimiter": { displayName: "Edit Limiter Options", category: ShortcutCategory.settings, keyCode: 76, shiftKey: true, ctrlKey: false }, // shift + l
+	"editSongLength": { displayName: "Edit Song Length", category: ShortcutCategory.settings, keyCode: 76, shiftKey: false, ctrlKey: false }, // l
+	"muteChannel": { displayName: "Mute Channel", category: ShortcutCategory.playback, keyCode: 77, shiftKey: false, ctrlKey: false }, // m
+	"muteAll": { displayName: "Mute All", category: ShortcutCategory.playback, keyCode: 77, shiftKey: true, ctrlKey: false }, // shift + m
+	"newPattern": { displayName: "New Pattern", category: ShortcutCategory.edit, keyCode: 78, shiftKey: false, ctrlKey: false }, // n
+	"newPatternFromEmpty": { displayName: "New Pattern From Empty", category: ShortcutCategory.edit, keyCode: 78, shiftKey: true, ctrlKey: false }, // shift + n
+	"editChannelSettings": { displayName: "Edit Channel Settings", category: ShortcutCategory.settings, keyCode: 81, shiftKey: false, ctrlKey: false }, // q
+	"editCustomSamples": { displayName: "Edit Custom Samples", category: ShortcutCategory.settings, keyCode: 81, shiftKey: true, ctrlKey: false }, // shift + q
+	"soloChannel": { displayName: "Solo Channel", category: ShortcutCategory.playback, keyCode: 83, shiftKey: false, ctrlKey: false }, // s
+	"export": { displayName: "Export", category: ShortcutCategory.file, keyCode: 83, shiftKey: true, ctrlKey: false }, // shift + s
+	"import": { displayName: "Import", category: ShortcutCategory.file, keyCode: 79, shiftKey: true, ctrlKey: false }, // shift + o
+	"pastePattern": { displayName: "Paste Notes", category: ShortcutCategory.edit, keyCode: 86, shiftKey: false, ctrlKey: false }, // v
+	"pasteInstrument": { displayName: "Paste Instrument", category: ShortcutCategory.edit, keyCode: 86, shiftKey: true, ctrlKey: false }, // shift + v
+	"pastePatternNumbers": { displayName: "Paste Pattern Number", category: ShortcutCategory.edit, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
+	"moveNotesSideways": { displayName: "Move Notes Sideways", category: ShortcutCategory.edit, keyCode: 87, shiftKey: false, ctrlKey: false }, // w
+	"exportInstrument": { displayName: "Export Instrument", category: ShortcutCategory.file, keyCode: 73, shiftKey: true, ctrlKey: false }, // shift + i
+	//"randomInstrument": { displayName: "Random Instrument", category: ShortcutCategory.playback, keyCode: 82, shiftKey: false, ctrlKey: false }, // r
+	"transposeDown": { displayName: "Transpose Down", category: ShortcutCategory.edit, keyCode: 189, shiftKey: false, ctrlKey: false }, // -
+	"transposeUp": { displayName: "Transpose Up", category: ShortcutCategory.edit, keyCode: 187, shiftKey: false, ctrlKey: false }, // +
+	"transposeOctaveDown": { displayName: "Transpose Octave Down", category: ShortcutCategory.edit, keyCode: 189, shiftKey: true, ctrlKey: false }, // shift + -
+	"transposeOctaveUp": { displayName: "Transpose Octave Up", category: ShortcutCategory.edit, keyCode: 187, shiftKey: true, ctrlKey: false }, // shift + +
+	"removePattern": { displayName: "Remove Pattern", category: ShortcutCategory.edit, keyCode: 46, shiftKey: false, ctrlKey: false }, // delete
+	"patternUp": { displayName: "Move Up", category: ShortcutCategory.selection, keyCode: 38, shiftKey: false, ctrlKey: false }, // up
+	"selectionUp": { displayName: "Extend Selection Up", category: ShortcutCategory.selection, keyCode: 38, shiftKey: true, ctrlKey: false }, // shift + up
+	"moveChannelUp": { displayName: "Move Channel Up", category: ShortcutCategory.selection, keyCode: 38, shiftKey: false, ctrlKey: true }, // ctrl + up
+	"patternDown": { displayName: "Move Down", category: ShortcutCategory.selection, keyCode: 40, shiftKey: false, ctrlKey: false }, // down
+	"selectionDown": { displayName: "Extend Selection Down", category: ShortcutCategory.selection, keyCode: 40, shiftKey: true, ctrlKey: false }, // shift + down
+	"moveChannelDown": { displayName: "Move Channel Down", category: ShortcutCategory.selection, keyCode: 40, shiftKey: false, ctrlKey: true }, // ctrl + down
+	"patternLeft": { displayName: "Move Left", category: ShortcutCategory.selection, keyCode: 37, shiftKey: false, ctrlKey: false }, // left
+	"selectionLeft": { displayName: "Extend Selection Left", category: ShortcutCategory.selection, keyCode: 37, shiftKey: true, ctrlKey: false }, // shift + left
+	"patternRight": { displayName: "Move Right", category: ShortcutCategory.selection, keyCode: 39, shiftKey: false, ctrlKey: false }, // right
+	"selectionRight": { displayName: "Extend Selection Right", category: ShortcutCategory.selection, keyCode: 39, shiftKey: true, ctrlKey: false }, // shift + right
 
-	"jummbify": { displayName: "Jummbify", keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
-	"slarmooify": { displayName: "Slarmooify", keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
+	"jummbify": { displayName: "Jummbify", category: ShortcutCategory.file, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
+	"slarmooify": { displayName: "Slarmooify", category: ShortcutCategory.file, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
 	// what to do about aliases? redo should also be shift+z; for now i will just ignore this since most people wont use more than one key combo for the same thing.
 	// another note: avoid having both shift & ctrl as modifiers cuz that totally just breaks
 	// also some of these hotkeys use alt as a modifier; these ones are rarely used so i will leave them unbound
