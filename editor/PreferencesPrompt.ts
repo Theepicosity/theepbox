@@ -761,7 +761,7 @@ export class PreferencesPrompt implements Prompt {
 		this._displayBrowserUrl.checked = this._doc.prefs.displayBrowserUrl;
 		this._closePromptByClickoff.checked = this._doc.prefs.closePromptByClickoff;
 
-		this._defaultScaleSelect.value = this._doc.prefs.defaultScale;
+		this._defaultScaleSelect.selectedIndex = this._doc.prefs.defaultScale;
 
 		this._shortenerStrategySelect.value = this._doc.prefs.shortenerStrategySelect;
 
@@ -877,7 +877,7 @@ export class PreferencesPrompt implements Prompt {
 		this._doc.prefs.displayBrowserUrl = this._displayBrowserUrl.checked;
 		this._doc.prefs.closePromptByClickoff = this._closePromptByClickoff.checked;
 
-		this._doc.prefs.defaultScale = this._defaultScaleSelect.value;
+		this._doc.prefs.defaultScale = this._defaultScaleSelect.selectedIndex;
 
 		this._doc.prefs.shortenerStrategySelect = this._shortenerStrategySelect.value;
 
@@ -1057,7 +1057,6 @@ export class PreferencesPrompt implements Prompt {
 			let i: string;
 			for (i in this._shortcuts) {
 				if (this._defaultShortcuts[i] && this._defaultShortcuts[i].category == categoryIndex) {
-					console.log(this._defaultShortcuts[i].category)
 					const ctrlKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
 					const shiftKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
 					const recordRebindButton: HTMLButtonElement = button({ style: "height: auto; margin: 1em;" }, "Hold to Rebind");
