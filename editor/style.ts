@@ -655,7 +655,7 @@ html {
 	mask-position: center;
 }
 
-.beepboxEditor .menu.preferences::before {
+.beepboxEditor button.preferences::before {
 	content: "";
 	flex-shrink: 0;
 	position: absolute;

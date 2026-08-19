@@ -814,7 +814,7 @@ export class SongEditor {
         option({ value: "limiterSettings" }, "Limiter Settings..."),
         option({ value: "addExternal" }, "Add Custom Samples..."),
     );
-    private readonly _optionsMenu: HTMLButtonElement = button({ style: "width: 100%;" , onclick: () => this._openPrompt("preferences")}, "Preferences" );
+    private readonly _optionsMenu: HTMLButtonElement = button({ style: "width: 100%;", class: "preferences", type: "button", onclick: () => this._openPrompt("preferences")}, "Preferences" );
     private readonly _scaleSelect: HTMLSelectElement = buildOptions(select(), Config.scales.map(scale => scale.name));
     private readonly _keySelect: HTMLSelectElement = buildOptions(select(), Config.keys.map(key => key.name).reverse());
     private readonly _octaveStepper: HTMLInputElement = input({ style: "width: 18%;", type: "number", min: Config.octaveMin, max: Config.octaveMax, value: "0" });
@@ -1222,9 +1222,7 @@ export class SongEditor {
         div({ class: "selectContainer menu edit" },
             this._editMenu,
         ),
-        div({ class: "preferences" },
-            this._optionsMenu,
-        ),
+        this._optionsMenu,
     );
 
     private readonly _sampleLoadingBar: HTMLDivElement = div({ style: `width: 0%; height: 100%; background-color: ${ColorConfig.indicatorPrimary};` });
