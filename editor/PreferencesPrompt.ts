@@ -14,6 +14,13 @@ import { Layout } from "./Layout";
 
 const { button, label, div, p, h2, form, input, select, option, optgroup } = HTML;
 
+function buildOptions(menu: HTMLSelectElement, items: ReadonlyArray<string | number>): HTMLSelectElement {
+	for (let index: number = 0; index < items.length; index++) {
+		menu.appendChild(option({ value: index }, items[index]));
+	}
+	return menu;
+}
+
 // taken from some stackexchange answer, it doesnt look good but its better than nothing
 const keyboardMap = [
 	"",              //  [0]
@@ -465,12 +472,13 @@ export class PreferencesPrompt implements Prompt {
 	private readonly _autoFollow: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _enableNotePreview: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _notesOutsideScale: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
-	// private readonly _setDefaultScale: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _alwaysFineNoteVol: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _showScrollBar: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _enableChannelMuting: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _displayBrowserUrl: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _closePromptByClickoff: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
+
+	private readonly _defaultScaleSelect: HTMLSelectElement = buildOptions(select({ style: "width: 100%;" } ), Config.scales.map(scale => scale.name));
 
     private readonly _keyboardMode: HTMLSelectElement = select({ style: "width: 100%;" },
         option({ value: "useCapsLockForNotes" }, "use caps lock to play notes"),
@@ -659,6 +667,10 @@ export class PreferencesPrompt implements Prompt {
 					  div({ style: "width: 50%; text-align: center;" }, this._notesOutsideScale),
 				),
 				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					  "Set default scale:",
+					  div({ style: "width: 50%; text-align: center;", class: "selectContainer" }, this._defaultScaleSelect),
+				),
+				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 					  "Always use fine note volume:",
 					  div({ style: "width: 50%; text-align: center;" }, this._alwaysFineNoteVol),
 				),
@@ -748,6 +760,8 @@ export class PreferencesPrompt implements Prompt {
 		this._enableChannelMuting.checked = this._doc.prefs.enableChannelMuting;
 		this._displayBrowserUrl.checked = this._doc.prefs.displayBrowserUrl;
 		this._closePromptByClickoff.checked = this._doc.prefs.closePromptByClickoff;
+
+		this._defaultScaleSelect.value = this._doc.prefs.defaultScale;
 
 		this._shortenerStrategySelect.value = this._doc.prefs.shortenerStrategySelect;
 
@@ -862,6 +876,8 @@ export class PreferencesPrompt implements Prompt {
 		this._doc.prefs.enableChannelMuting = this._enableChannelMuting.checked;
 		this._doc.prefs.displayBrowserUrl = this._displayBrowserUrl.checked;
 		this._doc.prefs.closePromptByClickoff = this._closePromptByClickoff.checked;
+
+		this._doc.prefs.defaultScale = this._defaultScaleSelect.value;
 
 		this._doc.prefs.shortenerStrategySelect = this._shortenerStrategySelect.value;
 
