@@ -429,8 +429,6 @@ export class PreferencesPrompt implements Prompt {
 			option({ value: "light classic" }, "BeepBox Light"),
 			option({ value: "dark competition" }, "BeepBox Competition Dark"),
 			option({ value: "jummbox classic" }, "JummBox Dark"),
-			// let's retire this again.
-			// option({ value: "jummbox light" }, "JummBox Light"),
 			option({ value: "sandbox classic" }, "Sandbox"),
 			option({ value: "harrybox" }, "Haileybox"),
 			option({ value: "brucebox" }, "Brucebox"),
@@ -454,128 +452,14 @@ export class PreferencesPrompt implements Prompt {
 			option({ value: "nepbox" }, "Nepbox"),
 			option({ value: "slarmoosbox" }, "Slarmoo's Box"),
 			option({ value: "ultrabox dark" }, "UltraBox"),
+			option({ value: "custom", hidden: "true" }, "Custom"),
 		)
 	);
 
 	private readonly _customThemeFileInput: HTMLInputElement = input({ type: "file", accept: "image/*", text: "choose editor background image"});
 	private readonly _customThemeFileInput2: HTMLInputElement = input({ type: "file", accept: "image/*", text: "choose website background image" });
-	private readonly _colorInput: HTMLInputElement = input({ type: "text", style: "width: auto", value: localStorage.getItem("customColors") || `:root {
-		--page-margin: black;
-		--editor-background: black;
-		--hover-preview: white;
-		--playhead: white;
-		--primary-text: white;
-		--secondary-text: #999;
-		--inverted-text: black;
-		--text-selection: rgba(119,68,255,0.99);
-		--box-selection-fill: rgba(255,255,255,0.2);
-		--loop-accent: #74f;
-		--link-accent: #98f;
-		--ui-widget-background: #444;
-		--ui-widget-focus: #777;
-		--pitch-background: #444;
-		--tonic: #864;
-		--fifth-note: #468;
-		--white-piano-key: #bbb;
-		--black-piano-key: #444;
-		--white-piano-key-text: #131200;
-		--black-piano-key-text: #fff;
-		--use-color-formula: false;
-		--track-editor-bg-pitch: #444;
-		--track-editor-bg-pitch-dim: #333;
-		--track-editor-bg-noise: #444;
-		--track-editor-bg-noise-dim: #333;
-		--track-editor-bg-mod: #234;
-		--track-editor-bg-mod-dim: #123;
-		--multiplicative-mod-slider: #456;
-		--overwriting-mod-slider: #654;
-		--indicator-primary: #74f;
-		--indicator-secondary: #444;
-		--select2-opt-group: #585858;
-		--input-box-outline: #333;
-		--mute-button-normal: #ffa033;
-		--mute-button-mod: #9a6bff;
-		--pitch1-secondary-channel: #0099A1;
-		--pitch1-primary-channel:   #25F3FF;
-		--pitch1-secondary-note:    #00BDC7;
-		--pitch1-primary-note:      #92F9FF;
-		--pitch2-secondary-channel: #A1A100;
-		--pitch2-primary-channel:   #FFFF25;
-		--pitch2-secondary-note:    #C7C700;
-		--pitch2-primary-note:      #FFFF92;
-		--pitch3-secondary-channel: #C75000;
-		--pitch3-primary-channel:   #FF9752;
-		--pitch3-secondary-note:    #FF771C;
-		--pitch3-primary-note:      #FFCDAB;
-		--pitch4-secondary-channel: #00A100;
-		--pitch4-primary-channel:   #50FF50;
-		--pitch4-secondary-note:    #00C700;
-		--pitch4-primary-note:      #A0FFA0;
-		--pitch5-secondary-channel: #D020D0;
-		--pitch5-primary-channel:   #FF90FF;
-		--pitch5-secondary-note:    #E040E0;
-		--pitch5-primary-note:      #FFC0FF;
-		--pitch6-secondary-channel: #7777B0;
-		--pitch6-primary-channel:   #A0A0FF;
-		--pitch6-secondary-note:    #8888D0;
-		--pitch6-primary-note:      #D0D0FF;
-		--pitch7-secondary-channel: #8AA100;
-		--pitch7-primary-channel:   #DEFF25;
-		--pitch7-secondary-note:    #AAC700;
-		--pitch7-primary-note:      #E6FF92;
-		--pitch8-secondary-channel: #DF0019;
-		--pitch8-primary-channel:   #FF98A4;
-		--pitch8-secondary-note:    #FF4E63;
-		--pitch8-primary-note:      #FFB2BB;
-		--pitch9-secondary-channel: #00A170;
-		--pitch9-primary-channel:   #50FFC9;
-		--pitch9-secondary-note:    #00C78A;
-		--pitch9-primary-note:      #83FFD9;
-		--pitch10-secondary-channel:#A11FFF;
-		--pitch10-primary-channel:  #CE8BFF;
-		--pitch10-secondary-note:   #B757FF;
-		--pitch10-primary-note:     #DFACFF;
-		--noise1-secondary-channel: #6F6F6F;
-		--noise1-primary-channel:   #AAAAAA;
-		--noise1-secondary-note:    #A7A7A7;
-		--noise1-primary-note:      #E0E0E0;
-		--noise2-secondary-channel: #996633;
-		--noise2-primary-channel:   #DDAA77;
-		--noise2-secondary-note:    #CC9966;
-		--noise2-primary-note:      #F0D0BB;
-		--noise3-secondary-channel: #4A6D8F;
-		--noise3-primary-channel:   #77AADD;
-		--noise3-secondary-note:    #6F9FCF;
-		--noise3-primary-note:      #BBD7FF;
-		--noise4-secondary-channel: #7A4F9A;
-		--noise4-primary-channel:   #AF82D2;
-		--noise4-secondary-note:    #9E71C1;
-		--noise4-primary-note:      #D4C1EA;
-		--noise5-secondary-channel: #607837;
-		--noise5-primary-channel:   #A2BB77;
-		--noise5-secondary-note:    #91AA66;
-		--noise5-primary-note:      #C5E2B2;
-		--mod1-secondary-channel:   #339955;
-		--mod1-primary-channel:     #77fc55;
-		--mod1-secondary-note:      #77ff8a;
-		--mod1-primary-note:        #cdffee;
-		--mod2-secondary-channel:   #993355;
-		--mod2-primary-channel:     #f04960;
-		--mod2-secondary-note:      #f057a0;
-		--mod2-primary-note:        #ffb8de;
-		--mod3-secondary-channel:   #553399;
-		--mod3-primary-channel:     #8855fc;
-		--mod3-secondary-note:      #aa64ff;
-		--mod3-primary-note:	    #f8ddff;
-		--mod4-secondary-channel:   #a86436;
-		--mod4-primary-channel:     #c8a825;
-		--mod4-secondary-note:      #e8ba46;
-		--mod4-primary-note:        #fff6d3;
-		--mod-label-primary:        #999;
-		--mod-label-secondary-text: #333;
-		--mod-label-primary-text:   black;
-		--disabled-note-primary:    #999;
-		--disabled-note-secondary:  #666; }`});
+	private readonly _colorInput: HTMLInputElement = input({ type: "text", style: "width: auto"});
+	private readonly _customThemeFileReset: HTMLButtonElement = button({ style: "height: auto; min-height: var(--button-size);" }, "Reset background image");
 
 	private readonly _autoPlay: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _autoFollow: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
@@ -630,7 +514,7 @@ export class PreferencesPrompt implements Prompt {
 	private readonly _generalAreaButton: HTMLButtonElement = button({ class: "generalAreaButton", style: "width:25%;" }, "General");
 	private readonly _keybindAreaButton: HTMLButtonElement = button({ class: "keybindAreaButton", style: "width:25%;" }, "Shortcuts");
 
-	private readonly _appearanceArea: HTMLDivElement = div({ style: "display: none; overflow-y: auto; overflow-x: hidden;" },
+	private readonly _appearanceArea: HTMLDivElement = div({ style: "display: none; overflow-y: visible; overflow-x: hidden;" },
 		h2("Appearance"),
 		div({ style: "display: flex; flex-direction: row; text-align: left; justify-content: space-between;" },
 			div({ style: "width:49.5%;" },
@@ -639,7 +523,7 @@ export class PreferencesPrompt implements Prompt {
 					div({ style: "width: 50%; text-align: center;" }, this._showFifth),
 				),
 				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					'Notes flash when played:',
+					'Flash notes when played:',
 					div({ style: "width: 50%; text-align: center;" }, this._notesFlashWhenPlayed),
 				),
 				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
@@ -699,6 +583,10 @@ export class PreferencesPrompt implements Prompt {
 					div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._themeSelect),
 				),
 				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Custom theme data:",
+					div({ style: "width: 50%; text-align: center;" }, this._colorInput)
+				),
+				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 					div({ style: "width: 50%;" }, "Editor background image:"),
 					div({ style: "width: 50%; text-align: center;" }, this._customThemeFileInput)
 				),
@@ -706,15 +594,12 @@ export class PreferencesPrompt implements Prompt {
 					div({ style: "width: 50%;" }, "Website background image:"),
 					div({ style: "width: 50%; text-align: center;" }, this._customThemeFileInput2)
 				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Custom theme data:",
-					div({ style: "width: 50%; text-align: center;" }, this._colorInput)
-				),
+				div({ style: "text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, this._customThemeFileReset),
 			),
 		)
 	);
 
-	private readonly _generalArea: HTMLDivElement = div({ style: "overflow-y: auto;" },
+	private readonly _generalArea: HTMLDivElement = div({ style: "overflow-y: visible; overflow-x: hidden;" },
 		h2("General"),
 		div({ style: "display: flex; flex-direction: row-reverse; text-align: left; justify-content: space-between;" },
 			div({ style: "width:49.5%;" },
@@ -801,7 +686,7 @@ export class PreferencesPrompt implements Prompt {
 		)
 	);
 
-	private readonly _keybindArea: HTMLDivElement = div({ style: "display: none; overflow-y: auto;" },
+	private readonly _keybindArea: HTMLDivElement = div({ style: "display: none;  overflow-y: visible; overflow-x: hidden;" },
 		h2("Shortcuts"),
 		this._shortcutLabels,
 		this._resetDefaultButton,
@@ -825,7 +710,9 @@ export class PreferencesPrompt implements Prompt {
         this._cancelButton,
     );
 
-	private _lastTheme: string | null = window.localStorage.getItem("colorTheme")
+	private _lastTheme: string | null = window.localStorage.getItem("colorTheme");
+	private _newTheme: boolean = false;
+	private _resetCustomTheme: boolean = false;
 	private _mustReload: boolean = false;
 
 	constructor(private _doc: SongDocument, private _pattern: PatternEditor, private _pattern2: HTMLDivElement, private _pattern3: HTMLElement) {
@@ -849,6 +736,8 @@ export class PreferencesPrompt implements Prompt {
 		if (this._lastTheme != null) {
 			this._themeSelect.value = this._lastTheme;
 		}
+
+		this._colorInput.value = this._doc.prefs.customColors || "";
 
 		this._autoPlay.checked = this._doc.prefs.autoPlay;
 		this._autoFollow.checked = this._doc.prefs.autoFollow;
@@ -891,14 +780,15 @@ export class PreferencesPrompt implements Prompt {
 
 		this._customThemeFileInput.addEventListener("change", this._whenCustomThemeFileSelected);
 		this._customThemeFileInput2.addEventListener("change", this._whenCustomThemeFileSelected2);
+		this._customThemeFileReset.addEventListener("click", this._resetCustomThemeFile);
 		this._colorInput.addEventListener("change", this._whenColorsChanged);
 		this._themeSelect.addEventListener("change", this._previewTheme);
 	}
 
 	private _close = (): void => {
-		if (this._lastTheme != null) {
+		if (!this._newTheme && this._lastTheme != null) {
 			ColorConfig.setTheme(this._lastTheme);
-		} else {
+		} else if (!this._newTheme) {
 			ColorConfig.setTheme(ColorConfig.defaultTheme);
 		}
 		this._doc.prompt = null;
@@ -945,6 +835,23 @@ export class PreferencesPrompt implements Prompt {
 		this._doc.prefs.layout = (<any>this._layoutForm.elements)["layout"].value;
 
 		this._doc.prefs.colorTheme = this._themeSelect.value;
+		this._newTheme = true
+
+		this._doc.prefs.customColors = this._colorInput.value;
+
+		if (this._resetCustomTheme) {
+			this._mustReload = true
+			this._doc.prefs.customTheme = null
+			this._doc.prefs.customTheme2 = null
+			this._pattern._svg.style.backgroundImage = "";
+			document.body.style.backgroundImage = "";
+			this._pattern2.style.backgroundImage = "";
+			this._pattern3.style.backgroundImage = "";
+			const secondImage: HTMLElement | null = document.getElementById("secondImage");
+			if (secondImage != null) {
+				secondImage.style.backgroundImage = "";
+			}
+		}
 
 		this._doc.prefs.autoPlay = this._autoPlay.checked;
 		this._doc.prefs.autoFollow = this._autoFollow.checked;
@@ -1041,13 +948,13 @@ export class PreferencesPrompt implements Prompt {
 
 	private _previewTheme = (): void => {
 		ColorConfig.setTheme(this._themeSelect.value);
-		this._doc.notifier.changed();
+		this._doc.prefs.customColors = "";
 	}
 
 	private _whenColorsChanged = (): void => {
-		localStorage.setItem("customColors", this._colorInput.value);
-		window.localStorage.setItem("colorTheme", "custom");
-		this._doc.colorTheme = "custom";
+		this._doc.prefs.customColors = this._colorInput.value;
+		this._doc.prefs.colorTheme = "custom";
+		this._themeSelect.value = "custom";
 		this._mustReload = true;
 	}
 
@@ -1057,9 +964,8 @@ export class PreferencesPrompt implements Prompt {
 		const reader: FileReader = new FileReader();
 		reader.addEventListener("load", (event: Event): void => {
 			let base64 = <string>reader.result;
-			window.localStorage.setItem("customTheme", base64);
-			const value = `url("${window.localStorage.getItem('customTheme')}")`
-			this._pattern._svg.style.backgroundImage = value;
+			this._doc.prefs.customTheme = base64;
+			this._pattern._svg.style.backgroundImage = `url("${base64}")`;
 		});
 		reader.readAsDataURL(file);
 	}
@@ -1070,17 +976,21 @@ export class PreferencesPrompt implements Prompt {
 		const reader: FileReader = new FileReader();
 		reader.addEventListener("load", (event: Event): void => {
 			let base64 = <string>reader.result;
-			window.localStorage.setItem("customTheme2", base64);
-			const value = `url("${window.localStorage.getItem('customTheme2')}")`
-			document.body.style.backgroundImage = `url(${base64})`;
+			this._doc.prefs.customTheme2 = base64
+			const value = `url("${base64}")`
+			document.body.style.backgroundImage = value;
 			this._pattern2.style.backgroundImage = value;
 			this._pattern3.style.backgroundImage = value;
 			const secondImage: HTMLElement | null = document.getElementById("secondImage");
 			if (secondImage != null) {
-				secondImage.style.backgroundImage = `url(${base64})`;
+				secondImage.style.backgroundImage = value;
 			}
 		});
 		reader.readAsDataURL(file);
+	}
+
+	private _resetCustomThemeFile = (): void => {
+		this._resetCustomTheme = true;
 	}
 
 	private _whenSetCtrlKey = (event: Event): void => {
@@ -1113,9 +1023,11 @@ export class PreferencesPrompt implements Prompt {
 	private _whenResetDefaultShortcuts = (event: Event): void => {
 		let i: string;
 		for (i in this._shortcuts) {
-			this._shortcuts[i].keyCode = this._defaultShortcuts[i].keyCode;
-			this._shortcuts[i].ctrlKey = this._defaultShortcuts[i].ctrlKey;
-			this._shortcuts[i].shiftKey = this._defaultShortcuts[i].shiftKey;
+			if (this._defaultShortcuts[i]) {
+				this._shortcuts[i].keyCode = this._defaultShortcuts[i].keyCode;
+				this._shortcuts[i].ctrlKey = this._defaultShortcuts[i].ctrlKey;
+				this._shortcuts[i].shiftKey = this._defaultShortcuts[i].shiftKey;
+			}
 		}
 		this._renderShortcuts();
 	}
@@ -1124,29 +1036,31 @@ export class PreferencesPrompt implements Prompt {
 		this._shortcutLabels.replaceChildren();
 		let i: string;
 		for (i in this._shortcuts) {
-			const ctrlKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
-			const shiftKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
-			const recordRebindButton: HTMLButtonElement = button({ style: "height: auto; margin: 1em;" }, "Hold to Rebind");
+			if (this._defaultShortcuts[i]) {
+				const ctrlKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
+				const shiftKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
+				const recordRebindButton: HTMLButtonElement = button({ style: "height: auto; margin: 1em;" }, "Hold to Rebind");
 
-			ctrlKeyBox.checked = this._shortcuts[i].ctrlKey;
-			shiftKeyBox.checked = this._shortcuts[i].shiftKey;
+				ctrlKeyBox.checked = this._shortcuts[i].ctrlKey;
+				shiftKeyBox.checked = this._shortcuts[i].shiftKey;
 
-			this._shortcutLabels.appendChild(div({ style: `display: flex; flex-direction: row; height: 2em; justify-content: space-between; align-items: center; margin: 2px; border: 2px solid ${ColorConfig.uiWidgetBackground}; border-radius: 4px;` },
-				p({style: "margin: 1em;"}, this._shortcuts[i].displayName),
-				div({style: "display: flex; flex-direction: row; width: 60%;"},
-					div( "ctrl", ctrlKeyBox),
-					div( "shift", shiftKeyBox),
-					div( recordRebindButton),
-					div({ style: "margin: 1em" }, keyboardMap[this._shortcuts[i].keyCode]),
-				),
-			));
-			ctrlKeyBox.dataset.index = i;
-			shiftKeyBox.dataset.index = i;
-			recordRebindButton.dataset.index = i;
-			ctrlKeyBox.addEventListener("change", this._whenSetCtrlKey);
-			shiftKeyBox.addEventListener("change", this._whenSetShiftKey);
-			recordRebindButton.addEventListener("mousedown", this._whenSetRebind);
-			recordRebindButton.addEventListener("click", this._whenRecordRebind);
+				this._shortcutLabels.appendChild(div({ style: `display: flex; flex-direction: row; height: 2em; justify-content: space-between; align-items: center; margin: 2px; border: 2px solid ${ColorConfig.uiWidgetBackground}; border-radius: 4px;` },
+					p({style: "margin: 1em;"}, this._shortcuts[i].displayName),
+					div({style: "display: flex; flex-direction: row; width: 60%;"},
+						div( "ctrl", ctrlKeyBox),
+						div( "shift", shiftKeyBox),
+						div( recordRebindButton),
+						div({ style: "margin: 1em" }, keyboardMap[this._shortcuts[i].keyCode]),
+					),
+				));
+				ctrlKeyBox.dataset.index = i;
+				shiftKeyBox.dataset.index = i;
+				recordRebindButton.dataset.index = i;
+				ctrlKeyBox.addEventListener("change", this._whenSetCtrlKey);
+				shiftKeyBox.addEventListener("change", this._whenSetShiftKey);
+				recordRebindButton.addEventListener("mousedown", this._whenSetRebind);
+				recordRebindButton.addEventListener("click", this._whenRecordRebind);
+			}
 		}
 	}
 }
