@@ -20,12 +20,12 @@ export class MuteEditor {
     public readonly _channelNameInput: InputBox = new InputBox(HTML.input({ style: `color: ${ColorConfig.primaryText}; background-color: ${ColorConfig.uiWidgetFocus}; margin-top: -2px; display: none; width: 6em; position: absolute; border-radius: 0.2em; z-index: 2;`, "color": ColorConfig.primaryText }, ""), this._doc, (oldValue: string, newValue: string) => new ChangeChannelName(this._doc, oldValue, newValue));
 
     private readonly _channelDropDown: HTMLSelectElement = HTML.select({ style: "width: 0px; left: 19px; height: 19px; position:absolute; opacity:0" },
-
         HTML.option({ value: "rename" }, "Rename..."),
         HTML.option({ value: "chnUp" }, "Move Channel Up"),
         HTML.option({ value: "chnDown" }, "Move Channel Down"),
         HTML.option({ value: "chnMute" }, "Mute Channel"),
         HTML.option({ value: "chnSolo" }, "Solo Channel"),
+        HTML.option({ value: "chnHide" }, "Hide Channel"),
         HTML.option({ value: "chnInsert" }, "Insert Channel Below"),
         HTML.option({ value: "chnDelete" }, "Delete This Channel"),
     );
@@ -179,6 +179,10 @@ export class MuteEditor {
                 this.render();
                 break;
             }
+            case "chnHide":
+                this._doc.song.channels[this._channelDropDownChannel].visible = !this._doc.song.channels[this._channelDropDownChannel].visible;
+                this.render();
+                break;
             case "chnInsert": {
                 this._doc.channel = this._channelDropDownChannel;
                 this._doc.selection.resetBoxSelection();
