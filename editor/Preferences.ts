@@ -92,8 +92,8 @@ export const DefaultShortcuts: Dictionary<Shortcut> = {
 	"patternRight": { displayName: "Move Right", category: ShortcutCategory.selection, keyCode: 39, shiftKey: false, ctrlKey: false }, // right
 	"selectionRight": { displayName: "Extend Selection Right", category: ShortcutCategory.selection, keyCode: 39, shiftKey: true, ctrlKey: false }, // shift + right
 
-	"jummbify": { displayName: "Jummbify", category: ShortcutCategory.file, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
-	"slarmooify": { displayName: "Slarmooify", category: ShortcutCategory.file, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
+	//"jummbify": { displayName: "Jummbify", category: ShortcutCategory.file, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
+	//"slarmooify": { displayName: "Slarmooify", category: ShortcutCategory.file, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
 	// what to do about aliases? redo should also be shift+z; for now i will just ignore this since most people wont use more than one key combo for the same thing.
 	// another note: avoid having both shift & ctrl as modifiers cuz that totally just breaks
 	// also some of these hotkeys use alt as a modifier; these ones are rarely used so i will leave them unbound
