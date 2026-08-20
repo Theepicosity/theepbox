@@ -28,6 +28,8 @@ document.head.appendChild(HTML.style({ type: "text/css" }, `
 	--internal-stop-symbol: var(--stop-symbol, url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="-13 -13 26 26"><rect x="-6" y="-6" width="12" height="12" fill="gray"/></svg>'));
 	--internal-prev-bar-symbol: var(--prev-bar-symbol, url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="-13 -13 26 26"><rect x="-6" y="-6" width="2" height="12" fill="gray"/><path d="M 6 -6 L 6 6 L -3 0 z" fill="gray"/></svg>'));
 	--internal-next-bar-symbol: var(--next-bar-symbol, url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="-13 -13 26 26"><rect x="4" y="-6" width="2" height="12" fill="gray"/><path d="M -6 -6 L -6 6 L 3 0 z" fill="gray"/></svg>'));
+	--internal-auto-follow-disabled-symbol: var(--auto-follow-disabled, url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="-13 -13 26 26"><rect x="-6" y="-6" width="2" height="12" fill="gray"/><path d="M 0 -3 L 0 3 L 6 3 L 6 -3 z" fill="gray"/></svg>'));
+	--internal-auto-follow-enabled-symbol: var(--auto-follow-enabled, url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="-13 -13 26 26"><rect x="-6" y="-6" width="2" height="12" fill="gray"/><path d="M 0 -4 L 0 4 L 6 0 z" fill="gray"/></svg>'));
 	--internal-volume-symbol: var(--volume-symbol, url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26"><path d="M 4 16 L 4 10 L 8 10 L 13 5 L 13 21 L 8 16 z M 15 11 L 16 10 A 7.2 7.2 0 0 1 16 16 L 15 15 A 5.8 5.8 0 0 0 15 12 z M 18 8 L 19 7 A 11.5 11.5 0 0 1 19 19 L 18 18 A 10.1 10.1 0 0 0 18 8 z" fill="gray"/></svg>'));
 	--internal-unmuted-symbol: var(--unmuted-symbol, url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="3 3 20 20"><path d="M 4 16 L 4 10 L 8 10 L 13 5 L 13 21 L 8 16 z M 15 11 L 16 10 A 7.2 7.2 0 0 1 16 16 L 15 15 A 5.8 5.8 0 0 0 15 12 z M 18 8 L 19 7 A 11.5 11.5 0 0 1 19 19 L 18 18 A 10.1 10.1 0 0 0 18 8 z" fill="gray"/></svg>'));
 	--internal-muted-symbol: var(--muted-symbol, url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="3 3 20 20"><path d="M 4 16 L 4 10 L 8 10 L 13 5 L 13 21 L 8 16 z" fill="gray"/></svg>'));
@@ -1012,7 +1014,7 @@ html {
 
 .beepboxEditor .playback-bar-controls {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
 	grid-template-rows: min-content;
 	grid-column-gap: 4px;
 }
@@ -1090,6 +1092,44 @@ html {
 	mask-position: center;
 }
 
+.beepboxEditor button.autoFollowButton::before {
+	content: "";
+	flex-shrink: 0;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	width: var(--button-size);
+	height: var(--button-size);
+	background: currentColor;
+	-webkit-mask-image: var(--internal-auto-follow-disabled-symbol);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-image: var(--internal-auto-follow-disabled-symbol);
+	mask-repeat: no-repeat;
+	mask-position: center;
+}
+
+.beepboxEditor button.autoFollowButton.autoFollowEnabled::before {
+	content: "";
+	flex-shrink: 0;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	width: var(--button-size);
+	height: var(--button-size);
+	background: currentColor;
+	-webkit-mask-image: var(--internal-auto-follow-enabled-symbol);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-image: var(--internal-auto-follow-enabled-symbol);
+	mask-repeat: no-repeat;
+	mask-position: center;
+}
+
 .beepboxEditor button.prevBarButton::before {
 	content: "";
 	flex-shrink: 0;
@@ -1133,19 +1173,27 @@ html {
 }
 .beepboxEditor button.playButton, .beepboxEditor button.pauseButton, .beepboxEditor button.recordButton {
 	grid-column-start: 1;
-	grid-column-end: 3;
+	grid-column-end: 5;
+}
+.beepboxEditor button.playButton.small, .beepboxEditor button.pauseButton.small, .beepboxEditor button.recordButton.small {
+	grid-column-start: 1;
+	grid-column-end: 4;
 }
 .beepboxEditor button.stopButton {
 	grid-column-start: 1;
+	grid-column-end: 7;
+}
+.beepboxEditor button.autoFollowButton {
+	grid-column-start: 4;
 	grid-column-end: 5;
 }
 .beepboxEditor button.prevBarButton {
-	grid-column-start: 3;
-	grid-column-end: 4;
+	grid-column-start: 5;
+	grid-column-end: 6;
 }
 .beepboxEditor button.nextBarButton {
-	grid-column-start: 4;
-	grid-column-end: 5;
+	grid-column-start: 6;
+	grid-column-end: 7;
 }
 
 .beepboxEditor button.playButton.shrunk, .beepboxEditor button.recordButton.shrunk {
@@ -1161,11 +1209,15 @@ html {
 }
 .beepboxEditor button.playButton.shrunk {
 	grid-column-start: 1;
-	grid-column-end: 2;
+	grid-column-end: 3;
 }
 .beepboxEditor button.recordButton.shrunk {
-	grid-column-start: 2;
-	grid-column-end: 3;
+	grid-column-start: 3;
+	grid-column-end: 5;
+}
+.beepboxEditor button.recordButton.shrunk.small {
+	grid-column-start: 3;
+	grid-column-end: 4;
 }
 
 .beepboxEditor button.cancelButton::before {

@@ -59,7 +59,7 @@ export class SongPerformance {
         this._doc.synth.resetEffects();
         this._doc.synth.enableMetronome = false;
         this._doc.synth.countInMetronome = false
-        if (this._doc.prefs.autoFollow) {
+        if (this._doc.prefs.autoFollow == 2 || this._doc.autoFollow) {
             this._doc.synth.goToBar(this._doc.bar);
         }
         this._doc.synth.snapToBar();

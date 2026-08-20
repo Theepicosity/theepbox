@@ -469,9 +469,18 @@ export class PreferencesPrompt implements Prompt {
 	private readonly _customThemeFileReset: HTMLButtonElement = button({ style: "height: auto; min-height: var(--button-size);" }, "Reset background images");
 
 	private readonly _autoPlay: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
-	private readonly _autoFollow: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
+	private readonly _autoFollow: HTMLSelectElement = select({ style: "width: 100%;" },
+		option({ value: "0" }, "never"),
+		option({ value: "1" }, "with button"),
+		option({ value: "2" }, "always"),
+	);
 	private readonly _enableNotePreview: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
-	private readonly _notesOutsideScale: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
+    private readonly _notesOutsideScale: HTMLSelectElement = select({ style: "width: 100%;" },
+        option({ value: "0" }, "disabled"),
+        option({ value: "1" }, "place out of scale only"),
+        option({ value: "2" }, "transpose out of scale only"),
+        option({ value: "3" }, "place and transpose out of scale"),
+    );
 	private readonly _alwaysFineNoteVol: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _showScrollBar: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _enableChannelMuting: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
@@ -675,15 +684,15 @@ export class PreferencesPrompt implements Prompt {
 			this._autoPlayRow,
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 					"Automatically view current bar:",
-					div({ style: "width: 50%; text-align: center;" }, this._autoFollow),
+					div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._autoFollow),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 					"Hear preview of placed notes:",
 					div({ style: "width: 50%; text-align: center;" }, this._enableNotePreview),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Place notes out of scale:",
-					div({ style: "width: 50%; text-align: center;" }, this._notesOutsideScale),
+					"Edit notes out of scale:",
+					div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._notesOutsideScale),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 					"Set default scale:",
@@ -774,9 +783,9 @@ export class PreferencesPrompt implements Prompt {
 		this._colorInput.value = this._doc.prefs.customColors || "";
 
 		this._autoPlay.checked = this._doc.prefs.autoPlay;
-		this._autoFollow.checked = this._doc.prefs.autoFollow;
+		this._autoFollow.selectedIndex = this._doc.prefs.autoFollow;
 		this._enableNotePreview.checked = this._doc.prefs.enableNotePreview;
-		this._notesOutsideScale.checked = this._doc.prefs.notesOutsideScale;
+		this._notesOutsideScale.selectedIndex = this._doc.prefs.notesOutsideScale;
 		this._alwaysFineNoteVol.checked = this._doc.prefs.alwaysFineNoteVol;
 		this._showScrollBar.checked = this._doc.prefs.showScrollBar;
 		this._enableChannelMuting.checked = this._doc.prefs.enableChannelMuting;
@@ -895,9 +904,9 @@ export class PreferencesPrompt implements Prompt {
 		}
 
 		this._doc.prefs.autoPlay = this._autoPlay.checked;
-		this._doc.prefs.autoFollow = this._autoFollow.checked;
+		this._doc.prefs.autoFollow = this._autoFollow.selectedIndex;
 		this._doc.prefs.enableNotePreview = this._enableNotePreview.checked;
-		this._doc.prefs.notesOutsideScale = this._notesOutsideScale.checked;
+		this._doc.prefs.notesOutsideScale = this._notesOutsideScale.selectedIndex;
 		this._doc.prefs.alwaysFineNoteVol = this._alwaysFineNoteVol.checked;
 		this._doc.prefs.showScrollBar = this._showScrollBar.checked;
 		this._doc.prefs.enableChannelMuting = this._enableChannelMuting.checked;
@@ -919,6 +928,8 @@ export class PreferencesPrompt implements Prompt {
 		this._doc.prefs.metronomeWhileRecording = this._metronomeWhileRecording.checked;
 
 		this._doc.prefs.shortcuts = this._shortcuts;
+
+		if (this._autoFollow.selectedIndex == 0) this._doc.autoFollow = false
 
 		this._doc.prefs.save();
 		Layout.setLayout(this._doc.prefs.layout);
@@ -1106,8 +1117,11 @@ export class PreferencesPrompt implements Prompt {
 				h3({style: "text-align: center; width: 100%;"}, ["Playback", "Edit", "Selection", "Settings", "File"][categoryIndex])
 			))
 			let i: string;
-			for (i in this._shortcuts) {
+			for (i in this._defaultShortcuts) {
 				if (this._defaultShortcuts[i] && this._defaultShortcuts[i].category == categoryIndex) {
+					if (!this._shortcuts[i]) {
+						this._shortcuts[i] = this._defaultShortcuts[i]
+					}
 					const ctrlKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
 					const shiftKeyBox: HTMLInputElement = input({ style: "width: 1em; margin: 1em;", type: "checkbox" });
 					const recordRebindButton: HTMLButtonElement = button({ style: "height: auto; margin: 1em;" }, "Hold to Rebind");

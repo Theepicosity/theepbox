@@ -51,6 +51,7 @@ export class SongDocument {
     public trackVisibleChannels: number = 4;
     public barScrollPos: number = 0;
     public channelScrollPos: number = 0;
+    public autoFollow: boolean = false;
     public prompt: string | null = null;
     public promptEffectIndex: number | null = null;
 

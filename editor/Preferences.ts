@@ -91,6 +91,7 @@ export const DefaultShortcuts: Dictionary<Shortcut> = {
 	"selectionLeft": { displayName: "Extend Selection Left", category: ShortcutCategory.selection, keyCode: 37, shiftKey: true, ctrlKey: false }, // shift + left
 	"patternRight": { displayName: "Move Right", category: ShortcutCategory.selection, keyCode: 39, shiftKey: false, ctrlKey: false }, // right
 	"selectionRight": { displayName: "Extend Selection Right", category: ShortcutCategory.selection, keyCode: 39, shiftKey: true, ctrlKey: false }, // shift + right
+	"toggleAutoFollow": { displayName: "Auto Follow Playhead", category: ShortcutCategory.playback, keyCode: 220, shiftKey: false, ctrlKey: false }, // \
 
 	//"jummbify": { displayName: "Jummbify", category: ShortcutCategory.file, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
 	//"slarmooify": { displayName: "Slarmooify", category: ShortcutCategory.file, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
@@ -224,10 +225,10 @@ export class Preferences {
 	public customTheme2: string | null;
 	public customColors: string | null;
 	public autoPlay: boolean;
-	public autoFollow: boolean;
+	public autoFollow: number;
 	public enableNotePreview: boolean;
 	public showFifth: boolean = true;
-	public notesOutsideScale: boolean;
+	public notesOutsideScale: number;
 	public defaultScale: number;
 	public showLetters: boolean;
 	public showChannels: boolean;
@@ -270,10 +271,14 @@ export class Preferences {
 	
 	public reload(): void {
 		this.autoPlay = window.localStorage.getItem("autoPlay") == "true";
-		this.autoFollow = window.localStorage.getItem("autoFollow") == "true";
+		if (window.localStorage.getItem("autoFollow") == "true") this.autoFollow = 0
+		else if (window.localStorage.getItem("autoFollow") == "false") this.autoFollow = 2
+		else this.autoFollow = Number(window.localStorage.getItem("autoFollow") || "0");
 		this.enableNotePreview = window.localStorage.getItem("enableNotePreview") != "false";
 		this.showFifth = window.localStorage.getItem("showFifth") != "false";
-		this.notesOutsideScale = window.localStorage.getItem("notesOutsideScale") == "true";
+		if (window.localStorage.getItem("notesOutsideScale") == "true") this.notesOutsideScale = 0;
+		else if (window.localStorage.getItem("notesOutsideScale") == "false") this.notesOutsideScale = 3;
+		else this.notesOutsideScale = Number(window.localStorage.getItem("notesOutsideScale") || "0")
 		this.showLetters = window.localStorage.getItem("showLetters") != "false";
 		this.showChannels = window.localStorage.getItem("showChannels") != "false";
 		this.showScrollBar = window.localStorage.getItem("showScrollBar") != "false";
@@ -321,10 +326,10 @@ export class Preferences {
 	
 	public save(): void {
 		window.localStorage.setItem("autoPlay", this.autoPlay ? "true" : "false");
-		window.localStorage.setItem("autoFollow", this.autoFollow ? "true" : "false");
+		window.localStorage.setItem("autoFollow", String(this.autoFollow));
 		window.localStorage.setItem("enableNotePreview", this.enableNotePreview ? "true" : "false");
 		window.localStorage.setItem("showFifth", this.showFifth ? "true" : "false");
-		window.localStorage.setItem("notesOutsideScale", this.notesOutsideScale ? "true" : "false");
+		window.localStorage.setItem("notesOutsideScale", String(this.notesOutsideScale));
 		window.localStorage.setItem("defaultScale", Config.scales[this.defaultScale].name);
 		window.localStorage.setItem("showLetters", this.showLetters ? "true" : "false");
 		window.localStorage.setItem("showChannels", this.showChannels ? "true" : "false");

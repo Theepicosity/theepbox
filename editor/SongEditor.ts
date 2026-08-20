@@ -736,12 +736,13 @@ export class SongEditor {
     private readonly _loopEditor: LoopEditor = new LoopEditor(this._doc, this._trackEditor);
     private readonly _piano: Piano = new Piano(this._doc);
     private readonly _octaveScrollBar: OctaveScrollBar = new OctaveScrollBar(this._doc, this._piano);
-    private readonly _playButton: HTMLButtonElement = button({ class: "playButton", type: "button", title: "Play (Space)" }, span("Play"));
-    private readonly _pauseButton: HTMLButtonElement = button({ class: "pauseButton", style: "display: none;", type: "button", title: "Pause (Space)" }, "Pause");
-    private readonly _recordButton: HTMLButtonElement = button({ class: "recordButton", style: "display: none;", type: "button", title: "Record (Ctrl+Space)" }, span("Record"));
-    private readonly _stopButton: HTMLButtonElement = button({ class: "stopButton", style: "display: none;", type: "button", title: "Stop Recording (Space)" }, "Stop Recording");
-    private readonly _prevBarButton: HTMLButtonElement = button({ class: "prevBarButton", type: "button", title: "Previous Bar (left bracket)" });
-    private readonly _nextBarButton: HTMLButtonElement = button({ class: "nextBarButton", type: "button", title: "Next Bar (right bracket)" });
+    private readonly _playButton: HTMLButtonElement = button({ class: "playButton", type: "button", title: "Play" }, span("Play"));
+    private readonly _pauseButton: HTMLButtonElement = button({ class: "pauseButton", style: "display: none;", type: "button", title: "Pause" }, "Pause");
+    private readonly _recordButton: HTMLButtonElement = button({ class: "recordButton", style: "display: none;", type: "button", title: "Record" }, span("Record"));
+    private readonly _stopButton: HTMLButtonElement = button({ class: "stopButton", style: "display: none;", type: "button", title: "Stop Recording" }, "Stop Recording");
+    private readonly _autoFollowButton: HTMLButtonElement = button({ class: "autoFollowButton", style: "display: none;", type: "button", title: "Auto Follow Playhead" });
+    private readonly _prevBarButton: HTMLButtonElement = button({ class: "prevBarButton", type: "button", title: "Previous Bar" });
+    private readonly _nextBarButton: HTMLButtonElement = button({ class: "nextBarButton", type: "button", title: "Next Bar" });
     private readonly _volumeSlider: Slider = new Slider(input({ title: "main volume", style: "width: 5em; flex-grow: 1; margin: 0;", type: "range", min: "0", max: "75", value: "50", step: "1" }), this._doc, null, false);
     private readonly _outVolumeBarBgL: SVGRectElement = SVG.rect({ "pointer-events": "none", width: "90%", height: "50%", x: "5%", y: "25%", fill: ColorConfig.uiWidgetBackground });
     private readonly _outVolumeBarBgR: SVGRectElement = SVG.rect({ "pointer-events": "none", width: "90%", height: "50%", x: "5%", y: "25%", fill: ColorConfig.uiWidgetBackground });
@@ -1289,6 +1290,7 @@ export class SongEditor {
                 this._pauseButton,
                 this._recordButton,
                 this._stopButton,
+                this._autoFollowButton,
                 this._prevBarButton,
                 this._nextBarButton,
             ),
@@ -1319,6 +1321,8 @@ export class SongEditor {
     private _renderedIsPlaying: boolean = false;
     private _renderedIsRecording: boolean = false;
     private _renderedShowRecordButton: boolean = false;
+    private _renderedShowAutoFollowButton: boolean = false;
+    private _renderedIsAutoFollowEnabled: boolean = false;
     private _renderedCtrlHeld: boolean = false;
     private _ctrlHeld: boolean = false;
     private _shiftHeld: boolean = false;
@@ -1575,6 +1579,7 @@ export class SongEditor {
                 this._toggleRecord();
             }
         });
+        if (this._doc.prefs.autoFollow == 1) this._autoFollowButton.addEventListener("click", this._whenAutoFollowPressed);
         this._prevBarButton.addEventListener("click", this._whenPrevBarPressed);
         this._nextBarButton.addEventListener("click", this._whenNextBarPressed);
         this._volumeSlider.input.addEventListener("input", this._setVolumeSlider);
@@ -3561,7 +3566,7 @@ export class SongEditor {
 
         this._setPrompt(this._doc.prompt);
 
-        if (prefs.autoFollow && !this._doc.synth.playing) {
+        if ((prefs.autoFollow == 2 || this._doc.autoFollow) && !this._doc.synth.playing) {
             this._doc.synth.goToBar(this._doc.bar);
         }
 
@@ -3686,10 +3691,12 @@ export class SongEditor {
     }
 
     public updatePlayButton = (): void => {
-        if (this._renderedIsPlaying != this._doc.synth.playing || this._renderedIsRecording != this._doc.synth.recording || this._renderedShowRecordButton != this._doc.prefs.showRecordButton || this._renderedCtrlHeld != this._ctrlHeld) {
+        if (this._renderedIsPlaying != this._doc.synth.playing || this._renderedIsRecording != this._doc.synth.recording || this._renderedShowRecordButton != this._doc.prefs.showRecordButton || this._renderedCtrlHeld != this._ctrlHeld || (this._renderedShowAutoFollowButton != (this._doc.prefs.autoFollow == 1)) || this._renderedIsAutoFollowEnabled != this._doc.autoFollow) {
             this._renderedIsPlaying = this._doc.synth.playing;
             this._renderedIsRecording = this._doc.synth.recording;
             this._renderedShowRecordButton = this._doc.prefs.showRecordButton;
+            this._renderedShowAutoFollowButton = (this._doc.prefs.autoFollow == 1);
+            this._renderedIsAutoFollowEnabled = this._doc.autoFollow;
             this._renderedCtrlHeld = this._ctrlHeld;
 
             if (document.activeElement == this._playButton || document.activeElement == this._pauseButton || document.activeElement == this._recordButton || document.activeElement == this._stopButton) {
@@ -3701,6 +3708,20 @@ export class SongEditor {
             this._pauseButton.style.display = "none";
             this._recordButton.style.display = "none";
             this._stopButton.style.display = "none";
+            if (this._doc.prefs.autoFollow == 1) {
+                this._autoFollowButton.style.display = "";
+                if (this._doc.autoFollow) this._autoFollowButton.classList.add("autoFollowEnabled");
+                else this._autoFollowButton.classList.remove("autoFollowEnabled");
+                this._playButton.classList.add("small");
+                this._pauseButton.classList.add("small");
+                this._recordButton.classList.add("small");
+            }
+            else {
+                this._autoFollowButton.style.display = "none";
+                this._playButton.classList.remove("small");
+                this._pauseButton.classList.remove("small");
+                this._recordButton.classList.remove("small");
+            }
             this._prevBarButton.style.display = "";
             this._nextBarButton.style.display = "";
             this._playButton.classList.remove("shrunk");
@@ -3719,6 +3740,7 @@ export class SongEditor {
 
             if (this._doc.synth.recording) {
                 this._stopButton.style.display = "";
+                this._autoFollowButton.style.display = "none";
                 this._prevBarButton.style.display = "none";
                 this._nextBarButton.style.display = "none";
                 this._patternEditorRow.style.pointerEvents = "none";
@@ -3872,6 +3894,7 @@ export class SongEditor {
     }
 
     private _parseShortcut = (event: KeyboardEvent, shortcut: Shortcut, needControlForShortcuts: boolean): number => {
+        if (!shortcut) return -1;
         // check for keyCodes which very across plaforms
         let eventKeyCode: number;
         if (event.keyCode == 173) eventKeyCode = 189;
@@ -4094,7 +4117,7 @@ export class SongEditor {
                     this._doc.synth.snapToBar();
                     this._doc.synth.initModFilters(this._doc.song);
                     this._doc.synth.computeLatestModValues();
-                    if (this._doc.prefs.autoFollow) {
+                    if (this._doc.prefs.autoFollow == 2 || this._doc.autoFollow) {
                         this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                     }
 
@@ -4228,7 +4251,7 @@ export class SongEditor {
                 this._doc.synth.snapToStart();
                 this._doc.synth.initModFilters(this._doc.song);
                 this._doc.synth.computeLatestModValues();
-                if (this._doc.prefs.autoFollow) {
+                if (this._doc.prefs.autoFollow == 2 || this._doc.autoFollow) {
                     this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                 }
                 event.preventDefault();
@@ -4244,7 +4267,7 @@ export class SongEditor {
                 this._doc.synth.snapToBar();
                 this._doc.synth.initModFilters(this._doc.song);
                 this._doc.synth.computeLatestModValues();
-                if (this._doc.prefs.autoFollow) {
+                if (this._doc.prefs.autoFollow == 2 || this._doc.autoFollow) {
                     this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                 }
                 event.preventDefault();
@@ -4279,7 +4302,7 @@ export class SongEditor {
                     this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
                 }
 
-                if (this._doc.prefs.autoFollow) {
+                if (this._doc.prefs.autoFollow == 2 || this._doc.autoFollow) {
                     this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                 }
                 event.preventDefault();
@@ -4288,10 +4311,10 @@ export class SongEditor {
             case this._parseShortcut(event, shortcuts["jummbify"], needControlForShortcuts):
                 if (canPlayNotes) break;
                 this._doc.prefs.autoPlay = false;
-                this._doc.prefs.autoFollow = false;
+                this._doc.prefs.autoFollow = 0;
                 this._doc.prefs.enableNotePreview = true;
                 this._doc.prefs.showFifth = true;
-                this._doc.prefs.notesOutsideScale = false;
+                this._doc.prefs.notesOutsideScale = 0;
                 this._doc.prefs.defaultScale = 0;
                 this._doc.prefs.showLetters = true;
                 this._doc.prefs.showChannels = true;
@@ -4430,10 +4453,10 @@ export class SongEditor {
                 if (canPlayNotes) break;
                 // Ctrl Alt Shift S: Slarmooify - set all prefs to my preferred ones lol
                 this._doc.prefs.autoPlay = false;
-                this._doc.prefs.autoFollow = true;
+                this._doc.prefs.autoFollow = 2;
                 this._doc.prefs.enableNotePreview = true;
                 this._doc.prefs.showFifth = true;
-                this._doc.prefs.notesOutsideScale = false;
+                this._doc.prefs.notesOutsideScale = 0;
                 this._doc.prefs.defaultScale = 0;
                 this._doc.prefs.showLetters = true;
                 this._doc.prefs.showChannels = true;
@@ -4545,7 +4568,7 @@ export class SongEditor {
                     this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
                 }
 
-                if (this._doc.prefs.autoFollow) {
+                if (this._doc.prefs.autoFollow == 2 || this._doc.autoFollow) {
                     this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                 }
                 event.preventDefault();
@@ -4563,7 +4586,7 @@ export class SongEditor {
                     this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
                 }
 
-                if (this._doc.prefs.autoFollow) {
+                if (this._doc.prefs.autoFollow == 2 || this._doc.autoFollow) {
                     this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                 }
                 event.preventDefault();
@@ -4663,6 +4686,12 @@ export class SongEditor {
                 if (canPlayNotes) break;
                 this._doc.selection.digits = "";
                 this._doc.selection.nextDigit("0", false, false);
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["toggleAutoFollow"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.autoFollow == 1) this._doc.autoFollow = !this._doc.autoFollow;
                 event.preventDefault();
                 break;
 
@@ -4773,6 +4802,10 @@ export class SongEditor {
         textField.remove();
         this.refocusStage();
         if (!succeeded) window.prompt("Copy this:", text);
+    }
+
+    private _whenAutoFollowPressed = (): void => {
+        this._doc.autoFollow = !this._doc.autoFollow;
     }
 
     private _whenPrevBarPressed = (): void => {

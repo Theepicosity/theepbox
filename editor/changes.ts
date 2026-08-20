@@ -5225,7 +5225,7 @@ export class ChangeDragSelectedNotes extends ChangeSequence {
             this.append(new ChangeNoteLength(doc, note, Math.max(note.start, newStart), Math.min(newEnd, note.end)));
 
             for (let i: number = 0; i < Math.abs(transpose); i++) {
-                this.append(new ChangeTransposeNote(doc, channelIndex, note, transpose > 0, doc.prefs.notesOutsideScale));
+                this.append(new ChangeTransposeNote(doc, channelIndex, note, transpose > 0, (doc.prefs.notesOutsideScale == 2 || doc.prefs.notesOutsideScale == 3)));
             }
 
         }

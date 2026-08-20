@@ -874,7 +874,7 @@ export class Selection {
             if (channelIndex >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
                 continue;
             for (const pattern of this._eachSelectedPattern(channelIndex)) {
-                this._changeTranspose.append(new ChangeTranspose(this._doc, channelIndex, pattern, upward, this._doc.prefs.notesOutsideScale, octave));
+                this._changeTranspose.append(new ChangeTranspose(this._doc, channelIndex, pattern, upward, (this._doc.prefs.notesOutsideScale == 2 || this._doc.prefs.notesOutsideScale == 3), octave));
             }
         }
 

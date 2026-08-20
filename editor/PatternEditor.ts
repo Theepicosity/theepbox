@@ -369,6 +369,8 @@ export class PatternEditor {
 
         let mousePitch: number = this._findMousePitch(this._mouseY);
 
+        const notesOutsideScale: boolean = (this._doc.prefs.notesOutsideScale == 1 || this._doc.prefs.notesOutsideScale == 3)
+
         if (this._cursor.curNote != null) {
 
             this._cursor.start = this._cursor.curNote.start;
@@ -408,7 +410,7 @@ export class PatternEditor {
             }
 
             mousePitch -= interval;
-            this._cursor.pitch = this._snapToPitch(mousePitch, -minInterval, this._getMaxPitch() - maxInterval);
+            this._cursor.pitch = this._snapToPitch(mousePitch, -minInterval, this._getMaxPitch() - maxInterval, notesOutsideScale);
 
             // Snap to nearby existing note if present.
             if (!this._doc.song.getChannelIsNoise(this._doc.channel) && !this._doc.song.getChannelIsMod(this._doc.channel)) {
@@ -428,7 +430,7 @@ export class PatternEditor {
                 }
             }
         } else {
-            this._cursor.pitch = this._snapToPitch(mousePitch, 0, this._getMaxPitch());
+            this._cursor.pitch = this._snapToPitch(mousePitch, 0, this._getMaxPitch(), notesOutsideScale);
             const defaultLength: number = this._copiedPins[this._copiedPins.length - 1].time;
             const fullBeats: number = Math.floor(this._cursor.part / Config.partsPerBeat);
             const maxDivision: number = this._getMaxDivision();
@@ -543,10 +545,10 @@ export class PatternEditor {
         return Math.max(0, Math.min(this._pitchCount - 1, this._pitchCount - (pixelY / this._pitchHeight))) + this._octaveOffset;
     }
 
-    private _snapToPitch(guess: number, min: number, max: number): number {
+    private _snapToPitch(guess: number, min: number, max: number, notesOutsideScale: boolean): number {
         if (guess < min) guess = min;
         if (guess > max) guess = max;
-        const scale: ReadonlyArray<boolean> = this._doc.prefs.notesOutsideScale ? Config.scales.dictionary["Free"].flags : this._doc.song.scale == Config.scales.dictionary["Custom"].index ? this._doc.song.scaleCustom : Config.scales[this._doc.song.scale].flags;
+        const scale: ReadonlyArray<boolean> = notesOutsideScale ? Config.scales.dictionary["Free"].flags : this._doc.song.scale == Config.scales.dictionary["Custom"].index ? this._doc.song.scaleCustom : Config.scales[this._doc.song.scale].flags;
         if (scale[Math.floor(guess) % Config.pitchesPerOctave] || this._doc.song.getChannelIsNoise(this._doc.channel) || this._doc.song.getChannelIsMod(this._doc.channel)) {
 
             return Math.floor(guess);
@@ -676,7 +678,7 @@ export class PatternEditor {
             }
         }
 
-        if (this._doc.synth.playing && (this._doc.synth.recording || this._doc.prefs.autoFollow) && this._followPlayheadBar != playheadBar) {
+        if (this._doc.synth.playing && (this._doc.synth.recording || this._doc.prefs.autoFollow == 2 || this._doc.autoFollow) && this._followPlayheadBar != playheadBar) {
             // When autofollow is enabled, select the current bar (but don't record it in undo history).
             new ChangeChannelBar(this._doc, this._doc.channel, playheadBar);
             // The full interface is usually only rerendered in response to user input events, not animation events, but in this case go ahead and rerender everything.
@@ -1953,6 +1955,7 @@ export class PatternEditor {
         // so changes are no longer undoable and the cursor status may be
         // invalid. Abort further drag changes until the mouse is released.
         const continuousState: boolean = this._doc.lastChangeWas(this._dragChange);
+        const notesOutsideScale: boolean = (this._doc.prefs.notesOutsideScale == 1 || this._doc.prefs.notesOutsideScale == 3);
 
         if (!this._mouseDragging && this._mouseDown && this._cursor.valid && continuousState) {
             const dx: number = this._mouseX - this._mouseXStart;
@@ -2245,7 +2248,7 @@ export class PatternEditor {
                         }
                         if (bendSize < 0) bendSize = 0;
                         if (bendSize > cap) bendSize = cap;
-                        bendInterval = this._snapToPitch(prevPin.interval * (1.0 - sizeRatio) + nextPin.interval * sizeRatio + this._cursor.curNote.pitches[0], 0, this._getMaxPitch()) - this._cursor.curNote.pitches[0];
+                        bendInterval = this._snapToPitch(prevPin.interval * (1.0 - sizeRatio) + nextPin.interval * sizeRatio + this._cursor.curNote.pitches[0], 0, this._getMaxPitch(), notesOutsideScale) - this._cursor.curNote.pitches[0];
                         break;
                     }
                     if (this._doc.song.getChannelIsMod(this._doc.channel) && this.controlMode) {
@@ -2338,12 +2341,12 @@ export class PatternEditor {
                     maxPitch -= this._cursor.curNote.pitches[this._cursor.pitchIndex];
 
                     if (!this._doc.song.getChannelIsMod(this._doc.channel)) {
-                        const bendTo: number = this._snapToPitch(this._findMousePitch(this._mouseY), -minPitch, this._getMaxPitch() - maxPitch);
+                        const bendTo: number = this._snapToPitch(this._findMousePitch(this._mouseY), -minPitch, this._getMaxPitch() - maxPitch, notesOutsideScale);
                         sequence.append(new ChangePitchBend(this._doc, this._cursor.curNote, bendStart, bendEnd, bendTo, this._cursor.pitchIndex));
                         this._dragPitch = bendTo;
                     }
                     else {
-                        const bendTo: number = this._snapToPitch(this._dragPitch, -minPitch, Config.modCount - 1);
+                        const bendTo: number = this._snapToPitch(this._dragPitch, -minPitch, Config.modCount - 1, notesOutsideScale);
                         sequence.append(new ChangePitchBend(this._doc, this._cursor.curNote, bendStart, bendEnd, bendTo, this._cursor.pitchIndex));
                         this._dragPitch = bendTo;
                     }
