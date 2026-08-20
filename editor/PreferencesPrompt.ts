@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 import { Config } from "../synth/SynthConfig";
-import { EditorConfig } from "./EditorConfig";
+import { EditorConfig, isMobile } from "./EditorConfig";
 import { PatternEditor } from "./PatternEditor";
 import { SongDocument } from "./SongDocument";
 import { Shortcut, DefaultShortcuts, ShortcutCategory } from "./Preferences";
@@ -586,15 +586,19 @@ export class PreferencesPrompt implements Prompt {
 		)
 	);
 
+	private readonly _layoutRow: HTMLDivElement = div(
+		h3({ style: "text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, "Layout"),
+		div({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em;" },
+			div({ style: "width: 10%; text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, ""),
+			div({ style: "width: 80%; text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, this._layoutForm),
+			div({ style: "width: 10%; text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, ""),
+		),
+	);
+
 	private readonly _themeArea: HTMLDivElement = div({ style: "display: none; overflow-y: visible; overflow-x: hidden;" },
 		h2("Theme"),
 		div({ style: "text-align: left;" },
-			h3({ style: "text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, "Layout"),
-			div({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em;" },
-				div({ style: "width: 10%; text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, ""),
-				div({ style: "width: 80%; text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, this._layoutForm),
-				div({ style: "width: 10%; text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, ""),
-			),
+			this._layoutRow,
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 				"Color palette:",
 				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._themeSelect),
@@ -658,13 +662,17 @@ export class PreferencesPrompt implements Prompt {
 		)
 	);
 
+	private readonly _autoPlayRow: HTMLDivElement = div(
+		label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+			  "Auto-play on load:",
+		div({ style: "width: 50%; text-align: center;" }, this._autoPlay),
+		),
+	);
+
 	private readonly _generalArea: HTMLDivElement = div({ style: "overflow-y: visible; overflow-x: hidden;" },
 		h2("General"),
 		div({ style: "text-align: left;" },
-			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-				"Auto-play on load:",
-				div({ style: "width: 50%; text-align: center;" }, this._autoPlay),
-			),
+			this._autoPlayRow,
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 					"Automatically view current bar:",
 					div({ style: "width: 50%; text-align: center;" }, this._autoFollow),
@@ -792,8 +800,11 @@ export class PreferencesPrompt implements Prompt {
 		this._shortcuts = _doc.prefs.shortcuts;
 		this._renderShortcuts();
 		this._resetDefaultButton.addEventListener("click", this._whenResetDefaultShortcuts);
-
         setTimeout(() => this._showRecordButton.focus());
+
+		if (isMobile) { this._autoPlayRow.setAttribute("hidden", ""); }
+
+		if (window.screen.availWidth < 710) { this._layoutRow.setAttribute("hidden", ""); }
 
 		this._renderKeyboardLayoutPreview();
 		this._keyboardLayout.addEventListener("change", this._renderKeyboardLayoutPreview);

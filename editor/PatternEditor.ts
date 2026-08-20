@@ -1628,8 +1628,6 @@ export class PatternEditor {
                 // Explicitly set the mod to the applied value, just in case the note we add isn't picked up in the next synth run.
                 const modNoteIndex: number = Config.modCount - 1 - usedModIndices[i];
                 const usedInstrument: Instrument = usedInstruments[i];
-                console.log(instrument)
-                console.log(usedInstrument)
                 if (usedInstrument.modChannels[usedModIndices[i]][0] >= -1) {
                     // Generate list of used instruments
                     let usedNewInstrumentIndices: number[] = [];
