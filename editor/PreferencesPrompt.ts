@@ -301,7 +301,7 @@ export class PreferencesPrompt implements Prompt {
 	private readonly _showSampleLoadingStatus: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _showDescription: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 
-	private readonly _layoutForm: HTMLFormElement = form({ style: "display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;" },
+	private readonly _layoutForm: HTMLFormElement = form({ style: "display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; text-align: center;" },
 		label({ class: "layout-option" },
 			  input({ type: "radio", name: "layout", value: "small" }),
 			  SVG(`\
@@ -466,7 +466,7 @@ export class PreferencesPrompt implements Prompt {
 	private readonly _customThemeFileInput: HTMLInputElement = input({ type: "file", accept: "image/*", text: "choose editor background image"});
 	private readonly _customThemeFileInput2: HTMLInputElement = input({ type: "file", accept: "image/*", text: "choose website background image" });
 	private readonly _colorInput: HTMLInputElement = input({ type: "text", style: "width: auto"});
-	private readonly _customThemeFileReset: HTMLButtonElement = button({ style: "height: auto; min-height: var(--button-size);" }, "Reset background image");
+	private readonly _customThemeFileReset: HTMLButtonElement = button({ style: "height: auto; min-height: var(--button-size);" }, "Reset background images");
 
 	private readonly _autoPlay: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _autoFollow: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
@@ -518,183 +518,193 @@ export class PreferencesPrompt implements Prompt {
 
 	private readonly _resetDefaultButton: HTMLButtonElement = button({ style: "height: auto; margin: 1em;" }, "Reset to Defaults");
 
-	private readonly _appearanceAreaButton: HTMLButtonElement = button({ class: "appearanceAreaButton", style: "width:25%;" }, "Appearance");
-	private readonly _generalAreaButton: HTMLButtonElement = button({ class: "generalAreaButton", style: "width:25%;" }, "General");
-	private readonly _keybindAreaButton: HTMLButtonElement = button({ class: "keybindAreaButton", style: "width:25%;" }, "Shortcuts");
+	private readonly _appearanceAreaButton: HTMLButtonElement = button({ class: "appearanceAreaButton", style: "width:16%;" }, "Appearance");
+	private readonly _themeAreaButton: HTMLButtonElement = button({ class: "themeAreaButton", style: "width:16%;" }, "Theme");
+	private readonly _generalAreaButton: HTMLButtonElement = button({ class: "generalAreaButton", style: "width:16%;" }, "General");
+	private readonly _recordingAreaButton: HTMLButtonElement = button({ class: "recordingAreaButton", style: "width:16%;" }, "Recording");
+	private readonly _keybindAreaButton: HTMLButtonElement = button({ class: "keybindAreaButton", style: "width:16%;" }, "Shortcuts");
 
 	private readonly _appearanceArea: HTMLDivElement = div({ style: "display: none; overflow-y: visible; overflow-x: hidden;" },
 		h2("Appearance"),
-		div({ style: "display: flex; flex-direction: row; text-align: left; justify-content: space-between;" },
-			div({ style: "width:49.5%;" },
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					'Highlight "fifth" note:',
-					div({ style: "width: 50%; text-align: center;" }, this._showFifth),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					'Flash notes when played:',
-					div({ style: "width: 50%; text-align: center;" }, this._notesFlashWhenPlayed),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					div({ style: "width: 50%;" }, "Blur background while in prompt:"),
-					div({ style: "width: 50%; text-align: center;" }, this._frostedGlassBackground),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Show all channels:",
-					div({ style: "width: 50%; text-align: center;" }, this._showChannels),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Preserve channel color order:",
-					div({ style: "width: 50%; text-align: center;" }, this._fixChannelColorOrder),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Show instrument scrollbars:",
-					div({ style: "width: 50%; text-align: center;" }, this._showInstrumentScrollbars),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-						div({ style: "width: 50%;" }, "Show instrument copy/paste buttons:"),
-						div({ style: "width: 50%; text-align: center;" }, this._instrumentCopyPaste),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-						div({ style: "width: 50%;" }, "Show instrument import/export buttons:"),
-						div({ style: "width: 50%; text-align: center;" }, this._instrumentImportExport),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					div({ style: "width: 50%;" }, "Show instrument buttons at top:"),
-					div({ style: "width: 50%; text-align: center;" }, this._instrumentButtonsAtTop),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Show piano keys:",
-					div({ style: "width: 50%; text-align: center;" }, this._showLetters),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Show volume bar:",
-					div({ style: "width: 50%; text-align: center;" }, this._displayVolumeBar),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Show oscilloscope:",
-					div({ style: "width: 50%; text-align: center;" }, this._showOscilloscope),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Show sample loading status:",
-					div({ style: "width: 50%; text-align: center;" }, this._showSampleLoadingStatus),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Show description:",
-					div({ style: "width: 50%; text-align: center;" }, this._showDescription),
-				),
+		div({ style: "text-align: left;" },
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				'Highlight "fifth" note:',
+				div({ style: "width: 50%; text-align: center;" }, this._showFifth),
 			),
-			div({ style: "width:49.5%;" },
-				div({ style: "text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, "Layout:"),
-				this._layoutForm,
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Theme:",
-					div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._themeSelect),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Custom theme data:",
-					div({ style: "width: 50%; text-align: center;" }, this._colorInput)
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					div({ style: "width: 50%;" }, "Editor background image:"),
-					div({ style: "width: 50%; text-align: center;" }, this._customThemeFileInput)
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					div({ style: "width: 50%;" }, "Website background image:"),
-					div({ style: "width: 50%; text-align: center;" }, this._customThemeFileInput2)
-				),
-				div({ style: "text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, this._customThemeFileReset),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				'Flash notes when played:',
+				div({ style: "width: 50%; text-align: center;" }, this._notesFlashWhenPlayed),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				div({ style: "width: 50%;" }, "Blur background while in prompt:"),
+				div({ style: "width: 50%; text-align: center;" }, this._frostedGlassBackground),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Show all channels:",
+				div({ style: "width: 50%; text-align: center;" }, this._showChannels),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Preserve channel color order:",
+				div({ style: "width: 50%; text-align: center;" }, this._fixChannelColorOrder),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Show instrument scrollbars:",
+				div({ style: "width: 50%; text-align: center;" }, this._showInstrumentScrollbars),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					div({ style: "width: 50%;" }, "Show instrument copy/paste buttons:"),
+					div({ style: "width: 50%; text-align: center;" }, this._instrumentCopyPaste),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					div({ style: "width: 50%;" }, "Show instrument import/export buttons:"),
+					div({ style: "width: 50%; text-align: center;" }, this._instrumentImportExport),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				div({ style: "width: 50%;" }, "Show instrument buttons at top:"),
+				div({ style: "width: 50%; text-align: center;" }, this._instrumentButtonsAtTop),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Show piano keys:",
+				div({ style: "width: 50%; text-align: center;" }, this._showLetters),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Show volume bar:",
+				div({ style: "width: 50%; text-align: center;" }, this._displayVolumeBar),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Show oscilloscope:",
+				div({ style: "width: 50%; text-align: center;" }, this._showOscilloscope),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Show sample loading status:",
+				div({ style: "width: 50%; text-align: center;" }, this._showSampleLoadingStatus),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Show description:",
+				div({ style: "width: 50%; text-align: center;" }, this._showDescription),
+			)
+		)
+	);
+
+	private readonly _themeArea: HTMLDivElement = div({ style: "display: none; overflow-y: visible; overflow-x: hidden;" },
+		h2("Theme"),
+		div({ style: "text-align: left;" },
+			h3({ style: "text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, "Layout"),
+			div({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em;" },
+				div({ style: "width: 10%; text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, ""),
+				div({ style: "width: 80%; text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, this._layoutForm),
+				div({ style: "width: 10%; text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, ""),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Color palette:",
+				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._themeSelect),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Custom color palette data:",
+				div({ style: "width: 50%; text-align: center;" }, this._colorInput)
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				div({ style: "width: 50%;" }, "Editor background image:"),
+				div({ style: "width: 50%; text-align: center;" }, this._customThemeFileInput)
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				div({ style: "width: 50%;" }, "Website background image:"),
+				div({ style: "width: 50%; text-align: center;" }, this._customThemeFileInput2)
+			),
+			div({ style: "text-align: center; margin-top: 0.5em; margin-bottom: 0.5em;" }, this._customThemeFileReset),
+		)
+	);
+
+	private readonly _recordingArea: HTMLDivElement = div({ style: "display: none; overflow-y: visible; overflow-x: hidden;" },
+		h2("Recording"),
+		div({ style: "text-align: left;" },
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Always show recording button:",
+				div({ style: "width: 50%; text-align: center;" }, this._showRecordButton),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				div({ style: "width: 50%;" }, "Snap recorded notes to rhythm:"),
+				div({ style: "width: 50%; text-align: center;" }, this._snapRecordedNotesToRhythm),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				div({ style: "width: 50%;" }, "Ignore recorded notes outside of the scale:"),
+				div({ style: "width: 50%; text-align: center;" }, this._ignorePerformedNotesNotInScale),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Recording keyboard layout:",
+				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._keyboardLayout),
+			),
+			div({ style: "display: flex; margin-top: 0.5em; margin-bottom: 0.5em;" }, this._keyboardLayoutPreview),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 0.5em; height: 2em;" },
+				"Shortcut / Recording mode:",
+				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._keyboardMode),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Enable MIDI performance:",
+				div({ style: "width: 50%; text-align: center;" }, this._enableMidi),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Record with metronome:",
+				div({ style: "width: 50%; text-align: center;" }, this._metronomeWhileRecording),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				div({ style: "width: 50%;" }, "Count-in recording with metronome:"),
+				div({ style: "width: 50%; text-align: center;" }, this._metronomeCountIn),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Bass channel offset:",
+				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._bassOffset),
 			),
 		)
 	);
 
 	private readonly _generalArea: HTMLDivElement = div({ style: "overflow-y: visible; overflow-x: hidden;" },
 		h2("General"),
-		div({ style: "display: flex; flex-direction: row-reverse; text-align: left; justify-content: space-between;" },
-			div({ style: "width:49.5%;" },
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Always show recording button:",
-					div({ style: "width: 50%; text-align: center;" }, this._showRecordButton),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					div({ style: "width: 50%;" }, "Snap recorded notes to rhythm:"),
-					div({ style: "width: 50%; text-align: center;" }, this._snapRecordedNotesToRhythm),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					div({ style: "width: 50%;" }, "Ignore recorded notes outside of the scale:"),
-					div({ style: "width: 50%; text-align: center;" }, this._ignorePerformedNotesNotInScale),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Recording keyboard layout:",
-					div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._keyboardLayout),
-				),
-				div({ style: "display: flex; margin-top: 0.5em; margin-bottom: 0.5em;" }, this._keyboardLayoutPreview),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 0.5em; height: 2em;" },
-					"Shortcut / Recording mode:",
-					div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._keyboardMode),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Enable MIDI performance:",
-					div({ style: "width: 50%; text-align: center;" }, this._enableMidi),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Record with metronome:",
-					div({ style: "width: 50%; text-align: center;" }, this._metronomeWhileRecording),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					div({ style: "width: 50%;" }, "Count-in recording with metronome:"),
-					div({ style: "width: 50%; text-align: center;" }, this._metronomeCountIn),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Bass channel offset:",
-					div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._bassOffset),
-				),
+		div({ style: "text-align: left;" },
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Auto-play on load:",
+				div({ style: "width: 50%; text-align: center;" }, this._autoPlay),
 			),
-			div({ style: "width:49.5%;" },
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Auto-play on load:",
-					div({ style: "width: 50%; text-align: center;" }, this._autoPlay),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					  "Automatically view current bar:",
-					  div({ style: "width: 50%; text-align: center;" }, this._autoFollow),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					  "Hear preview of placed notes:",
-					  div({ style: "width: 50%; text-align: center;" }, this._enableNotePreview),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					  "Place notes out of scale:",
-					  div({ style: "width: 50%; text-align: center;" }, this._notesOutsideScale),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					  "Set default scale:",
-					  div({ style: "width: 50%; text-align: center;", class: "selectContainer" }, this._defaultScaleSelect),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					  "Always use fine note volume:",
-					  div({ style: "width: 50%; text-align: center;" }, this._alwaysFineNoteVol),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					"Enable octave scroll bar:",
-					div({ style: "width: 50%; text-align: center;" }, this._showScrollBar),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					  "Enable channel muting:",
-					  div({ style: "width: 50%; text-align: center;" }, this._enableChannelMuting),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					  "Enable song data in URL:",
-					  div({ style: "width: 50%; text-align: center;" }, this._displayBrowserUrl),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					  "Song URL shortener:",
-					  div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._shortenerStrategySelect),
-				),
-				label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					  "Close prompts on click-off:",
-					  div({ style: "width: 50%; text-align: center;" }, this._closePromptByClickoff),
-				),
-			)
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Automatically view current bar:",
+					div({ style: "width: 50%; text-align: center;" }, this._autoFollow),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Hear preview of placed notes:",
+					div({ style: "width: 50%; text-align: center;" }, this._enableNotePreview),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Place notes out of scale:",
+					div({ style: "width: 50%; text-align: center;" }, this._notesOutsideScale),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Set default scale:",
+					div({ style: "width: 50%; text-align: center;", class: "selectContainer" }, this._defaultScaleSelect),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Always use fine note volume:",
+					div({ style: "width: 50%; text-align: center;" }, this._alwaysFineNoteVol),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Enable octave scroll bar:",
+				div({ style: "width: 50%; text-align: center;" }, this._showScrollBar),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Enable channel muting:",
+					div({ style: "width: 50%; text-align: center;" }, this._enableChannelMuting),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Enable song data in URL:",
+					div({ style: "width: 50%; text-align: center;" }, this._displayBrowserUrl),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Song URL shortener:",
+					div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._shortenerStrategySelect),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Close prompts on click-off:",
+					div({ style: "width: 50%; text-align: center;" }, this._closePromptByClickoff),
+			),
 		)
 	);
 
@@ -707,14 +717,18 @@ export class PreferencesPrompt implements Prompt {
     private readonly _okayButton: HTMLButtonElement = button({ class: "okayButton", style: "width:45%;" }, "Okay");
     private readonly _cancelButton: HTMLButtonElement = button({ class: "cancelButton" });
 
-	public readonly container: HTMLDivElement = div({ class: "prompt noSelection recordingSetupPrompt", style: "width: 750px; max-height: 90%;" },
+	public readonly container: HTMLDivElement = div({ class: "prompt noSelection recordingSetupPrompt", style: "width: 600px; max-height: 90%;" },
 		div({ style: "display: flex; flex-direction: row; justify-content: space-evenly;" },
 			this._generalAreaButton,
 			this._appearanceAreaButton,
+			this._themeAreaButton,
+			this._recordingAreaButton,
 			this._keybindAreaButton,
 		),
 		this._generalArea,
 		this._appearanceArea,
+		this._themeArea,
+		this._recordingArea,
 		this._keybindArea,
         div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" },
             this._okayButton,
@@ -781,13 +795,6 @@ export class PreferencesPrompt implements Prompt {
 
         setTimeout(() => this._showRecordButton.focus());
 
-		this._appearanceAreaButton.addEventListener("click", this._renderAppearanceArea);
-		this._generalAreaButton.addEventListener("click", this._renderGeneralArea);
-		this._keybindAreaButton.addEventListener("click", this._renderKeybindArea);
-        this._okayButton.addEventListener("click", this._confirm);
-        this._cancelButton.addEventListener("click", this._close);
-        this.container.addEventListener("keydown", this._whenKeyPressed);
-
 		this._renderKeyboardLayoutPreview();
 		this._keyboardLayout.addEventListener("change", this._renderKeyboardLayoutPreview);
 		this._bassOffset.addEventListener("change", this._renderKeyboardLayoutPreview);
@@ -797,6 +804,15 @@ export class PreferencesPrompt implements Prompt {
 		this._customThemeFileReset.addEventListener("click", this._resetCustomThemeFile);
 		this._colorInput.addEventListener("change", this._whenColorsChanged);
 		this._themeSelect.addEventListener("change", this._previewTheme);
+
+		this._appearanceAreaButton.addEventListener("click", this._renderAppearanceArea);
+		this._themeAreaButton.addEventListener("click", this._renderThemeArea);
+		this._generalAreaButton.addEventListener("click", this._renderGeneralArea);
+		this._recordingAreaButton.addEventListener("click", this._renderRecordingArea);
+		this._keybindAreaButton.addEventListener("click", this._renderKeybindArea);
+		this._okayButton.addEventListener("click", this._confirm);
+		this._cancelButton.addEventListener("click", this._close);
+		this.container.addEventListener("keydown", this._whenKeyPressed);
 	}
 
 	private _close = (): void => {
@@ -901,21 +917,45 @@ export class PreferencesPrompt implements Prompt {
 	private _renderAppearanceArea = (event: Event): void => {
 		event.preventDefault();
 		this._appearanceArea.style.display = "";
+		this._themeArea.style.display = "none";
 		this._generalArea.style.display = "none";
+		this._recordingArea.style.display = "none";
+		this._keybindArea.style.display = "none";
+	}
+
+	private _renderThemeArea = (event: Event): void => {
+		event.preventDefault();
+		this._appearanceArea.style.display = "none";
+		this._themeArea.style.display = "";
+		this._generalArea.style.display = "none";
+		this._recordingArea.style.display = "none";
 		this._keybindArea.style.display = "none";
 	}
 
 	private _renderGeneralArea = (event: Event): void => {
 		event.preventDefault();
 		this._appearanceArea.style.display = "none";
+		this._themeArea.style.display = "none";
 		this._generalArea.style.display = "";
+		this._recordingArea.style.display = "none";
+		this._keybindArea.style.display = "none";
+	}
+
+	private _renderRecordingArea = (event: Event): void => {
+		event.preventDefault();
+		this._appearanceArea.style.display = "none";
+		this._themeArea.style.display = "none";
+		this._generalArea.style.display = "none";
+		this._recordingArea.style.display = "";
 		this._keybindArea.style.display = "none";
 	}
 
 	private _renderKeybindArea = (event: Event): void => {
 		event.preventDefault();
 		this._appearanceArea.style.display = "none";
+		this._themeArea.style.display = "none";
 		this._generalArea.style.display = "none";
+		this._recordingArea.style.display = "none";
 		this._keybindArea.style.display = "";
 	}
 
