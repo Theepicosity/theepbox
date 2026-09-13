@@ -4137,7 +4137,7 @@ export class Synth {
 			const outputR = sampleR * expression;
 			expression += expressionDelta;
 			dataL[sampleIndex] += outputL;
-			dataR[sampleIndex] += outputR;
+			if(stereoChannels >= 2) dataR[sampleIndex] += outputR;
 		}
 		tone.phases[0] = phaseA / waveLength;
 		tone.phases[1] = phaseB / waveLength;
@@ -4291,7 +4291,7 @@ export class Synth {
             expression += expressionDelta;
 
             dataL[sampleIndex] += outputL;
-            dataR[sampleIndex] += outputR;
+            if(stereoChannels >= 2) dataR[sampleIndex] += outputR;
         }
 
         tone.phases[0] = phaseA / waveLength;
