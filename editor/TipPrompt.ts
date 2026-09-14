@@ -493,9 +493,9 @@ export class TipPrompt implements Prompt {
 			} break;
 			case "modChannel": {
 				message = div(
-					h2("Modulator Channel"),
+					h2("Modulator Instrument"),
 					p("Modulators can be used to change settings in your song automatically over time. This technique is also known as automation."),
-					p("This setting controls which channel the modulators will take effect for. If you choose 'Song', you can change song-wide settings too!"),
+					p("This setting controls which instruments in which channels the modulators will take effect for. You can choose as many as you want at once, and if you choose 'Song', you can change song-wide settings too!"),
 				);
 			} break;
 			case "modInstrument": {
@@ -521,6 +521,13 @@ export class TipPrompt implements Prompt {
 					p("This setting specifies which parameter of your targeted filter you would like to change."),
 					p("With the 'morph' setting, the note value for your modulator represents the number of a subfilter to 'morph' into over time. For example, dragging a note from 0 to 7 will morph from your main filter to the 7th subfilter. To change how your subfilters are set up, click the '+' button on the target filter."),
 					p("With a Dot setting, you can fine-tune the exact location of every dot on your filter graph. Note that this is extremely intensive if you want to modulate all dots - a morph is better in that case - but this can come in handy for small adjustments."),
+				);
+			} break;
+			case "modEffect": {
+				message = div(
+					h2("Effect Target"),
+					p("This setting specifies which effects you would like to target. You can select as many as you want!"),
+					p("You can choose which effects in the effect order you would like to target. If you have multiple instruments targeted, every effect in the same position in the effect order will be targeted. Only effects that apply to the current setting can be targeted!"),
 				);
 			} break;
 			case "transitionBar": {

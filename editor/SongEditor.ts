@@ -1497,7 +1497,7 @@ export class SongEditor {
             let modEffectBox: HTMLSelectElement = select();
             let modEnvelopeBox: HTMLSelectElement = select();
             let modSetRow: HTMLDivElement = div({ class: "selectRow", id: "modSettingText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modSet") }, "Setting: "), span({ class: "tip", style: "font-size:x-small;", onclick: () => this._openPrompt("modSetInfo" + mod) }, "?"), div({ class: "selectContainer" }, modSetBox));
-            let modFilterRow: HTMLDivElement = div({ class: "selectRow", id: "modFilterText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modFilter" + mod) }, "Target: "), div({ class: "selectContainer" }, modFilterBox));
+            let modFilterRow: HTMLDivElement = div({ class: "selectRow", id: "modFilterText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modFilter") }, "Target: "), div({ class: "selectContainer" }, modFilterBox));
             let modEffectRow: HTMLDivElement = div({ class: "selectRow", id: "modEffectText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modEffect") }, "Effect: "), div({ class: "selectContainer" }, modEffectBox));
             let modEnvelopeRow: HTMLDivElement = div({ class: "selectRow", id: "modEnvelopeText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modEnvelope") }, "Envelope: "), div({ class: "selectContainer" }, modEnvelopeBox));
 
@@ -3404,8 +3404,6 @@ export class SongEditor {
 
                     validEffects.sort()
 
-                    console.log(validEffectCounts)
-
                     while (this._modEffectBoxes[mod].firstChild) this._modEffectBoxes[mod].remove(0);
                     const effectList: string[] = [];
                     let stringValue: string = "many";
@@ -3489,12 +3487,13 @@ export class SongEditor {
                     for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
                         let modChannel: Channel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod][i])];
                         // Build options for modulator filters (make sure it has the right number of filter dots).
-                        if (!modChannel.instruments[useInstrument]) break;
+                        if (!modChannel.instruments[useInstrument] || (filterType == "post eq" && (!modChannel.instruments[useInstrument].effects[useEffect] || modChannel.instruments[useInstrument].effects[useEffect].type != EffectType.eqFilter))) break;
+
                         let dotCount: number = (filterType == "post eq")
                             ? modChannel.instruments[useInstrument].getLargestControlPointCount(false)
                             : modChannel.instruments[useInstrument].getLargestControlPointCount(true);
 
-                        let effect: Effect = modChannel.instruments[useInstrument].effects[useEffect] as Effect;
+                        let effect: Effect = modChannel.instruments[useInstrument].effects[useEffect];
 
                         const isSimple: boolean = useSongEq ? false : (filterType == "pre eq" ? modChannel.instruments[useInstrument].noteFilterType : effect.eqFilterType);
                         if (isSimple)
