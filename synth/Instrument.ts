@@ -481,10 +481,12 @@ export class Instrument {
                 this.chord = 0;
                 this.modChannels = [];
                 this.modInstruments = [];
+                this.modEffects = [];
                 this.modulators = [];
                 for (let mod: number = 0; mod < Config.modCount; mod++) {
                     this.modChannels.push([-2]);
                     this.modInstruments.push([0]);
+                    this.modEffects.push([0]);
                     this.modulators.push(Config.modulators.dictionary["none"].index);
                     this.invalidModulators[mod] = false;
                     this.modFilterTypes[mod] = 0;
@@ -830,12 +832,14 @@ export class Instrument {
         } else if (this.type == InstrumentType.mod) {
             instrumentObject["modChannels"] = [];
             instrumentObject["modInstruments"] = [];
+            instrumentObject["modEffects"] = [];
             instrumentObject["modSettings"] = [];
             instrumentObject["modFilterTypes"] = [];
             instrumentObject["modEnvelopeNumbers"] = [];
             for (let mod: number = 0; mod < Config.modCount; mod++) {
                 instrumentObject["modChannels"][mod] = this.modChannels[mod];
                 instrumentObject["modInstruments"][mod] = this.modInstruments[mod];
+                instrumentObject["modEffects"][mod] = this.modEffects[mod];
                 instrumentObject["modSettings"][mod] = this.modulators[mod];
                 instrumentObject["modFilterTypes"][mod] = this.modFilterTypes[mod];
                 instrumentObject["modEnvelopeNumbers"][mod] = this.modEnvelopeNumbers[mod];
@@ -1339,6 +1343,8 @@ export class Instrument {
                         this.modFilterTypes[mod] = instrumentObject["modFilterTypes"][mod];
                     if (instrumentObject["modEnvelopeNumbers"] != undefined)
                         this.modEnvelopeNumbers[mod] = instrumentObject["modEnvelopeNumbers"][mod];
+                    if (instrumentObject["modEffects"] != undefined)
+                        this.modEffects[mod] = instrumentObject["modEffects"][mod];
                 }
             }
         }

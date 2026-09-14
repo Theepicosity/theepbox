@@ -3565,7 +3565,7 @@ export class Song {
                                     instrument.modulators[mod] = bits.read(6);
                                 }
 
-                                if (Config.modulators[instrument.modulators[mod]].associatedEffect < EffectType.length) {
+                                if (fromTheepBox && !beforeSix && Config.modulators[instrument.modulators[mod]].associatedEffect < EffectType.length) {
                                     let modEffectLength: number = bits.read(8);
                                     for (let i: number = 0; i < modEffectLength; i++) {
                                         // maybe should clamp...

@@ -13534,10 +13534,12 @@ li.select2-results__option[role=group] > strong:hover {
           this.chord = 0;
           this.modChannels = [];
           this.modInstruments = [];
+          this.modEffects = [];
           this.modulators = [];
           for (let mod2 = 0; mod2 < Config.modCount; mod2++) {
             this.modChannels.push([-2]);
             this.modInstruments.push([0]);
+            this.modEffects.push([0]);
             this.modulators.push(Config.modulators.dictionary["none"].index);
             this.invalidModulators[mod2] = false;
             this.modFilterTypes[mod2] = 0;
@@ -13825,12 +13827,14 @@ li.select2-results__option[role=group] > strong:hover {
       } else if (this.type == 10 /* mod */) {
         instrumentObject["modChannels"] = [];
         instrumentObject["modInstruments"] = [];
+        instrumentObject["modEffects"] = [];
         instrumentObject["modSettings"] = [];
         instrumentObject["modFilterTypes"] = [];
         instrumentObject["modEnvelopeNumbers"] = [];
         for (let mod2 = 0; mod2 < Config.modCount; mod2++) {
           instrumentObject["modChannels"][mod2] = this.modChannels[mod2];
           instrumentObject["modInstruments"][mod2] = this.modInstruments[mod2];
+          instrumentObject["modEffects"][mod2] = this.modEffects[mod2];
           instrumentObject["modSettings"][mod2] = this.modulators[mod2];
           instrumentObject["modFilterTypes"][mod2] = this.modFilterTypes[mod2];
           instrumentObject["modEnvelopeNumbers"][mod2] = this.modEnvelopeNumbers[mod2];
@@ -14244,6 +14248,8 @@ li.select2-results__option[role=group] > strong:hover {
               this.modFilterTypes[mod2] = instrumentObject["modFilterTypes"][mod2];
             if (instrumentObject["modEnvelopeNumbers"] != void 0)
               this.modEnvelopeNumbers[mod2] = instrumentObject["modEnvelopeNumbers"][mod2];
+            if (instrumentObject["modEffects"] != void 0)
+              this.modEffects[mod2] = instrumentObject["modEffects"][mod2];
           }
         }
       }
@@ -17704,7 +17710,7 @@ li.select2-results__option[role=group] > strong:hover {
                     if (status != 3) {
                       instrument.modulators[mod2] = bits.read(6);
                     }
-                    if (Config.modulators[instrument.modulators[mod2]].associatedEffect < 12 /* length */) {
+                    if (fromTheepBox && !beforeSix && Config.modulators[instrument.modulators[mod2]].associatedEffect < 12 /* length */) {
                       let modEffectLength = bits.read(8);
                       for (let i2 = 0; i2 < modEffectLength; i2++) {
                         instrument.modEffects[mod2][i2] = bits.read(8);
@@ -21473,7 +21479,7 @@ li.select2-results__option[role=group] > strong:hover {
                         for (let effectIndex = 0; effectIndex < instrument.modEffects[mod2].length; effectIndex++) {
                           let tgtInstrument = this.song.channels[instrument.modChannels[mod2][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
                           let tgtEffect = tgtInstrument.effects[effectIndex];
-                          if (latestModInsTimes[instrument.modChannels[mod2][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod2] > latestModInsTimes[instrument.modChannels[mod2][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex]) {
+                          if (tgtEffect && (latestModInsTimes[instrument.modChannels[mod2][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod2] > latestModInsTimes[instrument.modChannels[mod2][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex])) {
                             if (eqFilterParam) {
                               if (instrument.modFilterTypes[mod2] == 0) {
                                 tgtEffect.tmpEqFilterStart = tgtEffect.eqSubFilters[latestPinValues[mod2]];
@@ -48238,9 +48244,9 @@ You should be redirected to the song at:<br /><br />
         case "modChannel":
           {
             message = div16(
-              h216("Modulator Channel"),
+              h216("Modulator Instrument"),
               p6("Modulators can be used to change settings in your song automatically over time. This technique is also known as automation."),
-              p6("This setting controls which channel the modulators will take effect for. If you choose 'Song', you can change song-wide settings too!")
+              p6("This setting controls which instruments in which channels the modulators will take effect for. You can choose as many as you want at once, and if you choose 'Song', you can change song-wide settings too!")
             );
           }
           break;
@@ -48272,6 +48278,15 @@ You should be redirected to the song at:<br /><br />
               p6("This setting specifies which parameter of your targeted filter you would like to change."),
               p6("With the 'morph' setting, the note value for your modulator represents the number of a subfilter to 'morph' into over time. For example, dragging a note from 0 to 7 will morph from your main filter to the 7th subfilter. To change how your subfilters are set up, click the '+' button on the target filter."),
               p6("With a Dot setting, you can fine-tune the exact location of every dot on your filter graph. Note that this is extremely intensive if you want to modulate all dots - a morph is better in that case - but this can come in handy for small adjustments.")
+            );
+          }
+          break;
+        case "modEffect":
+          {
+            message = div16(
+              h216("Effect Target"),
+              p6("This setting specifies which effects you would like to target. You can select as many as you want!"),
+              p6("You can choose which effects in the effect order you would like to target. If you have multiple instruments targeted, every effect in the same position in the effect order will be targeted. Only effects that apply to the current setting can be targeted!")
             );
           }
           break;
@@ -53490,7 +53505,7 @@ You should be redirected to the song at:<br /><br />
         let modEffectBox = select12();
         let modEnvelopeBox = select12();
         let modSetRow = div21({ class: "selectRow", id: "modSettingText" + mod2, style: "margin-bottom: 0.9em; color: currentColor;" }, span7({ class: "tip", onclick: /* @__PURE__ */ __name(() => this._openPrompt("modSet"), "onclick") }, "Setting: "), span7({ class: "tip", style: "font-size:x-small;", onclick: /* @__PURE__ */ __name(() => this._openPrompt("modSetInfo" + mod2), "onclick") }, "?"), div21({ class: "selectContainer" }, modSetBox));
-        let modFilterRow = div21({ class: "selectRow", id: "modFilterText" + mod2, style: "margin-bottom: 0.9em; color: currentColor;" }, span7({ class: "tip", onclick: /* @__PURE__ */ __name(() => this._openPrompt("modFilter" + mod2), "onclick") }, "Target: "), div21({ class: "selectContainer" }, modFilterBox));
+        let modFilterRow = div21({ class: "selectRow", id: "modFilterText" + mod2, style: "margin-bottom: 0.9em; color: currentColor;" }, span7({ class: "tip", onclick: /* @__PURE__ */ __name(() => this._openPrompt("modFilter"), "onclick") }, "Target: "), div21({ class: "selectContainer" }, modFilterBox));
         let modEffectRow = div21({ class: "selectRow", id: "modEffectText" + mod2, style: "margin-bottom: 0.9em; color: currentColor;" }, span7({ class: "tip", onclick: /* @__PURE__ */ __name(() => this._openPrompt("modEffect"), "onclick") }, "Effect: "), div21({ class: "selectContainer" }, modEffectBox));
         let modEnvelopeRow = div21({ class: "selectRow", id: "modEnvelopeText" + mod2, style: "margin-bottom: 0.9em; color: currentColor;" }, span7({ class: "tip", onclick: /* @__PURE__ */ __name(() => this._openPrompt("modEnvelope"), "onclick") }, "Envelope: "), div21({ class: "selectContainer" }, modEnvelopeBox));
         let modTarget = SVG.svg({ style: "transform: translate(0px, 1px);", width: "1.5em", height: "1em", viewBox: "0 0 200 200" }, [
@@ -55084,7 +55099,6 @@ You should be redirected to the song at:<br /><br />
               }
             }
             validEffects.sort();
-            console.log(validEffectCounts);
             while (this._modEffectBoxes[mod2].firstChild) this._modEffectBoxes[mod2].remove(0);
             const effectList = [];
             let stringValue = "many";
@@ -55158,7 +55172,7 @@ You should be redirected to the song at:<br /><br />
             }
             for (let i = 0; i < instrument2.modChannels[mod2].length; i++) {
               let modChannel = this._doc.song.channels[Math.max(0, instrument2.modChannels[mod2][i])];
-              if (!modChannel.instruments[useInstrument]) break;
+              if (!modChannel.instruments[useInstrument] || filterType == "post eq" && (!modChannel.instruments[useInstrument].effects[useEffect] || modChannel.instruments[useInstrument].effects[useEffect].type != 5 /* eqFilter */)) break;
               let dotCount = filterType == "post eq" ? modChannel.instruments[useInstrument].getLargestControlPointCount(false) : modChannel.instruments[useInstrument].getLargestControlPointCount(true);
               let effect = modChannel.instruments[useInstrument].effects[useEffect];
               const isSimple = useSongEq ? false : filterType == "pre eq" ? modChannel.instruments[useInstrument].noteFilterType : effect.eqFilterType;
