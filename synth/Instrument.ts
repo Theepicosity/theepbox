@@ -276,6 +276,7 @@ export class Instrument {
     public readonly drumsetSpectrumWaves: SpectrumWave[] = [];
     public modChannels: number[][] = [];
     public modInstruments: number[][] = [];
+    public modEffects: number[][] = [];
     public modulators: number[] = [];
     public modFilterTypes: number[] = [];
     public modEnvelopeNumbers: number[] = [];
@@ -307,6 +308,7 @@ export class Instrument {
             for (let mod: number = 0; mod < Config.modCount; mod++) {
                 this.modChannels.push([-2]);
                 this.modInstruments.push([0]);
+                this.modEffects.push([0]);
                 this.modulators.push(Config.modulators.dictionary["none"].index);
             }
         }

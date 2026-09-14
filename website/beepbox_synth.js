@@ -1301,9 +1301,9 @@ var beepbox = (function (exports) {
             promptName: "Panning Delay", promptDesc: ["This setting controls the delay applied to panning for your instrument, just like the pan delay slider.", "With more delay, the panning effect will generally be more pronounced. $MID is the default value, whereas $LO will remove any delay at all. No delay can be desirable for chiptune songs.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "reset arp", pianoName: "Reset Arp", maxRawVol: 1, newNoteVol: 1, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 4, maxIndex: 0,
             promptName: "Reset Arpeggio", promptDesc: ["This setting functions a little different from most. Wherever a note is placed, the arpeggio of this instrument will reset at the very start of that note. This is most noticeable with lower arpeggio speeds. The lengths and values of notes for this setting don't matter, just the note start times.", "This mod can be used to sync up your apreggios so that they always sound the same, even if you are using an odd-ratio arpeggio speed or modulating arpeggio speed.", "[$LO - $HI]"] },
-        { name: "post eq", pianoName: "PostEQ", maxRawVol: 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
+        { name: "post eq", pianoName: "PostEQ", maxRawVol: 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 5, associatedMDEffect: 6, maxIndex: 0,
             promptName: "Post EQ", promptDesc: ["This setting controls a few separate things for your instrument's EQ filter.", "When the option 'morph' is selected, your modulator values will indicate a sub-filter index of your EQ filter to 'morph' to over time. For example, a change from 0 to 1 means your main filter (default) will morph to sub-filter 1 over the specified duration. You can shape the main filter and sub-filters in the large filter editor ('+' button). If your two filters' number, type, and order of filter dots all match up, the morph will happen smoothly and you'll be able to hear them changing. If they do not match up, the filters will simply jump between each other.", "Note that filters will morph based on endpoints in the pattern editor. So, if you specify a morph from sub-filter 1 to 4 but do not specifically drag in new endpoints for 2 and 3, it will morph directly between 1 and 4 without going through the others.", "If you target Dot X or Dot Y, you can finely tune the coordinates of a single dot for your filter. The number of available dots to choose is dependent on your main filter's dot count.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pre eq", pianoName: "PreEQ", maxRawVol: 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 5, associatedMDEffect: 6, maxIndex: 0,
+        { name: "pre eq", pianoName: "PreEQ", maxRawVol: 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
             promptName: "Pre EQ", promptDesc: ["This setting controls a few separate things for your instrument's EQ filter.", "When the option 'morph' is selected, your modulator values will indicate a sub-filter index of your EQ filter to 'morph' to over time. For example, a change from 0 to 1 means your main filter (default) will morph to sub-filter 1 over the specified duration. You can shape the main filter and sub-filters in the large filter editor ('+' button). If your two filters' number, type, and order of filter dots all match up, the morph will happen smoothly and you'll be able to hear them changing. If they do not match up, the filters will simply jump between each other.", "Note that filters will morph based on endpoints in the pattern editor. So, if you specify a morph from sub-filter 1 to 4 but do not specifically drag in new endpoints for 2 and 3, it will morph directly between 1 and 4 without going through the others.", "If you target Dot X or Dot Y, you can finely tune the coordinates of a single dot for your filter. The number of available dots to choose is dependent on your main filter's dot count.", "[OVERWRITING] [$LO - $HI]"] },
         { name: "bit crush", pianoName: "Bitcrush", maxRawVol: _a.bitcrusherQuantizationRange - 1, newNoteVol: Math.round(_a.bitcrusherQuantizationRange / 2), forSong: false, convertRealFactor: 0, associatedEffect: 4, associatedMDEffect: 6, maxIndex: 0,
             promptName: "Instrument Bit Crush", promptDesc: ["This setting controls the bit crush of your instrument, just like the bit crush slider.", "At a value of $LO, no bit crush will be applied. This increases and the bit crush effect gets more noticeable up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
@@ -1795,7 +1795,7 @@ var beepbox = (function (exports) {
             return (_a = EditorConfig.presetCategories[0].presets.dictionary) === null || _a === void 0 ? void 0 : _a[TypePresets === null || TypePresets === void 0 ? void 0 : TypePresets[instrument]];
         }
     }
-    EditorConfig.version = "v2";
+    EditorConfig.version = "v3";
     EditorConfig.versionDisplayName = "theepbox!";
     EditorConfig.releaseNotesURL = "./patch_notes.html";
     EditorConfig.isOnMac = /^Mac/i.test(navigator.platform) || /Mac OS X/i.test(navigator.userAgent) || /^(iPhone|iPad|iPod)/i.test(navigator.platform) || /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
@@ -3363,6 +3363,7 @@ var beepbox = (function (exports) {
             this.drumsetSpectrumWaves = [];
             this.modChannels = [];
             this.modInstruments = [];
+            this.modEffects = [];
             this.modulators = [];
             this.modFilterTypes = [];
             this.modEnvelopeNumbers = [];
@@ -3372,6 +3373,7 @@ var beepbox = (function (exports) {
                 for (let mod = 0; mod < Config.modCount; mod++) {
                     this.modChannels.push([-2]);
                     this.modInstruments.push([0]);
+                    this.modEffects.push([0]);
                     this.modulators.push(Config.modulators.dictionary["none"].index);
                 }
             }
@@ -5322,7 +5324,7 @@ var beepbox = (function (exports) {
             let bits;
             let buffer = [];
             buffer.push(Song._variant);
-            buffer.push(base64IntToCharCode[Song._latestSlarmoosBoxVersion]);
+            buffer.push(base64IntToCharCode[Song._latestTheepBoxVersion]);
             buffer.push(78);
             var encodedSongTitle = encodeURIComponent(this.title);
             buffer.push(base64IntToCharCode[encodedSongTitle.length >> 6], base64IntToCharCode[encodedSongTitle.length & 0x3f]);
@@ -6083,7 +6085,9 @@ var beepbox = (function (exports) {
                 return;
             if (fromUltraBox && (version == -1 || version > Song._latestUltraBoxVersion || version < Song._oldestUltraBoxVersion))
                 return;
-            if ((fromSlarmoosBox || fromTheepBox) && (version == -1 || version > Song._latestSlarmoosBoxVersion || version < Song._oldestSlarmoosBoxVersion))
+            if (fromSlarmoosBox && !fromTheepBox && (version == -1 || version > Song._latestSlarmoosBoxVersion || version < Song._oldestSlarmoosBoxVersion))
+                return;
+            if (fromTheepBox && (version == -1 || version > Song._latestTheepBoxVersion || version < Song._oldestTheepBoxVersion))
                 return;
             const beforeTwo = version < 2;
             const beforeThree = version < 3;
@@ -7436,6 +7440,13 @@ var beepbox = (function (exports) {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                 instrument.volume = Math.round(clamp(-Config.volumeRange / 2, Config.volumeRange / 2 + 1, ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)])) - Config.volumeRange / 2) * 2.0);
                             }
+                            else if (beforeSix) {
+                                const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
+                                if (instrument.type == 0)
+                                    instrument.volume = Math.round(clamp(-Config.volumeRange / 2, Config.volumeRange / 2 + 1, ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)])) / 2 - Config.volumeRange / 2));
+                                else
+                                    instrument.volume = Math.round(clamp(-Config.volumeRange / 2, Config.volumeRange / 2 + 1, ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)])) - Config.volumeRange / 2));
+                            }
                             else {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                 instrument.volume = Math.round(clamp(-Config.volumeRange / 2, Config.volumeRange / 2 + 1, ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)])) - Config.volumeRange / 2));
@@ -8679,7 +8690,7 @@ var beepbox = (function (exports) {
             const result = {
                 "name": this.title,
                 "format": Song._format,
-                "version": Song._latestSlarmoosBoxVersion,
+                "version": Song._latestTheepBoxVersion,
                 "scale": Config.scales[this.scale].name,
                 "customScale": this.scaleCustom,
                 "key": Config.keys[this.key].name,
@@ -9294,6 +9305,8 @@ var beepbox = (function (exports) {
     Song._latestUltraBoxVersion = 5;
     Song._oldestSlarmoosBoxVersion = 1;
     Song._latestSlarmoosBoxVersion = 5;
+    Song._oldestTheepBoxVersion = 5;
+    Song._latestTheepBoxVersion = 6;
     Song._variant = 0x74;
 
     class ChannelState {
@@ -9747,7 +9760,7 @@ var beepbox = (function (exports) {
             this.reverbShelfPrevInput2 = 0.0;
             this.reverbShelfPrevInput3 = 0.0;
         }
-        compute(synth, instrument, effect, instrumentState, samplesPerTick, roundedSamplesPerTick, tone, channelIndex, instrumentIndex, envelopeStarts, envelopeEnds) {
+        compute(synth, instrument, effect, instrumentState, samplesPerTick, roundedSamplesPerTick, tone, channelIndex, instrumentIndex, effectIndex, envelopeStarts, envelopeEnds) {
             const samplesPerSecond = synth.samplesPerSecond;
             this.type = effect.type;
             const usesGranular = effect.type == 8;
@@ -9764,8 +9777,8 @@ var beepbox = (function (exports) {
             const usesEQFilter = effect.type == 5;
             if (usesGranular) {
                 this.granularMaximumGrains = Math.pow(2, effect.grainAmounts * envelopeStarts[53]);
-                if (synth.isModActive(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex)) {
-                    this.granularMaximumGrains = Math.pow(2, synth.getModValue(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, false) * envelopeStarts[53]);
+                if (synth.isModActive(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    this.granularMaximumGrains = Math.pow(2, synth.getModValue(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, effectIndex, false) * envelopeStarts[53]);
                 }
                 this.granularMaximumGrains == Math.floor(this.granularMaximumGrains);
             }
@@ -9774,9 +9787,9 @@ var beepbox = (function (exports) {
                 this.granularMix = effect.granular / Config.granularRange;
                 this.computeGrains = true;
                 let granularMixEnd = this.granularMix;
-                if (synth.isModActive(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex)) {
-                    this.granularMix = synth.getModValue(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, false) / Config.granularRange;
-                    granularMixEnd = synth.getModValue(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, true) / Config.granularRange;
+                if (synth.isModActive(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    this.granularMix = synth.getModValue(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, false) / Config.granularRange;
+                    granularMixEnd = synth.getModValue(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, true) / Config.granularRange;
                 }
                 this.granularMix *= envelopeStarts[52];
                 granularMixEnd *= envelopeEnds[52];
@@ -9784,13 +9797,13 @@ var beepbox = (function (exports) {
                 for (let iterations = 0; iterations < Math.ceil(Math.random() * Math.random() * 10); iterations++) {
                     if (this.granularGrainsLength < this.granularMaximumGrains) {
                         let granularMinGrainSizeInMilliseconds = effect.grainSize;
-                        if (synth.isModActive(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex)) {
-                            granularMinGrainSizeInMilliseconds = synth.getModValue(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex, false);
+                        if (synth.isModActive(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex)) {
+                            granularMinGrainSizeInMilliseconds = synth.getModValue(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex, false);
                         }
                         granularMinGrainSizeInMilliseconds *= envelopeStarts[54];
                         let grainRange = effect.grainRange;
-                        if (synth.isModActive(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex)) {
-                            grainRange = synth.getModValue(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex, false);
+                        if (synth.isModActive(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex)) {
+                            grainRange = synth.getModValue(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex, false);
                         }
                         grainRange *= envelopeStarts[55];
                         const granularMaxGrainSizeInMilliseconds = granularMinGrainSizeInMilliseconds + grainRange;
@@ -9819,9 +9832,9 @@ var beepbox = (function (exports) {
             if (usesDistortion) {
                 let useDistortionStart = effect.distortion;
                 let useDistortionEnd = effect.distortion;
-                if (synth.isModActive(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex)) {
-                    useDistortionStart = synth.getModValue(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, false);
-                    useDistortionEnd = synth.getModValue(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useDistortionStart = synth.getModValue(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useDistortionEnd = synth.getModValue(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 const distortionSliderStart = Math.min(1.0, envelopeStarts[43] * useDistortionStart / (Config.distortionRange - 1));
                 const distortionSliderEnd = Math.min(1.0, envelopeEnds[43] * useDistortionEnd / (Config.distortionRange - 1));
@@ -9839,13 +9852,13 @@ var beepbox = (function (exports) {
                 let useClippingInGainEnd = effect.clippingInGain;
                 let useClippingThresholdStart = effect.clippingThreshold;
                 let useClippingThresholdEnd = effect.clippingThreshold;
-                if (synth.isModActive(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex)) {
-                    useClippingInGainStart = synth.getModValue(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, false);
-                    useClippingInGainEnd = synth.getModValue(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useClippingInGainStart = synth.getModValue(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useClippingInGainEnd = synth.getModValue(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
-                if (synth.isModActive(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex)) {
-                    useClippingThresholdStart = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, false);
-                    useClippingThresholdEnd = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useClippingThresholdStart = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useClippingThresholdEnd = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 const clippingInGainStart = Math.pow(1 - (envelopeStarts[62] * useClippingInGainStart / Config.distortionRange), 2.0);
                 const clippingInGainEnd = Math.pow(1 - (envelopeStarts[62] * useClippingInGainEnd / Config.distortionRange), 2.0);
@@ -9860,15 +9873,15 @@ var beepbox = (function (exports) {
             if (usesBitcrusher) {
                 let freqSettingStart = effect.bitcrusherFreq * Math.sqrt(envelopeStarts[45]);
                 let freqSettingEnd = effect.bitcrusherFreq * Math.sqrt(envelopeEnds[45]);
-                if (synth.isModActive(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex)) {
-                    freqSettingStart = synth.getModValue(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, false) * Math.sqrt(envelopeStarts[45]);
-                    freqSettingEnd = synth.getModValue(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, true) * Math.sqrt(envelopeEnds[45]);
+                if (synth.isModActive(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    freqSettingStart = synth.getModValue(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeStarts[45]);
+                    freqSettingEnd = synth.getModValue(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeEnds[45]);
                 }
                 let quantizationSettingStart = effect.bitcrusherQuantization * Math.sqrt(envelopeStarts[44]);
                 let quantizationSettingEnd = effect.bitcrusherQuantization * Math.sqrt(envelopeEnds[44]);
-                if (synth.isModActive(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex)) {
-                    quantizationSettingStart = synth.getModValue(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, false) * Math.sqrt(envelopeStarts[44]);
-                    quantizationSettingEnd = synth.getModValue(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, true) * Math.sqrt(envelopeEnds[44]);
+                if (synth.isModActive(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    quantizationSettingStart = synth.getModValue(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeStarts[44]);
+                    quantizationSettingEnd = synth.getModValue(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeEnds[44]);
                 }
                 const basePitch = Config.keys[synth.song.key].basePitch + (Config.pitchesPerOctave * synth.song.octave);
                 const freqStart = Instrument.frequencyFromPitch(basePitch + 60) * Math.pow(2.0, (Config.bitcrusherFreqRange - 1 - freqSettingStart) * Config.bitcrusherOctaveStep);
@@ -9898,14 +9911,14 @@ var beepbox = (function (exports) {
                     let endSimpleFreq = effect.eqFilterSimpleCut;
                     let endSimpleGain = effect.eqFilterSimplePeak;
                     let filterChanges = false;
-                    if (synth.isModActive(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex)) {
-                        startSimpleFreq = synth.getModValue(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, false);
-                        endSimpleFreq = synth.getModValue(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, true);
+                    if (synth.isModActive(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, effectIndex)) {
+                        startSimpleFreq = synth.getModValue(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, effectIndex, false);
+                        endSimpleFreq = synth.getModValue(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, effectIndex, true);
                         filterChanges = true;
                     }
-                    if (synth.isModActive(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex)) {
-                        startSimpleGain = synth.getModValue(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, false);
-                        endSimpleGain = synth.getModValue(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, true);
+                    if (synth.isModActive(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, effectIndex)) {
+                        startSimpleGain = synth.getModValue(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, effectIndex, false);
+                        endSimpleGain = synth.getModValue(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, effectIndex, true);
                         filterChanges = true;
                     }
                     let startPoint;
@@ -9969,9 +9982,9 @@ var beepbox = (function (exports) {
                 const panEnvelopeEnd = envelopeEnds[42] * 2.0 - 1.0;
                 let usePanStart = effect.pan;
                 let usePanEnd = effect.pan;
-                if (synth.isModActive(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex)) {
-                    usePanStart = synth.getModValue(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, false);
-                    usePanEnd = synth.getModValue(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    usePanStart = synth.getModValue(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    usePanEnd = synth.getModValue(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let panStart = Math.max(-1.0, Math.min(1.0, (usePanStart - Config.panCenter) / Config.panCenter * panEnvelopeStart));
                 let panEnd = Math.max(-1.0, Math.min(1.0, (usePanEnd - Config.panCenter) / Config.panCenter * panEnvelopeEnd));
@@ -9982,9 +9995,9 @@ var beepbox = (function (exports) {
                 const maxDelaySamples = samplesPerSecond * Config.panDelaySecondsMax;
                 let usePanDelayStart = effect.panDelay;
                 let usePanDelayEnd = effect.panDelay;
-                if (synth.isModActive(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex)) {
-                    usePanDelayStart = synth.getModValue(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, false);
-                    usePanDelayEnd = synth.getModValue(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    usePanDelayStart = synth.getModValue(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    usePanDelayEnd = synth.getModValue(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 const delayStart = panStart * usePanDelayStart * maxDelaySamples / 10;
                 const delayEnd = panEnd * usePanDelayEnd * maxDelaySamples / 10;
@@ -10006,9 +10019,9 @@ var beepbox = (function (exports) {
                 const gainEnvelopeEnd = envelopeEnds[57];
                 let useGainStart = effect.gain;
                 let useGainEnd = effect.gain;
-                if (synth.isModActive(Config.modulators.dictionary["gain"].index, channelIndex, instrumentIndex)) {
-                    useGainStart = synth.getModValue(Config.modulators.dictionary["gain"].index, channelIndex, instrumentIndex, false);
-                    useGainEnd = synth.getModValue(Config.modulators.dictionary["gain"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useGainStart = synth.getModValue(Config.modulators.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useGainEnd = synth.getModValue(Config.modulators.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let gainStart = Math.min(Config.gainRangeMult, gainEnvelopeStart * useGainStart / (Config.volumeRange / 2 * Config.gainRangeMult)) * Config.gainRangeMult;
                 let gainEnd = Math.min(Config.gainRangeMult, gainEnvelopeEnd * useGainEnd / (Config.volumeRange / 2 * Config.gainRangeMult)) * Config.gainRangeMult;
@@ -10020,9 +10033,9 @@ var beepbox = (function (exports) {
                 const chorusEnvelopeEnd = envelopeEnds[46];
                 let useChorusStart = effect.chorus;
                 let useChorusEnd = effect.chorus;
-                if (synth.isModActive(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex)) {
-                    useChorusStart = synth.getModValue(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, false);
-                    useChorusEnd = synth.getModValue(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useChorusStart = synth.getModValue(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useChorusEnd = synth.getModValue(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let chorusStart = Math.min(1.0, chorusEnvelopeStart * useChorusStart / (Config.chorusRange - 1));
                 let chorusEnd = Math.min(1.0, chorusEnvelopeEnd * useChorusEnd / (Config.chorusRange - 1));
@@ -10040,9 +10053,9 @@ var beepbox = (function (exports) {
                 const flangerEnvelopeEnd = envelopeEnds[58];
                 let useFlangerStart = effect.flanger;
                 let useFlangerEnd = effect.flanger;
-                if (synth.isModActive(Config.modulators.dictionary["flanger"].index, channelIndex, instrumentIndex)) {
-                    useFlangerStart = synth.getModValue(Config.modulators.dictionary["flanger"].index, channelIndex, instrumentIndex, false);
-                    useFlangerEnd = synth.getModValue(Config.modulators.dictionary["flanger"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useFlangerStart = synth.getModValue(Config.modulators.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useFlangerEnd = synth.getModValue(Config.modulators.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let flangerStart = Math.min(1.0, flangerEnvelopeStart * useFlangerStart / (Config.flangerRange - 1));
                 let flangerEnd = Math.min(1.0, flangerEnvelopeEnd * useFlangerEnd / (Config.flangerRange - 1));
@@ -10050,9 +10063,9 @@ var beepbox = (function (exports) {
                 const flangerSpeedEnvelopeEnd = envelopeEnds[59];
                 let useFlangerSpeedStart = effect.flangerSpeed;
                 let useFlangerSpeedEnd = effect.flangerSpeed;
-                if (synth.isModActive(Config.modulators.dictionary["flanger speed"].index, channelIndex, instrumentIndex)) {
-                    useFlangerSpeedStart = synth.getModValue(Config.modulators.dictionary["flanger speed"].index, channelIndex, instrumentIndex, false);
-                    useFlangerSpeedEnd = synth.getModValue(Config.modulators.dictionary["flanger speed"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useFlangerSpeedStart = synth.getModValue(Config.modulators.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useFlangerSpeedEnd = synth.getModValue(Config.modulators.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let flangerSpeedStart = flangerSpeedEnvelopeStart * useFlangerSpeedStart + 2;
                 let flangerSpeedEnd = flangerSpeedEnvelopeEnd * useFlangerSpeedEnd + 2;
@@ -10060,9 +10073,9 @@ var beepbox = (function (exports) {
                 const flangerDepthEnvelopeEnd = envelopeEnds[60];
                 let useFlangerDepthStart = effect.flangerDepth;
                 let useFlangerDepthEnd = effect.flangerDepth;
-                if (synth.isModActive(Config.modulators.dictionary["flanger depth"].index, channelIndex, instrumentIndex)) {
-                    useFlangerDepthStart = synth.getModValue(Config.modulators.dictionary["flanger depth"].index, channelIndex, instrumentIndex, false);
-                    useFlangerDepthEnd = synth.getModValue(Config.modulators.dictionary["flanger depth"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useFlangerDepthStart = synth.getModValue(Config.modulators.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useFlangerDepthEnd = synth.getModValue(Config.modulators.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let flangerDepthStart = flangerDepthEnvelopeStart * useFlangerDepthStart * 2 + 2;
                 let flangerDepthEnd = flangerDepthEnvelopeEnd * useFlangerDepthEnd * 2 + 2;
@@ -10070,9 +10083,9 @@ var beepbox = (function (exports) {
                 const flangerFeedbackEnvelopeEnd = envelopeEnds[61];
                 let useFlangerFeedbackStart = effect.flangerFeedback;
                 let useFlangerFeedbackEnd = effect.flangerFeedback;
-                if (synth.isModActive(Config.modulators.dictionary["flanger feedback"].index, channelIndex, instrumentIndex)) {
-                    useFlangerFeedbackStart = synth.getModValue(Config.modulators.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, false);
-                    useFlangerFeedbackEnd = synth.getModValue(Config.modulators.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useFlangerFeedbackStart = synth.getModValue(Config.modulators.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useFlangerFeedbackEnd = synth.getModValue(Config.modulators.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let flangerFeedbackStart = flangerFeedbackEnvelopeStart * useFlangerFeedbackStart * 1.5;
                 let flangerFeedbackEnd = flangerFeedbackEnvelopeEnd * useFlangerFeedbackEnd * 1.5;
@@ -10094,13 +10107,13 @@ var beepbox = (function (exports) {
                 let useRingModHzEnd = Math.min(1.0, effect.ringModulationHz / (Config.ringModHzRange - 1));
                 let useRingModHzEnvelopeStart = envelopeStarts[51];
                 let useRingModHzEnvelopeEnd = envelopeEnds[51];
-                if (synth.isModActive(Config.modulators.dictionary["ring modulation"].index, channelIndex, instrumentIndex)) {
-                    useRingModStart = (synth.getModValue(Config.modulators.dictionary["ring modulation"].index, channelIndex, instrumentIndex, false));
-                    useRingModEnd = (synth.getModValue(Config.modulators.dictionary["ring modulation"].index, channelIndex, instrumentIndex, true));
+                if (synth.isModActive(Config.modulators.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useRingModStart = (synth.getModValue(Config.modulators.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex, false));
+                    useRingModEnd = (synth.getModValue(Config.modulators.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex, true));
                 }
-                if (synth.isModActive(Config.modulators.dictionary["ring mod hertz"].index, channelIndex, instrumentIndex)) {
-                    useRingModHzStart = Math.min(1.0, Math.max(0.0, (synth.getModValue(Config.modulators.dictionary["ring mod hertz"].index, channelIndex, instrumentIndex, false)) / (Config.ringModHzRange - 1)));
-                    useRingModHzEnd = Math.min(1.0, Math.max(0.0, (synth.getModValue(Config.modulators.dictionary["ring mod hertz"].index, channelIndex, instrumentIndex, false)) / (Config.ringModHzRange - 1)));
+                if (synth.isModActive(Config.modulators.dictionary["ring mod hertz"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useRingModHzStart = Math.min(1.0, Math.max(0.0, (synth.getModValue(Config.modulators.dictionary["ring mod hertz"].index, channelIndex, instrumentIndex, effectIndex, false)) / (Config.ringModHzRange - 1)));
+                    useRingModHzEnd = Math.min(1.0, Math.max(0.0, (synth.getModValue(Config.modulators.dictionary["ring mod hertz"].index, channelIndex, instrumentIndex, effectIndex, false)) / (Config.ringModHzRange - 1)));
                 }
                 useRingModHzStart *= useRingModHzEnvelopeStart;
                 useRingModHzEnd *= useRingModHzEnvelopeEnd;
@@ -10132,9 +10145,9 @@ var beepbox = (function (exports) {
                 const echoSustainEnvelopeEnd = envelopeEnds[47];
                 let useEchoSustainStart = effect.echoSustain;
                 let useEchoSustainEnd = effect.echoSustain;
-                if (synth.isModActive(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex)) {
-                    useEchoSustainStart = Math.max(0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, false));
-                    useEchoSustainEnd = Math.max(0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, true));
+                if (synth.isModActive(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useEchoSustainStart = Math.max(0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex, false));
+                    useEchoSustainEnd = Math.max(0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex, true));
                 }
                 const echoMultStart = Math.min(1.0, Math.pow(echoSustainEnvelopeStart * useEchoSustainStart / Config.echoSustainRange, 1.1)) * 0.9;
                 const echoMultEnd = Math.min(1.0, Math.pow(echoSustainEnvelopeEnd * useEchoSustainEnd / Config.echoSustainRange, 1.1)) * 0.9;
@@ -10145,9 +10158,9 @@ var beepbox = (function (exports) {
                 const echoDelayEnvelopeEnd = envelopeEnds[56];
                 let useEchoDelayStart = effect.echoDelay * echoDelayEnvelopeStart;
                 let useEchoDelayEnd = effect.echoDelay * echoDelayEnvelopeEnd;
-                if (synth.isModActive(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex)) {
-                    useEchoDelayStart = synth.getModValue(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, false) * echoDelayEnvelopeStart;
-                    useEchoDelayEnd = synth.getModValue(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, true) * echoDelayEnvelopeEnd;
+                if (synth.isModActive(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useEchoDelayStart = synth.getModValue(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex, false) * echoDelayEnvelopeStart;
+                    useEchoDelayEnd = synth.getModValue(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex, true) * echoDelayEnvelopeEnd;
                 }
                 const tmpEchoDelayOffsetStart = Math.round((useEchoDelayStart + 1) * Config.echoDelayStepTicks * samplesPerTick);
                 const tmpEchoDelayOffsetEnd = Math.round((useEchoDelayEnd + 1) * Config.echoDelayStepTicks * samplesPerTick);
@@ -10165,9 +10178,9 @@ var beepbox = (function (exports) {
                 const echoPingPongEnvelopeEnd = envelopeEnds[66];
                 let useEchoPingPongStart = effect.echoPingPong;
                 let useEchoPingPongEnd = effect.echoPingPong;
-                if (synth.isModActive(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex)) {
-                    useEchoPingPongStart = synth.getModValue(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, false) * echoPingPongEnvelopeStart;
-                    useEchoPingPongEnd = synth.getModValue(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, true) * echoPingPongEnvelopeEnd;
+                if (synth.isModActive(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useEchoPingPongStart = synth.getModValue(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex, false) * echoPingPongEnvelopeStart;
+                    useEchoPingPongEnd = synth.getModValue(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex, true) * echoPingPongEnvelopeEnd;
                 }
                 const echoPingPongStart = ((useEchoPingPongStart / Config.panMax) - 0.5) * echoPingPongEnvelopeStart * 2;
                 const echoPingPongEnd = ((useEchoPingPongEnd / Config.panMax) - 0.5) * echoPingPongEnvelopeEnd * 2;
@@ -10193,21 +10206,21 @@ var beepbox = (function (exports) {
                 let useReverbWetDryMixEnd = effect.reverbWetDryMix;
                 let useReverbSendStart = effect.reverbSend;
                 let useReverbSendEnd = effect.reverbSend;
-                if (synth.isModActive(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex)) {
-                    useReverbStart = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, false);
-                    useReverbEnd = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useReverbStart = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useReverbEnd = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
-                if (synth.isModActive(Config.modulators.dictionary["song reverb"].index, channelIndex, instrumentIndex)) {
-                    useReverbStart *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, false) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
-                    useReverbEnd *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, true) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
+                if (synth.isModActive(Config.modulators.dictionary["song reverb"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useReverbStart *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, undefined, false) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
+                    useReverbEnd *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, undefined, true) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
                 }
-                if (synth.isModActive(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex)) {
-                    useReverbWetDryMixStart = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, false);
-                    useReverbWetDryMixEnd = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useReverbWetDryMixStart = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useReverbWetDryMixEnd = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
-                if (synth.isModActive(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex)) {
-                    useReverbSendStart = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, false);
-                    useReverbSendEnd = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, true);
+                if (synth.isModActive(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useReverbSendStart = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useReverbSendEnd = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 const reverbStart = Math.min(1.0, Math.pow(reverbEnvelopeStart * useReverbStart / Config.reverbRange, 0.667)) * 0.425;
                 const reverbEnd = Math.min(1.0, Math.pow(reverbEnvelopeEnd * useReverbEnd / Config.reverbRange, 0.667)) * 0.425;
@@ -11421,7 +11434,7 @@ var beepbox = (function (exports) {
             }
             let useEnvelopeSpeed = Config.arpSpeedScale[instrument.envelopeSpeed];
             if (synth.isModActive(Config.modulators.dictionary["envelope speed"].index, channelIndex, instrumentIndex)) {
-                useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.modulators.dictionary["envelope speed"].index, channelIndex, instrumentIndex, false)));
+                useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.modulators.dictionary["envelope speed"].index, channelIndex, instrumentIndex, -1, false)));
                 if (Number.isInteger(useEnvelopeSpeed)) {
                     useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed];
                 }
@@ -11442,20 +11455,20 @@ var beepbox = (function (exports) {
             for (let effectIndex = 0; effectIndex < instrument.effects.length; effectIndex++) {
                 if (this.effects[effectIndex] != null) {
                     let effect = instrument.effects[effectIndex];
-                    this.effects[effectIndex].compute(synth, instrument, effect, this, samplesPerTick, roundedSamplesPerTick, tone, channelIndex, instrumentIndex, envelopeStarts, envelopeEnds);
+                    this.effects[effectIndex].compute(synth, instrument, effect, this, samplesPerTick, roundedSamplesPerTick, tone, channelIndex, instrumentIndex, effectIndex, envelopeStarts, envelopeEnds);
                 }
             }
             this.mixVolume = envelopeStarts[1] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
             let mixVolumeEnd = envelopeEnds[1] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
             if (synth.isModActive(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex)) {
-                const startVal = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, false);
-                const endVal = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, true);
+                const startVal = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, -1, false);
+                const endVal = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, -1, true);
                 this.mixVolume *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
                 mixVolumeEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
             }
             if (synth.isModActive(Config.modulators.dictionary["song volume"].index)) {
-                this.mixVolume *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, false)) / 100.0;
-                mixVolumeEnd *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, true)) / 100.0;
+                this.mixVolume *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, -1, false)) / 100.0;
+                mixVolumeEnd *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, -1, true)) / 100.0;
             }
             this.mixVolumeDelta = (mixVolumeEnd - this.mixVolume) / roundedSamplesPerTick;
             let attenuationVolumeStart = 1.0;
@@ -11922,8 +11935,11 @@ var beepbox = (function (exports) {
                                                     }
                                                     tgtSong.tmpEqFilterEnd = tgtSong.tmpEqFilterStart;
                                                 }
-                                                for (let i = 0; i < instrument.modChannels[mod].length; i++)
-                                                    this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modChannels[mod][i], instrument.modInstruments[mod][i], instrument.modulators[mod]);
+                                                for (let i = 0; i < instrument.modChannels[mod].length; i++) {
+                                                    for (let j = 0; j < instrument.modEffects[mod].length; j++) {
+                                                        this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modChannels[mod][i], instrument.modInstruments[mod][i], instrument.modulators[mod], instrument.modEffects[mod][j]);
+                                                    }
+                                                }
                                                 latestModTimes[instrument.modulators[mod]] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                             }
                                         }
@@ -11963,7 +11979,7 @@ var beepbox = (function (exports) {
                                                     || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust]) {
                                                     if (eqFilterParam) {
                                                         let tgtInstrument = this.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
-                                                        for (let effectIndex = 0; effectIndex < tgtInstrument.effects.length; effectIndex++) {
+                                                        for (let effectIndex = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
                                                             let tgtEffect = tgtInstrument.effects[effectIndex];
                                                             if (instrument.modFilterTypes[mod] == 0) {
                                                                 tgtEffect.tmpEqFilterStart = tgtEffect.eqSubFilters[latestPinValues[mod]];
@@ -12008,8 +12024,11 @@ var beepbox = (function (exports) {
                                                         }
                                                         tgtInstrument.tmpNoteFilterEnd = tgtInstrument.tmpNoteFilterStart;
                                                     }
-                                                    else
-                                                        this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], modulatorAdjust);
+                                                    else {
+                                                        for (let i = 0; i < instrument.modEffects[mod].length; i++) {
+                                                            this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], instrument.modChannels[mod][i], modulatorAdjust);
+                                                        }
+                                                    }
                                                     latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                                 }
                                             }
@@ -12476,7 +12495,7 @@ var beepbox = (function (exports) {
                 }
             }
         }
-        setModValue(volumeStart, volumeEnd, channelIndex, instrumentIndex, setting) {
+        setModValue(volumeStart, volumeEnd, channelIndex, instrumentIndex, setting, effectIndex) {
             let val = volumeStart + Config.modulators[setting].convertRealFactor;
             let nextVal = volumeEnd + Config.modulators[setting].convertRealFactor;
             if (Config.modulators[setting].forSong) {
@@ -12486,25 +12505,25 @@ var beepbox = (function (exports) {
                 }
             }
             else {
-                if (this.modInsValues[channelIndex][instrumentIndex][setting] == null
-                    || this.modInsValues[channelIndex][instrumentIndex][setting] != val
-                    || this.nextModInsValues[channelIndex][instrumentIndex][setting] != nextVal) {
-                    this.modInsValues[channelIndex][instrumentIndex][setting] = val;
-                    this.nextModInsValues[channelIndex][instrumentIndex][setting] = nextVal;
+                if (this.modInsValues[channelIndex][instrumentIndex][setting][effectIndex] == null
+                    || this.modInsValues[channelIndex][instrumentIndex][setting][effectIndex] != val
+                    || this.nextModInsValues[channelIndex][instrumentIndex][setting][effectIndex] != nextVal) {
+                    this.modInsValues[channelIndex][instrumentIndex][setting][effectIndex] = val;
+                    this.nextModInsValues[channelIndex][instrumentIndex][setting][effectIndex] = nextVal;
                 }
             }
             return val;
         }
-        getModValue(setting, channel, instrument, nextVal) {
+        getModValue(setting, channel, instrument, effect, nextVal) {
             const forSong = Config.modulators[setting].forSong;
             if (forSong) {
                 if (this.modValues[setting] != null && this.nextModValues[setting] != null) {
                     return nextVal ? this.nextModValues[setting] : this.modValues[setting];
                 }
             }
-            else if (channel != undefined && instrument != undefined) {
-                if (this.modInsValues[channel][instrument][setting] != null && this.nextModInsValues[channel][instrument][setting] != null) {
-                    return nextVal ? this.nextModInsValues[channel][instrument][setting] : this.modInsValues[channel][instrument][setting];
+            else if (channel != undefined && instrument != undefined && effect != undefined) {
+                if (this.modInsValues[channel][instrument][setting][effect] != null && this.nextModInsValues[channel][instrument][setting][effect] != null) {
+                    return nextVal ? this.nextModInsValues[channel][instrument][setting][effect] : this.modInsValues[channel][instrument][setting][effect];
                 }
             }
             return -1;
@@ -12512,19 +12531,19 @@ var beepbox = (function (exports) {
         isAnyModActive(channel, instrument) {
             for (let setting = 0; setting < Config.modulators.length; setting++) {
                 if ((this.modValues != undefined && this.modValues[setting] != null)
-                    || (this.modInsValues != undefined && this.modInsValues[channel] != undefined && this.modInsValues[channel][instrument] != undefined && this.modInsValues[channel][instrument][setting] != null)) {
+                    || (this.modInsValues != undefined && this.modInsValues[channel] != undefined && this.modInsValues[channel][instrument] != undefined && this.modInsValues[channel][instrument][setting] != null && this.modInsValues[channel][instrument][setting].length > 0)) {
                     return true;
                 }
             }
             return false;
         }
-        unsetMod(setting, channel, instrument) {
-            if (this.isModActive(setting) || (channel != undefined && instrument != undefined && this.isModActive(setting, channel, instrument))) {
+        unsetMod(setting, channel, instrument, effect) {
+            if (this.isModActive(setting) || (channel != undefined && instrument != undefined && effect != undefined && this.isModActive(setting, channel, instrument, effect))) {
                 this.modValues[setting] = null;
                 this.nextModValues[setting] = null;
                 for (let i = 0; i < this.heldMods.length; i++) {
-                    if (channel != undefined && instrument != undefined) {
-                        if (this.heldMods[i].channelIndex == channel && this.heldMods[i].instrumentIndex == instrument && this.heldMods[i].setting == setting)
+                    if (channel != undefined && instrument != undefined && effect != undefined) {
+                        if (this.heldMods[i].channelIndex == channel && this.heldMods[i].instrumentIndex == instrument && this.heldMods[i].effectIndex == effect && this.heldMods[i].setting == setting)
                             this.heldMods.splice(i, 1);
                     }
                     else {
@@ -12532,13 +12551,13 @@ var beepbox = (function (exports) {
                             this.heldMods.splice(i, 1);
                     }
                 }
-                if (channel != undefined && instrument != undefined) {
-                    this.modInsValues[channel][instrument][setting] = null;
-                    this.nextModInsValues[channel][instrument][setting] = null;
+                if (channel != undefined && instrument != undefined && effect != undefined) {
+                    this.modInsValues[channel][instrument][setting][effect] = null;
+                    this.nextModInsValues[channel][instrument][setting][effect] = null;
                 }
             }
         }
-        isFilterModActive(forNoteFilter, channelIdx, instrumentIdx, forSong) {
+        isFilterModActive(forNoteFilter, channelIdx, instrumentIdx, effectIdx, forSong) {
             var _a;
             const instrument = this.song.channels[channelIdx].instruments[instrumentIdx];
             if (forNoteFilter) {
@@ -12553,35 +12572,33 @@ var beepbox = (function (exports) {
                         return true;
                 }
                 else {
-                    for (let i = 0; i < instrument.effects.length; i++) {
-                        if (!instrument.effects[i].eqFilterType && instrument.effects[i].tmpEqFilterEnd != null)
-                            return true;
-                    }
+                    if (!instrument.effects[effectIdx].eqFilterType && instrument.effects[effectIdx].tmpEqFilterEnd != null)
+                        return true;
                 }
             }
             return false;
         }
-        isModActive(setting, channel, instrument) {
+        isModActive(setting, channel, instrument, effect) {
             const forSong = Config.modulators[setting].forSong;
             if (forSong) {
                 return (this.modValues != undefined && this.modValues[setting] != null);
             }
-            else if (channel != undefined && instrument != undefined && this.modInsValues != undefined && this.modInsValues[channel] != null && this.modInsValues[channel][instrument] != null) {
-                return (this.modInsValues[channel][instrument][setting] != null);
+            else if (channel != undefined && instrument != undefined && effect != undefined && this.modInsValues != undefined && this.modInsValues[channel] != null && this.modInsValues[channel][instrument] != null && this.modInsValues[channel][instrument][setting] != null) {
+                return (this.modInsValues[channel][instrument][setting][effect] != null);
             }
             return false;
         }
-        forceHoldMods(volumeStart, channelIndex, instrumentIndex, setting) {
+        forceHoldMods(volumeStart, channelIndex, instrumentIndex, effectIndex, setting) {
             let found = false;
             for (let i = 0; i < this.heldMods.length; i++) {
-                if (this.heldMods[i].channelIndex == channelIndex && this.heldMods[i].instrumentIndex == instrumentIndex && this.heldMods[i].setting == setting) {
+                if (this.heldMods[i].channelIndex == channelIndex && this.heldMods[i].instrumentIndex == instrumentIndex && this.heldMods[i].effectIndex == effectIndex && this.heldMods[i].setting == setting) {
                     this.heldMods[i].volume = volumeStart;
                     this.heldMods[i].holdFor = 24;
                     found = true;
                 }
             }
             if (!found)
-                this.heldMods.push({ volume: volumeStart, channelIndex: channelIndex, instrumentIndex: instrumentIndex, setting: setting, holdFor: 24 });
+                this.heldMods.push({ volume: volumeStart, channelIndex: channelIndex, instrumentIndex: instrumentIndex, effectIndex: effectIndex, setting: setting, holdFor: 24 });
         }
         snapToStart() {
             this.bar = 0;
@@ -13057,11 +13074,11 @@ var beepbox = (function (exports) {
                             for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                                 let useEnvelopeSpeed = instrument.envelopeSpeed;
                                 let perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-                                if (this.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channel, instrumentIdx) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+                                if (this.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channel, instrumentIdx, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                                     perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed;
                                 }
-                                if (this.isModActive(Config.modulators.dictionary["envelope speed"].index, channel, instrumentIdx)) {
-                                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.modulators.dictionary["envelope speed"].index, channel, instrumentIdx, false)));
+                                if (this.isModActive(Config.modulators.dictionary["envelope speed"].index, channel, instrumentIdx, -1)) {
+                                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.modulators.dictionary["envelope speed"].index, channel, instrumentIdx, -1, false)));
                                     if (Number.isInteger(useEnvelopeSpeed)) {
                                         instrumentState.envelopeTime[envelopeIndex] += Config.arpSpeedScale[useEnvelopeSpeed] * perEnvelopeSpeed;
                                     }
@@ -13080,8 +13097,8 @@ var beepbox = (function (exports) {
                             const envelopeStarts = envelopeComputer.envelopeStarts;
                             const arpEnvelopeStart = envelopeStarts[49];
                             let useArpeggioSpeed = instrument.arpeggioSpeed;
-                            if (this.isModActive(Config.modulators.dictionary["arp speed"].index, channel, instrumentIdx)) {
-                                useArpeggioSpeed = clamp(0, Config.arpSpeedScale.length, arpEnvelopeStart * this.getModValue(Config.modulators.dictionary["arp speed"].index, channel, instrumentIdx, false));
+                            if (this.isModActive(Config.modulators.dictionary["arp speed"].index, channel, instrumentIdx, -1)) {
+                                useArpeggioSpeed = clamp(0, Config.arpSpeedScale.length, arpEnvelopeStart * this.getModValue(Config.modulators.dictionary["arp speed"].index, channel, instrumentIdx, -1, false));
                                 if (Number.isInteger(useArpeggioSpeed)) {
                                     instrumentState.arpTime += Config.arpSpeedScale[useArpeggioSpeed];
                                 }
@@ -13996,14 +14013,14 @@ var beepbox = (function (exports) {
                 let endSimpleFreq = instrument.noteFilterSimpleCut;
                 let endSimpleGain = instrument.noteFilterSimplePeak;
                 let filterChanges = false;
-                if (this.isModActive(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex)) {
-                    startSimpleFreq = this.getModValue(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, false);
-                    endSimpleFreq = this.getModValue(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, true);
+                if (this.isModActive(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    startSimpleFreq = this.getModValue(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, -1, false);
+                    endSimpleFreq = this.getModValue(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, -1, true);
                     filterChanges = true;
                 }
-                if (this.isModActive(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex)) {
-                    startSimpleGain = this.getModValue(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, false);
-                    endSimpleGain = this.getModValue(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, true);
+                if (this.isModActive(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    startSimpleGain = this.getModValue(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, -1, false);
+                    endSimpleGain = this.getModValue(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, -1, true);
                     filterChanges = true;
                 }
                 noteFilterSettingsStart.convertLegacySettingsForSynth(startSimpleFreq, startSimpleGain, !filterChanges);
@@ -14020,12 +14037,12 @@ var beepbox = (function (exports) {
             }
             for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                 let perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-                if (this.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channelIndex, tone.instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+                if (this.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channelIndex, tone.instrumentIndex, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                     perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed;
                 }
                 let useEnvelopeSpeed = Config.arpSpeedScale[instrument.envelopeSpeed] * perEnvelopeSpeed;
-                if (this.isModActive(Config.modulators.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex)) {
-                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.modulators.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, false)));
+                if (this.isModActive(Config.modulators.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.modulators.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1, false)));
                     if (Number.isInteger(useEnvelopeSpeed)) {
                         useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed] * perEnvelopeSpeed;
                     }
@@ -14078,29 +14095,29 @@ var beepbox = (function (exports) {
                 let pitchShift = Config.justIntonationSemitones[instrument.pitchShift] / intervalScale;
                 let pitchShiftScalarStart = 1.0;
                 let pitchShiftScalarEnd = 1.0;
-                if (this.isModActive(Config.modulators.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex)) {
+                if (this.isModActive(Config.modulators.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, -1)) {
                     pitchShift = Config.justIntonationSemitones[Config.justIntonationSemitones.length - 1];
-                    pitchShiftScalarStart = (this.getModValue(Config.modulators.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, false)) / (Config.pitchShiftCenter);
-                    pitchShiftScalarEnd = (this.getModValue(Config.modulators.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, true)) / (Config.pitchShiftCenter);
+                    pitchShiftScalarStart = (this.getModValue(Config.modulators.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, -1, false)) / (Config.pitchShiftCenter);
+                    pitchShiftScalarEnd = (this.getModValue(Config.modulators.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, -1, true)) / (Config.pitchShiftCenter);
                 }
                 const envelopeStart = envelopeStarts[19];
                 const envelopeEnd = envelopeEnds[19];
                 intervalStart += pitchShift * envelopeStart * pitchShiftScalarStart;
                 intervalEnd += pitchShift * envelopeEnd * pitchShiftScalarEnd;
             }
-            if (effectsIncludeDetune(instrument.mdeffects) || this.isModActive(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex)) {
+            if (effectsIncludeDetune(instrument.mdeffects) || this.isModActive(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1)) {
                 const envelopeStart = envelopeStarts[20];
                 const envelopeEnd = envelopeEnds[20];
                 let modDetuneStart = instrument.detune;
                 let modDetuneEnd = instrument.detune;
-                if (this.isModActive(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex)) {
-                    modDetuneStart = this.getModValue(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, false) + Config.detuneCenter;
-                    modDetuneEnd = this.getModValue(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, true) + Config.detuneCenter;
+                if (this.isModActive(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    modDetuneStart = this.getModValue(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, false) + Config.detuneCenter;
+                    modDetuneEnd = this.getModValue(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, true) + Config.detuneCenter;
                 }
                 if (!Config.chipWaves[instrument.chipWave].isCustomSampled || Config.chipWaves[instrument.chipWave].isPercussion != 1) {
-                    if (this.isModActive(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex)) {
-                        modDetuneStart += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, false);
-                        modDetuneEnd += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, true);
+                    if (this.isModActive(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        modDetuneStart += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, false);
+                        modDetuneEnd += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, true);
                     }
                 }
                 intervalStart += detuneToCents(modDetuneStart) * envelopeStart * Config.pitchesPerOctave / (12.0 * 100.0);
@@ -14122,14 +14139,14 @@ var beepbox = (function (exports) {
                     vibratoAmplitudeStart = Config.vibratos[instrument.vibrato].amplitude;
                     vibratoAmplitudeEnd = vibratoAmplitudeStart;
                 }
-                if (this.isModActive(Config.modulators.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex)) {
-                    delayTicks = this.getModValue(Config.modulators.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, false) * 2;
+                if (this.isModActive(Config.modulators.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    delayTicks = this.getModValue(Config.modulators.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1, false) * 2;
                     if (delayTicks == Config.modulators.dictionary["vibrato delay"].maxRawVol * 2)
                         delayTicks = Number.POSITIVE_INFINITY;
                 }
-                if (this.isModActive(Config.modulators.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex)) {
-                    vibratoAmplitudeStart = this.getModValue(Config.modulators.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, false) / 25;
-                    vibratoAmplitudeEnd = this.getModValue(Config.modulators.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, true) / 25;
+                if (this.isModActive(Config.modulators.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    vibratoAmplitudeStart = this.getModValue(Config.modulators.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, false) / 25;
+                    vibratoAmplitudeEnd = this.getModValue(Config.modulators.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, true) / 25;
                 }
                 let vibratoStart;
                 if (tone.prevVibrato != null) {
@@ -14275,15 +14292,15 @@ var beepbox = (function (exports) {
                     let amplitudeStart = instrument.operators[i].amplitude;
                     let amplitudeEnd = instrument.operators[i].amplitude;
                     if (i < 4) {
-                        if (this.isModActive(Config.modulators.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex)) {
-                            amplitudeStart *= this.getModValue(Config.modulators.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, false) / 15.0;
-                            amplitudeEnd *= this.getModValue(Config.modulators.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, true) / 15.0;
+                        if (this.isModActive(Config.modulators.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, -1)) {
+                            amplitudeStart *= this.getModValue(Config.modulators.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
+                            amplitudeEnd *= this.getModValue(Config.modulators.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
                         }
                     }
                     else {
-                        if (this.isModActive(Config.modulators.dictionary["fm slider 5"].index + i - 4, channelIndex, tone.instrumentIndex)) {
-                            amplitudeStart *= this.getModValue(Config.modulators.dictionary["fm slider 5"].index + i - 4, channelIndex, tone.instrumentIndex, false) / 15.0;
-                            amplitudeEnd *= this.getModValue(Config.modulators.dictionary["fm slider 5"].index + i - 4, channelIndex, tone.instrumentIndex, true) / 15.0;
+                        if (this.isModActive(Config.modulators.dictionary["fm slider 5"].index + i - 4, channelIndex, tone.instrumentIndex, -1)) {
+                            amplitudeStart *= this.getModValue(Config.modulators.dictionary["fm slider 5"].index + i - 4, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
+                            amplitudeEnd *= this.getModValue(Config.modulators.dictionary["fm slider 5"].index + i - 4, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
                         }
                     }
                     const amplitudeCurveStart = Synth.operatorAmplitudeCurve(amplitudeStart);
@@ -14313,9 +14330,9 @@ var beepbox = (function (exports) {
                     }
                     expressionStart *= envelopeStarts[12 + i];
                     expressionEnd *= envelopeEnds[12 + i];
-                    if (this.isModActive(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex)) {
-                        const startVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, false);
-                        const endVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, true);
+                    if (this.isModActive(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        const startVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
+                        const endVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true);
                         expressionStart *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
                         expressionEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
                     }
@@ -14335,9 +14352,9 @@ var beepbox = (function (exports) {
                 tone.expressionDelta = (expressionEnd - expressionStart) / roundedSamplesPerTick;
                 let useFeedbackAmplitudeStart = instrument.feedbackAmplitude;
                 let useFeedbackAmplitudeEnd = instrument.feedbackAmplitude;
-                if (this.isModActive(Config.modulators.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex)) {
-                    useFeedbackAmplitudeStart *= this.getModValue(Config.modulators.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, false) / 15.0;
-                    useFeedbackAmplitudeEnd *= this.getModValue(Config.modulators.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, true) / 15.0;
+                if (this.isModActive(Config.modulators.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    useFeedbackAmplitudeStart *= this.getModValue(Config.modulators.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
+                    useFeedbackAmplitudeEnd *= this.getModValue(Config.modulators.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
                 }
                 let feedbackAmplitudeStart = Config.sineWaveLength * 0.3 * useFeedbackAmplitudeStart / 15.0;
                 const feedbackAmplitudeEnd = Config.sineWaveLength * 0.3 * useFeedbackAmplitudeEnd / 15.0;
@@ -14387,17 +14404,17 @@ var beepbox = (function (exports) {
                     const basePulseWidth = getPulseWidthRatio(instrument.pulseWidth);
                     let pulseWidthModStart = basePulseWidth;
                     let pulseWidthModEnd = basePulseWidth;
-                    if (this.isModActive(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex)) {
-                        pulseWidthModStart = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, false)) / (Config.pulseWidthRange * 2);
-                        pulseWidthModEnd = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, true)) / (Config.pulseWidthRange * 2);
+                    if (this.isModActive(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        pulseWidthModStart = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false)) / (Config.pulseWidthRange * 2);
+                        pulseWidthModEnd = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true)) / (Config.pulseWidthRange * 2);
                     }
                     const pulseWidthStart = pulseWidthModStart * envelopeStarts[3];
                     const pulseWidthEnd = pulseWidthModEnd * envelopeEnds[3];
                     tone.pulseWidth = pulseWidthStart;
                     tone.pulseWidthDelta = (pulseWidthEnd - pulseWidthStart) / roundedSamplesPerTick;
                     let decimalOffsetModStart = instrument.decimalOffset;
-                    if (this.isModActive(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex)) {
-                        decimalOffsetModStart = this.getModValue(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, false);
+                    if (this.isModActive(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        decimalOffsetModStart = this.getModValue(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
                     }
                     const decimalOffsetStart = decimalOffsetModStart * envelopeStarts[38];
                     tone.decimalOffset = decimalOffsetStart;
@@ -14406,9 +14423,9 @@ var beepbox = (function (exports) {
                 if (instrument.type == 7) {
                     let useSustainStart = instrument.stringSustain;
                     let useSustainEnd = instrument.stringSustain;
-                    if (this.isModActive(Config.modulators.dictionary["sustain"].index, channelIndex, tone.instrumentIndex)) {
-                        useSustainStart = this.getModValue(Config.modulators.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, false);
-                        useSustainEnd = this.getModValue(Config.modulators.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, true);
+                    if (this.isModActive(Config.modulators.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        useSustainStart = this.getModValue(Config.modulators.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, false);
+                        useSustainEnd = this.getModValue(Config.modulators.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, true);
                     }
                     tone.stringSustainStart = useSustainStart;
                     tone.stringSustainEnd = useSustainEnd;
@@ -14510,9 +14527,9 @@ var beepbox = (function (exports) {
                     const minFirstVoiceAmplitude = 1.0 / Math.sqrt(Config.supersawVoiceCount);
                     let useDynamismStart = instrument.supersawDynamism / Config.supersawDynamismMax;
                     let useDynamismEnd = instrument.supersawDynamism / Config.supersawDynamismMax;
-                    if (this.isModActive(Config.modulators.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex)) {
-                        useDynamismStart = (this.getModValue(Config.modulators.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, false)) / Config.supersawDynamismMax;
-                        useDynamismEnd = (this.getModValue(Config.modulators.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, true)) / Config.supersawDynamismMax;
+                    if (this.isModActive(Config.modulators.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        useDynamismStart = (this.getModValue(Config.modulators.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawDynamismMax;
+                        useDynamismEnd = (this.getModValue(Config.modulators.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawDynamismMax;
                     }
                     const curvedDynamismStart = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismStart * envelopeStarts[39]), 0.2);
                     const curvedDynamismEnd = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismEnd * envelopeEnds[39]), 0.2);
@@ -14567,9 +14584,9 @@ var beepbox = (function (exports) {
                     const baseSpreadSlider = instrument.supersawSpread / Config.supersawSpreadMax;
                     let useSpreadStart = baseSpreadSlider;
                     let useSpreadEnd = baseSpreadSlider;
-                    if (this.isModActive(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex)) {
-                        useSpreadStart = (this.getModValue(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex, false)) / Config.supersawSpreadMax;
-                        useSpreadEnd = (this.getModValue(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex, true)) / Config.supersawSpreadMax;
+                    if (this.isModActive(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        useSpreadStart = (this.getModValue(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawSpreadMax;
+                        useSpreadEnd = (this.getModValue(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawSpreadMax;
                     }
                     const spreadSliderStart = useSpreadStart * envelopeStarts[40];
                     const spreadSliderEnd = useSpreadEnd * envelopeEnds[40];
@@ -14582,26 +14599,26 @@ var beepbox = (function (exports) {
                     const baseShape = instrument.supersawShape / Config.supersawShapeMax;
                     let useShapeStart = baseShape * envelopeStarts[41];
                     let useShapeEnd = baseShape * envelopeEnds[41];
-                    if (this.isModActive(Config.modulators.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex)) {
-                        useShapeStart = (this.getModValue(Config.modulators.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, false)) / Config.supersawShapeMax;
-                        useShapeEnd = (this.getModValue(Config.modulators.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, true)) / Config.supersawShapeMax;
+                    if (this.isModActive(Config.modulators.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        useShapeStart = (this.getModValue(Config.modulators.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawShapeMax;
+                        useShapeEnd = (this.getModValue(Config.modulators.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawShapeMax;
                     }
                     const shapeStart = useShapeStart * envelopeStarts[41];
                     const shapeEnd = useShapeEnd * envelopeEnds[41];
                     tone.supersawShape = shapeStart;
                     tone.supersawShapeDelta = (shapeEnd - shapeStart) / roundedSamplesPerTick;
                     let decimalOffsetModStart = instrument.decimalOffset;
-                    if (this.isModActive(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex)) {
-                        decimalOffsetModStart = this.getModValue(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, false);
+                    if (this.isModActive(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        decimalOffsetModStart = this.getModValue(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
                     }
                     const decimalOffsetStart = decimalOffsetModStart * envelopeStarts[38];
                     tone.decimalOffset = decimalOffsetStart;
                     const basePulseWidth = getPulseWidthRatio(instrument.pulseWidth);
                     let pulseWidthModStart = basePulseWidth;
                     let pulseWidthModEnd = basePulseWidth;
-                    if (this.isModActive(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex)) {
-                        pulseWidthModStart = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, false)) / (Config.pulseWidthRange * 2);
-                        pulseWidthModEnd = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, true)) / (Config.pulseWidthRange * 2);
+                    if (this.isModActive(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        pulseWidthModStart = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false)) / (Config.pulseWidthRange * 2);
+                        pulseWidthModEnd = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true)) / (Config.pulseWidthRange * 2);
                     }
                     let pulseWidthStart = pulseWidthModStart * envelopeStarts[3];
                     let pulseWidthEnd = pulseWidthModEnd * envelopeEnds[3];
@@ -14638,9 +14655,9 @@ var beepbox = (function (exports) {
                 }
                 let expressionStart = settingsExpressionMult * fadeExpressionStart * chordExpressionStart * pitchExpressionStart * envelopeStarts[0] * supersawExpressionStart;
                 let expressionEnd = settingsExpressionMult * fadeExpressionEnd * chordExpressionEnd * pitchExpressionEnd * envelopeEnds[0] * supersawExpressionEnd;
-                if (this.isModActive(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex)) {
-                    const startVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, false);
-                    const endVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, true);
+                if (this.isModActive(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    const startVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
+                    const endVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true);
                     expressionStart *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
                     expressionEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
                 }
@@ -15201,7 +15218,8 @@ var beepbox = (function (exports) {
                 const outputR = sampleR * expression;
                 expression += expressionDelta;
                 dataL[sampleIndex] += outputL;
-                dataR[sampleIndex] += outputR;
+                if (stereoChannels >= 2)
+                    dataR[sampleIndex] += outputR;
             }
             tone.phases[0] = phaseA / waveLength;
             tone.phases[1] = phaseB / waveLength;
@@ -15343,7 +15361,8 @@ var beepbox = (function (exports) {
                 const outputR = sampleR * expression;
                 expression += expressionDelta;
                 dataL[sampleIndex] += outputL;
-                dataR[sampleIndex] += outputR;
+                if (stereoChannels >= 2)
+                    dataR[sampleIndex] += outputR;
             }
             tone.phases[0] = phaseA / waveLength;
             tone.phases[1] = phaseB / waveLength;
@@ -17269,49 +17288,26 @@ var beepbox = (function (exports) {
             if (instrument.invalidModulators[mod])
                 return;
             let setting = instrument.modulators[mod];
-            let usedChannels = [];
-            let usedInstruments = [];
-            if (Config.modulators[instrument.modulators[mod]].forSong) {
-                usedInstruments.push(0);
-            }
-            else {
-                if (instrument.modInstruments[mod][0] == synth.song.channels[instrument.modChannels[mod][0]].instruments.length) {
-                    for (let i = 0; i < synth.song.channels[instrument.modChannels[mod][0]].instruments.length; i++) {
-                        usedInstruments.push(i);
-                        usedChannels.push(0);
-                    }
-                }
-                else if (instrument.modInstruments[mod][0] > synth.song.channels[instrument.modChannels[mod][0]].instruments.length) {
-                    if (synth.song.getPattern(instrument.modChannels[mod][0], synth.bar) != null) {
-                        usedInstruments = synth.song.getPattern(instrument.modChannels[mod][0], synth.bar).instruments;
-                        usedChannels.push(0);
-                    }
-                }
-                else {
-                    for (let i = 0; i < instrument.modChannels[mod].length; i++) {
-                        usedChannels.push(instrument.modChannels[mod][i]);
-                        usedInstruments.push(instrument.modInstruments[mod][i]);
-                    }
-                }
-            }
-            for (let instrumentIndex = 0; instrumentIndex < usedInstruments.length; instrumentIndex++) {
-                synth.setModValue(tone.expression, tone.expression + tone.expressionDelta, instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], setting);
-                for (let i = 0; i < synth.heldMods.length; i++) {
-                    if (Config.modulators[instrument.modulators[mod]].forSong) {
-                        if (synth.heldMods[i].setting == setting)
-                            synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], setting);
-                    }
-                    else if (synth.heldMods[i].channelIndex == instrument.modChannels[mod][instrumentIndex] && synth.heldMods[i].instrumentIndex == usedInstruments[instrumentIndex] && synth.heldMods[i].setting == setting) {
-                        synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], setting);
+            for (let instrumentIndex = 0; instrumentIndex < instrument.modInstruments[mod].length; instrumentIndex++) {
+                for (let effectIndex = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
+                    synth.setModValue(tone.expression, tone.expression + tone.expressionDelta, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], setting, instrument.modEffects[mod][effectIndex]);
+                    for (let i = 0; i < synth.heldMods.length; i++) {
+                        if (Config.modulators[instrument.modulators[mod]].forSong) {
+                            if (synth.heldMods[i].setting == setting)
+                                synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], setting, instrument.modEffects[mod][effectIndex]);
+                        }
+                        else if (synth.heldMods[i].channelIndex == instrument.modChannels[mod][instrumentIndex] && synth.heldMods[i].instrumentIndex == instrument.modInstruments[mod][instrumentIndex] && synth.heldMods[i].setting == setting) {
+                            synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], setting, instrument.modEffects[mod][effectIndex]);
+                        }
                     }
                 }
                 if (setting == Config.modulators.dictionary["reset arp"].index && synth.tick == 0 && tone.noteStartPart == synth.beat * Config.partsPerBeat + synth.part) {
-                    synth.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]].arpTime = 0;
+                    synth.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]].arpTime = 0;
                 }
                 else if (setting == Config.modulators.dictionary["reset envelope"].index && synth.tick == 0 && tone.noteStartPart == synth.beat * Config.partsPerBeat + synth.part) {
                     let envelopeTarget = instrument.modEnvelopeNumbers[mod];
-                    const tgtInstrumentState = synth.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
+                    const tgtInstrumentState = synth.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
+                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     if (tgtInstrument.envelopeCount > envelopeTarget) {
                         tgtInstrumentState.envelopeTime[envelopeTarget] = 0;
                     }
@@ -17357,9 +17353,9 @@ var beepbox = (function (exports) {
                     }
                 }
                 else if (setting == Config.modulators.dictionary["post eq"].index) {
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
-                    for (let effectIndex = 0; effectIndex < tgtInstrument.effects.length; effectIndex++) {
-                        const tgtEffect = tgtInstrument.effects[effectIndex];
+                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
+                    for (let effectIndex = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
+                        const tgtEffect = tgtInstrument.effects[instrument.modEffects[mod][effectIndex]];
                         if (!tgtEffect.eqFilterType) {
                             let dotTarget = instrument.modFilterTypes[mod] | 0;
                             if (dotTarget == 0) {
@@ -17399,7 +17395,7 @@ var beepbox = (function (exports) {
                     }
                 }
                 else if (setting == Config.modulators.dictionary["pre eq"].index) {
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
+                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     if (!tgtInstrument.noteFilterType) {
                         let dotTarget = instrument.modFilterTypes[mod] | 0;
                         if (dotTarget == 0) {
@@ -17438,7 +17434,7 @@ var beepbox = (function (exports) {
                     }
                 }
                 else if (setting == Config.modulators.dictionary["individual envelope speed"].index) {
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
+                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     let envelopeTarget = instrument.modEnvelopeNumbers[mod];
                     let speed = tone.expression + tone.expressionDelta;
                     if (tgtInstrument.envelopeCount > envelopeTarget) {
@@ -17452,7 +17448,7 @@ var beepbox = (function (exports) {
                     }
                 }
                 else if (setting == Config.modulators.dictionary["individual envelope lower bound"].index) {
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
+                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     let envelopeTarget = instrument.modEnvelopeNumbers[mod];
                     let bound = tone.expression + tone.expressionDelta;
                     if (tgtInstrument.envelopeCount > envelopeTarget) {
@@ -17460,13 +17456,12 @@ var beepbox = (function (exports) {
                     }
                 }
                 else if (setting == Config.modulators.dictionary["individual envelope upper bound"].index) {
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
+                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     let envelopeTarget = instrument.modEnvelopeNumbers[mod];
                     let bound = tone.expression + tone.expressionDelta;
                     if (tgtInstrument.envelopeCount > envelopeTarget) {
                         tgtInstrument.envelopes[envelopeTarget].tempEnvelopeUpperBound = bound / 10;
                     }
-                    console.log(tgtInstrument.envelopes[envelopeTarget]);
                 }
             }
         }

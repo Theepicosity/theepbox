@@ -373,14 +373,6 @@ class BitFieldWriter {
     }
 }
 
-export interface HeldMod {
-    volume: number;
-    channelIndex: number;
-    instrumentIndex: number;
-    setting: number;
-    holdFor: number;
-}
-
 export class Song {
     private static readonly _format: string = Config.jsonFormat;
     private static readonly _oldestBeepboxVersion: number = 2;
@@ -1302,6 +1294,7 @@ export class Song {
                         const modChannels: number[] = instrument.modChannels[mod];
                         const modInstruments: number[] = instrument.modInstruments[mod];
                         const modSetting: number = instrument.modulators[mod];
+                        const modEffects: number[] = instrument.modEffects[mod];
                         const modFilter: number = instrument.modFilterTypes[mod];
                         const modEnvelope: number = instrument.modEnvelopeNumbers[mod];
 
@@ -1328,6 +1321,12 @@ export class Song {
                         // Only used if setting isn't "none".
                         if (status != 3) {
                             bits.write(6, modSetting);
+                        }
+
+                        //hum hm
+                        if (Config.modulators[instrument.modulators[mod]].associatedEffect < EffectType.length) {
+                            bits.write(8, modEffects.length);
+                            for (let i: number = 0; i < modEffects.length; i++) bits.write(8, modEffects[i]);
                         }
 
                         // Write mod filter info, only if this is a filter mod
@@ -2843,9 +2842,9 @@ export class Song {
                                 newEffect.flangerFeedback = clamp(0, Config.flangerFeedbackRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             }
                             if (newEffect.type == EffectType.chorus) {
-                                if (fromTheepBox) newEffect.chorus = clamp(0, (Config.chorusRange / 2) + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                else if (fromBeepBox) newEffect.chorus = clamp(0, (Config.chorusRange / 2) + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) * 4;
-                                else newEffect.chorus = clamp(0, Config.chorusRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) * 2;
+                                if (fromTheepBox) newEffect.chorus = clamp(0, Config.chorusRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                else if (fromBeepBox) newEffect.chorus = clamp(0, (Config.chorusRange / 2) + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 2) * 2;
+                                else newEffect.chorus = clamp(0, (Config.chorusRange / 2), base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 2);
                             }
                             if (newEffect.type == EffectType.gain) {
                                 newEffect.gain = clamp(0, Config.volumeRange, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
@@ -3564,6 +3563,14 @@ export class Song {
                                 // Mod setting is only used if the status isn't "none".
                                 if (status != 3) {
                                     instrument.modulators[mod] = bits.read(6);
+                                }
+
+                                if (Config.modulators[instrument.modulators[mod]].associatedEffect < EffectType.length) {
+                                    let modEffectLength: number = bits.read(8);
+                                    for (let i: number = 0; i < modEffectLength; i++) {
+                                        // maybe should clamp...
+                                        instrument.modEffects[mod][i] = bits.read(8);
+                                    }
                                 }
 
                                 if (!jumfive && (Config.modulators[instrument.modulators[mod]].name == "post eq" || Config.modulators[instrument.modulators[mod]].name == "pre eq" || Config.modulators[instrument.modulators[mod]].name == "song eq")) {

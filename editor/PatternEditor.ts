@@ -872,6 +872,7 @@ export class PatternEditor {
 
         const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
         let applyToMods: number[] = [];
+        //let applyToEffects: number[] = [];
         let applyToFilterTargets: number[] = [];
         let applyToEnvelopeTargets: number[] = [];
         let applyValues: number[] = [];
@@ -1646,8 +1647,10 @@ export class PatternEditor {
 
                     for (let channelIndex: number = 0; channelIndex < usedNewInstrumentIndices.length; channelIndex++) {
                         for (let instrumentIndex: number = 0; instrumentIndex < usedNewInstrumentIndices.length; instrumentIndex++) {
-                            this._doc.synth.setModValue(applyValues[applyIndex], applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]][channelIndex], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
-                            this._doc.synth.forceHoldMods(applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]][channelIndex], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
+                            for (let effectIndex: number = 0; effectIndex < usedInstruments[i].modEffects[usedModIndices[i]].length; effectIndex++) {
+                                this._doc.synth.setModValue(applyValues[applyIndex], applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]][channelIndex], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex], usedInstruments[i].modEffects[usedModIndices[i]][effectIndex]);
+                                this._doc.synth.forceHoldMods(applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]][channelIndex], usedNewInstrumentIndices[instrumentIndex], usedInstruments[i].modEffects[usedModIndices[i]][effectIndex], applyToMods[applyIndex]);
+                            }
                         }
                     }
                 }
