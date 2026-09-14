@@ -2118,7 +2118,7 @@ export class ChangeChannelCount extends Change {
                         for (let j: number = 0; j < Config.instrumentCountMin; j++) {
                             const instrument: Instrument = new Instrument(isNoise, isMod);
                             if (!isMod) {
-                                instrument.setTypeAndReset(InstrumentType.chip, isNoise, isMod);
+                                instrument.setTypeAndReset(isNoise ? InstrumentType.noise : InstrumentType.chip, isNoise, isMod);
                             } else {
                                 instrument.setTypeAndReset(InstrumentType.mod, isNoise, isMod);
                             }
@@ -3483,7 +3483,7 @@ export class ChangeAddChannelInstrument extends Change {
         const maxInstruments: number = doc.song.getMaxInstrumentsPerChannel();
         if (channel.instruments.length >= maxInstruments) return;
         const instrument: Instrument = new Instrument(isNoise, isMod);
-        instrument.setTypeAndReset(InstrumentType.chip, isNoise, isMod);
+        instrument.setTypeAndReset(isNoise ? InstrumentType.noise : InstrumentType.chip, isNoise, isMod);
         channel.instruments.push(instrument);
         if (!isMod) { // Mod channels lose information when changing set instrument
             doc.viewedInstrument[doc.channel] = channel.instruments.length - 1;
