@@ -261,7 +261,7 @@ export class EffectEditor {
 				//grainSizeNum.innerHTML = effect.grainSize * Config.grainSizeStep;
 				//grainRangeNum.innerHTML = effect.grainRange * Config.grainSizeStep;
 
-				const effectButtonsRow: HTMLDivElement = HTML.div({ class: "selectRow", style: `padding-left: 12.5%; max-width: 75%; height: 80%; padding-top: 0.2em;` }, effectButtonsText, moveupButton, movedownButton, minimizeButton, deleteButton);
+				const effectButtonsRow: HTMLDivElement = HTML.div({ class: "selectRow effectHeader", style: `padding-left: 12.5%; max-width: 75%; height: 80%; padding-top: 0.2em;` }, effectButtonsText, moveupButton, movedownButton, minimizeButton, deleteButton);
 				const chorusRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("chorus") }, "Chorus:"), chorusSlider.container);
 				const reverbRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("reverb") }, "Reverb:"), reverbSlider.container);
 				const reverbWetDryMixRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("reverbWetDryMix") }, "Wet/Dry Mix:"), reverbWetDryMixSlider.container);
@@ -396,7 +396,7 @@ export class EffectEditor {
 					effectRow.style.display = "none";
 				}
 
-				const row: HTMLDivElement = HTML.div({ class: "effect-row" },
+				const row: HTMLDivElement = HTML.div({ class: "effect-row sectionBody" },
 					effectButtonsRow,
 					effectRow
 				);

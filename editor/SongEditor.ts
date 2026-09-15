@@ -1085,23 +1085,27 @@ export class SongEditor {
     );
     private readonly _addEnvelopeButton: HTMLButtonElement = button({ type: "button", class: "add-envelope" });
     private _mdeffectsGroup: HTMLDivElement = div({ class: "editor-controls" },
-        div(
+        div({ class: "sectionBody"},
             this._transitionRow,
             this._transitionDropdownGroup,
         ),
-        div(
+        div({ class: "sectionBody"},
             this._chordSelectRow,
             this._chordDropdownGroup,
         ),
-        this._pitchShiftRow,
-        this._detuneSliderRow,
-        div(
+        div({ class: "sectionBody"},
+            this._pitchShiftRow,
+        ),
+        div({ class: "sectionBody"},
+            this._detuneSliderRow,
+        ),
+        div({ class: "sectionBody"},
             this._vibratoSelectRow,
             this._vibratoDropdownGroup,
         ),
     );
     private readonly _customInstrumentSettingsGroup: HTMLDivElement = div({ class: "editor-controls" },
-        div(
+        div({ class: "sectionBody"},
             this._instrumentTypeSelectRow,
             this._instrumentVolumeSliderRow,
             this._chipWaveSelectRow,
@@ -1138,7 +1142,7 @@ export class SongEditor {
             this._unisonDropdownGroup,
         ),
         div(
-            div(
+            div({ class: "sectionHeader"},
                 div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
                     span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("mdeffects") }, "Musical Effects")),
                     div({ class: "effects-menu" }, this._mdeffectsSelect),
@@ -1147,7 +1151,7 @@ export class SongEditor {
             this._mdeffectsGroup,
         ),
         div(
-            div(
+            div({ class: "sectionHeader"},
                 div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
                     span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("effects") }, "Audio Effects")),
                     div({ class: "effects-menu" }, this._effectsSelect),
@@ -1156,7 +1160,7 @@ export class SongEditor {
             this.effectEditor.container,
         ),
         div(
-            div(
+            div({ class: "sectionHeader"},
                 div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
                     span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("envelopes") }, "Envelopes")),
                     this._envelopeDropdown,
@@ -1179,17 +1183,18 @@ export class SongEditor {
             this._instrumentImportButton,
         ),
     );
-    private readonly _instrumentSettingsTextRow: HTMLDivElement = div({ id: "instrumentSettingsText", style: `padding: 3px 0; max-width: 15em; text-align: center; color: ${ColorConfig.secondaryText};` },
+    private readonly _instrumentSettingsTextRow: HTMLDivElement = div({ class: "sectionHeader", id: "instrumentSettingsText", style: `padding: 3px 0; max-width: 15em; text-align: center; color: ${ColorConfig.secondaryText};` },
         "Instrument Settings"
     );
     private readonly _instrumentSettingsGroup: HTMLDivElement = div({ class: "editor-controls" },
         this._instrumentSettingsTextRow,
-        div(
+        div({ class: "sectionBody"},
             this._instrumentsButtonRow,
             this._instrumentCopyGroup,
             this._instrumentExportGroup
         ),
         this._customInstrumentSettingsGroup,
+        this._modulatorGroup,
         div()
     );
     private readonly _usedPatternIndicator: SVGElement = SVG.path({ d: "M -6 -6 H 6 V 6 H -6 V -6 M -2 -3 L -2 -3 L -1 -4 H 1 V 4 H -1 V -1.2 L -1.2 -1 H -2 V -3 z", fill: ColorConfig.indicatorSecondary, "fill-rule": "evenodd" });
@@ -1233,7 +1238,7 @@ export class SongEditor {
         this._barScrollBar.container,
     );
 
-    private readonly _menuArea: HTMLDivElement = div({ class: "menu-area" },
+    private readonly _menuArea: HTMLDivElement = div({ class: "menu-area sectionBody" },
         div({ class: "selectContainer menu file" },
             this._fileMenu,
         ),
@@ -1254,7 +1259,7 @@ export class SongEditor {
 
     private readonly _songSettingsArea: HTMLDivElement = div({ class: "song-settings-area" },
         div({ class: "editor-controls" },
-            div({ class: "editor-song-settings" },
+            div({ class: "editor-song-settings sectionHeader" },
                 div({ style: "margin: 3px 0; position: relative; text-align: center; color: ${ColorConfig.secondaryText};" },
                     div({ class: "tip", style: "flex-shrink: 0; position:absolute; left: 0; top: 0; width: 12px; height: 12px", onclick: () => this._openPrompt("usedPattern") },
                         SVG.svg({ style: "flex-shrink: 0; position: absolute; left: 0; top: 0; pointer-events: none;", width: "12px", height: "12px", "margin-right": "0.5em", viewBox: "-6 -6 12 12" },
@@ -1270,7 +1275,7 @@ export class SongEditor {
                     div({ style: "width: 100%; left: 0; top: -1px; position:absolute; overflow-x:clip;" }, this._jumpToModIndicator),
                 ),
             ),
-            div(
+            div({ class: "sectionBody"},
                 div({ class: "selectRow" },
                     span({ class: "tip", onclick: () => this._openPrompt("scale") }, "Scale: "),
                     div({ class: "selectContainer" }, this._scaleSelect),
@@ -1301,11 +1306,10 @@ export class SongEditor {
         ),
     );
     private readonly _instrumentSettingsArea: HTMLDivElement = div({ class: "instrument-settings-area" },
-        this._instrumentSettingsGroup,
-        this._modulatorGroup
+        this._instrumentSettingsGroup
     );
     public readonly _settingsArea: HTMLDivElement = div({ class: "settings-area noSelection" },
-        div({ class: "version-area" },
+        div({ class: "version-area sectionHeader" },
             div({ style: `text-align: center; margin: 3px 0; color: ${ColorConfig.secondaryText};` },
                 this._songTitleInputBox.input,
             ),
@@ -1320,11 +1324,11 @@ export class SongEditor {
                 this._prevBarButton,
                 this._nextBarButton,
             ),
-            div({ class: "play-pause-area playback-volume-controls" },
+            div({ class: "play-pause-area playback-volume-controls sectionHeader" },
                 span({ class: "volume-speaker" }),
                 this._volumeSlider.container,
             ),
-            div({ class: "play-pause-area" },
+            div({ class: "play-pause-area sectionBody" },
                 this._globalOscscopeContainer,
                 this._volumeBarBoxL,
                 this._volumeBarBoxR,
@@ -1515,7 +1519,7 @@ export class SongEditor {
 
             let modNameRow: HTMLDivElement = div({ class: "operatorRow", style: "height: 1em; margin-bottom: 0.65em;" },
                 div({ class: "tip", style: "width: 10%; max-width: 5.4em;", id: "modChannelText" + mod, onclick: () => this._openPrompt("modChannel") }, "Instr.:"),
-                div({ class: "selectContainer", style: 'width: 35%;' }, modChannelBox),
+                div({ class: "selectContainer", style: 'width: 35%;', id: "modChannelBox" + mod }, modChannelBox),
             );
 
             let modSetBox: HTMLSelectElement = select();
@@ -1548,7 +1552,7 @@ export class SongEditor {
             this._modEnvelopeBoxes.push(modEnvelopeBox);
             this._modTargetIndicators.push(modTarget);
 
-            this._modulatorGroup.appendChild(div({ style: "margin: 3px 0; font-weight: bold; margin-bottom: 0.7em; text-align: center; color: " + ColorConfig.secondaryText + "; background: " + ColorConfig.uiWidgetBackground + ";" }, ["Modulator " + (mod + 1), modTarget]));
+            this._modulatorGroup.appendChild(div({ style: "margin: 3px 0; font-weight: bold; margin-bottom: 0.7em; text-align: center; color: " + ColorConfig.secondaryText + "; background: " + ColorConfig.uiWidgetBackground + ";", id: "modHeader" + mod}, ["Modulator " + (mod + 1), modTarget]));
             this._modulatorGroup.appendChild(modNameRow);
             this._modulatorGroup.appendChild(modSetRow);
             this._modulatorGroup.appendChild(modEffectRow);
@@ -2670,11 +2674,11 @@ export class SongEditor {
 
             this._mdeffectsGroup.replaceChildren();
             if(effectsIncludeTransition(instrument.mdeffects)) {
-                this._mdeffectsGroup.append(div(this._transitionRow, this._transitionDropdownGroup))
+                this._mdeffectsGroup.append(div({ class: "sectionBody" }, this._transitionRow, this._transitionDropdownGroup))
                 if (this._openTransitionDropdown) this._transitionDropdownGroup.style.display = "";
             }
             if(effectsIncludeChord(instrument.mdeffects)) {
-                this._mdeffectsGroup.append(div(this._chordSelectRow, this._chordDropdownGroup))
+                this._mdeffectsGroup.append(div({ class: "sectionBody" }, this._chordSelectRow, this._chordDropdownGroup))
                 this._chordDropdown.style.display = (instrument.chord == Config.chords.dictionary["arpeggio"].index) ? "" : "none";
                 this._chordDropdownGroup.style.display = (instrument.chord == Config.chords.dictionary["arpeggio"].index && this._openChordDropdown) ? "" : "none";
                 if (instrument.chord == Config.chords.dictionary["monophonic"].index) {
@@ -2687,7 +2691,7 @@ export class SongEditor {
                 }
             }
             if(effectsIncludePitchShift(instrument.mdeffects)) {
-                this._mdeffectsGroup.append(this._pitchShiftRow)
+                this._mdeffectsGroup.append(div({ class: "sectionBody" }, this._pitchShiftRow))
                 this._pitchShiftSlider.updateValue(instrument.pitchShift);
                 this._pitchShiftSlider.input.title = (instrument.pitchShift - Config.pitchShiftCenter) + " semitone(s)";
                 for (const marker of this._pitchShiftFifthMarkers) {
@@ -2695,12 +2699,12 @@ export class SongEditor {
                 }
             }
             if(effectsIncludeDetune(instrument.mdeffects)) {
-                this._mdeffectsGroup.append(this._detuneSliderRow)
+                this._mdeffectsGroup.append(div({ class: "sectionBody" }, this._detuneSliderRow))
                 this._detuneSlider.updateValue(instrument.detune - Config.detuneCenter);
                 this._detuneSlider.input.title = (detuneToCents(instrument.detune)) + " cent(s)";
             }
             if(effectsIncludeVibrato(instrument.mdeffects)) {
-                this._mdeffectsGroup.append(div(this._vibratoSelectRow, this._vibratoDropdownGroup))
+                this._mdeffectsGroup.append(div({ class: "sectionBody" }, this._vibratoSelectRow, this._vibratoDropdownGroup))
                 if (this._openVibratoDropdown) this._vibratoDropdownGroup.style.display = "";
             }
 
@@ -2783,16 +2787,7 @@ export class SongEditor {
             this._drumPresetSelect.style.display = "none";
             $("#pitchPresetSelect").parent().hide();
             $("#drumPresetSelect").parent().hide();
-            if (prefs.instrumentButtonsAtTop) {
-                this._modulatorGroup.insertBefore(this._instrumentExportGroup, this._modulatorGroup.firstChild);
-                this._modulatorGroup.insertBefore(this._instrumentCopyGroup, this._modulatorGroup.firstChild);
-            } else {
-                this._modulatorGroup.appendChild(this._instrumentCopyGroup);
-                this._modulatorGroup.appendChild(this._instrumentExportGroup);
-            }
 
-            this._modulatorGroup.insertBefore(this._instrumentsButtonRow, this._modulatorGroup.firstChild);
-            this._modulatorGroup.insertBefore(this._instrumentSettingsTextRow, this._modulatorGroup.firstChild);
             if (this._doc.song.channels[this._doc.channel].name == "") {
                 this._instrumentSettingsTextRow.textContent = "Modulator Settings";
             }
@@ -3362,6 +3357,17 @@ export class SongEditor {
                     this._whenSetModSetting(mod);
                 }
 
+                // section padding
+                let extraMargin: string = "2px";
+                $("#modHeader" + mod).get(0)!.style.setProperty("margin-bottom", "0.7em");
+                if (this._doc.prefs.settingsSectionPadding == 1) {
+                    extraMargin = "0.45em";
+                    $("#modHeader" + mod).get(0)!.style.setProperty("margin-bottom", "0.9em");
+                } else if (this._doc.prefs.settingsSectionPadding == 2) {
+                    extraMargin = "0.9em";
+                    $("#modHeader" + mod).get(0)!.style.setProperty("margin-bottom", "1.1em");
+                }
+
                 //Hide instrument select if channel is "none" or "song"
                 //Hopefully the !. don't ruin something...
                 if (instrument.modChannels[mod][0] < 0) {
@@ -3371,9 +3377,14 @@ export class SongEditor {
                     if (instrument.modChannels[mod][0] == -2) {
                         $("#modSettingText" + mod).get(0)!.style.display = "none";
                         ((this._modSetBoxes[mod].parentElement) as HTMLDivElement).style.display = "none";
+                        $("#modChannelText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
+                        $("#modChannelBox" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
                     } else {
                         $("#modSettingText" + mod).get(0)!.style.display = "";
                         ((this._modSetBoxes[mod].parentElement) as HTMLDivElement).style.display = "";
+                        $("#modChannelText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
+                        $("#modChannelBox" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
+                        $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
                     }
 
                     this._modTargetIndicators[mod].style.setProperty("fill", ColorConfig.uiWidgetFocus);
@@ -3459,7 +3470,7 @@ export class SongEditor {
 
                 } else {
                     $("#modEffectText" + mod).get(0)!.style.display = "none";
-                    $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "0.9em");
+                    $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
                 }
 
                 let filterType: string = Config.modulators[instrument.modulators[mod]].name;
@@ -3555,7 +3566,7 @@ export class SongEditor {
                     }
                 } else {
                     $("#modFilterText" + mod).get(0)!.style.display = "none";
-                    $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", "0.9em");
+                    $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
                 }
                 instrument.invalidModulators[mod]
 
@@ -3601,7 +3612,7 @@ export class SongEditor {
                 } else {
                     $("#modEnvelopeText" + mod).get(0)!.style.display = "none";
                     if (!(filterType == "post eq" || filterType == "pre eq")) {
-                        $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", "0.9em");
+                        $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
                     }
 
                 }
@@ -3652,72 +3663,45 @@ export class SongEditor {
         }
 
         // this is an arbitrary set of sections that i think looks good and makes sense! ~ theepie
-        let specialSections: HTMLElement[] = [
-            this._settingsArea.children[1].children[0],
-            this._settingsArea.children[1].children[2],
-            this._settingsArea.children[2],
-            this._songSettingsArea.children[0].children[0],
-            this._songSettingsArea.children[0].children[1],
-            this._instrumentSettingsGroup.children[0],
-            this._instrumentSettingsGroup.children[1],
-            this._instrumentSettingsGroup.children[2].children[0],
-            this._customInstrumentSettingsGroup.children[1].children[0],
-            this._customInstrumentSettingsGroup.children[2].children[0],
-            this._customInstrumentSettingsGroup.children[3].children[0],
-        ] as HTMLElement[]
+        let specialSections: HTMLElement[] = []
 
         // these are for the effect titles, they get a slightly smaller padding
         let effectSections: HTMLElement[] = []
 
-        // lowk these should be a class (actually all of these should be a class ngl) but yea these are for section headers for divider display
-        let headerSections: boolean[] = [
-            true,
-            false,
-            false,
-            true,
-            false,
-            true,
-            false,
-            false,
-            true,
-            true,
-            true,
-            false
-        ]
+        let headerSections: HTMLElement[] = []
 
         if (prefs.instrumentCopyPaste == "2") {
-            this._instrumentSettingsGroup.children[3].appendChild(this._instrumentCopyGroup);
-            if (prefs.instrumentImportExport == "2" || prefs.instrumentImportExport == "3") this._instrumentSettingsGroup.children[3].appendChild(this._instrumentExportGroup);
+            this._instrumentSettingsGroup.children[4].appendChild(this._instrumentCopyGroup);
+            if (prefs.instrumentImportExport == "2" || prefs.instrumentImportExport == "3") this._instrumentSettingsGroup.children[4].appendChild(this._instrumentExportGroup);
             else if (prefs.instrumentImportExport == "1") this._instrumentSettingsGroup.children[1].appendChild(this._instrumentExportGroup);
-            specialSections.push(this._instrumentSettingsGroup.children[3])
+            this._instrumentSettingsGroup.children[4].classList.add("sectionBody")
 
         } else if (prefs.instrumentCopyPaste == "1") {
             this._instrumentSettingsGroup.children[1].appendChild(this._instrumentCopyGroup);
             if (prefs.instrumentImportExport == "2") {
-                this._instrumentSettingsGroup.children[3].appendChild(this._instrumentExportGroup);
-                specialSections.push(this._instrumentSettingsGroup.children[3])
+                this._instrumentSettingsGroup.children[4].appendChild(this._instrumentExportGroup);
+                this._instrumentSettingsGroup.children[4].classList.add("sectionBody")
             }
             else {
                 this._instrumentSettingsGroup.children[1].appendChild(this._instrumentExportGroup);
-                resetSectionToDefault(this._instrumentSettingsGroup.children[3])
+                resetSectionToDefault(this._instrumentSettingsGroup.children[4])
+                this._instrumentSettingsGroup.children[4].classList.remove("sectionBody")
             }
         }
 
-        for (let j: number = 0; j < this._mdeffectsGroup.children.length; j++) {
-            specialSections.push(this._mdeffectsGroup.children[j] as HTMLElement)
+        for (let j: number = 0; j < this._settingsArea.getElementsByClassName("sectionBody").length; j++) {
+            specialSections.push(this._settingsArea.getElementsByClassName("sectionBody")[j] as HTMLElement)
         }
 
-        for (let j: number = 0; j < this.effectEditor.container.children.length; j++) {
-            specialSections.push(this.effectEditor.container.children[j] as HTMLElement)
-            effectSections.push(this.effectEditor.container.children[j].children[0] as HTMLElement)
+        for (let j: number = 0; j < this._settingsArea.getElementsByClassName("effectHeader").length; j++) {
+            effectSections.push(this._settingsArea.getElementsByClassName("effectHeader")[j] as HTMLElement)
         }
 
-        for (let j: number = 0; j < this.envelopeEditor.container.children.length; j++) {
-            if (this.envelopeEditor.container.children[j].children[0].style.display != "none") specialSections.push(this.envelopeEditor.container.children[j] as HTMLElement)
-            else resetSectionToDefault(this.envelopeEditor.container.children[j])
+        for (let j: number = 0; j < this._settingsArea.getElementsByClassName("sectionHeader").length; j++) {
+            headerSections.push(this._settingsArea.getElementsByClassName("sectionHeader")[j] as HTMLElement)
         }
 
-        // also check for section borders!
+        // also get the section borders!
         let sectionDisplay: string[] = defaultSectionDisplay;
         (this._instrumentTypeSelectRow.children[1] as HTMLElement).style.width = "62.5%";
         if (this._doc.prefs.settingsSectionDisplay == 1) {
@@ -3731,35 +3715,55 @@ export class SongEditor {
         }
 
         for (let i: number = 0; i < specialSections.length; i++) {
+            // check if there are any visible children first
+            let visibleChildren: boolean = specialSections[i].children.length == 0;
+            for (let j: number = 0; j < specialSections[i].children.length; j++) {
+                if ((specialSections[i].children[j] as HTMLElement).style.display != "none") {
+                    visibleChildren = true;
+                    break;
+                }
+            }
             if (specialSections[i]) {
-                if (i != 0
-                && (i + 1 != specialSections.length || this._doc.prefs.settingsSectionDisplay != 1)
-                && (sectionDisplay[5] == "true" || !headerSections[i])
-                ) {
+                if ((i + 1 != specialSections.length || this._doc.prefs.settingsSectionDisplay != 1) && visibleChildren) {
                     specialSections[i].style.borderStyle = sectionDisplay[0];
                     specialSections[i].style.borderWidth = sectionDisplay[1];
                     specialSections[i].style.borderRadius = sectionDisplay[2];
                     specialSections[i].style.padding = sectionDisplay[3];
                     if (sectionDisplay[4] == "true") {
                         let color: string = window.getComputedStyle(specialSections[i]).color
-                        specialSections[i].style.backgroundImage = "linear-gradient(to bottom, " + color.replace(")", ", 0.2),") +  color.replace(")", ", 0)") + ")"; //get actual theme color!
+                        specialSections[i].style.backgroundImage = "linear-gradient(to bottom, " + color.replace(")", ", 0.2),") +  color.replace(")", ", 0)") + ")";
                     }
                     else specialSections[i].style.backgroundImage = "none";
                 } else {
-                    specialSections[i].style.borderStyle = defaultSectionDisplay[0];
-                    specialSections[i].style.borderWidth = defaultSectionDisplay[1];
-                    specialSections[i].style.borderRadius = defaultSectionDisplay[2];
-                    specialSections[i].style.padding = defaultSectionDisplay[3];
-                    specialSections[i].style.backgroundImage = "none";
+                    resetSectionToDefault(specialSections[i])
                 }
-                specialSections[i].style.marginBottom = extraMargin;
-                specialSections[i].style.paddingBottom = extraMargin;
+                if (visibleChildren) {
+                    specialSections[i].style.marginBottom = extraMargin;
+                    specialSections[i].style.paddingBottom = extraMargin;
+                } else {
+                    specialSections[i].style.marginBottom = "0px";
+                    specialSections[i].style.paddingBottom = "0px";
+                }
             }
         }
         for (let i: number = 0; i < effectSections.length; i++) {
             if (effectSections[i]) {
                 effectSections[i].style.marginBottom = "0px";
                 effectSections[i].style.paddingBottom = extraMargin;
+            }
+        }
+        for (let i: number = 0; i < headerSections.length; i++) {
+            if (headerSections[i]) {
+                if (this._doc.prefs.settingsSectionDisplay == 1) {
+                    headerSections[i].style.borderStyle = sectionDisplay[0];
+                    headerSections[i].style.borderWidth = sectionDisplay[1];
+                    headerSections[i].style.borderRadius = sectionDisplay[2];
+                    headerSections[i].style.padding = sectionDisplay[3];
+                } else {
+                    resetSectionToDefault(headerSections[i])
+                }
+                headerSections[i].style.marginBottom = extraMargin;
+                headerSections[i].style.paddingBottom = extraMargin;
             }
         }
 

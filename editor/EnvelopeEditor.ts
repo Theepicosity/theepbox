@@ -527,7 +527,7 @@ export class EnvelopeEditor {
 				deleteButton,
 			);
 
-			const rowGroupContainer: HTMLDivElement = HTML.div(
+			const rowGroupContainer: HTMLDivElement = HTML.div({class: "sectionBody"},
 				row,
 				extraSettingsDropdownGroup
 			);
