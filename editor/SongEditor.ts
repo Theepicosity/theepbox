@@ -3707,7 +3707,8 @@ export class SongEditor {
         }
 
         // also check for section borders!
-        let sectionDisplay: string[] = defaultSectionDisplay
+        let sectionDisplay: string[] = defaultSectionDisplay;
+        (this._instrumentTypeSelectRow.children[1] as HTMLElement).style.width = "62.5%";
         if (this._doc.prefs.settingsSectionDisplay == 1) {
             sectionDisplay = ["none none ridge none", "2px", "0px", "0px", "false", "true"];
         } else if (this._doc.prefs.settingsSectionDisplay == 2) {
@@ -3747,8 +3748,8 @@ export class SongEditor {
         }
         for (let i: number = 0; i < effectSections.length; i++) {
             if (effectSections[i]) {
-                effectSections[i].style.marginBottom = extraMargin;
-                effectSections[i].style.paddingBottom = "0px";
+                effectSections[i].style.marginBottom = "0px";
+                effectSections[i].style.paddingBottom = extraMargin;
             }
         }
 
