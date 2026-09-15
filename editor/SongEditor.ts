@@ -3475,7 +3475,7 @@ export class SongEditor {
 
                 let filterType: string = Config.modulators[instrument.modulators[mod]].name;
                 let useSongEq: boolean = filterType == "song eq";
-                if (useSongEq) filterType = "post eq";
+                if (useSongEq) filterType = "pre eq";
                 if (filterType == "post eq" || filterType == "pre eq") {
                     $("#modFilterText" + mod).get(0)!.style.display = "";
                     $("#modEnvelopeText" + mod).get(0)!.style.display = "none";
