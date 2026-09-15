@@ -1444,7 +1444,7 @@ html {
 
 .beepboxEditor .selectRow > :last-child {
 	width: 62.5%;
-	flex-shrink: 0;
+	flex-shrink: auto;
 }
 
 .beepboxEditor .menu-area {

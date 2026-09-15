@@ -242,6 +242,7 @@ export class Preferences {
 	public colorTheme: string;
 	public fixChannelColorOrder: boolean;
 	public settingsSectionPadding: number;
+	public settingsSectionDisplay: number;
 	public layout: string;
 	public displayBrowserUrl: boolean;
 	public volume: number = 75;
@@ -291,6 +292,7 @@ export class Preferences {
 		this.enableChannelMuting = window.localStorage.getItem("enableChannelMuting") != "false";
 		this.fixChannelColorOrder = window.localStorage.getItem("fixChannelColorOrder") != "false";
 		this.settingsSectionPadding = Number(window.localStorage.getItem("settingsSectionPadding") || "0")
+		this.settingsSectionDisplay = Number(window.localStorage.getItem("settingsSectionDisplay") || "0")
 		this.displayBrowserUrl = window.localStorage.getItem("displayBrowserUrl") != "false";
 		this.pressControlForShortcuts = window.localStorage.getItem("pressControlForShortcuts") == "true";
 		this.enableMidi = window.localStorage.getItem("enableMidi") != "false";
@@ -341,6 +343,7 @@ export class Preferences {
 		window.localStorage.setItem("enableChannelMuting", this.enableChannelMuting ? "true" : "false");
 		window.localStorage.setItem("fixChannelColorOrder", this.fixChannelColorOrder ? "true" : "false");
 		window.localStorage.setItem("settingsSectionPadding", String(this.settingsSectionPadding));
+		window.localStorage.setItem("settingsSectionDisplay", String(this.settingsSectionDisplay));
 		window.localStorage.setItem("instrumentCopyPaste", this.instrumentCopyPaste ? "true" : "false");
 		window.localStorage.setItem("instrumentImportExport", this.instrumentImportExport ? "true" : "false");
 		window.localStorage.setItem("instrumentButtonsAtTop", this.instrumentButtonsAtTop ? "true" : "false");

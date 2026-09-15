@@ -292,9 +292,15 @@ export class PreferencesPrompt implements Prompt {
 	private readonly _showChannels: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _fixChannelColorOrder: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
     private readonly _settingsSectionPadding: HTMLSelectElement = select({ style: "width: 100%;" },
-        option({ value: "0" }, "default"),
+        option({ value: "0" }, "no padding"),
         option({ value: "1" }, "small"),
         option({ value: "2" }, "large"),
+    );
+    private readonly _settingsSectionDisplay: HTMLSelectElement = select({ style: "width: 100%;" },
+        option({ value: "0" }, "no divider"),
+        option({ value: "1" }, "line"),
+        option({ value: "2" }, "box"),
+        option({ value: "3" }, "gradient"),
     );
 	private readonly _showInstrumentScrollbars: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _instrumentCopyPaste: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
@@ -562,8 +568,12 @@ export class PreferencesPrompt implements Prompt {
 				div({ style: "width: 50%; text-align: center;" }, this._fixChannelColorOrder),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-				"Settings section padding:",
+				"Settings section padding size:",
 				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._settingsSectionPadding),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Settings section divider style:",
+				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._settingsSectionDisplay),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 				"Show instrument scrollbars:",
@@ -774,6 +784,7 @@ export class PreferencesPrompt implements Prompt {
 		this._showChannels.checked = this._doc.prefs.showChannels;
 		this._fixChannelColorOrder.checked = this._doc.prefs.fixChannelColorOrder;
 		this._settingsSectionPadding.selectedIndex = this._doc.prefs.settingsSectionPadding;
+		this._settingsSectionDisplay.selectedIndex = this._doc.prefs.settingsSectionDisplay;
 		this._showInstrumentScrollbars.checked = this._doc.prefs.showInstrumentScrollbars;
 		this._instrumentCopyPaste.checked = this._doc.prefs.instrumentCopyPaste;
 		this._instrumentImportExport.checked = this._doc.prefs.instrumentImportExport;
@@ -883,6 +894,7 @@ export class PreferencesPrompt implements Prompt {
 		this._doc.prefs.showChannels = this._showChannels.checked;
 		this._doc.prefs.fixChannelColorOrder = this._fixChannelColorOrder.checked;
 		this._doc.prefs.settingsSectionPadding = this._settingsSectionPadding.selectedIndex;
+		this._doc.prefs.settingsSectionDisplay = this._settingsSectionDisplay.selectedIndex;
 		this._doc.prefs.showInstrumentScrollbars = this._showInstrumentScrollbars.checked;
 		this._doc.prefs.instrumentCopyPaste = this._instrumentCopyPaste.checked;
 		this._doc.prefs.instrumentImportExport = this._instrumentImportExport.checked;
