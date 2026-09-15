@@ -291,6 +291,11 @@ export class PreferencesPrompt implements Prompt {
 	private readonly _frostedGlassBackground: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _showChannels: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _fixChannelColorOrder: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
+    private readonly _settingsSectionPadding: HTMLSelectElement = select({ style: "width: 100%;" },
+        option({ value: "0" }, "default"),
+        option({ value: "1" }, "small"),
+        option({ value: "2" }, "large"),
+    );
 	private readonly _showInstrumentScrollbars: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _instrumentCopyPaste: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _instrumentImportExport: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
@@ -549,12 +554,16 @@ export class PreferencesPrompt implements Prompt {
 				div({ style: "width: 50%; text-align: center;" }, this._frostedGlassBackground),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-				"Show all channels:",
+				"Show all visible channels:",
 				div({ style: "width: 50%; text-align: center;" }, this._showChannels),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 				"Preserve channel color order:",
 				div({ style: "width: 50%; text-align: center;" }, this._fixChannelColorOrder),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+				"Settings section padding:",
+				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._settingsSectionPadding),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 				"Show instrument scrollbars:",
@@ -764,6 +773,7 @@ export class PreferencesPrompt implements Prompt {
 		this._frostedGlassBackground.checked = this._doc.prefs.frostedGlassBackground;
 		this._showChannels.checked = this._doc.prefs.showChannels;
 		this._fixChannelColorOrder.checked = this._doc.prefs.fixChannelColorOrder;
+		this._settingsSectionPadding.selectedIndex = this._doc.prefs.settingsSectionPadding;
 		this._showInstrumentScrollbars.checked = this._doc.prefs.showInstrumentScrollbars;
 		this._instrumentCopyPaste.checked = this._doc.prefs.instrumentCopyPaste;
 		this._instrumentImportExport.checked = this._doc.prefs.instrumentImportExport;
@@ -872,6 +882,7 @@ export class PreferencesPrompt implements Prompt {
 		this._doc.prefs.frostedGlassBackground = this._frostedGlassBackground.checked;
 		this._doc.prefs.showChannels = this._showChannels.checked;
 		this._doc.prefs.fixChannelColorOrder = this._fixChannelColorOrder.checked;
+		this._doc.prefs.settingsSectionPadding = this._settingsSectionPadding.selectedIndex;
 		this._doc.prefs.showInstrumentScrollbars = this._showInstrumentScrollbars.checked;
 		this._doc.prefs.instrumentCopyPaste = this._instrumentCopyPaste.checked;
 		this._doc.prefs.instrumentImportExport = this._instrumentImportExport.checked;

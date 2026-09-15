@@ -527,8 +527,12 @@ export class EnvelopeEditor {
 				deleteButton,
 			);
 
-			this.container.appendChild(row);
-			this.container.appendChild(extraSettingsDropdownGroup);
+			const rowGroupContainer: HTMLDivElement = HTML.div(
+				row,
+				extraSettingsDropdownGroup
+			);
+
+			this.container.appendChild(rowGroupContainer);
 			this._rows[envelopeIndex] = row;
 			this._targetSelects[envelopeIndex] = targetSelect;
 			this._envelopeSelects[envelopeIndex] = envelopeSelect;

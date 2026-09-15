@@ -1088,55 +1088,63 @@ export class SongEditor {
         this._vibratoDropdownGroup,
     );
     private readonly _customInstrumentSettingsGroup: HTMLDivElement = div({ class: "editor-controls" },
-        this._chipWaveSelectRow,
-        this._chipNoiseSelectRow,
-        this._useChipWaveAdvancedLoopControlsRow,
-        this._chipWaveLoopModeSelectRow,
-        this._chipWaveLoopStartRow,
-        this._chipWaveLoopEndRow,
-        this._chipWaveStartOffsetRow,
-        this._chipWavePlayBackwardsRow,
-        this._customWaveDraw,
-        this._noteFilterTypeRow,
-        this._noteFilterRow,
-        this._noteFilterSimpleCutRow,
-        this._noteFilterSimplePeakRow,
-        this._fadeInOutRow,
-        this._algorithmSelectRow,
-        this._algorithm6OpSelectRow,
-        this._phaseModGroup,
-        this._feedbackRow1,
-        this._feedback6OpRow1,
-        this._feedbackRow2,
-        this._spectrumRow,
-        this._harmonicsRow,
-        this._drumsetGroup,
-        this._supersawDynamismRow,
-        this._supersawSpreadRow,
-        this._supersawShapeRow,
-        this._pulseWidthRow,
-        // this._decimalOffsetRow,
-        this._pulseWidthDropdownGroup,
-        this._stringSustainRow,
-        this._unisonSelectRow,
-        this._unisonDropdownGroup,
-        div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
-            span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("mdeffects") }, "Musical Effects")),
-            div({ class: "effects-menu" }, this._mdeffectsSelect),
+        div(
+            this._chipWaveSelectRow,
+            this._chipNoiseSelectRow,
+            this._useChipWaveAdvancedLoopControlsRow,
+            this._chipWaveLoopModeSelectRow,
+            this._chipWaveLoopStartRow,
+            this._chipWaveLoopEndRow,
+            this._chipWaveStartOffsetRow,
+            this._chipWavePlayBackwardsRow,
+            this._customWaveDraw,
+            this._noteFilterTypeRow,
+            this._noteFilterRow,
+            this._noteFilterSimpleCutRow,
+            this._noteFilterSimplePeakRow,
+            this._fadeInOutRow,
+            this._algorithmSelectRow,
+            this._algorithm6OpSelectRow,
+            this._phaseModGroup,
+            this._feedbackRow1,
+            this._feedback6OpRow1,
+            this._feedbackRow2,
+            this._spectrumRow,
+            this._harmonicsRow,
+            this._drumsetGroup,
+            this._supersawDynamismRow,
+            this._supersawSpreadRow,
+            this._supersawShapeRow,
+            this._pulseWidthRow,
+            // this._decimalOffsetRow,
+            this._pulseWidthDropdownGroup,
+            this._stringSustainRow,
+            this._unisonSelectRow,
+            this._unisonDropdownGroup,
         ),
-        this._mdeffectsGroup,
-        div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
-            span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("effects") }, "Audio Effects")),
-            div({ class: "effects-menu" }, this._effectsSelect),
+        div(
+            div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
+                span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("mdeffects") }, "Musical Effects")),
+                div({ class: "effects-menu" }, this._mdeffectsSelect),
+            ),
+            this._mdeffectsGroup,
         ),
-        this.effectEditor.container,
-        div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
-            span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("envelopes") }, "Envelopes")),
-            this._envelopeDropdown,
-            this._addEnvelopeButton,
+        div(
+            div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
+                span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("effects") }, "Audio Effects")),
+                div({ class: "effects-menu" }, this._effectsSelect),
+            ),
+            this.effectEditor.container,
         ),
-        this._envelopeDropdownGroup,
-        this.envelopeEditor.container,
+        div(
+            div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
+                span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("envelopes") }, "Envelopes")),
+                this._envelopeDropdown,
+                this._addEnvelopeButton,
+            ),
+            this._envelopeDropdownGroup,
+            this.envelopeEditor.container,
+        )
     );
     private readonly _instrumentCopyGroup: HTMLDivElement = div({ class: "editor-controls" },
         div({ class: "selectRow" },
@@ -1279,7 +1287,8 @@ export class SongEditor {
     );
     private readonly _instrumentSettingsArea: HTMLDivElement = div({ class: "instrument-settings-area" },
         this._instrumentSettingsGroup,
-        this._modulatorGroup);
+        this._modulatorGroup
+    );
     public readonly _settingsArea: HTMLDivElement = div({ class: "settings-area noSelection" },
         div({ class: "version-area" },
             div({ style: `text-align: center; margin: 3px 0; color: ${ColorConfig.secondaryText};` },
@@ -3620,6 +3629,62 @@ export class SongEditor {
 
             this._renderInstrumentBar(channel, instrumentIndex, colors);
 
+        }
+
+        // make sure to set the padding appropriately for the settings areas
+        let extraMargin: string = "0em";
+        let effectMargin: string = "0em";
+        if (this._doc.prefs.settingsSectionPadding == 1) {
+            extraMargin = "0.45em";
+            effectMargin = "0.3em";
+        } else if (this._doc.prefs.settingsSectionPadding == 2) {
+            extraMargin = "0.9em";
+            effectMargin = "0.6em";
+        }
+
+        // this is an arbitrary set of sections that i think looks good and makes sense! ~ theepie
+        let specialSections: HTMLElement[] = [
+            this._settingsArea.children[1],
+            this._settingsArea.children[1].children[0],
+            this._settingsArea.children[2],
+            this._songSettingsArea.children[0].children[0],
+            this._instrumentSettingsArea.children[0].children[0],
+            this._customInstrumentSettingsGroup.children[0],
+            this._customInstrumentSettingsGroup.children[1].children[0],
+            this._customInstrumentSettingsGroup.children[2].children[0],
+            this._customInstrumentSettingsGroup.children[3].children[0],
+        ]
+
+        // these are for the effect titles, they get a slightly smaller padding
+        let effectSections: HTMLElement[] = []
+
+        for (let j: number = 0; j < this._mdeffectsGroup.children.length; j++) {
+            if (j + 1 == this._mdeffectsGroup.children.length) specialSections.push(this._mdeffectsGroup.children[j])
+            else effectSections.push(this._mdeffectsGroup.children[j])
+        }
+
+        for (let j: number = 0; j < this.effectEditor.container.children.length; j++) {
+            specialSections.push(this.effectEditor.container.children[j])
+            effectSections.push(this.effectEditor.container.children[j].children[0])
+        }
+
+        for (let j: number = 0; j < this.envelopeEditor.container.children.length; j++) {
+            if (j + 1 == this.envelopeEditor.container.children.length) specialSections.push(this.envelopeEditor.container.children[j])
+            else effectSections.push(this.envelopeEditor.container.children[j])
+        }
+
+        if (this._doc.prefs.instrumentButtonsAtTop && (this._doc.prefs.instrumentCopyPaste || this._doc.prefs.instrumentImportExport)) {
+            if (this._doc.prefs.instrumentImportExport) specialSections.push(this._instrumentExportGroup)
+                else specialSections.push(this._instrumentCopyGroup)
+        } else {
+            specialSections.push(this._instrumentSettingsArea.children[0].children[1])
+        }
+
+        for (let i: number = 0; i < specialSections.length; i++) {
+            if (specialSections[i]) specialSections[i].style.marginBottom = extraMargin;
+        }
+        for (let i: number = 0; i < effectSections.length; i++) {
+            if (effectSections[i]) effectSections[i].style.marginBottom = effectMargin;
         }
 
         this._instrumentSettingsGroup.style.color = colors.primaryNote;
