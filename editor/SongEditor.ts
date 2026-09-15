@@ -1186,12 +1186,11 @@ export class SongEditor {
         this._instrumentSettingsTextRow,
         div(
             this._instrumentsButtonRow,
-            div(
-                this._instrumentCopyGroup,
-                this._instrumentExportGroup
-            )
+            this._instrumentCopyGroup,
+            this._instrumentExportGroup
         ),
         this._customInstrumentSettingsGroup,
+        div()
     );
     private readonly _usedPatternIndicator: SVGElement = SVG.path({ d: "M -6 -6 H 6 V 6 H -6 V -6 M -2 -3 L -2 -3 L -1 -4 H 1 V 4 H -1 V -1.2 L -1.2 -1 H -2 V -3 z", fill: ColorConfig.indicatorSecondary, "fill-rule": "evenodd" });
     private readonly _usedInstrumentIndicator: SVGElement = SVG.path({ d: "M -6 -0.8 H -3.8 V -6 H 0.8 V 4.4 H 2.2 V -0.8 H 6 V 0.8 H 3.8 V 6 H -0.8 V -4.4 H -2.2 V 0.8 H -6 z", fill: ColorConfig.indicatorSecondary });
@@ -2273,8 +2272,8 @@ export class SongEditor {
         this._globalOscscopeContainer.style.display = this._doc.prefs.showOscilloscope ? "" : "none";
         this._doc.synth.oscEnabled = this._doc.prefs.showOscilloscope;
         this._sampleLoadingStatusContainer.style.display = this._doc.prefs.showSampleLoadingStatus ? "" : "none";
-        this._instrumentCopyGroup.style.display = this._doc.prefs.instrumentCopyPaste ? "" : "none";
-        this._instrumentExportGroup.style.display = this._doc.prefs.instrumentImportExport ? "" : "none";
+        this._instrumentCopyGroup.style.display = this._doc.prefs.instrumentCopyPaste != "0" ? "" : "none";
+        this._instrumentExportGroup.style.display = this._doc.prefs.instrumentImportExport != "0" ? "" : "none";
         this._instrumentSettingsArea.style.scrollbarWidth = this._doc.prefs.showInstrumentScrollbars ? "" : "none";
         if (document.getElementById('text-content'))
             document.getElementById('text-content')!.style.display = this._doc.prefs.showDescription ? "" : "none";
@@ -3636,18 +3635,12 @@ export class SongEditor {
         }
 
         const defaultSectionDisplay: string[] = ["none", "0px", "0px", "0px", "false", "true"]
-
-        if (!prefs.instrumentButtonsAtTop) {
-            if (this._instrumentSettingsGroup.children[1].children[1]) this._instrumentSettingsGroup.appendChild(this._instrumentSettingsGroup.children[1].children[1]);
-        } else {
-            if (this._instrumentSettingsGroup.children[3]) {
-                this._instrumentSettingsGroup.children[1].appendChild(this._instrumentSettingsGroup.children[3]);
-                (this._instrumentSettingsGroup.children[1].children[1] as HTMLElement).style.borderStyle = defaultSectionDisplay[0];
-                (this._instrumentSettingsGroup.children[1].children[1] as HTMLElement).style.borderWidth = defaultSectionDisplay[1];
-                (this._instrumentSettingsGroup.children[1].children[1] as HTMLElement).style.borderRadius = defaultSectionDisplay[2];
-                (this._instrumentSettingsGroup.children[1].children[1] as HTMLElement).style.padding = defaultSectionDisplay[3];
-                (this._instrumentSettingsGroup.children[1].children[1] as HTMLElement).style.backgroundImage = "none";
-            }
+        function resetSectionToDefault(element: HTMLElement): void {
+            element.style.borderStyle = defaultSectionDisplay[0];
+            element.style.borderWidth = defaultSectionDisplay[1];
+            element.style.borderRadius = defaultSectionDisplay[2];
+            element.style.padding = defaultSectionDisplay[3];
+            element.style.backgroundImage = "none";
         }
 
         // make sure to set the padding appropriately for the settings areas
@@ -3671,7 +3664,6 @@ export class SongEditor {
             this._customInstrumentSettingsGroup.children[1].children[0],
             this._customInstrumentSettingsGroup.children[2].children[0],
             this._customInstrumentSettingsGroup.children[3].children[0],
-            this._instrumentSettingsGroup.children[3]
         ] as HTMLElement[]
 
         // these are for the effect titles, they get a slightly smaller padding
@@ -3693,6 +3685,24 @@ export class SongEditor {
             false
         ]
 
+        if (prefs.instrumentCopyPaste == "2") {
+            this._instrumentSettingsGroup.children[3].appendChild(this._instrumentCopyGroup);
+            if (prefs.instrumentImportExport == "2" || prefs.instrumentImportExport == "3") this._instrumentSettingsGroup.children[3].appendChild(this._instrumentExportGroup);
+            else if (prefs.instrumentImportExport == "1") this._instrumentSettingsGroup.children[1].appendChild(this._instrumentExportGroup);
+            specialSections.push(this._instrumentSettingsGroup.children[3])
+
+        } else if (prefs.instrumentCopyPaste == "1") {
+            this._instrumentSettingsGroup.children[1].appendChild(this._instrumentCopyGroup);
+            if (prefs.instrumentImportExport == "2") {
+                this._instrumentSettingsGroup.children[3].appendChild(this._instrumentExportGroup);
+                specialSections.push(this._instrumentSettingsGroup.children[3])
+            }
+            else {
+                this._instrumentSettingsGroup.children[1].appendChild(this._instrumentExportGroup);
+                resetSectionToDefault(this._instrumentSettingsGroup.children[3])
+            }
+        }
+
         for (let j: number = 0; j < this._mdeffectsGroup.children.length; j++) {
             specialSections.push(this._mdeffectsGroup.children[j] as HTMLElement)
         }
@@ -3703,7 +3713,8 @@ export class SongEditor {
         }
 
         for (let j: number = 0; j < this.envelopeEditor.container.children.length; j++) {
-            specialSections.push(this.envelopeEditor.container.children[j] as HTMLElement)
+            if (this.envelopeEditor.container.children[j].children[0].style.display != "none") specialSections.push(this.envelopeEditor.container.children[j] as HTMLElement)
+            else resetSectionToDefault(this.envelopeEditor.container.children[j])
         }
 
         // also check for section borders!
@@ -3724,7 +3735,6 @@ export class SongEditor {
                 if (i != 0
                 && (i + 1 != specialSections.length || this._doc.prefs.settingsSectionDisplay != 1)
                 && (sectionDisplay[5] == "true" || !headerSections[i])
-                && ((specialSections[i].children[0] && (specialSections[i].children[0] as HTMLElement).style.display != "none") || (specialSections[i].children[1] && (specialSections[i].children[1] as HTMLElement).style.display != "none"))
                 ) {
                     specialSections[i].style.borderStyle = sectionDisplay[0];
                     specialSections[i].style.borderWidth = sectionDisplay[1];
@@ -3732,7 +3742,7 @@ export class SongEditor {
                     specialSections[i].style.padding = sectionDisplay[3];
                     if (sectionDisplay[4] == "true") {
                         let color: string = window.getComputedStyle(specialSections[i]).color
-                        specialSections[i].style.backgroundImage = "linear-gradient(to bottom, " + color.replace(")", ", 0.2)") + ", black)";
+                        specialSections[i].style.backgroundImage = "linear-gradient(to bottom, " + color.replace(")", ", 0.2),") +  color.replace(")", ", 0)") + ")"; //get actual theme color!
                     }
                     else specialSections[i].style.backgroundImage = "none";
                 } else {
@@ -4692,7 +4702,6 @@ export class SongEditor {
                 this._doc.prefs.closePromptByClickoff = false;
                 this._doc.prefs.colorTheme = "slarmoosbox";
                 this._doc.prefs.frostedGlassBackground = false;
-                this._doc.prefs.instrumentButtonsAtTop = true;
                 this._doc.prefs.instrumentCopyPaste = true;
                 this._doc.prefs.instrumentImportExport = true;
                 this._doc.prefs.notesFlashWhenPlayed = true;

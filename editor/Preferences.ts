@@ -237,7 +237,7 @@ export class Preferences {
 	public displayVolumeBar: boolean;
 	public instrumentCopyPaste: boolean;
 	public instrumentImportExport: boolean;
-	public instrumentButtonsAtTop: boolean;
+	//public instrumentButtonsAtTop: boolean;
 	public enableChannelMuting: boolean;
 	public colorTheme: string;
 	public fixChannelColorOrder: boolean;
@@ -273,22 +273,34 @@ export class Preferences {
 	
 	public reload(): void {
 		this.autoPlay = window.localStorage.getItem("autoPlay") == "true";
-		if (window.localStorage.getItem("autoFollow") == "true") this.autoFollow = 0
-		else if (window.localStorage.getItem("autoFollow") == "false") this.autoFollow = 2
+		if (window.localStorage.getItem("autoFollow") == "true") this.autoFollow = "0"
+		else if (window.localStorage.getItem("autoFollow") == "false") this.autoFollow = "2"
 		else this.autoFollow = Number(window.localStorage.getItem("autoFollow") || "0");
+
 		this.enableNotePreview = window.localStorage.getItem("enableNotePreview") != "false";
 		this.showFifth = window.localStorage.getItem("showFifth") != "false";
-		if (window.localStorage.getItem("notesOutsideScale") == "true") this.notesOutsideScale = 0;
-		else if (window.localStorage.getItem("notesOutsideScale") == "false") this.notesOutsideScale = 3;
+
+		if (window.localStorage.getItem("notesOutsideScale") == "true") this.notesOutsideScale = "0";
+		else if (window.localStorage.getItem("notesOutsideScale") == "false") this.notesOutsideScale = "3";
 		else this.notesOutsideScale = Number(window.localStorage.getItem("notesOutsideScale") || "0")
+
 		this.showLetters = window.localStorage.getItem("showLetters") != "false";
 		this.showChannels = window.localStorage.getItem("showChannels") != "false";
 		this.showScrollBar = window.localStorage.getItem("showScrollBar") != "false";
 		this.alwaysFineNoteVol = window.localStorage.getItem("alwaysFineNoteVol") == "true";
 		this.displayVolumeBar = window.localStorage.getItem("displayVolumeBar") != "false";
-		this.instrumentCopyPaste = window.localStorage.getItem("instrumentCopyPaste") != "false";
-		this.instrumentImportExport = window.localStorage.getItem("instrumentImportExport") == "true";
-		this.instrumentButtonsAtTop = window.localStorage.getItem("instrumentButtonsAtTop") != "false"
+
+		if (window.localStorage.getItem("instrumentCopyPaste") == "false") this.instrumentCopyPaste = "0";
+		else if (window.localStorage.getItem("instrumentCopyPaste") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "true") this.instrumentCopyPaste = "1";
+		else if (window.localStorage.getItem("instrumentCopyPaste") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "false") this.instrumentCopyPaste = "2";
+		else this.instrumentCopyPaste = Number(window.localStorage.getItem("instrumentCopyPaste") || "1")
+
+		if (window.localStorage.getItem("instrumentImportExport") == "false") this.instrumentImportExport = "0";
+		else if (window.localStorage.getItem("instrumentImportExport") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "true") this.instrumentImportExport = "1";
+		else if (window.localStorage.getItem("instrumentImportExport") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "false") this.instrumentImportExport = "2";
+		else this.instrumentImportExport = Number(window.localStorage.getItem("instrumentImportExport") || "0")
+
+		//this.instrumentButtonsAtTop = window.localStorage.getItem("instrumentButtonsAtTop") != "false"
 		this.enableChannelMuting = window.localStorage.getItem("enableChannelMuting") != "false";
 		this.fixChannelColorOrder = window.localStorage.getItem("fixChannelColorOrder") != "false";
 		this.settingsSectionPadding = Number(window.localStorage.getItem("settingsSectionPadding") || "0")
@@ -344,9 +356,9 @@ export class Preferences {
 		window.localStorage.setItem("fixChannelColorOrder", this.fixChannelColorOrder ? "true" : "false");
 		window.localStorage.setItem("settingsSectionPadding", String(this.settingsSectionPadding));
 		window.localStorage.setItem("settingsSectionDisplay", String(this.settingsSectionDisplay));
-		window.localStorage.setItem("instrumentCopyPaste", this.instrumentCopyPaste ? "true" : "false");
-		window.localStorage.setItem("instrumentImportExport", this.instrumentImportExport ? "true" : "false");
-		window.localStorage.setItem("instrumentButtonsAtTop", this.instrumentButtonsAtTop ? "true" : "false");
+		window.localStorage.setItem("instrumentCopyPaste", String(this.instrumentCopyPaste));
+		window.localStorage.setItem("instrumentImportExport", String(this.instrumentImportExport));
+		//window.localStorage.setItem("instrumentButtonsAtTop", this.instrumentButtonsAtTop ? "true" : "false");
 		window.localStorage.setItem("displayBrowserUrl", this.displayBrowserUrl ? "true" : "false");
 		window.localStorage.setItem("pressControlForShortcuts", this.pressControlForShortcuts ? "true" : "false");
 		window.localStorage.setItem("enableMidi", this.enableMidi ? "true" : "false");

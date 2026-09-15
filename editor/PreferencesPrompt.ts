@@ -303,9 +303,18 @@ export class PreferencesPrompt implements Prompt {
         option({ value: "3" }, "gradient"),
     );
 	private readonly _showInstrumentScrollbars: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
-	private readonly _instrumentCopyPaste: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
-	private readonly _instrumentImportExport: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
-	private readonly _instrumentButtonsAtTop: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
+    private readonly _instrumentCopyPaste: HTMLSelectElement = select({ style: "width: 100%;" },
+        option({ value: "0" }, "disabled"),
+        option({ value: "1" }, "at top"),
+        option({ value: "2" }, "at bottom")
+    );
+    private readonly _instrumentImportExport: HTMLSelectElement = select({ style: "width: 100%;" },
+        option({ value: "0" }, "disabled"),
+        option({ value: "1" }, "at top"),
+        option({ value: "2" }, "at bottom"),
+        option({ value: "3" }, "with copy/paste")
+    );
+	//private readonly _instrumentButtonsAtTop: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _showLetters: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _displayVolumeBar: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _showOscilloscope: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
@@ -580,17 +589,17 @@ export class PreferencesPrompt implements Prompt {
 				div({ style: "width: 50%; text-align: center;" }, this._showInstrumentScrollbars),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					div({ style: "width: 50%;" }, "Show instrument copy/paste buttons:"),
-					div({ style: "width: 50%; text-align: center;" }, this._instrumentCopyPaste),
+				"Instrument copy/paste buttons:",
+				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._instrumentCopyPaste),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-					div({ style: "width: 50%;" }, "Show instrument import/export buttons:"),
-					div({ style: "width: 50%; text-align: center;" }, this._instrumentImportExport),
+				"Instrument import/export buttons:",
+				div({ class: "selectContainer", style: "width: 50%; text-align: center;" }, this._instrumentImportExport),
 			),
-			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
-				div({ style: "width: 50%;" }, "Show instrument buttons at top:"),
-				div({ style: "width: 50%; text-align: center;" }, this._instrumentButtonsAtTop),
-			),
+			// label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+			// 	div({ style: "width: 50%;" }, "Show instrument buttons at top:"),
+			// 	div({ style: "width: 50%; text-align: center;" }, this._instrumentButtonsAtTop),
+			// ),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 				"Show piano keys:",
 				div({ style: "width: 50%; text-align: center;" }, this._showLetters),
@@ -786,9 +795,9 @@ export class PreferencesPrompt implements Prompt {
 		this._settingsSectionPadding.selectedIndex = this._doc.prefs.settingsSectionPadding;
 		this._settingsSectionDisplay.selectedIndex = this._doc.prefs.settingsSectionDisplay;
 		this._showInstrumentScrollbars.checked = this._doc.prefs.showInstrumentScrollbars;
-		this._instrumentCopyPaste.checked = this._doc.prefs.instrumentCopyPaste;
-		this._instrumentImportExport.checked = this._doc.prefs.instrumentImportExport;
-		this._instrumentButtonsAtTop.checked = this._doc.prefs.instrumentButtonsAtTop;
+		this._instrumentCopyPaste.selectedIndex = this._doc.prefs.instrumentCopyPaste;
+		this._instrumentImportExport.selectedIndex = this._doc.prefs.instrumentImportExport;
+		//this._instrumentButtonsAtTop.checked = this._doc.prefs.instrumentButtonsAtTop;
 		this._showLetters.checked = this._doc.prefs.showLetters;
 		this._displayVolumeBar.checked = this._doc.prefs.displayVolumeBar;
 		this._showOscilloscope.checked = this._doc.prefs.showOscilloscope;
@@ -896,9 +905,9 @@ export class PreferencesPrompt implements Prompt {
 		this._doc.prefs.settingsSectionPadding = this._settingsSectionPadding.selectedIndex;
 		this._doc.prefs.settingsSectionDisplay = this._settingsSectionDisplay.selectedIndex;
 		this._doc.prefs.showInstrumentScrollbars = this._showInstrumentScrollbars.checked;
-		this._doc.prefs.instrumentCopyPaste = this._instrumentCopyPaste.checked;
-		this._doc.prefs.instrumentImportExport = this._instrumentImportExport.checked;
-		this._doc.prefs.instrumentButtonsAtTop = this._instrumentButtonsAtTop.checked;
+		this._doc.prefs.instrumentCopyPaste = this._instrumentCopyPaste.selectedIndex;
+		this._doc.prefs.instrumentImportExport = this._instrumentImportExport.selectedIndex;
+		//this._doc.prefs.instrumentButtonsAtTop = this._instrumentButtonsAtTop.checked;
 		this._doc.prefs.showLetters = this._showLetters.checked;
 		this._doc.prefs.displayVolumeBar = this._displayVolumeBar.checked;
 		this._doc.prefs.showOscilloscope = this._showOscilloscope.checked;
