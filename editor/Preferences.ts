@@ -235,8 +235,8 @@ export class Preferences {
 	public showScrollBar: boolean;
 	public alwaysFineNoteVol: boolean;
 	public displayVolumeBar: boolean;
-	public instrumentCopyPaste: boolean;
-	public instrumentImportExport: boolean;
+	public instrumentCopyPaste: number;
+	public instrumentImportExport: number;
 	//public instrumentButtonsAtTop: boolean;
 	public enableChannelMuting: boolean;
 	public colorTheme: string;
@@ -273,15 +273,15 @@ export class Preferences {
 	
 	public reload(): void {
 		this.autoPlay = window.localStorage.getItem("autoPlay") == "true";
-		if (window.localStorage.getItem("autoFollow") == "true") this.autoFollow = "0"
-		else if (window.localStorage.getItem("autoFollow") == "false") this.autoFollow = "2"
+		if (window.localStorage.getItem("autoFollow") == "true") this.autoFollow = 0
+		else if (window.localStorage.getItem("autoFollow") == "false") this.autoFollow = 2
 		else this.autoFollow = Number(window.localStorage.getItem("autoFollow") || "0");
 
 		this.enableNotePreview = window.localStorage.getItem("enableNotePreview") != "false";
 		this.showFifth = window.localStorage.getItem("showFifth") != "false";
 
-		if (window.localStorage.getItem("notesOutsideScale") == "true") this.notesOutsideScale = "0";
-		else if (window.localStorage.getItem("notesOutsideScale") == "false") this.notesOutsideScale = "3";
+		if (window.localStorage.getItem("notesOutsideScale") == "true") this.notesOutsideScale = 0;
+		else if (window.localStorage.getItem("notesOutsideScale") == "false") this.notesOutsideScale = 3;
 		else this.notesOutsideScale = Number(window.localStorage.getItem("notesOutsideScale") || "0")
 
 		this.showLetters = window.localStorage.getItem("showLetters") != "false";
@@ -290,14 +290,14 @@ export class Preferences {
 		this.alwaysFineNoteVol = window.localStorage.getItem("alwaysFineNoteVol") == "true";
 		this.displayVolumeBar = window.localStorage.getItem("displayVolumeBar") != "false";
 
-		if (window.localStorage.getItem("instrumentCopyPaste") == "false") this.instrumentCopyPaste = "0";
-		else if (window.localStorage.getItem("instrumentCopyPaste") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "true") this.instrumentCopyPaste = "1";
-		else if (window.localStorage.getItem("instrumentCopyPaste") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "false") this.instrumentCopyPaste = "2";
+		if (window.localStorage.getItem("instrumentCopyPaste") == "false") this.instrumentCopyPaste = 0;
+		else if (window.localStorage.getItem("instrumentCopyPaste") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "true") this.instrumentCopyPaste = 1;
+		else if (window.localStorage.getItem("instrumentCopyPaste") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "false") this.instrumentCopyPaste = 2;
 		else this.instrumentCopyPaste = Number(window.localStorage.getItem("instrumentCopyPaste") || "1")
 
-		if (window.localStorage.getItem("instrumentImportExport") == "false") this.instrumentImportExport = "0";
-		else if (window.localStorage.getItem("instrumentImportExport") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "true") this.instrumentImportExport = "1";
-		else if (window.localStorage.getItem("instrumentImportExport") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "false") this.instrumentImportExport = "2";
+		if (window.localStorage.getItem("instrumentImportExport") == "false") this.instrumentImportExport = 0;
+		else if (window.localStorage.getItem("instrumentImportExport") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "true") this.instrumentImportExport = 1;
+		else if (window.localStorage.getItem("instrumentImportExport") == "true" && window.localStorage.getItem("instrumentButtonsAtTop") == "false") this.instrumentImportExport = 2;
 		else this.instrumentImportExport = Number(window.localStorage.getItem("instrumentImportExport") || "0")
 
 		//this.instrumentButtonsAtTop = window.localStorage.getItem("instrumentButtonsAtTop") != "false"

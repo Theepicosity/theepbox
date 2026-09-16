@@ -6,7 +6,7 @@ import { ColorConfig } from "./ColorConfig";
 import { ChannelRow } from "./ChannelRow";
 import { InputBox } from "./HTMLWrapper";
 import { ChangeChannelOrder, ChangeChannelName, ChangeRemoveChannel } from "./changes";
-import { Config } from "../synth/SynthConfig";
+import { ChannelType, Config } from "../synth/SynthConfig";
 import { SongEditor } from "./SongEditor";
 
 //namespace beepbox {
@@ -24,10 +24,12 @@ export class MuteEditor {
         HTML.option({ value: "chnUp" }, "Move Channel Up"),
         HTML.option({ value: "chnDown" }, "Move Channel Down"),
         HTML.option({ value: "chnMute" }, "Mute Channel"),
+        HTML.option({ value: "chnUnmute" }, "Unmute Channel"),
         HTML.option({ value: "chnSolo" }, "Solo Channel"),
+        HTML.option({ value: "chnShow" }, "Show Channel"),
         HTML.option({ value: "chnHide" }, "Hide Channel"),
-        HTML.option({ value: "chnInsert" }, "Insert Channel Below"),
-        HTML.option({ value: "chnDelete" }, "Delete This Channel"),
+        HTML.option({ value: "chnInsert" }, "Insert Channel"),
+        HTML.option({ value: "chnDelete" }, "Delete Channel"),
     );
 
     public readonly container: HTMLElement = HTML.div({ class: "muteEditor", style: "position: sticky; padding-top: " + Config.barEditorHeight + "px;" }, this._channelNameDisplay, this._channelNameInput.input, this._channelDropDown);
@@ -95,24 +97,42 @@ export class MuteEditor {
 
         this._channelNameDisplay.style.setProperty("display", "");
 
+        // if the channel is muted, show the unmute option
+        if (this._doc.song.channels[this._channelDropDownChannel].muted == true) {
+            this._channelDropDown.options[3].hidden = true;
+            this._channelDropDown.options[4].removeAttribute("hidden");
+        }
+        else {
+            this._channelDropDown.options[3].removeAttribute("hidden");
+            this._channelDropDown.options[4].hidden = true;
+        }
+        if (this._doc.song.channels[this._channelDropDownChannel].visible == true) {
+            this._channelDropDown.options[6].hidden = true;
+            this._channelDropDown.options[7].removeAttribute("hidden");
+        }
+        else {
+            this._channelDropDown.options[7].hidden = true;
+            this._channelDropDown.options[6].removeAttribute("hidden");
+        }
+
         // Check if channel is at limit, in which case another can't be inserted
         if ((this._channelDropDownChannel < this._doc.song.pitchChannelCount && this._doc.song.pitchChannelCount == Config.pitchChannelCountMax)
             || (this._channelDropDownChannel >= this._doc.song.pitchChannelCount && this._channelDropDownChannel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount && this._doc.song.noiseChannelCount == Config.noiseChannelCountMax)
             || (this._channelDropDownChannel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount && this._doc.song.modChannelCount == Config.modChannelCountMax)) {
-            this._channelDropDown.options[5].disabled = true;
+            this._channelDropDown.options[8].disabled = true;
         }
         else {
-            this._channelDropDown.options[5].disabled = false;
+            this._channelDropDown.options[8].disabled = false;
         }
 
         // Also check if a channel is eligible to move up or down based on the song's channel settings.
-        if (this._channelDropDownChannel == 0 || this._channelDropDownChannel == this._doc.song.pitchChannelCount || this._channelDropDownChannel == this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
+        if (this._channelDropDownChannel == 0) {
             this._channelDropDown.options[1].disabled = true;
         }
         else {
             this._channelDropDown.options[1].disabled = false;
         }
-        if (this._channelDropDownChannel == this._doc.song.pitchChannelCount - 1 || this._channelDropDownChannel == this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount - 1 || this._channelDropDownChannel == this._doc.song.getChannelCount() - 1) {
+        if (this._channelDropDownChannel == this._doc.song.getChannelCount() - 1) {
             this._channelDropDown.options[2].disabled = true;
         }
         else {
@@ -121,10 +141,10 @@ export class MuteEditor {
 
         // Also, can't delete the last pitch channel.
         if (this._doc.song.pitchChannelCount == 1 && this._channelDropDownChannel == 0) {
-            this._channelDropDown.options[6].disabled = true;
+            this._channelDropDown.options[9].disabled = true;
         }
         else {
-            this._channelDropDown.options[6].disabled = false;
+            this._channelDropDown.options[9].disabled = false;
         }
     }
 
@@ -154,6 +174,7 @@ export class MuteEditor {
                 this._doc.record(new ChangeChannelOrder(this._doc, this._channelDropDownChannel, this._channelDropDownChannel, 1));
                 break;
             case "chnMute":
+            case "chnUnmute":
                 this._doc.song.channels[this._channelDropDownChannel].muted = !this._doc.song.channels[this._channelDropDownChannel].muted;
                 this.render();
                 break;
@@ -180,6 +201,7 @@ export class MuteEditor {
                 break;
             }
             case "chnHide":
+            case "chnShow":
                 this._doc.song.channels[this._channelDropDownChannel].visible = !this._doc.song.channels[this._channelDropDownChannel].visible;
                 this.render();
                 break;
@@ -239,13 +261,12 @@ export class MuteEditor {
                     this._channelNameDisplay.style.setProperty("display", "");
                 }
                 else {
-                    if (index < this._doc.song.pitchChannelCount) {
+                    if (this._doc.song.channels[index].type === ChannelType.pitch) {
                         this._channelNameDisplay.textContent = "Pitch " + (index + 1);
-                    } else if (index < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
-                        this._channelNameDisplay.textContent = "Noise " + (index - this._doc.song.pitchChannelCount + 1);
-                    }
-                    else {
-                        this._channelNameDisplay.textContent = "Mod " + (index - this._doc.song.pitchChannelCount - this._doc.song.noiseChannelCount + 1);
+                    } else if (this._doc.song.channels[index].type === ChannelType.noise) {
+                        this._channelNameDisplay.textContent = "Noise " + (index + 1);
+                    } else if (this._doc.song.channels[index].type === ChannelType.mod) {
+                        this._channelNameDisplay.textContent = "Mod " + (index + 1);
                     }
                     // The name set will only show up when this becomes visible, e.g. when the dropdown is opened.
                     this._channelNameDisplay.style.setProperty("display", "none");
@@ -322,39 +343,27 @@ export class MuteEditor {
 
 
                 if (this._doc.song.channels[y].visible) {
-                    if (y < this._doc.song.pitchChannelCount)
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgPitch;
-                    else if (y < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgNoise;
-                    else
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgMod;
+                    if (this._doc.song.channels[y].type === ChannelType.pitch) this._channelCounts[y].style.color = ColorConfig.trackEditorBgPitch;
+                    else if (this._doc.song.channels[y].type === ChannelType.noise) this._channelCounts[y].style.color = ColorConfig.trackEditorBgNoise;
+                    else if (this._doc.song.channels[y].type === ChannelType.mod) this._channelCounts[y].style.color = ColorConfig.trackEditorBgMod;
                 }
                 else {
-                    if (y < this._doc.song.pitchChannelCount)
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgPitchDim;
-                    else if (y < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgNoiseDim;
-                    else
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgModDim;
+                    if (this._doc.song.channels[y].type === ChannelType.pitch) this._channelCounts[y].style.color = ColorConfig.trackEditorBgPitchDim;
+                    else if (this._doc.song.channels[y].type === ChannelType.noise) this._channelCounts[y].style.color = ColorConfig.trackEditorBgNoiseDim;
+                    else if (this._doc.song.channels[y].type === ChannelType.mod) this._channelCounts[y].style.color = ColorConfig.trackEditorBgModDim;
                 }
             } else {
                 this._buttons[y].children[0].classList.remove("muted");
 
                 if (this._doc.song.channels[y].visible) {
-                    if (y < this._doc.song.pitchChannelCount)
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgPitch;
-                    else if (y < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgNoise;
-                    else
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgMod;
+                    if (this._doc.song.channels[y].type === ChannelType.pitch) this._channelCounts[y].style.color = ColorConfig.trackEditorBgPitch;
+                    else if (this._doc.song.channels[y].type === ChannelType.noise) this._channelCounts[y].style.color = ColorConfig.trackEditorBgNoise;
+                    else if (this._doc.song.channels[y].type === ChannelType.mod) this._channelCounts[y].style.color = ColorConfig.trackEditorBgMod;
                 }
                 else {
-                    if (y < this._doc.song.pitchChannelCount)
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgPitchDim;
-                    else if (y < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount)
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgNoiseDim;
-                    else
-                        this._channelCounts[y].style.color = ColorConfig.trackEditorBgModDim;
+                    if (this._doc.song.channels[y].type === ChannelType.pitch) this._channelCounts[y].style.color = ColorConfig.trackEditorBgPitchDim;
+                    else if (this._doc.song.channels[y].type === ChannelType.noise) this._channelCounts[y].style.color = ColorConfig.trackEditorBgNoiseDim;
+                    else if (this._doc.song.channels[y].type === ChannelType.mod) this._channelCounts[y].style.color = ColorConfig.trackEditorBgModDim;
                 }
             }
         }
@@ -368,32 +377,20 @@ export class MuteEditor {
 
         if (this._renderedModChannels != this._doc.song.modChannelCount || startingChannelCount != this._buttons.length) {
             for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
-                if (y < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
-                    this._buttons[y].children[0].classList.remove("modMute");
+                if (this._doc.song.channels[y].type === ChannelType.mod) {
+                    this._buttons[y].children[0].classList.add("modMute");
                 }
                 else {
-                    this._buttons[y].children[0].classList.add("modMute");
+                    this._buttons[y].children[0].classList.remove("modMute");
                 }
             }
         }
 
         if (this._renderedModChannels != this._doc.song.modChannelCount || this._renderedPitchChannels != this._doc.song.pitchChannelCount || this._renderedNoiseChannels != this._doc.song.noiseChannelCount) {
             for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
-                if (y < this._doc.song.pitchChannelCount) {
-                    let val: number = (y + 1);
-                    this._channelCounts[y].textContent = val + "";
-                    this._channelCounts[y].style.fontSize = (val >= 10) ? "xx-small" : "inherit";
-                }
-                else if (y < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
-                    let val: number = (y - this._doc.song.pitchChannelCount + 1);
-                    this._channelCounts[y].textContent = val + "";
-                    this._channelCounts[y].style.fontSize = (val >= 10) ? "xx-small" : "inherit";
-                }
-                else {
-                    let val: number = (y - this._doc.song.pitchChannelCount - this._doc.song.noiseChannelCount + 1);
-                    this._channelCounts[y].textContent = val + "";
-                    this._channelCounts[y].style.fontSize = (val >= 10) ? "xx-small" : "inherit";
-                }
+                let val: number = (y + 1);
+                this._channelCounts[y].textContent = val + "";
+                this._channelCounts[y].style.fontSize = (val >= 10) ? "xx-small" : "inherit";
             }
             this._renderedPitchChannels = this._doc.song.pitchChannelCount;
             this._renderedNoiseChannels = this._doc.song.noiseChannelCount;

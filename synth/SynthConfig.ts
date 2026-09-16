@@ -72,6 +72,12 @@ export const enum EnvelopeType {
     //add new envelope types here
 }
 
+export enum ChannelType {
+    pitch,
+    noise,
+    mod
+}
+
 export const enum InstrumentType {
     chip,
     fm,

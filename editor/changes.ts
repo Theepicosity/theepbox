@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Algorithm, Dictionary, FilterType, SustainType, InstrumentType, MDEffectType, EffectType, AutomationTarget, Config, LFOEnvelopeTypes, RandomEnvelopeTypes } from "../synth/SynthConfig";
+import { Algorithm, Dictionary, FilterType, SustainType, ChannelType, InstrumentType, MDEffectType, EffectType, AutomationTarget, Config, LFOEnvelopeTypes, RandomEnvelopeTypes } from "../synth/SynthConfig";
 import { Synth } from "../synth/synth";
 import { clamp } from "../synth/utils";
 import { Song } from "../synth/Song";
@@ -2064,16 +2064,18 @@ export class ChangeChannelOrder extends Change {
 
         // Update mods for each channel
         selectionMax = Math.max(selectionMax, selectionMin);
-        for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
-                for (let i: number = 0; i < Config.modCount; i++) {
-                    for (let j: number = 0; j < instrument.modChannels[i].length; j++) {
-                        if (instrument.modChannels[i][j] >= selectionMin && instrument.modChannels[i][j] <= selectionMax) {
-                            instrument.modChannels[i][j] += offset;
-                        }
-                        else if (instrument.modChannels[i][j] >= selectionMin + offset && instrument.modChannels[i][j] <= selectionMax + offset) {
-                            instrument.modChannels[i][j] -= offset * (selectionMax - selectionMin + 1);
+        for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
+            if (doc.song.channels[channelIndex].type === ChannelType.mod) {
+                for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
+                    let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
+                    for (let i: number = 0; i < Config.modCount; i++) {
+                        for (let j: number = 0; j < instrument.modChannels[i].length; j++) {
+                            if (instrument.modChannels[i][j] >= selectionMin && instrument.modChannels[i][j] <= selectionMax) {
+                                instrument.modChannels[i][j] += offset;
+                            }
+                            else if (instrument.modChannels[i][j] >= selectionMin + offset && instrument.modChannels[i][j] <= selectionMax + offset) {
+                                instrument.modChannels[i][j] -= offset * (selectionMax - selectionMin + 1);
+                            }
                         }
                     }
                 }
@@ -2103,71 +2105,68 @@ export class ChangeChannelCount extends Change {
     constructor(doc: SongDocument, newPitchChannelCount: number, newNoiseChannelCount: number, newModChannelCount: number) {
         super();
         if (doc.song.pitchChannelCount != newPitchChannelCount || doc.song.noiseChannelCount != newNoiseChannelCount || doc.song.modChannelCount != newModChannelCount) {
-            const newChannels: Channel[] = [];
+            const oldPitchCount: number = doc.song.pitchChannelCount;
+            let pitchChannelsToMake: number = newPitchChannelCount - doc.song.pitchChannelCount;
+            let noiseChannelsToMake: number = newNoiseChannelCount - doc.song.noiseChannelCount;
+            let modChannelsToMake: number = newModChannelCount - doc.song.modChannelCount;
+            let colorIndex: number = (doc.song.channels[doc.channel].color + 1) % 60;
 
-            function changeGroup(newCount: number, oldCount: number, newStart: number, oldStart: number, octave: number, isNoise: boolean, isMod: boolean): void {
-                for (let i: number = 0; i < newCount; i++) {
-                    const channelIndex = i + newStart;
-                    const oldChannel = i + oldStart;
-                    if (i < oldCount) {
-                        newChannels[channelIndex] = doc.song.channels[oldChannel];
-                    } else {
-                        newChannels[channelIndex] = new Channel();
-                        newChannels[channelIndex].octave = octave;
-                        newChannels[channelIndex].color = channelIndex % 60;
+            function changeGroup(channelsToMake: number, channelType: ChannelType): void {
+                if (channelsToMake == 0) return;
+                else if (channelsToMake > 0) {
+                    for (let i: number = 0; i < channelsToMake; i++) {
+                        let newChannel = new Channel(channelType);
+                        newChannel.octave = channelType === ChannelType.pitch ? 4 : 0;
+                        newChannel.color = colorIndex;
+                        colorIndex = (colorIndex + 1) % 60;
                         for (let j: number = 0; j < Config.instrumentCountMin; j++) {
+                            const isNoise: boolean = channelType === ChannelType.noise
+                            const isMod: boolean = channelType === ChannelType.mod
                             const instrument: Instrument = new Instrument(isNoise, isMod);
                             if (!isMod) {
                                 instrument.setTypeAndReset(isNoise ? InstrumentType.noise : InstrumentType.chip, isNoise, isMod);
                             } else {
                                 instrument.setTypeAndReset(InstrumentType.mod, isNoise, isMod);
                             }
-                            newChannels[channelIndex].instruments[j] = instrument;
+                            newChannel.instruments[j] = instrument;
                         }
                         for (let j: number = 0; j < doc.song.patternsPerChannel; j++) {
-                            newChannels[channelIndex].patterns[j] = new Pattern();
+                            newChannel.patterns[j] = new Pattern();
                         }
                         for (let j: number = 0; j < doc.song.barCount; j++) {
-                            newChannels[channelIndex].bars[j] = 0;
+                            newChannel.bars[j] = 0;
                         }
+                        doc.song.channels.push(newChannel)
                     }
+                }
+                else {
+                    // we need to find a channel
                 }
             }
 
-            changeGroup(newPitchChannelCount, doc.song.pitchChannelCount, 0, 0, 3, false, false);
-            changeGroup(newNoiseChannelCount, doc.song.noiseChannelCount, newPitchChannelCount, doc.song.pitchChannelCount, 0, true, false);
-            changeGroup(newModChannelCount, doc.song.modChannelCount, newNoiseChannelCount + newPitchChannelCount, doc.song.pitchChannelCount + doc.song.noiseChannelCount, 0, false, true);
+            changeGroup(pitchChannelsToMake, ChannelType.pitch);
+            changeGroup(noiseChannelsToMake, ChannelType.noise);
+            changeGroup(modChannelsToMake, ChannelType.mod);
 
-            let oldPitchCount: number = doc.song.pitchChannelCount;
-            doc.song.pitchChannelCount = newPitchChannelCount;
-            doc.song.noiseChannelCount = newNoiseChannelCount;
-            doc.song.modChannelCount = newModChannelCount;
-
-            for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-                doc.song.channels[channelIndex] = newChannels[channelIndex];
-            }
-            doc.song.channels.length = doc.song.getChannelCount();
+            doc.song.channels.length = newPitchChannelCount + newNoiseChannelCount + newModChannelCount;
 
             doc.channel = Math.min(doc.channel, newPitchChannelCount + newNoiseChannelCount + newModChannelCount - 1);
 
             // Determine if any mod instruments now refer to an invalid channel. Unset them if so
-            for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-                for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                    let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
-                    for (let mod: number = 0; mod < Config.modCount; mod++) {
-                        for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
+            for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
+                if (doc.song.channels[channelIndex].type === ChannelType.mod) {
+                    for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
+                        let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
+                        for (let mod: number = 0; mod < Config.modCount; mod++) {
+                            for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
 
-                            let modChannel: number = instrument.modChannels[mod][i];
+                                let modChannel: number = instrument.modChannels[mod][i];
 
-                            // Boundary checking
-                            if (instrument.modChannels[mod].length == 1 && ((modChannel >= doc.song.pitchChannelCount && modChannel < oldPitchCount) || modChannel >= doc.song.pitchChannelCount + doc.song.noiseChannelCount)) {
-                                instrument.modulators[mod] = Config.modulators.dictionary["none"].index;
+                                // Boundary checking
+                                if (instrument.modChannels[mod].length == 1 && ((modChannel >= doc.song.pitchChannelCount && modChannel < oldPitchCount) || modChannel >= doc.song.pitchChannelCount + doc.song.noiseChannelCount)) {
+                                    instrument.modulators[mod] = Config.modulators.dictionary["none"].index;
+                                }
                             }
-
-                            // Bump indices - new pitch channel added, bump all noise mods.
-                            if (modChannel >= oldPitchCount && oldPitchCount < newPitchChannelCount) {
-                                instrument.modChannels[mod][i] += newPitchChannelCount - oldPitchCount;
-                            } //BUG: this is (probably?) broken right now, pls fix
                         }
                     }
                 }

@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 //import {Layout} from "./Layout";
-import { sampleLoadEvents, SampleLoadedEvent, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, DropdownID } from "../synth/SynthConfig";
+import { sampleLoadEvents, SampleLoadedEvent, ChannelType, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, DropdownID } from "../synth/SynthConfig";
 import { BarScrollBar } from "./BarScrollBar";
 import { BeatsPerBarPrompt } from "./BeatsPerBarPrompt";
 import { Change, ChangeGroup } from "./Change";
@@ -2247,10 +2247,12 @@ export class SongEditor {
         const trackBounds: DOMRect = this._trackVisibleArea.getBoundingClientRect();
         this._doc.trackVisibleBars = Math.floor((trackBounds.right - trackBounds.left - (prefs.enableChannelMuting ? 32 : 0)) / this._doc.getBarWidth());
         this._doc.trackVisibleChannels = Math.floor((trackBounds.bottom - trackBounds.top - 30) / ChannelRow.patternHeight);
-        for (let i: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; i < this._doc.song.channels.length; i++) {
-            const channel: Channel = this._doc.song.channels[i];
-            for (let j: number = 0; j < channel.instruments.length; j++) {
-                this._doc.synth.determineInvalidModulators(channel.instruments[j]);
+        for (let i: number = 0; i < this._doc.song.channels.length; i++) {
+            if (this._doc.song.channels[i].type === ChannelType.mod) {
+                const channel: Channel = this._doc.song.channels[i];
+                for (let j: number = 0; j < channel.instruments.length; j++) {
+                    this._doc.synth.determineInvalidModulators(channel.instruments[j]);
+                }
             }
         }
         this._barScrollBar.render();
@@ -2276,8 +2278,8 @@ export class SongEditor {
         this._globalOscscopeContainer.style.display = this._doc.prefs.showOscilloscope ? "" : "none";
         this._doc.synth.oscEnabled = this._doc.prefs.showOscilloscope;
         this._sampleLoadingStatusContainer.style.display = this._doc.prefs.showSampleLoadingStatus ? "" : "none";
-        this._instrumentCopyGroup.style.display = this._doc.prefs.instrumentCopyPaste != "0" ? "" : "none";
-        this._instrumentExportGroup.style.display = this._doc.prefs.instrumentImportExport != "0" ? "" : "none";
+        this._instrumentCopyGroup.style.display = this._doc.prefs.instrumentCopyPaste != 0 ? "" : "none";
+        this._instrumentExportGroup.style.display = this._doc.prefs.instrumentImportExport != 0 ? "" : "none";
         this._instrumentSettingsArea.style.scrollbarWidth = this._doc.prefs.showInstrumentScrollbars ? "" : "none";
         if (document.getElementById('text-content'))
             document.getElementById('text-content')!.style.display = this._doc.prefs.showDescription ? "" : "none";
@@ -2864,39 +2866,21 @@ export class SongEditor {
                     channelList.push("none");
                     channelList.push("song");
                     let newString: string = "";
-                    for (let i: number = 0; i < this._doc.song.pitchChannelCount; i++) {
+                    for (let i: number = 0; i < this._doc.song.getChannelCount(); i++) {
                         let tgtchannel: Channel = this._doc.song.channels[i];
+                        if (tgtchannel.type === ChannelType.mod) break;
                         for (let j: number = 0; j < tgtchannel.instruments.length; j++) {
                             let countString = ""
                             if (tgtchannel.instruments.length > 1) countString = " ins. " + (j + 1)
                             if (this._doc.song.channels[i].name == "") {
-                                newString = "pitch " + (i + 1) + countString
+                                if (tgtchannel.type === ChannelType.pitch) newString = "pitch " + (i + 1) + countString;
+                                else if (tgtchannel.type === ChannelType.noise) newString = "noise " + (i + 1) + countString;
                             }
                             else {
                                 newString = this._doc.song.channels[i].name + countString;
                             }
                             for (let k: number = 0; k < instrument.modChannels[mod].length; k++) {
                                 if (instrument.modChannels[mod][k] == i && instrument.modInstruments[mod][k] == j) {
-                                    newString = "🢒 " + newString
-                                    break;
-                                }
-                            }
-                            channelList.push(newString)
-                        }
-                    }
-                    for (let i: number = 0; i < this._doc.song.noiseChannelCount; i++) {
-                        let tgtchannel: Channel = this._doc.song.channels[i + this._doc.song.pitchChannelCount];
-                        for (let j: number = 0; j < tgtchannel.instruments.length; j++) {
-                            let countString = ""
-                            if (tgtchannel.instruments.length > 1) countString = " ins. " + (j + 1)
-                            if (this._doc.song.channels[i].name == "") {
-                                newString = "noise " + (i + 1) + countString
-                            }
-                            else {
-                                newString = this._doc.song.channels[i].name + countString;
-                            }
-                            for (let k: number = 0; k < instrument.modChannels[mod].length; k++) {
-                                if (instrument.modChannels[mod][k] == i + this._doc.song.pitchChannelCount && instrument.modInstruments[mod][k] == j) {
                                     newString = "🢒 " + newString
                                     break;
                                 }
@@ -3670,21 +3654,21 @@ export class SongEditor {
 
         let headerSections: HTMLElement[] = []
 
-        if (prefs.instrumentCopyPaste == "2") {
+        if (prefs.instrumentCopyPaste == 2) {
             this._instrumentSettingsGroup.children[4].appendChild(this._instrumentCopyGroup);
-            if (prefs.instrumentImportExport == "2" || prefs.instrumentImportExport == "3") this._instrumentSettingsGroup.children[4].appendChild(this._instrumentExportGroup);
-            else if (prefs.instrumentImportExport == "1") this._instrumentSettingsGroup.children[1].appendChild(this._instrumentExportGroup);
+            if (prefs.instrumentImportExport == 2 || prefs.instrumentImportExport == 3) this._instrumentSettingsGroup.children[4].appendChild(this._instrumentExportGroup);
+            else if (prefs.instrumentImportExport == 1) this._instrumentSettingsGroup.children[1].appendChild(this._instrumentExportGroup);
             this._instrumentSettingsGroup.children[4].classList.add("sectionBody")
 
-        } else if (prefs.instrumentCopyPaste == "1") {
+        } else if (prefs.instrumentCopyPaste == 1) {
             this._instrumentSettingsGroup.children[1].appendChild(this._instrumentCopyGroup);
-            if (prefs.instrumentImportExport == "2") {
+            if (prefs.instrumentImportExport == 2) {
                 this._instrumentSettingsGroup.children[4].appendChild(this._instrumentExportGroup);
                 this._instrumentSettingsGroup.children[4].classList.add("sectionBody")
             }
             else {
                 this._instrumentSettingsGroup.children[1].appendChild(this._instrumentExportGroup);
-                resetSectionToDefault(this._instrumentSettingsGroup.children[4])
+                resetSectionToDefault(this._instrumentSettingsGroup.children[4] as HTMLElement)
                 this._instrumentSettingsGroup.children[4].classList.remove("sectionBody")
             }
         }
@@ -4706,8 +4690,8 @@ export class SongEditor {
                 this._doc.prefs.closePromptByClickoff = false;
                 this._doc.prefs.colorTheme = "slarmoosbox";
                 this._doc.prefs.frostedGlassBackground = false;
-                this._doc.prefs.instrumentCopyPaste = true;
-                this._doc.prefs.instrumentImportExport = true;
+                this._doc.prefs.instrumentCopyPaste = 1;
+                this._doc.prefs.instrumentImportExport = 1;
                 this._doc.prefs.notesFlashWhenPlayed = true;
                 this._doc.prefs.showOscilloscope = true;
                 this._doc.prefs.save();

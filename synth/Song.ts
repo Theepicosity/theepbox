@@ -1,6 +1,6 @@
 // Copyright (c) John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, InstrumentType, EffectType, MDEffectType, Envelope, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, LFOEnvelopeTypes, RandomEnvelopeTypes } from "./SynthConfig";
+import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, ChannelType, InstrumentType, EffectType, MDEffectType, Envelope, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, LFOEnvelopeTypes, RandomEnvelopeTypes } from "./SynthConfig";
 import { Preset, EditorConfig } from "../editor/EditorConfig";
 import { Channel } from "./Channel";
 import { Instrument, LegacySettings } from "./Instrument";
@@ -406,9 +406,6 @@ export class Song {
     public patternInstruments: boolean;
     public loopStart: number;
     public loopLength: number;
-    public pitchChannelCount: number;
-    public noiseChannelCount: number;
-    public modChannelCount: number;
     public readonly channels: Channel[] = [];
     public limitDecay: number = 4.0;
     public limitRise: number = 4000.0;
@@ -635,8 +632,35 @@ export class Song {
     }
 
     public getChannelCount(): number {
-        return this.pitchChannelCount + this.noiseChannelCount + this.modChannelCount;
+        return this.channels.length;
     }
+    /** number of Pitch channels */
+    public get pitchChannelCount(): number {
+        return this.channels.reduce(
+            (cnt, ch) => cnt + (ch.type === ChannelType.pitch ? 1 : 0),
+                                    0
+        );
+    }
+    /** allow legacy assignments—no‐op */
+    public set pitchChannelCount(_v: number) { /* noop */ }
+    /** number of Noise channels */
+    public get noiseChannelCount(): number {
+        return this.channels.reduce(
+            (cnt, ch) => cnt + (ch.type === ChannelType.noise ? 1 : 0),
+                                    0
+        );
+    }
+    /** allow legacy assignments—no‐op */
+    public set noiseChannelCount(_v: number) { /* noop */ }
+    /** number of Modulator channels */
+    public get modChannelCount(): number {
+        return this.channels.reduce(
+            (cnt, ch) => cnt + (ch.type === ChannelType.mod ? 1 : 0),
+                                    0
+        );
+    }
+    /** allow legacy assignments—no‐op */
+    public set modChannelCount(_v: number) { /* noop */ }
 
     public getMaxInstrumentsPerChannel(): number {
         return Math.max(
@@ -655,11 +679,11 @@ export class Song {
     }
 
     public getChannelIsNoise(channelIndex: number): boolean {
-        return (channelIndex >= this.pitchChannelCount && channelIndex < this.pitchChannelCount + this.noiseChannelCount);
+        return this.channels[channelIndex].type === ChannelType.noise;
     }
 
     public getChannelIsMod(channelIndex: number): boolean {
-        return (channelIndex >= this.pitchChannelCount + this.noiseChannelCount);
+        return this.channels[channelIndex].type === ChannelType.mod;
     }
 
     public static secondsToFadeInSetting(seconds: number): number {
@@ -703,17 +727,16 @@ export class Song {
         document.title = this.title + " - " + EditorConfig.versionDisplayName;
 
         if (andResetChannels) {
-            this.pitchChannelCount = 4;
-            this.noiseChannelCount = 1;
-            this.modChannelCount = 0;
+            this.channels.length = 0;
+            // build 3 pitch, 1 noise, 1 mod—then they can be reordered/mixed later
+            for (let i = 0; i < 4; i++) this.channels.push(new Channel(ChannelType.pitch));
+            this.channels.push(new Channel(ChannelType.noise));
             for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
-                const isNoiseChannel: boolean = channelIndex >= this.pitchChannelCount && channelIndex < this.pitchChannelCount + this.noiseChannelCount;
-                const isModChannel: boolean = channelIndex >= this.pitchChannelCount + this.noiseChannelCount;
-                if (this.channels.length <= channelIndex) {
-                    this.channels[channelIndex] = new Channel();
-                    this.channels[channelIndex].color = channelIndex;
-                }
+                // set defaults (octave, name, patterns, instruments, bars)
                 const channel: Channel = this.channels[channelIndex];
+                const isNoiseChannel: boolean = channel.type === ChannelType.noise;
+                const isModChannel: boolean = channel.type === ChannelType.mod;
+                channel.color = channelIndex;
                 channel.octave = Math.max(4 - channelIndex, 0); // [4, 3, 2, 1, 0]; Descending octaves with drums at zero in last channel.
 
                 for (let pattern: number = 0; pattern < this.patternsPerChannel; pattern++) {
@@ -760,7 +783,11 @@ export class Song {
             buffer.push(encodedSongTitle.charCodeAt(i));
         }
 
-        buffer.push(SongTagCode.channelCount, base64IntToCharCode[this.pitchChannelCount], base64IntToCharCode[this.noiseChannelCount], base64IntToCharCode[this.modChannelCount]);
+        // Save total channel count, then the type of each channel.
+        buffer.push(SongTagCode.channelCount, base64IntToCharCode[this.channels.length]);
+        this.channels.forEach(channel => {
+            buffer.push(base64IntToCharCode[channel.type]);
+        });
         buffer.push(SongTagCode.scale, base64IntToCharCode[this.scale]);
         if (this.scale == Config.scales["dictionary"]["Custom"].index) {
             for (var i = 1; i < Config.pitchesPerOctave; i++) {
@@ -844,8 +871,8 @@ export class Song {
         }
 
         buffer.push(SongTagCode.channelOctave);
-        for (let channelIndex: number = 0; channelIndex < this.pitchChannelCount; channelIndex++) {
-            buffer.push(base64IntToCharCode[this.channels[channelIndex].octave]);
+        for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
+            if (this.channels[channelIndex].type === ChannelType.pitch) buffer.push(base64IntToCharCode[this.channels[channelIndex].octave]);
         }
 
         //This is for specific instrument stuff to url
@@ -1732,26 +1759,32 @@ export class Song {
                 charIndex += songNameLength;
             } break;
             case SongTagCode.channelCount: {
-                this.pitchChannelCount = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                this.noiseChannelCount = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                if (fromBeepBox || (fromJummBox && beforeTwo)) {
-                    // No mod channel support before jummbox v2
-                    this.modChannelCount = 0;
+                if (fromTheepBox && !beforeSix) {
+                    // this code is taken from tesseract incase it wasn't obvious ^_^ ~ theepie
+                    const totalChannels = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                    this.channels.length = 0;
+                    for (let i = 0; i < totalChannels; i++) {
+                        const channelType = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] as ChannelType;
+                        this.channels.push(new Channel(channelType));
+                    }
                 } else {
-                    this.modChannelCount = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                }
-                this.pitchChannelCount = validateRange(Config.pitchChannelCountMin, Config.pitchChannelCountMax, this.pitchChannelCount);
-                this.noiseChannelCount = validateRange(Config.noiseChannelCountMin, Config.noiseChannelCountMax, this.noiseChannelCount);
-                this.modChannelCount = validateRange(Config.modChannelCountMin, Config.modChannelCountMax, this.modChannelCount);
+                    let pitchCount: number = validateRange(Config.pitchChannelCountMin, Config.pitchChannelCountMax, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                    let noiseCount: number = validateRange(Config.noiseChannelCountMin, Config.noiseChannelCountMax, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                    let modCount: number = 0;
+                    if (!fromBeepBox && !(fromJummBox && beforeTwo)) {
+                        modCount = validateRange(Config.modChannelCountMin, Config.modChannelCountMax, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                    }
 
-                for (let channelIndex = this.channels.length; channelIndex < this.getChannelCount(); channelIndex++) {
-                    this.channels[channelIndex] = new Channel();
-                }
-                this.channels.length = this.getChannelCount();
-                if ((fromBeepBox && beforeNine) || ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox))) {
-                    for (let i: number = legacySettingsCache!.length; i < this.getChannelCount(); i++) {
-                        legacySettingsCache![i] = [];
-                        for (let j: number = 0; j < Config.instrumentCountMin; j++) legacySettingsCache![i][j] = {};
+                    this.channels.length = 0;
+                    for (let i = 0; i < pitchCount; i++) this.channels.push(new Channel(ChannelType.pitch));
+                    for (let i = 0; i < noiseCount; i++) this.channels.push(new Channel(ChannelType.noise));
+                    for (let i = 0; i < modCount; i++) this.channels.push(new Channel(ChannelType.mod));
+
+                    if ((fromBeepBox && beforeNine) || ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox))) {
+                        for (let i: number = legacySettingsCache!.length; i < this.getChannelCount(); i++) {
+                            legacySettingsCache![i] = [];
+                            for (let j: number = 0; j < Config.instrumentCountMin; j++) legacySettingsCache![i][j] = {};
+                        }
                     }
                 }
             } break;
@@ -1858,14 +1891,33 @@ export class Song {
                 }
             } break;
             case SongTagCode.instrumentCount: {
-                if ((beforeNine && fromBeepBox) || ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox))) {
+                if (fromTheepBox && !beforeSix) {
+                    const instrumentsFlagBits: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                    this.layeredInstruments = (instrumentsFlagBits & (1 << 1)) != 0;
+                    this.patternInstruments = (instrumentsFlagBits & (1 << 0)) != 0;
+                    // Always loop through channels to ensure instruments are created.
+                    for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
+                        let instrumentCount: number = 1; // Default to 1 instrument per channel.
+                        if (this.layeredInstruments || this.patternInstruments) {
+                            // If flags are true, read the real count from the data stream.
+                            instrumentCount = validateRange(Config.instrumentCountMin, this.getMaxInstrumentsPerChannel(), base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + Config.instrumentCountMin);
+                        }
+                        const channel: Channel = this.channels[channelIndex];
+                        const isNoiseChannel: boolean = channel.type === ChannelType.noise;
+                        const isModChannel: boolean = channel.type === ChannelType.mod;
+                        for (let i: number = channel.instruments.length; i < instrumentCount; i++) {
+                            channel.instruments[i] = new Instrument(isNoiseChannel, isModChannel);
+                        }
+                        channel.instruments.length = instrumentCount;
+                    }
+                } else { // All legacy formats
                     const instrumentsPerChannel: number = validateRange(Config.instrumentCountMin, Config.patternInstrumentCountMax, base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + Config.instrumentCountMin);
                     this.layeredInstruments = false;
                     this.patternInstruments = (instrumentsPerChannel > 1);
 
                     for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
-                        const isNoiseChannel: boolean = channelIndex >= this.pitchChannelCount && channelIndex < this.pitchChannelCount + this.noiseChannelCount;
-                        const isModChannel: boolean = channelIndex >= this.pitchChannelCount + this.noiseChannelCount;
+                        const isNoiseChannel: boolean = this.getChannelIsNoise(channelIndex);
+                        const isModChannel: boolean = this.getChannelIsMod(channelIndex);
 
                         for (let instrumentIndex: number = this.channels[channelIndex].instruments.length; instrumentIndex < instrumentsPerChannel; instrumentIndex++) {
                             this.channels[channelIndex].instruments[instrumentIndex] = new Instrument(isNoiseChannel, isModChannel);
@@ -1880,23 +1932,6 @@ export class Song {
                         for (let j: number = legacySettingsCache![channelIndex].length; j < instrumentsPerChannel; j++) {
                             legacySettingsCache![channelIndex][j] = {};
                         }
-                    }
-                } else {
-                    const instrumentsFlagBits: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                    this.layeredInstruments = (instrumentsFlagBits & (1 << 1)) != 0;
-                    this.patternInstruments = (instrumentsFlagBits & (1 << 0)) != 0;
-                    for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
-                        let instrumentCount: number = 1;
-                        if (this.layeredInstruments || this.patternInstruments) {
-                            instrumentCount = validateRange(Config.instrumentCountMin, this.getMaxInstrumentsPerChannel(), base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + Config.instrumentCountMin);
-                        }
-                        const channel: Channel = this.channels[channelIndex];
-                        const isNoiseChannel: boolean = this.getChannelIsNoise(channelIndex);
-                        const isModChannel: boolean = this.getChannelIsMod(channelIndex);
-                        for (let i: number = channel.instruments.length; i < instrumentCount; i++) {
-                            channel.instruments[i] = new Instrument(isNoiseChannel, isModChannel);
-                        }
-                        channel.instruments.length = instrumentCount;
                     }
                 }
             } break;
@@ -1924,22 +1959,29 @@ export class Song {
                 }
             } break;
             case SongTagCode.channelOctave: {
-                if (beforeThree && fromBeepBox) {
+                if (fromTheepBox && !beforeSix) {
+                    for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
+                        if (this.channels[channelIndex].type === ChannelType.pitch) {
+                            this.channels[channelIndex].octave = clamp(0, Config.pitchOctaves, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                        } else {
+                            this.channels[channelIndex].octave = 0;
+                        }
+                    };
+                } else if (beforeThree && fromBeepBox) {
                     const channelIndex: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                     this.channels[channelIndex].octave = clamp(0, Config.pitchOctaves, base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + 1);
-                    if (channelIndex >= this.pitchChannelCount) this.channels[channelIndex].octave = 0;
+                    if (this.getChannelIsNoise(channelIndex) || this.getChannelIsMod(channelIndex)) this.channels[channelIndex].octave = 0;
                 } else if ((beforeNine && fromBeepBox) || ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox))) {
                     for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
                         this.channels[channelIndex].octave = clamp(0, Config.pitchOctaves, base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + 1);
-                        if (channelIndex >= this.pitchChannelCount) this.channels[channelIndex].octave = 0;
+                        if (this.getChannelIsNoise(channelIndex) || this.getChannelIsMod(channelIndex)) this.channels[channelIndex].octave = 0;
                     }
                 } else {
-                    for (let channelIndex: number = 0; channelIndex < this.pitchChannelCount; channelIndex++) {
-                        this.channels[channelIndex].octave = clamp(0, Config.pitchOctaves, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                    }
-                    for (let channelIndex: number = this.pitchChannelCount; channelIndex < this.getChannelCount(); channelIndex++) {
-                        this.channels[channelIndex].octave = 0;
-                    }
+                    for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
+                        if (this.channels[channelIndex].type === ChannelType.pitch) {
+                            this.channels[channelIndex].octave = clamp(0, Config.pitchOctaves, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                        }
+                    };
                 }
             } break;
             case SongTagCode.startInstrument: {
@@ -1963,7 +2005,7 @@ export class Song {
                         instrumentType += 1;
                     }
                 }
-                instrument.setTypeAndReset(instrumentType, instrumentChannelIterator >= this.pitchChannelCount && instrumentChannelIterator < this.pitchChannelCount + this.noiseChannelCount, instrumentChannelIterator >= this.pitchChannelCount + this.noiseChannelCount);
+                instrument.setTypeAndReset(instrumentType, this.getChannelIsNoise(instrumentChannelIterator), this.getChannelIsMod(instrumentChannelIterator));
 
                 // Anti-aliasing was added in BeepBox 3.0 (v6->v7) and JummBox 1.3 (v1->v2 roughly but some leakage possible)
                 if (((beforeSeven && fromBeepBox) || (beforeTwo && fromJummBox)) && (instrumentType == InstrumentType.chip || instrumentType == InstrumentType.customChipWave || instrumentType == InstrumentType.pwm)) {
@@ -2030,7 +2072,7 @@ export class Song {
                     const legacyWaves: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 0];
                     for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
                         for (const instrument of this.channels[channelIndex].instruments) {
-                            if (channelIndex >= this.pitchChannelCount) {
+                            if (this.getChannelIsNoise(channelIndex)) {
                                 instrument.chipNoise = clamp(0, Config.chipNoises.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             } else {
                                 instrument.chipWave = clamp(0, Config.chipWaves.length, legacyWaves[base64CharCodeToInt[compressed.charCodeAt(charIndex++)]] | 0);
@@ -2039,7 +2081,7 @@ export class Song {
                     }
                 } else if (beforeSeven && fromBeepBox) {
                     const legacyWaves: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 0];
-                    if (instrumentChannelIterator >= this.pitchChannelCount) {
+                    if (this.getChannelIsNoise(instrumentChannelIterator)) {
                         this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator].chipNoise = clamp(0, Config.chipNoises.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                     } else {
                         this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator].chipWave = clamp(0, Config.chipWaves.length, legacyWaves[base64CharCodeToInt[compressed.charCodeAt(charIndex++)]] | 0);
@@ -3548,9 +3590,21 @@ export class Song {
                                         for (let i: number = 0; i < modInstrumentLength; i++) instrument.modInstruments[mod][i] = clamp(0, this.channels[instrument.modChannels[mod][i]].instruments.length + 2, bits.read(neededModInstrumentIndexBits));
                                         break;
                                     case 1: // Noise
-                                        // Getting a status of 1 means this is legacy mod info. Need to add pitch channel count, as it used to just store noise channel index and not overall channel index
-                                        instrument.modChannels[mod][0] = this.pitchChannelCount + clamp(0, this.noiseChannelCount + 1, bits.read(8));
-                                        instrument.modInstruments[mod][0] = clamp(0, this.channels[instrument.modChannels[mod][0]].instruments.length + 2, bits.read(neededInstrumentIndexBits));
+                                        // Legacy format: The stored index is relative to noise channels.
+                                        // We must find the absolute index in our flexible array.
+                                        const relativeNoiseIndex = bits.read(8);
+                                        let absoluteNoiseIndex = 0;
+                                        let noiseChannelsFound = 0;
+                                        for (let i = 0; i < this.channels.length; i++) {
+                                            if (this.getChannelIsNoise(i)) {
+                                                if (noiseChannelsFound++ == relativeNoiseIndex) {
+                                                    absoluteNoiseIndex = i;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        instrument.modChannels[mod] = [absoluteNoiseIndex];
+                                        instrument.modInstruments[mod] = [clamp(0, this.channels[absoluteNoiseIndex].instruments.length + 2, bits.read(neededInstrumentIndexBits))];
                                         break;
                                     case 2: // For song
                                         instrument.modChannels[mod][0] = -1;
@@ -3563,6 +3617,12 @@ export class Song {
                                 // Mod setting is only used if the status isn't "none".
                                 if (status != 3) {
                                     instrument.modulators[mod] = bits.read(6);
+                                }
+
+                                // In legacy formats, a status of 1 meant "noise channel" and the index was relative.
+                                if (status == 1) {
+                                    const noiseChannelIndex = instrument.modChannels[mod][0] - this.pitchChannelCount;
+                                    instrument.modChannels[mod][0] = this.channels.findIndex((ch, i) => this.getChannelIsNoise(i) && i >= this.pitchChannelCount && (i - this.pitchChannelCount) === noiseChannelIndex);
                                 }
 
                                 if (fromTheepBox && !beforeSix && Config.modulators[instrument.modulators[mod]].associatedEffect < EffectType.length) {

@@ -886,21 +886,12 @@ export class Selection {
     }
 
     public swapChannels(offset: number): void {
-        const possibleSectionBoundaries: number[] = [
-            this._doc.song.pitchChannelCount,
-            this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount,
-            this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount + this._doc.song.modChannelCount,
-            this._doc.song.getChannelCount(),
-        ];
         let channelSectionMin: number = 0;
         let channelSectionMax: number = 0;
-        for (const nextBoundary of possibleSectionBoundaries) {
-            if ((this.boxSelectionChannel < nextBoundary && offset < 0) || (this.boxSelectionChannel + this.boxSelectionHeight <= nextBoundary)) {
-                channelSectionMax = nextBoundary - 1;
-                break;
-            }
-            channelSectionMin = nextBoundary;
+        if ((this.boxSelectionChannel < this._doc.song.getChannelCount() && offset < 0) || (this.boxSelectionChannel + this.boxSelectionHeight <= this._doc.song.getChannelCount())) {
+            channelSectionMax = this._doc.song.getChannelCount() - 1;
         }
+        else channelSectionMin = this._doc.song.getChannelCount();
         const newSelectionMin: number = Math.max(this.boxSelectionChannel, channelSectionMin);
         const newSelectionMax: number = Math.min(this.boxSelectionChannel + this.boxSelectionHeight - 1, channelSectionMax);
         offset = Math.max(offset, channelSectionMin - newSelectionMin);

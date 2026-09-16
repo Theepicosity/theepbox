@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { BeepBoxOption, DictionaryArray, toNameMap, Config } from "../synth/SynthConfig";
+import { BeepBoxOption, DictionaryArray, toNameMap, ChannelType, Config } from "../synth/SynthConfig";
 import { Song } from "../synth/Song";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 
@@ -6104,21 +6104,25 @@ export class ColorConfig {
         if (!this.usesColorFormula) {
             // Set colors, not defined by formula
 			if (!useFixedOrder) {
-				if (channel < song.pitchChannelCount) {
+				if (song.channels[channel].type === ChannelType.pitch) {
 					return ColorConfig.pitchChannels[(color % this.c_pitchLimit) % ColorConfig.pitchChannels.length];
-				} else if (channel < song.pitchChannelCount + song.noiseChannelCount) {
+				} else if (song.channels[channel].type === ChannelType.noise) {
 					return ColorConfig.noiseChannels[(color % this.c_noiseLimit) % ColorConfig.noiseChannels.length];
-				} else {
+				} else if (song.channels[channel].type === ChannelType.mod) {
 					return ColorConfig.modChannels[(color % this.c_modLimit) % ColorConfig.modChannels.length];
+				} else {
+					return ColorConfig.pitchChannels[(color % this.c_pitchLimit) % ColorConfig.pitchChannels.length];
 				}
 			}
 			else {
-				if (channel < song.pitchChannelCount) {
-					return ColorConfig.pitchChannels[(channel % this.c_pitchLimit) % ColorConfig.pitchChannels.length];
-				} else if (channel < song.pitchChannelCount + song.noiseChannelCount) {
-					return ColorConfig.noiseChannels[((channel - song.pitchChannelCount) % this.c_noiseLimit) % ColorConfig.noiseChannels.length];
+				if (song.channels[channel].type === ChannelType.pitch) {
+					return ColorConfig.pitchChannels[(color % this.c_pitchLimit) % ColorConfig.pitchChannels.length];
+				} else if (song.channels[channel].type === ChannelType.noise) {
+					return ColorConfig.noiseChannels[(color % this.c_noiseLimit) % ColorConfig.noiseChannels.length];
+				} else if (song.channels[channel].type === ChannelType.mod) {
+					return ColorConfig.modChannels[(color % this.c_modLimit) % ColorConfig.modChannels.length];
 				} else {
-					return ColorConfig.modChannels[((channel - song.pitchChannelCount - song.noiseChannelCount) % this.c_modLimit) % ColorConfig.modChannels.length];
+					return ColorConfig.pitchChannels[(color % this.c_pitchLimit) % ColorConfig.pitchChannels.length];
 				}
 			}
         }
