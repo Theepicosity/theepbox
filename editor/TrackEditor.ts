@@ -39,7 +39,7 @@ export class TrackEditor {
         this._select,
         this._barDropDown
     );
-    private readonly _channels: ChannelRow[] = [];
+    public readonly channels: ChannelRow[] = [];
     private readonly _barNumbers: SVGTextElement[] = [];
     private _mouseX: number = 0;
     private _mouseY: number = 0;
@@ -55,6 +55,7 @@ export class TrackEditor {
     private _mouseOver: boolean = false;
     private _mousePressed: boolean = false;
     private _mouseDragging = false;
+    public readonly patternTops: number[] = [];
     private _barWidth: number = 32;
     private _renderedBarCount: number = -1;
     private _renderedEditorWidth: number = -1;
@@ -184,7 +185,10 @@ export class TrackEditor {
         if (isNaN(this._mouseX)) this._mouseX = 0;
         if (isNaN(this._mouseY)) this._mouseY = 0;
         this._mouseBar = Math.floor(Math.min(this._doc.song.barCount - 1, Math.max(0, this._mouseX / this._barWidth)));
-        this._mouseChannel = Math.floor(Math.min(this._doc.song.getChannelCount() - 1, Math.max(0, (this._mouseY - Config.barEditorHeight) / ChannelRow.patternHeight)));
+        for (let i: number = 0; i < this.patternTops.length; i++) {
+            if (this._mouseY > this.patternTops[i]) this._mouseChannel = Math.min(this._doc.song.getChannelCount() - 1, i);
+            else break;
+        }
     }
 
     private _whenSelectPressed = (event: TouchEvent): void => {
@@ -226,7 +230,11 @@ export class TrackEditor {
         this._mouseX = (event.clientX || event.pageX) - boundingRect.left;
         this._mouseY = (event.clientY || event.pageY) - boundingRect.top;
         this._mouseBar = Math.floor(Math.min(this._doc.song.barCount - 1, Math.max(0, this._mouseX / this._barWidth)));
-        this._mouseChannel = Math.floor(Math.min(this._doc.song.getChannelCount() - 1, Math.max(0, (this._mouseY - Config.barEditorHeight) / ChannelRow.patternHeight)));
+        this._mouseChannel = this._doc.song.getChannelCount() - 1
+        for (let i: number = 0; i < this.patternTops.length; i++) {
+            if (this._mouseY > this.patternTops[i]) this._mouseChannel = Math.min(this._doc.song.getChannelCount() - 1, i);
+            else break;
+        }
     }
 
     private _whenMousePressed = (event: MouseEvent): void => {
@@ -287,6 +295,8 @@ export class TrackEditor {
             channel = this._doc.channel;
         }
 
+        if (!this.channels[channel]) return;
+
         const selected: boolean = (bar == this._doc.bar && channel == this._doc.channel);
         const overTrackEditor: boolean = (this._mouseY >= Config.barEditorHeight);
 
@@ -314,8 +324,8 @@ export class TrackEditor {
 
         if (this._mouseOver && !this._mousePressed && !selected && overTrackEditor) {
             this._boxHighlight.setAttribute("x", "" + (1 + this._barWidth * bar));
-            this._boxHighlight.setAttribute("y", "" + (1 + Config.barEditorHeight + ChannelRow.patternHeight * channel));
-            this._boxHighlight.setAttribute("height", "" + (ChannelRow.patternHeight - 2));
+            this._boxHighlight.setAttribute("y", "" + (1 + this.patternTops[channel]));
+            this._boxHighlight.setAttribute("height", "" + (this.channels[channel].patternHeight - 2));
             this._boxHighlight.setAttribute("width", "" + (this._barWidth - 2));
             this._boxHighlight.style.visibility = "visible";
         } else if ((this._mouseOver || ((this._mouseX >= bar * this._barWidth) && (this._mouseX < bar * this._barWidth + this._barWidth) && (this._mouseY > 0))) && (!overTrackEditor)) {
@@ -328,12 +338,12 @@ export class TrackEditor {
         }
 
         if ((this._mouseOver || this._touchMode) && selected && overTrackEditor) {
-            const up: boolean = ((this._mouseY - Config.barEditorHeight) % ChannelRow.patternHeight) < ChannelRow.patternHeight / 2;
+            const up: boolean = ((this._mouseY - Config.barEditorHeight) % this.channels[channel].patternHeight) < this.channels[channel].patternHeight / 2;
             const center: number = this._barWidth * (bar + 0.8);
-            const middle: number = Config.barEditorHeight + ChannelRow.patternHeight * (channel + 0.5);
-            const base: number = ChannelRow.patternHeight * 0.1;
-            const tip: number = ChannelRow.patternHeight * 0.4;
-            const width: number = ChannelRow.patternHeight * 0.175;
+            const middle: number = this.patternTops[channel] + (this.channels[channel].patternHeight / 2);
+            const base: number = this.channels[channel].patternHeight * 0.1;
+            const tip: number = this.channels[channel].patternHeight * 0.4;
+            const width: number = this.channels[channel].patternHeight * 0.175;
 
             this._upHighlight.setAttribute("fill", up && !this._touchMode ? ColorConfig.hoverPreview : ColorConfig.invertedText);
             this._downHighlight.setAttribute("fill", !up && !this._touchMode ? ColorConfig.hoverPreview : ColorConfig.invertedText);
@@ -349,13 +359,13 @@ export class TrackEditor {
         }
 
         this._selectionRect.style.left = (this._barWidth * this._doc.bar) + "px";
-        this._selectionRect.style.top = (Config.barEditorHeight + (ChannelRow.patternHeight * this._doc.channel)) + "px";
+        this._selectionRect.style.top = (this.patternTops[this._doc.channel]) + "px";
 
         this._select.style.left = (this._barWidth * this._doc.bar) + "px";
 
         this._select.style.width = this._barWidth + "px";
-        this._select.style.top = (Config.barEditorHeight + ChannelRow.patternHeight * this._doc.channel) + "px";
-        this._select.style.height = ChannelRow.patternHeight + "px";
+        this._select.style.top = (this.patternTops[this._doc.channel]) + "px";
+        this._select.style.height = this.patternTops[this._doc.channel].patternHeight + "px";
 
         this._barDropDown.style.left = (this._barWidth * bar) + "px";
 
@@ -373,48 +383,58 @@ export class TrackEditor {
 
     public rerenderChannelColors(): void {
         for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
-            this._channelRowContainer.removeChild(this._channels[y].container);
+            this._channelRowContainer.removeChild(this.channels[y].container);
         }
 
         for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
             const channelRow: ChannelRow = new ChannelRow(this._doc, y, this._doc.song.channels[y].color);
-            this._channels[y] = channelRow;
+            this.channels[y] = channelRow;
             this._channelRowContainer.appendChild(channelRow.container);
         }
 
-        this._channels.length = this._doc.song.getChannelCount();
+        this.channels.length = this._doc.song.getChannelCount();
         this._mousePressed = false;
 
+        let runningHeight: number = Config.barEditorHeight;
+        this.patternTops = []
         for (let j: number = 0; j < this._doc.song.getChannelCount(); j++) {
-            this._channels[j].render();
+            this.channels[j].render();
+            this.patternTops[j] = runningHeight;
+            runningHeight += this.channels[j].patternHeight
         }
+        this.patternTops.push(runningHeight)
     }
 
     public render(): void {
 
         this._barWidth = this._doc.getBarWidth();
 
-        if (this._channels.length != this._doc.song.getChannelCount()) {
+        if (this.channels.length != this._doc.song.getChannelCount()) {
 
             // Add new channel boxes if needed
-            for (let y: number = this._channels.length; y < this._doc.song.getChannelCount(); y++) {
+            for (let y: number = this.channels.length; y < this._doc.song.getChannelCount(); y++) {
                 const channelRow: ChannelRow = new ChannelRow(this._doc, y, this._doc.song.channels[y].color);
-                this._channels[y] = channelRow;
+                this.channels[y] = channelRow;
                 this._channelRowContainer.appendChild(channelRow.container);
             }
 
             // Remove old channel boxes
-            for (let y: number = this._doc.song.getChannelCount(); y < this._channels.length; y++) {
-                this._channelRowContainer.removeChild(this._channels[y].container);
+            for (let y: number = this._doc.song.getChannelCount(); y < this.channels.length; y++) {
+                this._channelRowContainer.removeChild(this.channels[y].container);
             }
 
-            this._channels.length = this._doc.song.getChannelCount();
+            this.channels.length = this._doc.song.getChannelCount();
             this._mousePressed = false;
         }
 
+        let runningHeight: number = Config.barEditorHeight;
+        this.patternTops = []
         for (let j: number = 0; j < this._doc.song.getChannelCount(); j++) {
-            this._channels[j].render();
+            this.channels[j].render();
+            this.patternTops[j] = runningHeight;
+            runningHeight += this.channels[j].patternHeight
         }
+        this.patternTops.push(runningHeight)
 
         const editorWidth: number = this._barWidth * this._doc.song.barCount;
         if (this._renderedEditorWidth != editorWidth) {
@@ -473,12 +493,12 @@ export class TrackEditor {
             this._mousePressed = false;
         }
 
-        const editorHeight: number = this._doc.song.getChannelCount() * ChannelRow.patternHeight;
+        const editorHeight: number = this.patternTops[this._doc.song.getChannelCount()];
         if (this._renderedEditorHeight != editorHeight) {
             this._renderedEditorHeight = editorHeight;
-            this._svg.setAttribute("height", "" + (editorHeight + Config.barEditorHeight));
-            this._playhead.setAttribute("height", "" + (editorHeight + Config.barEditorHeight));
-            this.container.style.height = (editorHeight + Config.barEditorHeight) + "px";
+            this._svg.setAttribute("height", "" + editorHeight);
+            this._playhead.setAttribute("height", "" + editorHeight);
+            this.container.style.height = editorHeight + "px";
         }
 
         this._select.style.display = this._touchMode ? "" : "none";
@@ -488,9 +508,9 @@ export class TrackEditor {
             // editor renders and the selection is visible. Check if anything changed
             // before overwriting the attributes?
             this._selectionRect.setAttribute("x", String(this._barWidth * this._doc.selection.boxSelectionBar + 1));
-            this._selectionRect.setAttribute("y", String(Config.barEditorHeight + ChannelRow.patternHeight * this._doc.selection.boxSelectionChannel + 1));
+            this._selectionRect.setAttribute("y", String(this.patternTops[this._doc.selection.boxSelectionChannel] + 1));
             this._selectionRect.setAttribute("width", String(this._barWidth * this._doc.selection.boxSelectionWidth - 2));
-            this._selectionRect.setAttribute("height", String(ChannelRow.patternHeight * this._doc.selection.boxSelectionHeight - 2));
+            this._selectionRect.setAttribute("height", String(this.patternTops[this._doc.selection.boxSelectionChannel + this._doc.selection.boxSelectionHeight] - this.patternTops[this._doc.selection.boxSelectionChannel] - 2));
             this._selectionRect.setAttribute("visibility", "visible");
         } else {
             this._selectionRect.setAttribute("visibility", "hidden");

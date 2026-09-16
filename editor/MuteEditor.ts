@@ -43,7 +43,7 @@ export class MuteEditor {
     private _channelDropDownOpen: boolean = false;
     private _channelDropDownLastState: boolean = false;
 
-    constructor(private _doc: SongDocument, private _editor: SongEditor) {
+    constructor(private _doc: SongDocument, private _editor: SongEditor, private _trackEditor: TrackEditor) {
         this.container.addEventListener("click", this._onClick);
         this.container.addEventListener("mousemove", this._onMouseMove);
         this.container.addEventListener("mouseleave", this._onMouseLeave);
@@ -92,7 +92,10 @@ export class MuteEditor {
 
         this._channelDropDownLastState = this._channelDropDownOpen;
 
-        this._channelDropDownChannel = Math.floor(Math.min(this._buttons.length, Math.max(0, parseInt(this._channelDropDown.style.getPropertyValue("top")) / ChannelRow.patternHeight)));
+        for (let i: number = 0; i < this._trackEditor.patternTops.length; i++) {
+            if (parseInt(this._channelDropDown.style.getPropertyValue("top")) > this._trackEditor.patternTops[i]) this._channelDropDownChannel = Math.min(this._doc.song.getChannelCount() - 1, i);
+            else break;
+        }
         this._doc.muteEditorChannel = this._channelDropDownChannel;
 
         this._channelNameDisplay.style.setProperty("display", "");
@@ -253,7 +256,7 @@ export class MuteEditor {
             if (!this._channelDropDownOpen) {
                 // Mouse over chn. number
                 this._channelDropDown.style.setProperty("display", "");
-                var height = ChannelRow.patternHeight;
+                var height = this._trackEditor.channels[this._channelDropDownChannel].patternHeight;
                 this._channelNameDisplay.style.setProperty("transform", "translate(20px, " + (height / 4 + height * index) + "px)");
 
                 if (this._doc.song.channels[index].name != "") {
@@ -272,7 +275,7 @@ export class MuteEditor {
                     this._channelNameDisplay.style.setProperty("display", "none");
                 }
 
-                this._channelDropDown.style.top = (Config.barEditorHeight + 2 + index * ChannelRow.patternHeight) + "px";
+                this._channelDropDown.style.top = (this._trackEditor.patternTops[index] + 2) + "px";
                 this._channelDropDown.style.setProperty("width", "15px");
             }
         }
@@ -368,11 +371,9 @@ export class MuteEditor {
             }
         }
 
-        if (this._renderedChannelHeight != ChannelRow.patternHeight || startingChannelCount != this._buttons.length) {
-            for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
-                this._buttons[y].style.marginTop = ((ChannelRow.patternHeight - 20) / 2) + "px";
-                this._buttons[y].style.marginBottom = ((ChannelRow.patternHeight - 20) / 2) + "px";
-            }
+        for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
+            this._buttons[y].style.marginTop = ((this._trackEditor.channels[y].patternHeight - 20) / 2) + "px";
+            this._buttons[y].style.marginBottom = ((this._trackEditor.channels[y].patternHeight - 20) / 2) + "px";
         }
 
         if (this._renderedModChannels != this._doc.song.modChannelCount || startingChannelCount != this._buttons.length) {
@@ -397,29 +398,26 @@ export class MuteEditor {
             this._renderedModChannels = this._doc.song.modChannelCount;
         }
 
-        if (startingChannelCount != this._buttons.length || this._renderedChannelHeight != ChannelRow.patternHeight) {
-            this._renderedChannelHeight = ChannelRow.patternHeight;
-            this._editorHeight = Config.barEditorHeight + this._doc.song.getChannelCount() * ChannelRow.patternHeight;
-            this._channelNameDisplay.style.setProperty("display", "none");
-            this.container.style.height = (this._editorHeight + 16) + "px";
+        this._editorHeight = this._trackEditor.patternTops[this._doc.song.getChannelCount()];
+        this._channelNameDisplay.style.setProperty("display", "none");
+        this.container.style.height = (this._editorHeight + 16) + "px";
 
-            if (ChannelRow.patternHeight < 27) {
-                this._channelNameDisplay.style.setProperty("margin-top", "-2px");
-                this._channelDropDown.style.setProperty("margin-top", "-4px");
-                this._channelNameInput.input.style.setProperty("margin-top", "-4px");
-
-            }
-            else if (ChannelRow.patternHeight < 30) {
-                this._channelNameDisplay.style.setProperty("margin-top", "-1px");
-                this._channelDropDown.style.setProperty("margin-top", "-3px");
-                this._channelNameInput.input.style.setProperty("margin-top", "-3px");
-            }
-            else {
-                this._channelNameDisplay.style.setProperty("margin-top", "0px");
-                this._channelDropDown.style.setProperty("margin-top", "0px");
-                this._channelNameInput.input.style.setProperty("margin-top", "-2px");
-            }
-        }
+        // if (ChannelRow.patternHeight < 27) {
+        //     this._channelNameDisplay.style.setProperty("margin-top", "-2px");
+        //     this._channelDropDown.style.setProperty("margin-top", "-4px");
+        //     this._channelNameInput.input.style.setProperty("margin-top", "-4px");
+        //
+        // }
+        // else if (ChannelRow.patternHeight < 30) {
+        //     this._channelNameDisplay.style.setProperty("margin-top", "-1px");
+        //     this._channelDropDown.style.setProperty("margin-top", "-3px");
+        //     this._channelNameInput.input.style.setProperty("margin-top", "-3px");
+        // }
+        // else {
+        //     this._channelNameDisplay.style.setProperty("margin-top", "0px");
+        //     this._channelDropDown.style.setProperty("margin-top", "0px");
+        //     this._channelNameInput.input.style.setProperty("margin-top", "-2px");
+        // }
     }
 }
 //}

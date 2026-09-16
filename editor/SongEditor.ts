@@ -732,7 +732,7 @@ export class SongEditor {
     private readonly _patternEditor: PatternEditor = new PatternEditor(this._doc, true, 0);
     private readonly _patternEditorNext: PatternEditor = new PatternEditor(this._doc, false, 1);
     private readonly _trackEditor: TrackEditor = new TrackEditor(this._doc, this);
-    private readonly _muteEditor: MuteEditor = new MuteEditor(this._doc, this);
+    private readonly _muteEditor: MuteEditor = new MuteEditor(this._doc, this, this._trackEditor);
     private readonly _loopEditor: LoopEditor = new LoopEditor(this._doc, this._trackEditor);
     private readonly _piano: Piano = new Piano(this._doc);
     private readonly _octaveScrollBar: OctaveScrollBar = new OctaveScrollBar(this._doc, this._piano);

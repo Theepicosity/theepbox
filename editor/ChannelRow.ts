@@ -84,7 +84,8 @@ export class Box {
 }
 
 export class ChannelRow {
-    public static patternHeight: number = 28;
+    public patternHeight: number = 28;
+    public patternTop: number = 0;
 
     private _renderedBarWidth: number = -1;
     private _renderedBarHeight: number = -1;
@@ -95,7 +96,7 @@ export class ChannelRow {
     constructor(private readonly _doc: SongDocument, public readonly index: number, public readonly color: number) { }
 
     public render(): void {
-        ChannelRow.patternHeight = this._doc.getChannelHeight();
+        this.patternHeight = this._doc.getChannelHeight();
 
         const barWidth: number = this._doc.getBarWidth();
         if (this._boxes.length != this._doc.song.barCount) {
@@ -118,11 +119,9 @@ export class ChannelRow {
             }
         }
 
-        if (this._renderedBarHeight != ChannelRow.patternHeight) {
-            this._renderedBarHeight = ChannelRow.patternHeight;
-            for (let x: number = 0; x < this._boxes.length; x++) {
-                this._boxes[x].setHeight(ChannelRow.patternHeight);
-            }
+        this._renderedBarHeight = this.patternHeight;
+        for (let x: number = 0; x < this._boxes.length; x++) {
+            this._boxes[x].setHeight(this.patternHeight);
         }
 
         for (let i: number = 0; i < this._boxes.length; i++) {
