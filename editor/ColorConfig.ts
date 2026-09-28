@@ -5998,19 +5998,18 @@ export class ColorConfig {
         if (!this.usesColorFormula) {
             let base: ChannelColors;
             switch (type) {
-                case ("noise"): {
+                case ("noise"):
                     base = ColorConfig.noiseChannels[(channel % this.c_noiseLimit) % ColorConfig.noiseChannels.length];
                     break;
-                }
-                case ("mod"): {
+                case ("mod"):
                     base = ColorConfig.modChannels[(channel % this.c_modLimit) % ColorConfig.modChannels.length];
                     break;
-                }
-                case ("pitch"):
-                default: {
+				case ("pitch"):
+					base = ColorConfig.pitchChannels[(channel % this.c_pitchLimit) % ColorConfig.pitchChannels.length];
+					break;
+                default:
                     base = ColorConfig.pitchChannels[(channel % this.c_pitchLimit) % ColorConfig.pitchChannels.length];
                     break;
-                }
             }
             var regex = /\(([^\,)]+)/;
             let newChannelSecondary: string = ColorConfig.getComputed((regex.exec(base.secondaryChannel) as RegExpExecArray)[1] as string);

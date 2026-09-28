@@ -87,6 +87,9 @@ export class ChannelRow {
     public patternHeight: number = 28;
     public patternTop: number = 0;
 
+    private _beginsFolder: boolean = false;
+    private _isInFolder: boolean = false;
+    private _endsFolder: boolean = false;
     private _renderedBarWidth: number = -1;
     private _renderedBarHeight: number = -1;
     private _boxes: Box[] = [];
@@ -119,10 +122,24 @@ export class ChannelRow {
             }
         }
 
+        if (this._doc.song.channels[this.index - 1] && this._doc.song.channels[this.index - 1].folder != this._doc.song.channels[this.index].folder) this._beginsFolder = true;
+        else if (!this._doc.song.channels[this.index - 1] && this._doc.song.channels[this.index].folder != 0) this._beginsFolder = true;
+        else this._beginsFolder = false;
+        if (this._doc.song.channels[this.index].folder != 0) this._isInFolder = true;
+        else this._isInFolder = false;
+
         this._renderedBarHeight = this.patternHeight;
         for (let x: number = 0; x < this._boxes.length; x++) {
             this._boxes[x].setHeight(this.patternHeight);
+            if (this._beginsFolder) {
+                this._boxes[x].container.style.marginTop = "5px";
+                // basically the hackiest hack possible
+                if (this._isInFolder) this._boxes[x].container.style.boxShadow = "0 -5px 0 " + ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel + "60";
+            }
         }
+
+        if (this._beginsFolder) this.patternHeight += 4;
+        if (this._isInFolder) this.container.style.backgroundColor = ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel + "30";
 
         for (let i: number = 0; i < this._boxes.length; i++) {
             const pattern: Pattern | null = this._doc.song.getPattern(this.index, i);
@@ -132,7 +149,8 @@ export class ChannelRow {
             const box: Box = this._boxes[i];
             if (i < this._doc.song.barCount) {
                 const colors: ChannelColors = ColorConfig.getChannelColor(this._doc.song, this.color, this.index, this._doc.prefs.fixChannelColorOrder);
-                box.setIndex(this._doc.song.channels[this.index].bars[i], selected, dim, dim && !selected ? colors.secondaryChannel : colors.primaryChannel,
+                const useColor = dim && !selected ? colors.secondaryChannel : colors.primaryChannel
+                box.setIndex(this._doc.song.channels[this.index].bars[i], selected, dim, useColor,
                     this.index >= this._doc.song.pitchChannelCount && this.index < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount, this.index >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount);
                 box.setVisibility("visible");
             } else {

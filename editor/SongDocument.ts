@@ -38,6 +38,7 @@ export class SongDocument {
     public readonly prefs: Preferences = new Preferences();
     public channel: number = 0;
     public muteEditorChannel: number = 0;
+    public minimizedFolders: number[] = [];
     public bar: number = 0;
     public recalcChannelNames: boolean;
     public recalcChannelColors: boolean;
@@ -269,6 +270,7 @@ export class SongDocument {
 		}
 			
 		this._recoveryUid = state.recoveryUid;
+        this.recalcChannelColors = true;
 		this.selection.fromJSON(state.selection);
 			
 		//this.barScrollPos = Math.min(this.bar, Math.max(this.bar - (this.trackVisibleBars - 1), this.barScrollPos));

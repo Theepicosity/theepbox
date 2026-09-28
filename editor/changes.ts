@@ -2057,30 +2057,104 @@ export class ChangeLimiterSettings extends Change {
 }
 
 export class ChangeChannelOrder extends Change {
-    constructor(doc: SongDocument, selectionMin: number, selectionMax: number, offset: number) {
+    constructor(doc: SongDocument, selectionMin: number, selectionMax: number, offset: number, ignoreFolders: boolean = false) {
         super();
-        // Change the order of two channels by swapping.
-        doc.song.channels.splice(selectionMin + offset, 0, ...doc.song.channels.splice(selectionMin, selectionMax - selectionMin + 1));
 
-        // Update mods for each channel
-        selectionMax = Math.max(selectionMax, selectionMin);
-        for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            if (doc.song.channels[channelIndex].type === ChannelType.mod) {
-                for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                    let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
-                    for (let i: number = 0; i < Config.modCount; i++) {
-                        for (let j: number = 0; j < instrument.modChannels[i].length; j++) {
-                            if (instrument.modChannels[i][j] >= selectionMin && instrument.modChannels[i][j] <= selectionMax) {
-                                instrument.modChannels[i][j] += offset;
-                            }
-                            else if (instrument.modChannels[i][j] >= selectionMin + offset && instrument.modChannels[i][j] <= selectionMax + offset) {
-                                instrument.modChannels[i][j] -= offset * (selectionMax - selectionMin + 1);
+        // mechanics for channel folders:
+        // 1. if the channel is at the top of the folder it basically acts at the "header" so when it moves up the entire folder moves up (but not when it moves down)
+        // 2. if a channel is moved into the folder from above it will go past it, and if a channel goes into the folder from below it will be absorbed into it
+        // 3. if a channel is the last element in a folder then it will move out of the folder (unless it is the first element too aka the only element ;p)
+
+        let changeOrder: boolean = true;
+        if (doc.song.channels[selectionMin].folder != doc.song.channels[selectionMin + offset].folder && !ignoreFolders) {
+            let prevChannelFolder: Channel = doc.song.channels[selectionMin - 1] ?  doc.song.channels[selectionMin - 1].folder : -1;
+            if ((doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMin].folder != prevChannelFolder) || (offset > 0 && doc.song.channels[selectionMin].folder == 0)) {
+                //(implements 1)
+                let folderMax: number = selectionMin;
+                if (doc.song.channels[selectionMin].folder != 0) {
+                    for (let channelIndex: number = selectionMin; channelIndex < doc.song.getChannelCount(); channelIndex++) {
+                        if (doc.song.channels[channelIndex].folder == doc.song.channels[selectionMin].folder) {
+                            folderMax = channelIndex;
+                        }
+                    }
+                    selectionMax = folderMax;
+                }
+                if (offset < 0) {
+                    let skipFolder: number = doc.song.channels[selectionMin - 1].folder;
+                    for (let channelIndex: number = selectionMin - 1; channelIndex >= 0; channelIndex--) {
+                        if (doc.song.channels[channelIndex].folder != skipFolder || skipFolder == 0) {
+                            break;
+                        }
+                        offset -= 1;
+                        doc.selection.boxSelectionY0 -= 1;
+                        doc.selection.boxSelectionY1 -= 1;
+                    }
+                    if (skipFolder != 0) {
+                        offset += 1;
+                        doc.selection.boxSelectionY0 += 1;
+                        doc.selection.boxSelectionY1 += 1;
+                    }
+                } else if (offset > 0) {
+                    let skipFolder: number = doc.song.channels[selectionMax + 1].folder;
+                    for (let channelIndex: number = selectionMax + 1; channelIndex < doc.song.getChannelCount(); channelIndex++) {
+                        if (doc.song.channels[channelIndex].folder != skipFolder || skipFolder == 0) {
+                            break;
+                        }
+                        offset += 1;
+                        doc.selection.boxSelectionY0 += 1;
+                        doc.selection.boxSelectionY1 += 1;
+                    }
+                    if (skipFolder != 0) {
+                        offset -= 1;
+                        doc.selection.boxSelectionY0 -= 1;
+                        doc.selection.boxSelectionY1 -= 1;
+                    }
+                }
+            }
+            else if (offset < 0) {
+                //(implements 2)
+                for (let i: number = selectionMin; i < selectionMax + 1; i++) {
+                    doc.song.channels[i].folder = doc.song.channels[selectionMin + offset].folder
+                }
+                changeOrder = false;
+            }
+            else if (offset > 0) {
+                //(implements 3)
+                for (let i: number = selectionMin; i < selectionMax + 1; i++) {
+                    doc.song.channels[i].folder = 0
+                }
+                changeOrder = false;
+            }
+        }
+
+        if (changeOrder) {
+            // Change the order of two channels by swapping.
+            doc.song.channels.splice(selectionMin + offset, 0, ...doc.song.channels.splice(selectionMin, selectionMax - selectionMin + 1));
+
+            // Update mods for each channel
+            selectionMax = Math.max(selectionMax, selectionMin);
+            for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
+                if (doc.song.channels[channelIndex].type === ChannelType.mod) {
+                    for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
+                        let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
+                        for (let i: number = 0; i < Config.modCount; i++) {
+                            for (let j: number = 0; j < instrument.modChannels[i].length; j++) {
+                                if (instrument.modChannels[i][j] >= selectionMin && instrument.modChannels[i][j] <= selectionMax) {
+                                    instrument.modChannels[i][j] += offset;
+                                }
+                                else if (instrument.modChannels[i][j] >= selectionMin + offset && instrument.modChannels[i][j] <= selectionMax + offset) {
+                                    instrument.modChannels[i][j] -= offset * (selectionMax - selectionMin + 1);
+                                }
                             }
                         }
                     }
                 }
             }
+        } else {
+            doc.selection.boxSelectionY0 -= offset;
+            doc.selection.boxSelectionY1 -= offset;
         }
+
         doc.recalcChannelColors = true;
 
         doc.notifier.changed();
@@ -2102,7 +2176,7 @@ export class ChangeCustomScale extends Change {
 }
 
 export class ChangeChannelCount extends Change {
-    constructor(doc: SongDocument, newPitchChannelCount: number, newNoiseChannelCount: number, newModChannelCount: number) {
+    constructor(doc: SongDocument, newPitchChannelCount: number, newNoiseChannelCount: number, newModChannelCount: number, setFolder?: number = -1) {
         super();
         if (doc.song.pitchChannelCount != newPitchChannelCount || doc.song.noiseChannelCount != newNoiseChannelCount || doc.song.modChannelCount != newModChannelCount) {
             const oldPitchCount: number = doc.song.pitchChannelCount;
@@ -2136,11 +2210,9 @@ export class ChangeChannelCount extends Change {
                         for (let j: number = 0; j < doc.song.barCount; j++) {
                             newChannel.bars[j] = 0;
                         }
+                        if (setFolder != -1) newChannel.folder = setFolder
                         doc.song.channels.push(newChannel)
                     }
-                }
-                else {
-                    // we need to find a channel
                 }
             }
 
@@ -2190,10 +2262,10 @@ export class ChangeAddChannel extends ChangeGroup {
         const newModChannelCount: number = doc.song.modChannelCount + (isNoise || !isMod ? 0 : 1);
 
         if (newPitchChannelCount <= Config.pitchChannelCountMax && newNoiseChannelCount <= Config.noiseChannelCountMax && newModChannelCount <= Config.modChannelCountMax) {
-            const addedChannelIndex: number = isMod ? doc.song.pitchChannelCount + doc.song.noiseChannelCount + doc.song.modChannelCount : (isNoise ? doc.song.pitchChannelCount + doc.song.noiseChannelCount : doc.song.pitchChannelCount);
-            this.append(new ChangeChannelCount(doc, newPitchChannelCount, newNoiseChannelCount, newModChannelCount));
+            const addedChannelIndex: number = doc.song.getChannelCount()
+            this.append(new ChangeChannelCount(doc, newPitchChannelCount, newNoiseChannelCount, newModChannelCount, index >= addedChannelIndex ? 0 : doc.song.channels[index-1].folder));
             if (addedChannelIndex - 1 >= index) {
-                this.append(new ChangeChannelOrder(doc, index, addedChannelIndex - 1, 1));
+                this.append(new ChangeChannelOrder(doc, index, addedChannelIndex - 1, 1, true));
             }
 
             doc.synth.computeLatestModValues();
@@ -2276,6 +2348,23 @@ export class ChangeChannelBar extends Change {
         if (oldChannel != newChannel || oldBar != newBar) {
             this._didSomething();
         }
+    }
+}
+
+export class ChangeAddChannelFolder extends ChangeGroup {
+    constructor(doc: SongDocument, index: number, remove: boolean = false) {
+        super();
+        if (remove) {
+            doc.song.channels[index].folder = 0;
+            if (doc.song.channels[index-1] && doc.song.channels[index+1] && doc.song.channels[index-1].folder == doc.song.channels[index+1].folder) {
+                this.append(new ChangeChannelOrder(doc, index, index, 1))
+            }
+        }
+        else doc.song.channels[index].folder = doc.song.getHighestChannelFolderIndex() + 1;
+
+        doc.recalcChannelColors = true;
+        doc.notifier.changed();
+        this._didSomething();
     }
 }
 
@@ -4578,6 +4667,7 @@ export class ChangeSong extends ChangeGroup {
                 doc.recentPatternInstruments[i] = [0];
             }
             doc.viewedInstrument.length = doc.song.channels.length;
+            doc.recalcChannelColors = true;
         } else {
             this.append(new ChangeValidateTrackSelection(doc));
         }

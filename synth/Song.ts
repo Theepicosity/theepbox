@@ -686,6 +686,14 @@ export class Song {
         return this.channels[channelIndex].type === ChannelType.mod;
     }
 
+    public getHighestChannelFolderIndex(): number {
+        let folderIndex: number = 0;
+        for (let i: number = 0; i < this.channels.length; i++) {
+            if (this.channels[i].folder > folderIndex) folderIndex = this.channels[i].folder;
+        }
+        return folderIndex;
+    }
+
     public static secondsToFadeInSetting(seconds: number): number {
         return clamp(0, Config.fadeInRange, Math.round((-0.95 + Math.sqrt(0.9025 + 0.2 * seconds / 0.0125)) / 0.1));
     }
@@ -861,6 +869,7 @@ export class Song {
                 buffer.push(encodedChannelName.charCodeAt(i));
             }
             buffer.push(base64IntToCharCode[this.channels[channel].color % 60]);
+            buffer.push(base64IntToCharCode[this.channels[channel].folder]);
         }
 
         buffer.push(SongTagCode.instrumentCount, base64IntToCharCode[(<any>this.layeredInstruments << 1) | <any>this.patternInstruments]);
@@ -3117,6 +3126,7 @@ export class Song {
                     charIndex += channelNameLength;
 
                     if (fromTheepBox) this.channels[channel].color = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                    if (fromTheepBox && !beforeSix) this.channels[channel].folder = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                 }
             } break;
             case SongTagCode.algorithm: {

@@ -14,6 +14,7 @@ export class Channel {
     public visible: boolean = true;
     public name: string = "";
     public color: number = 0;
+    public folder: number = 0;
     constructor(type: ChannelType = ChannelType.pitch) {
         this.type = type;
     }
