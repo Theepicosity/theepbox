@@ -2066,21 +2066,38 @@ export class ChangeChannelOrder extends Change {
         // 3. if a channel is the last element in a folder then it will move out of the folder (unless it is the first element too aka the only element ;p)
 
         let changeOrder: boolean = true;
-        if (doc.song.channels[selectionMin].folder != doc.song.channels[selectionMin + offset].folder && !ignoreFolders) {
+        let folderMax: number = selectionMin;
+        let folderMin: number = selectionMin;
+        if ((doc.song.channels[selectionMin].folder != doc.song.channels[selectionMin + offset].folder
+            || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMax + offset].folder
+            || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder)
+            && !ignoreFolders
+        ) {
             let prevChannelFolder: Channel = doc.song.channels[selectionMin - 1] ?  doc.song.channels[selectionMin - 1].folder : -1;
-            if ((doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMin].folder != prevChannelFolder) || (offset > 0 && doc.song.channels[selectionMin].folder == 0)) {
+            if ((doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMin].folder != prevChannelFolder)
+                || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder
+                || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder
+                || (offset > 0 && doc.song.channels[selectionMin].folder == 0)
+            ) {
                 //(implements 1)
-                let folderMax: number = selectionMin;
-                if (doc.song.channels[selectionMin].folder != 0) {
-                    for (let channelIndex: number = selectionMin; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-                        if (doc.song.channels[channelIndex].folder == doc.song.channels[selectionMin].folder) {
+                if (doc.song.channels[selectionMax].folder != 0) {
+                    for (let channelIndex: number = selectionMax; channelIndex < doc.song.getChannelCount(); channelIndex++) {
+                        if (doc.song.channels[channelIndex].folder == doc.song.channels[selectionMax].folder) {
                             folderMax = channelIndex;
                         }
                     }
                     selectionMax = folderMax;
                 }
+                if (doc.song.channels[selectionMin].folder != 0) {
+                    for (let channelIndex: number = selectionMin; channelIndex >= 0; channelIndex--) {
+                        if (doc.song.channels[channelIndex].folder == doc.song.channels[selectionMin].folder) {
+                            folderMin = channelIndex;
+                        }
+                    }
+                    selectionMin = folderMin;
+                }
                 if (offset < 0) {
-                    let skipFolder: number = doc.song.channels[selectionMin - 1].folder;
+                    let skipFolder: number = doc.song.channels[selectionMin - 1] ? doc.song.channels[selectionMin - 1].folder : 0;
                     for (let channelIndex: number = selectionMin - 1; channelIndex >= 0; channelIndex--) {
                         if (doc.song.channels[channelIndex].folder != skipFolder || skipFolder == 0) {
                             break;
@@ -2095,7 +2112,7 @@ export class ChangeChannelOrder extends Change {
                         doc.selection.boxSelectionY1 += 1;
                     }
                 } else if (offset > 0) {
-                    let skipFolder: number = doc.song.channels[selectionMax + 1].folder;
+                    let skipFolder: number = doc.song.channels[selectionMax + 1] ? doc.song.channels[selectionMax + 1].folder : 0;
                     for (let channelIndex: number = selectionMax + 1; channelIndex < doc.song.getChannelCount(); channelIndex++) {
                         if (doc.song.channels[channelIndex].folder != skipFolder || skipFolder == 0) {
                             break;
