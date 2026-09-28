@@ -43,6 +43,7 @@ export class MuteEditor {
     private _renderedNoiseChannels: number = 0;
     private _renderedChannelHeight: number = -1;
     private _renderedModChannels: number = 0;
+    private _renderedActiveChannelCount: number = 0;
     private _channelDropDownChannel: number = 0;
     private _channelDropDownOpen: boolean = false;
     private _channelDropDownLastState: boolean = false;
@@ -130,12 +131,18 @@ export class MuteEditor {
             this._channelDropDown.options[2].removeAttribute("hidden");
         }
         if (this._doc.minimizedFolders.includes(this._doc.song.channels[this._channelDropDownChannel].folder)) {
-            this._channelDropDown.options[11].hidden = true;
-            this._channelDropDown.options[10].removeAttribute("hidden");
+            this._channelDropDown.options[10].hidden = true;
+            this._channelDropDown.options[11].removeAttribute("hidden");
         }
         else {
             this._channelDropDown.options[11].hidden = true;
             this._channelDropDown.options[10].removeAttribute("hidden");
+        }
+
+        // if a channel isnt in a folder i will just hide these attributes tbh
+        if (this._doc.song.channels[this._channelDropDownChannel].folder == 0) {
+            this._channelDropDown.options[10].hidden = true;
+            this._channelDropDown.options[11].hidden = true;
         }
 
         // Check if channel is at limit, in which case another can't be inserted
@@ -235,9 +242,11 @@ export class MuteEditor {
                 this.render();
                 break;
             case "chnMax":
-                this._doc.minimizedFolders.splice(this._doc.minimizedFolders.findIndex(this._doc.song.channels[this._channelDropDownChannel].folder), 1)
+                let folder: number = this._doc.song.channels[this._channelDropDownChannel].folder;
+                this._doc.minimizedFolders.splice(this._doc.minimizedFolders.findIndex( (value) => value == folder ), 1)
                 this._doc.recalcChannelColors = true;
                 this._doc.notifier.changed();
+                break;
             case "chnMin":
                 this._doc.minimizedFolders.push(this._doc.song.channels[this._channelDropDownChannel].folder)
                 this._doc.recalcChannelColors = true;
@@ -350,8 +359,17 @@ export class MuteEditor {
     public render(): void {
         if (!this._doc.prefs.enableChannelMuting) return;
         let startingChannelCount: number = this._buttons.length;
+        let activeChannelCount: number = this._doc.song.getChannelCount()
+
+        for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
+            if ((this._doc.minimizedFolders.includes(this._doc.song.channels[y].folder)
+            && this._doc.song.channels[y-1] && this._doc.song.channels[y].folder == this._doc.song.channels[y-1].folder)) activeChannelCount -= 1
+        }
 
         if (this._buttons.length != this._doc.song.getChannelCount()) {
+            //console.log(this._buttons.length)
+            //console.log(activeChannelCount)
+            //this.container.textContent = '';
             for (let y: number = this._buttons.length; y < this._doc.song.getChannelCount(); y++) {
 
                 const channelCountText: HTMLDivElement = HTML.div({ class: "noSelection muteButtonText", style: "display: table-cell; -webkit-text-stroke: 1.5px; vertical-align: middle; text-align: center; -webkit-user-select: none; -webkit-touch-callout: none; -moz-user-select: none; -ms-user-select: none; user-select: none; pointer-events: none; width: 12px; height: 20px; transform: translate(0px, 1px);" });
@@ -361,18 +379,29 @@ export class MuteEditor {
                     muteButton,
                     channelCountText,
                 ]);
+
+
                 this.container.appendChild(muteContainer);
                 this._buttons[y] = muteContainer;
                 this._channelCounts[y] = channelCountText;
             }
 
-            for (let y: number = this._doc.song.getChannelCount(); y < this._buttons.length; y++) {
-                this.container.removeChild(this._buttons[y]);
-            }
-
             this._buttons.length = this._doc.song.getChannelCount();
 
             this.container.appendChild(this._cornerFiller);
+        }
+
+        for (let y: number = this._doc.song.getChannelCount(); y < this._buttons.length; y++) {
+            this.container.removeChild(this._buttons[y]);
+        }
+
+        if (activeChannelCount != this._renderedActiveChannelCount) {
+            for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
+                if ((this._doc.minimizedFolders.includes(this._doc.song.channels[y].folder)
+                    && this._doc.song.channels[y-1] && this._doc.song.channels[y].folder == this._doc.song.channels[y-1].folder)) this._buttons[y].style.visibility = "hidden"
+                else this._buttons[y].style.visibility = "visible"
+            }
+            this._renderedActiveChannelCount = activeChannelCount
         }
 
         for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
