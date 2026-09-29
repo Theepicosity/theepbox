@@ -37,7 +37,7 @@ export const DefaultShortcuts: Dictionary<Shortcut> = {
 	"redo": { displayName: "Redo", category: ShortcutCategory.edit, keyCode: 89, shiftKey: false, ctrlKey: false }, // y
 	"cutPattern": { displayName: "Cut Notes", category: ShortcutCategory.edit, keyCode: 88, shiftKey: false, ctrlKey: false }, // x
 	"editBeatsPerBar": { displayName: "Edit Beats Per Bar", category: ShortcutCategory.settings, keyCode: 66, shiftKey: true, ctrlKey: false }, // shift + b
-	"loopPattern": { displayName: "Loop Pattern", category: ShortcutCategory.playback, keyCode: 66, shiftKey: false, ctrlKey: false }, // b
+	"loopPattern": { displayName: "Loop Bar", category: ShortcutCategory.playback, keyCode: 66, shiftKey: false, ctrlKey: false }, // b
 	"copyInstrument": { displayName: "Copy Instrument", category: ShortcutCategory.edit, keyCode: 67, shiftKey: true, ctrlKey: false }, // shift + c
 	"copyPattern": { displayName: "Copy Notes", category: ShortcutCategory.edit, keyCode: 67, shiftKey: false, ctrlKey: false }, // c
 	"insertBarNext": { displayName: "Insert Bar After", category: ShortcutCategory.edit, keyCode: 13, shiftKey: false, ctrlKey: false }, // enter

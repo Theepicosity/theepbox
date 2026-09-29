@@ -13,6 +13,7 @@ export class TrackEditor {
 
         HTML.option({ value: "barBefore" }, "Insert Bar Before"),
         HTML.option({ value: "barAfter" }, "Insert Bar After"),
+        HTML.option({ value: "loopBar" }, "Loop Bar"),
         HTML.option({ value: "deleteBar" }, "Delete This Bar"),
     );
     private readonly _channelRowContainer: HTMLElement = HTML.div({ style: `display: flex; flex-direction: column; padding-top: ${Config.barEditorHeight}px` });
@@ -128,6 +129,23 @@ export class TrackEditor {
                 this._songEditor._barScrollBar.animatePlayhead();
             }
 
+        }
+        else if (this._barDropDown.value == "loopBar") {
+            this._doc.synth.loopBarStart = this._barDropDownBar;
+            this._doc.synth.loopBarEnd = this._barDropDownBar;
+
+            this._doc.synth.goToBar(this._barDropDownBar);
+            this._doc.synth.snapToBar();
+            this._doc.synth.initModFilters(this._doc.song);
+            this._doc.synth.computeLatestModValues();
+            if (this._doc.prefs.autoFollow == 2 || this._doc.autoFollow) {
+                this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+            }
+            if (!this._doc.synth.playing) {
+                this._doc.performance.play();
+            }
+
+            this._songEditor._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
         }
         else if (this._barDropDown.value == "deleteBar") {
 
