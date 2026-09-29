@@ -269,10 +269,8 @@ export class MuteEditor {
                 this._channelNameInput.input.select();
                 break;
             case "addFolder":
-                this._doc.record(new ChangeAddChannelFolder(this._doc, this._channelDropDownChannel));
-                break;
             case "removeFolder":
-                this._doc.record(new ChangeAddChannelFolder(this._doc, this._channelDropDownChannel, true));
+                this._doc.record(new ChangeAddChannelFolder(this._doc, this._channelDropDownChannel, this._channelDropDownChannel));
                 break;
             case "chnUp":
                 this._doc.record(new ChangeChannelOrder(this._doc, this._channelDropDownChannel, this._channelDropDownChannel, -1));
@@ -521,9 +519,6 @@ export class MuteEditor {
         }
 
         if (this._buttons.length != this._doc.song.getChannelCount()) {
-            //console.log(this._buttons.length)
-            //console.log(activeChannelCount)
-            //this.container.textContent = '';
             for (let y: number = this._buttons.length; y < this._doc.song.getChannelCount(); y++) {
 
                 const channelCountText: HTMLDivElement = HTML.div({ class: "noSelection muteButtonText", style: "display: table-cell; -webkit-text-stroke: 1.5px; vertical-align: middle; text-align: center; -webkit-user-select: none; -webkit-touch-callout: none; -moz-user-select: none; -ms-user-select: none; user-select: none; pointer-events: none; width: 12px; height: 20px; transform: translate(0px, 1px);" });
@@ -540,13 +535,12 @@ export class MuteEditor {
                 this._channelCounts[y] = channelCountText;
             }
 
+            for (let y: number = this._doc.song.getChannelCount(); y < this._buttons.length; y++) {
+                this.container.removeChild(this._buttons[y]);
+            }
             this._buttons.length = this._doc.song.getChannelCount();
 
             this.container.appendChild(this._cornerFiller);
-        }
-
-        for (let y: number = this._doc.song.getChannelCount(); y < this._buttons.length; y++) {
-            this.container.removeChild(this._buttons[y]);
         }
 
         if (activeChannelCount != this._renderedActiveChannelCount) {

@@ -4582,6 +4582,18 @@ export class SongEditor {
                 event.preventDefault();
             break;
 
+            case this._parseShortcut(event, shortcuts["minFolder"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.minimizeFolder();
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["newFolder"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.createFolder();
+                event.preventDefault();
+            break;
+
             case this._parseShortcut(event, shortcuts["editLimiter"], needControlForShortcuts):
                 if (canPlayNotes) break;
                 this._openPrompt("limiterSettings");

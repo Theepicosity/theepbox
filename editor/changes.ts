@@ -1861,18 +1861,20 @@ export class ChangeReorderEffects extends Change {
         let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
 
         // Update mods for each channel
-        for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                let modInstrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
-                for (let i: number = 0; i < Config.modCount; i++) {
-                    for (let j: number = 0; j < modInstrument.modEffects[i].length; j++) {
-                        if (modInstrument.modInstruments[i].indexOf(doc.getCurrentInstrument()) != -1 && modInstrument.modChannels[i].indexOf(doc.channel) != -1) {
-                            if (moveUp && effectIndex - 1 >= 0) {
-                                if (modInstrument.modEffects[i][j] == effectIndex && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex].type) modInstrument.modEffects[i][j]--
-                                else if (modInstrument.modEffects[i][j] == effectIndex - 1 && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex - 1].type) modInstrument.modEffects[i][j]++
-                            } else if (!moveUp && effectIndex + 1 < instrument.effects.length) {
-                                if (modInstrument.modEffects[i][j] == effectIndex && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex].type) modInstrument.modEffects[i][j]++
-                                else if (modInstrument.modEffects[i][j] == effectIndex + 1 && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex + 1].type) modInstrument.modEffects[i][j]--
+        for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
+            if (channelIndex.type === ChannelType.mod) {
+                for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
+                    let modInstrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
+                    for (let i: number = 0; i < Config.modCount; i++) {
+                        for (let j: number = 0; j < modInstrument.modEffects[i].length; j++) {
+                            if (modInstrument.modInstruments[i].indexOf(doc.getCurrentInstrument()) != -1 && modInstrument.modChannels[i].indexOf(doc.channel) != -1) {
+                                if (moveUp && effectIndex - 1 >= 0) {
+                                    if (modInstrument.modEffects[i][j] == effectIndex && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex].type) modInstrument.modEffects[i][j]--
+                                    else if (modInstrument.modEffects[i][j] == effectIndex - 1 && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex - 1].type) modInstrument.modEffects[i][j]++
+                                } else if (!moveUp && effectIndex + 1 < instrument.effects.length) {
+                                    if (modInstrument.modEffects[i][j] == effectIndex && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex].type) modInstrument.modEffects[i][j]++
+                                    else if (modInstrument.modEffects[i][j] == effectIndex + 1 && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex + 1].type) modInstrument.modEffects[i][j]--
+                                }
                             }
                         }
                     }
@@ -2298,16 +2300,18 @@ export class ChangeRemoveChannel extends ChangeGroup {
         const oldMax: number = maxIndex;
 
         // Update modulators - if a higher index was removed, shift down
-        for (let modChannel: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; modChannel < doc.song.channels.length; modChannel++) {
-            for (let instrumentIndex: number = 0; instrumentIndex < doc.song.channels[modChannel].instruments.length; instrumentIndex++) {
-                const modInstrument: Instrument = doc.song.channels[modChannel].instruments[instrumentIndex];
-                for (let mod: number = 0; mod < Config.modCount; mod++) {
-                    for (let channelIndex: number = 0; channelIndex < modInstrument.modChannels[mod].length; channelIndex++) {
-                        if (modInstrument.modChannels[mod][channelIndex] >= minIndex && modInstrument.modChannels[mod][channelIndex] <= oldMax) {
-                            this.append(new ChangeReplaceModChannel(doc, mod, channelIndex, modInstrument));
-                        }
-                        else if (modInstrument.modChannels[mod][channelIndex] > oldMax) {
-                            this.append(new ChangeReplaceModChannel(doc, mod, channelIndex, modInstrument, -(oldMax - minIndex + 1)));
+        for (let modChannel: number = 0; modChannel < doc.song.channels.length; modChannel++) {
+            if (modChannel.type === ChannelType.mod) {
+                for (let instrumentIndex: number = 0; instrumentIndex < doc.song.channels[modChannel].instruments.length; instrumentIndex++) {
+                    const modInstrument: Instrument = doc.song.channels[modChannel].instruments[instrumentIndex];
+                    for (let mod: number = 0; mod < Config.modCount; mod++) {
+                        for (let channelIndex: number = 0; channelIndex < modInstrument.modChannels[mod].length; channelIndex++) {
+                            if (modInstrument.modChannels[mod][channelIndex] >= minIndex && modInstrument.modChannels[mod][channelIndex] <= oldMax) {
+                                this.append(new ChangeReplaceModChannel(doc, mod, channelIndex, modInstrument));
+                            }
+                            else if (modInstrument.modChannels[mod][channelIndex] > oldMax) {
+                                this.append(new ChangeReplaceModChannel(doc, mod, channelIndex, modInstrument, -(oldMax - minIndex + 1)));
+                            }
                         }
                     }
                 }
@@ -2369,15 +2373,20 @@ export class ChangeChannelBar extends Change {
 }
 
 export class ChangeAddChannelFolder extends ChangeGroup {
-    constructor(doc: SongDocument, index: number, remove: boolean = false) {
+    constructor(doc: SongDocument, selectionMin: number, selectionMax: number) {
         super();
-        if (remove) {
-            doc.song.channels[index].folder = 0;
-            if (doc.song.channels[index-1] && doc.song.channels[index+1] && doc.song.channels[index-1].folder == doc.song.channels[index+1].folder) {
-                this.append(new ChangeChannelOrder(doc, index, index, 1))
+        console.log(selectionMin)
+        console.log(selectionMax)
+        if (doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMax].folder != 0) {
+            for (let channelIndex: number = selectionMin; channelIndex <= selectionMax; channelIndex++) doc.song.channels[channelIndex].folder = 0;
+            if (doc.song.channels[selectionMin-1] && doc.song.channels[selectionMax+1] && doc.song.channels[selectionMin-1].folder == doc.song.channels[selectionMax+1].folder && doc.song.channels[selectionMin-1].folder != 0) {
+                this.append(new ChangeChannelOrder(doc, selectionMin, selectionMax, 1))
             }
         }
-        else doc.song.channels[index].folder = doc.song.getHighestChannelFolderIndex() + 1;
+        else {
+            let folderIndex: number = doc.song.getHighestChannelFolderIndex() + 1;
+            for (let channelIndex: number = selectionMin; channelIndex <= selectionMax; channelIndex++) doc.song.channels[channelIndex].folder = folderIndex;
+        }
 
         doc.recalcChannelColors = true;
         doc.notifier.changed();

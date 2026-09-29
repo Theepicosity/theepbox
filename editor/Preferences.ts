@@ -96,6 +96,8 @@ export const DefaultShortcuts: Dictionary<Shortcut> = {
 	"selectionLeft": { displayName: "Extend Selection Left", category: ShortcutCategory.selection, keyCode: 37, shiftKey: true, ctrlKey: false }, // shift + left
 	"patternRight": { displayName: "Move Right", category: ShortcutCategory.selection, keyCode: 39, shiftKey: false, ctrlKey: false }, // right
 	"selectionRight": { displayName: "Extend Selection Right", category: ShortcutCategory.selection, keyCode: 39, shiftKey: true, ctrlKey: false }, // shift + right
+	"minFolder": { displayName: "Minimize Folder", category: ShortcutCategory.playback, keyCode: 71, shiftKey: false, ctrlKey: false }, // g
+	"newFolder": { displayName: "Add to Folder", category: ShortcutCategory.playback, keyCode: 71, shiftKey: true, ctrlKey: false }, // shift + g
 	"toggleAutoFollow": { displayName: "Auto Follow Playhead", category: ShortcutCategory.playback, keyCode: 220, shiftKey: false, ctrlKey: false }, // \
 
 	//"jummbify": { displayName: "Jummbify", category: ShortcutCategory.file, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
