@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { getLocalStorageItem, Chord, Transition, Config } from "../synth/SynthConfig";
+import { getLocalStorageItem, ChannelType, Chord, Transition, Config } from "../synth/SynthConfig";
 import { Channel } from "../synth/Channel";
 import { Instrument } from "../synth/Instrument";
 import { Effect } from "../synth/Effect";
@@ -616,17 +616,14 @@ export class PatternEditor {
         let cap: number = this._doc.song.getVolumeCap(false);
         this._copiedPinChannels.length = this._doc.song.getChannelCount();
         this._stashCursorPinVols.length = this._doc.song.getChannelCount();
-        for (let i: number = 0; i < this._doc.song.pitchChannelCount; i++) {
-            this._copiedPinChannels[i] = [makeNotePin(0, 0, cap), makeNotePin(0, maxDivision, cap)];
-            this._stashCursorPinVols[i] = [cap, cap];
-        }
-        for (let i: number = this._doc.song.pitchChannelCount; i < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; i++) {
-            this._copiedPinChannels[i] = [makeNotePin(0, 0, cap), makeNotePin(0, maxDivision, 0)];
-            this._stashCursorPinVols[i] = [cap, 0];
-        }
-        for (let i: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; i < this._doc.song.getChannelCount(); i++) {
-            this._copiedPinChannels[i] = [makeNotePin(0, 0, cap), makeNotePin(0, maxDivision, 0)];
-            this._stashCursorPinVols[i] = [cap, 0];
+        for (let i: number = 0; i < this._doc.song.getChannelCount(); i++) {
+            if (this._doc.song.channels[i].type === ChannelType.pitch) {
+                this._copiedPinChannels[i] = [makeNotePin(0, 0, cap), makeNotePin(0, maxDivision, cap)];
+                this._stashCursorPinVols[i] = [cap, cap];
+            } else {
+                this._copiedPinChannels[i] = [makeNotePin(0, 0, cap), makeNotePin(0, maxDivision, 0)];
+                this._stashCursorPinVols[i] = [cap, 0];
+            }
         }
     }
 
@@ -1481,127 +1478,131 @@ export class PatternEditor {
             let usedInstrumentIndices: number[] = [];
             let usedModIndices: number[] = [];
 
-            for (let channelIndex: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+            for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
                 const channel: Channel = this._doc.song.channels[channelIndex];
                 let pattern: Pattern | null = this._doc.song.getPattern(channelIndex, currentBar);
                 let useInstrumentIndex: number = 0;
                 let useModIndex: number = 0;
 
-                if (pattern == null) {
-                    // Hunt for instrument matching this setting and swap to it.
-                    var rtn;
-                    if (applyToFilterTargets.length > applyIndex)
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, undefined, applyToFilterTargets[applyIndex]);
-                    else if (applyToEnvelopeTargets.length > applyIndex)
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, undefined, undefined, applyToEnvelopeTargets[applyIndex]);
-                    else
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel);
-                    useInstrumentIndex = rtn[0];
-                    useModIndex = rtn[1];
+                if (channel.type === ChannelType.mod) {
+                    if (pattern == null) {
+                        // Hunt for instrument matching this setting and swap to it.
+                        var rtn;
+                        if (applyToFilterTargets.length > applyIndex)
+                            rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, undefined, applyToFilterTargets[applyIndex]);
+                        else if (applyToEnvelopeTargets.length > applyIndex)
+                            rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, undefined, undefined, applyToEnvelopeTargets[applyIndex]);
+                        else
+                            rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel);
+                        useInstrumentIndex = rtn[0];
+                        useModIndex = rtn[1];
 
-                    // Found it in this channel, but the pattern doesn't exist. So, add a new pattern and swap to that instrument.
-                    if (useInstrumentIndex != -1) {
-                        sequence.append(new ChangeEnsurePatternExists(this._doc, channelIndex, currentBar));
-                        new ChangeDuplicateSelectedReusedPatterns(this._doc, currentBar, 1, channelIndex, 1, false);
+                        // Found it in this channel, but the pattern doesn't exist. So, add a new pattern and swap to that instrument.
+                        if (useInstrumentIndex != -1) {
+                            sequence.append(new ChangeEnsurePatternExists(this._doc, channelIndex, currentBar));
+                            new ChangeDuplicateSelectedReusedPatterns(this._doc, currentBar, 1, channelIndex, 1, false);
 
-                        pattern = this._doc.song.getPattern(channelIndex, currentBar)!;
+                            pattern = this._doc.song.getPattern(channelIndex, currentBar)!;
 
-                        pattern.instruments[0] = useInstrumentIndex;
+                            pattern.instruments[0] = useInstrumentIndex;
 
-                        changedPatterns = true;
+                            changedPatterns = true;
+                        }
+                    } else {
+                        var rtn;
+                        if (applyToFilterTargets.length > applyIndex)
+                            rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, pattern.instruments[0], applyToFilterTargets[applyIndex]);
+                        else if (applyToEnvelopeTargets.length > applyIndex)
+                            rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, pattern.instruments[0], undefined, applyToEnvelopeTargets[applyIndex]);
+                        else
+                            rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, pattern.instruments[0]);
+                        useInstrumentIndex = rtn[0];
+                        useModIndex = rtn[1];
+
+                        if (useInstrumentIndex != -1) {
+                            new ChangeDuplicateSelectedReusedPatterns(this._doc, currentBar, 1, channelIndex, 1, false);
+                            pattern = this._doc.song.getPattern(channelIndex, currentBar);
+
+                            changedPatterns = true;
+                        }
                     }
-                } else {
-                    var rtn;
-                    if (applyToFilterTargets.length > applyIndex)
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, pattern.instruments[0], applyToFilterTargets[applyIndex]);
-                    else if (applyToEnvelopeTargets.length > applyIndex)
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, pattern.instruments[0], undefined, applyToEnvelopeTargets[applyIndex]);
-                    else
-                        rtn = getMatchingInstrumentAndMod(applyToMods[applyIndex], channel, pattern.instruments[0]);
-                    useInstrumentIndex = rtn[0];
-                    useModIndex = rtn[1];
 
                     if (useInstrumentIndex != -1) {
-                        new ChangeDuplicateSelectedReusedPatterns(this._doc, currentBar, 1, channelIndex, 1, false);
-                        pattern = this._doc.song.getPattern(channelIndex, currentBar);
-
-                        changedPatterns = true;
+                        // Found the appropriate mod channel's mod instrument, mod number, and the pattern to modify (useInstrumentIndex, useModIndex, and pattern respectively).
+                        // Note these as needing modification, but continue on until all channels are checked.
+                        usedPatterns.push(pattern!);
+                        usedInstrumentIndices.push(useInstrumentIndex);
+                        usedInstruments.push(channel.instruments[useInstrumentIndex]);
+                        usedModIndices.push(useModIndex);
                     }
-                }
-
-                if (useInstrumentIndex != -1) {
-                    // Found the appropriate mod channel's mod instrument, mod number, and the pattern to modify (useInstrumentIndex, useModIndex, and pattern respectively).
-                    // Note these as needing modification, but continue on until all channels are checked.
-                    usedPatterns.push(pattern!);
-                    usedInstrumentIndices.push(useInstrumentIndex);
-                    usedInstruments.push(channel.instruments[useInstrumentIndex]);
-                    usedModIndices.push(useModIndex);
                 }
             }
 
             // If the setting wasn't found in any channel or instruments, add it to the first unused slot in any channel.
             if (usedInstrumentIndices.length == 0) {
-                for (let channelIndex: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
                     const channel: Channel = this._doc.song.channels[channelIndex];
-                    let pattern: Pattern | null = this._doc.song.getPattern(channelIndex, currentBar);
-                    let useInstrument: number = -1;
-                    // If there's a pattern for this channel in this bar, it only makes sense to add the new slot in that instrument somewhere or give up and move to the next.
-                    if (pattern != null) {
-                        useInstrument = pattern.instruments[0];
-                    }
-                    // No pattern for this channel, so check through all the instruments for a free slot, and add a pattern if there's a free one.
-                    else {
-                        for (let instrumentIndex: number = 0; instrumentIndex < channel.instruments.length; instrumentIndex++) {
-                            for (let mod: number = 0; mod < Config.modCount; mod++) {
-                                if (channel.instruments[instrumentIndex].modulators[mod] == Config.modulators.dictionary["none"].index) {
-                                    useInstrument = instrumentIndex;
+                    if (channel.type === ChannelType.mod) {
+                        let pattern: Pattern | null = this._doc.song.getPattern(channelIndex, currentBar);
+                        let useInstrument: number = -1;
+                        // If there's a pattern for this channel in this bar, it only makes sense to add the new slot in that instrument somewhere or give up and move to the next.
+                        if (pattern != null) {
+                            useInstrument = pattern.instruments[0];
+                        }
+                        // No pattern for this channel, so check through all the instruments for a free slot, and add a pattern if there's a free one.
+                        else {
+                            for (let instrumentIndex: number = 0; instrumentIndex < channel.instruments.length; instrumentIndex++) {
+                                for (let mod: number = 0; mod < Config.modCount; mod++) {
+                                    if (channel.instruments[instrumentIndex].modulators[mod] == Config.modulators.dictionary["none"].index) {
+                                        useInstrument = instrumentIndex;
 
-                                    sequence.append(new ChangeEnsurePatternExists(this._doc, channelIndex, currentBar));
+                                        sequence.append(new ChangeEnsurePatternExists(this._doc, channelIndex, currentBar));
 
-                                    pattern = this._doc.song.getPattern(channelIndex, currentBar)!;
+                                        pattern = this._doc.song.getPattern(channelIndex, currentBar)!;
 
-                                    pattern.instruments[0] = instrumentIndex;
+                                        pattern.instruments[0] = instrumentIndex;
 
-                                    mod = Config.modCount;
-                                    instrumentIndex = channel.instruments.length;
-                                    channelIndex = this._doc.song.getChannelCount();
+                                        mod = Config.modCount;
+                                        instrumentIndex = channel.instruments.length;
+                                        channelIndex = this._doc.song.getChannelCount();
 
-                                    changedPatterns = true;
+                                        changedPatterns = true;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    // Found a suitable instrument to use, now add the setting
-                    if (useInstrument != -1) {
-                        let instrument: Instrument = channel.instruments[useInstrument];
-                        for (let mod: number = 0; mod < Config.modCount; mod++) {
-                            if (instrument.modulators[mod] == Config.modulators.dictionary["none"].index) {
-                                instrument.modulators[mod] = applyToMods[applyIndex];
-                                if (Config.modulators[applyToMods[applyIndex]].forSong) {
-                                    if (applyToFilterTargets.length > applyIndex) {
-                                        instrument.modFilterTypes[mod] = applyToFilterTargets[applyIndex];
-                                    }
-                                    instrument.modChannels[mod][0] = -1; // Song
-                                } else {
-                                    instrument.modChannels[mod] = [this._doc.channel];
-                                    instrument.modInstruments[mod] = [this._doc.getCurrentInstrument()];
+                        // Found a suitable instrument to use, now add the setting
+                        if (useInstrument != -1) {
+                            let instrument: Instrument = channel.instruments[useInstrument];
+                            for (let mod: number = 0; mod < Config.modCount; mod++) {
+                                if (instrument.modulators[mod] == Config.modulators.dictionary["none"].index) {
+                                    instrument.modulators[mod] = applyToMods[applyIndex];
+                                    if (Config.modulators[applyToMods[applyIndex]].forSong) {
+                                        if (applyToFilterTargets.length > applyIndex) {
+                                            instrument.modFilterTypes[mod] = applyToFilterTargets[applyIndex];
+                                        }
+                                        instrument.modChannels[mod][0] = -1; // Song
+                                    } else {
+                                        instrument.modChannels[mod] = [this._doc.channel];
+                                        instrument.modInstruments[mod] = [this._doc.getCurrentInstrument()];
 
-                                    // Filter dot. Add appropriate filter target settings (dot# X and dot# Y mod).
-                                    if (applyToFilterTargets.length > applyIndex) {
-                                        instrument.modFilterTypes[mod] = applyToFilterTargets[applyIndex];
+                                        // Filter dot. Add appropriate filter target settings (dot# X and dot# Y mod).
+                                        if (applyToFilterTargets.length > applyIndex) {
+                                            instrument.modFilterTypes[mod] = applyToFilterTargets[applyIndex];
+                                        }
+                                        //or add appropriate envelope settings
+                                        else if (applyToEnvelopeTargets.length > applyIndex)
+                                            instrument.modEnvelopeNumbers[mod] = applyToEnvelopeTargets[applyIndex];
                                     }
-                                    //or add appropriate envelope settings
-                                    else if (applyToEnvelopeTargets.length > applyIndex)
-                                        instrument.modEnvelopeNumbers[mod] = applyToEnvelopeTargets[applyIndex];
+
+                                    usedPatterns.push(pattern!);
+                                    usedInstrumentIndices.push(useInstrument);
+                                    usedInstruments.push(instrument);
+                                    usedModIndices.push(mod);
+
+                                    mod = Config.modCount; channelIndex = this._doc.song.getChannelCount(); // Skip after finding one
                                 }
-
-                                usedPatterns.push(pattern!);
-                                usedInstrumentIndices.push(useInstrument);
-                                usedInstruments.push(instrument);
-                                usedModIndices.push(mod);
-
-                                mod = Config.modCount; channelIndex = this._doc.song.getChannelCount(); // Skip after finding one
                             }
                         }
                     }
@@ -1796,7 +1797,7 @@ export class PatternEditor {
         }
 
         // Re-render mod pattern since it may have new notes in it (e.g. if editing song mods from mod channel)
-        if (this._doc.channel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
+        if (this._doc.song.channels[this._doc.channel].type === ChannelType.mod) {
             this._doc.currentPatternIsDirty = true;
         }
 
@@ -2130,7 +2131,7 @@ export class PatternEditor {
                         start = this._cursor.start;
                         end = start + defaultLength;
                     }
-                    const continuesLastPattern: boolean = (start < 0 && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount);
+                    const continuesLastPattern: boolean = (start < 0 && this._doc.song.channels[this._doc.channel].type != ChannelType.mod);
                     if (start < 0) start = 0;
                     if (end > this._doc.song.beatsPerBar * Config.partsPerBeat) end = this._doc.song.beatsPerBar * Config.partsPerBeat;
 
@@ -2184,7 +2185,7 @@ export class PatternEditor {
 
                     const shiftedPin: NotePin = this._cursor.curNote.pins[this._cursor.nearPinIndex];
                     let shiftedTime: number = Math.round((this._cursor.curNote.start + shiftedPin.time + shift) / minDivision) * minDivision;
-                    const continuesLastPattern: boolean = (shiftedTime < 0.0 && this._doc.channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount);
+                    const continuesLastPattern: boolean = (shiftedTime < 0.0 && this._doc.song.channels[this._doc.channel].type != ChannelType.mod);
                     if (shiftedTime < 0) shiftedTime = 0;
                     if (shiftedTime > this._doc.song.beatsPerBar * Config.partsPerBeat) shiftedTime = this._doc.song.beatsPerBar * Config.partsPerBeat;
 
@@ -2537,7 +2538,7 @@ export class PatternEditor {
         this._editorWidth = this.container.clientWidth;
         this._editorHeight = this.container.clientHeight;
         this._partWidth = this._editorWidth / (this._doc.song.beatsPerBar * Config.partsPerBeat);
-        this._octaveOffset = (this._doc.channel >= this._doc.song.pitchChannelCount) ? 0 : this._doc.song.channels[this._doc.channel].octave * Config.pitchesPerOctave;
+        this._octaveOffset = (this._doc.song.channels[this._doc.channel].type != ChannelType.pitch) ? 0 : this._doc.song.channels[this._doc.channel].octave * Config.pitchesPerOctave;
 
         if (this._doc.song.getChannelIsNoise(this._doc.channel)) {
             this._pitchBorder = 0;
@@ -2573,7 +2574,7 @@ export class PatternEditor {
         }
 
         this._pitchHeight = this._editorHeight / this._pitchCount;
-        this._octaveOffset = (this._doc.channel >= this._doc.song.pitchChannelCount) ? 0 : this._doc.getBaseVisibleOctave(this._doc.channel) * Config.pitchesPerOctave;
+        this._octaveOffset = (this._doc.song.channels[this._doc.channel].type != ChannelType.pitch) ? 0 : this._doc.getBaseVisibleOctave(this._doc.channel) * Config.pitchesPerOctave;
 
         if (this._renderedRhythm != this._doc.song.rhythm ||
             this._renderedPitchChannelCount != this._doc.song.pitchChannelCount ||
@@ -2674,8 +2675,8 @@ export class PatternEditor {
             if (!this._doc.song.getChannelIsMod(this._doc.channel)) {
                 let noteFlashColor: string = "#ffffff77";
                 if (this._doc.prefs.notesFlashWhenPlayed) noteFlashColor = ColorConfig.getComputed("--note-flash-secondary");
-                for (let channel: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount - 1; channel >= 0; channel--) {
-                    if (channel == this._doc.channel || !this._doc.song.channels[channel].visible) continue;
+                for (let channel: number = this._doc.song.getChannelCount() - 1; channel >= 0; channel--) {
+                    if (channel == this._doc.channel || !this._doc.song.channels[channel].visible || this._doc.song.channels[channel].type === ChannelType.mod) continue;
                     if (this._doc.song.getChannelIsNoise(channel) != this._doc.song.getChannelIsNoise(this._doc.channel)) continue;
 
                     const pattern2: Pattern | null = this._doc.song.getPattern(channel, this._doc.bar + this._barOffset);

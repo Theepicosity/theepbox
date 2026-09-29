@@ -3,12 +3,12 @@
 import { SongDocument } from "./SongDocument";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { ColorConfig } from "./ColorConfig";
-import { ChannelRow } from "./ChannelRow";
 import { InputBox } from "./HTMLWrapper";
 import { ChangeChannelOrder, ChangeChannelName, ChangeRemoveChannel, ChangeAddChannelFolder, ChangeMinimizeChannelFolder } from "./changes";
 import { ChannelType, Config } from "../synth/SynthConfig";
 import { Channel } from "../synth/Channel";
 import { SongEditor } from "./SongEditor";
+import { TrackEditor } from "./TrackEditor";
 
 //namespace beepbox {
 export class MuteEditor {
@@ -51,7 +51,6 @@ export class MuteEditor {
     private _editorHeight: number = 128;
     private _renderedPitchChannels: number = 0;
     private _renderedNoiseChannels: number = 0;
-    private _renderedChannelHeight: number = -1;
     private _renderedModChannels: number = 0;
     private _renderedActiveChannelCount: number = 0;
     private _channelDropDownChannel: number = 0;
@@ -510,7 +509,6 @@ export class MuteEditor {
 
     public render(): void {
         if (!this._doc.prefs.enableChannelMuting) return;
-        let startingChannelCount: number = this._buttons.length;
         let activeChannelCount: number = this._doc.song.getChannelCount()
 
         for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {

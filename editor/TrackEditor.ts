@@ -55,7 +55,7 @@ export class TrackEditor {
     private _mouseOver: boolean = false;
     private _mousePressed: boolean = false;
     private _mouseDragging = false;
-    public readonly patternTops: number[] = [];
+    public patternTops: number[] = [];
     private _barWidth: number = 32;
     private _renderedBarCount: number = -1;
     private _renderedEditorWidth: number = -1;
@@ -276,7 +276,7 @@ export class TrackEditor {
     private _whenMouseReleased = (event: MouseEvent): void => {
         if (this._mousePressed && !this._mouseDragging) {
             if (this._doc.channel == this._mouseChannel && this._doc.bar == this._mouseBar) {
-                const up: boolean = ((this._mouseY - Config.barEditorHeight) % ChannelRow.patternHeight) < ChannelRow.patternHeight / 2;
+                const up: boolean = ((this._mouseY - Config.barEditorHeight) % this.channels[this._mouseChannel].patternHeight) < this.channels[this._mouseChannel].patternHeight / 2;
                 const patternCount: number = this._doc.song.patternsPerChannel;
                 this._doc.selection.setPattern((this._doc.song.channels[this._mouseChannel].bars[this._mouseBar] + (up ? 1 : patternCount)) % (patternCount + 1));
             }
@@ -365,7 +365,7 @@ export class TrackEditor {
 
         this._select.style.width = this._barWidth + "px";
         this._select.style.top = (this.patternTops[this._doc.channel]) + "px";
-        this._select.style.height = this.patternTops[this._doc.channel].patternHeight + "px";
+        this._select.style.height = this.channels[channel].patternHeight + "px";
 
         this._barDropDown.style.left = (this._barWidth * bar) + "px";
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Config } from "../synth/SynthConfig";
+import { Config, ChannelType } from "../synth/SynthConfig";
 import { SongDocument } from "./SongDocument";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { ColorConfig } from "./ColorConfig";
@@ -365,7 +365,7 @@ export class Piano {
                 let instrumentVal: number = instrument.modInstruments[Config.modCount - j - 1][0] + 1; //TODO: something special for when there are multiple channel targets?
                 let channelVal: number = instrument.modChannels[Config.modCount - j - 1][0] + 1;
                 let modulator: number = instrument.modulators[Config.modCount - j - 1];
-                let status: number = 1 + +(channelVal - 1 >= this._doc.song.pitchChannelCount);
+                let status: number = this._doc.song.channels[Math.max(0, channelVal - 1)].type === ChannelType.pitch ? 1 : 2;
                 if (instrument.modChannels[Config.modCount - j - 1][0] == -2)
                     status = 0;
                 else if (instrument.modChannels[Config.modCount - j - 1][0] == -1)

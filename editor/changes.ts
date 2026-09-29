@@ -1862,7 +1862,7 @@ export class ChangeReorderEffects extends Change {
 
         // Update mods for each channel
         for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            if (channelIndex.type === ChannelType.mod) {
+            if (doc.song.channels[channelIndex].type === ChannelType.mod) {
                 for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
                     let modInstrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
                     for (let i: number = 0; i < Config.modCount; i++) {
@@ -2075,7 +2075,7 @@ export class ChangeChannelOrder extends Change {
             || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder)
             && !ignoreFolders
         ) {
-            let prevChannelFolder: Channel = doc.song.channels[selectionMin - 1] ?  doc.song.channels[selectionMin - 1].folder : -1;
+            let prevChannelFolder: number = doc.song.channels[selectionMin - 1] ? doc.song.channels[selectionMin - 1].folder : -1;
             if ((doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMin].folder != prevChannelFolder)
                 || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder
                 || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder
@@ -2169,6 +2169,7 @@ export class ChangeChannelOrder extends Change {
                     }
                 }
             }
+            doc.recalcModChannels = true;
         } else {
             doc.selection.boxSelectionY0 -= offset;
             doc.selection.boxSelectionY1 -= offset;
@@ -2195,7 +2196,7 @@ export class ChangeCustomScale extends Change {
 }
 
 export class ChangeChannelCount extends Change {
-    constructor(doc: SongDocument, newPitchChannelCount: number, newNoiseChannelCount: number, newModChannelCount: number, setFolder?: number = -1) {
+    constructor(doc: SongDocument, newPitchChannelCount: number, newNoiseChannelCount: number, newModChannelCount: number, setFolder: number = -1) {
         super();
         if (doc.song.pitchChannelCount != newPitchChannelCount || doc.song.noiseChannelCount != newNoiseChannelCount || doc.song.modChannelCount != newModChannelCount) {
             const oldPitchCount: number = doc.song.pitchChannelCount;
@@ -2239,9 +2240,9 @@ export class ChangeChannelCount extends Change {
             changeGroup(noiseChannelsToMake, ChannelType.noise);
             changeGroup(modChannelsToMake, ChannelType.mod);
 
-            doc.song.channels.length = newPitchChannelCount + newNoiseChannelCount + newModChannelCount;
+            //doc.song.channels.length = newPitchChannelCount + newNoiseChannelCount + newModChannelCount;
 
-            doc.channel = Math.min(doc.channel, newPitchChannelCount + newNoiseChannelCount + newModChannelCount - 1);
+            doc.channel = Math.min(doc.channel, newPitchChannelCount + newNoiseChannelCount + newModChannelCount);
 
             // Determine if any mod instruments now refer to an invalid channel. Unset them if so
             for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
@@ -2267,6 +2268,7 @@ export class ChangeChannelCount extends Change {
 
             ColorConfig.resetColors();
             doc.recalcChannelColors = true;
+            doc.recalcModChannels = true;
 
             this._didSomething();
         }
@@ -2301,7 +2303,7 @@ export class ChangeRemoveChannel extends ChangeGroup {
 
         // Update modulators - if a higher index was removed, shift down
         for (let modChannel: number = 0; modChannel < doc.song.channels.length; modChannel++) {
-            if (modChannel.type === ChannelType.mod) {
+            if (doc.song.channels[modChannel].type === ChannelType.mod) {
                 for (let instrumentIndex: number = 0; instrumentIndex < doc.song.channels[modChannel].instruments.length; instrumentIndex++) {
                     const modInstrument: Instrument = doc.song.channels[modChannel].instruments[instrumentIndex];
                     for (let mod: number = 0; mod < Config.modCount; mod++) {
@@ -2375,8 +2377,6 @@ export class ChangeChannelBar extends Change {
 export class ChangeAddChannelFolder extends ChangeGroup {
     constructor(doc: SongDocument, selectionMin: number, selectionMax: number) {
         super();
-        console.log(selectionMin)
-        console.log(selectionMax)
         if (doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMax].folder != 0) {
             for (let channelIndex: number = selectionMin; channelIndex <= selectionMax; channelIndex++) doc.song.channels[channelIndex].folder = 0;
             if (doc.song.channels[selectionMin-1] && doc.song.channels[selectionMax+1] && doc.song.channels[selectionMin-1].folder == doc.song.channels[selectionMax+1].folder && doc.song.channels[selectionMin-1].folder != 0) {

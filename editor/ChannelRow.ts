@@ -1,5 +1,6 @@
 // Copyright (C) 2021 John Nesky, distributed under the MIT license.
 
+import { ChannelType } from "../synth/SynthConfig";
 import { Pattern } from "../synth/Pattern";
 import { ColorConfig, ChannelColors } from "./ColorConfig";
 import { SongDocument } from "./SongDocument";
@@ -8,7 +9,7 @@ import { HTML } from "imperative-html/dist/esm/elements-strict";
 export class Box {
     private readonly _text: Text = document.createTextNode("");
     private readonly _label: HTMLElement = HTML.div({ class: "channelBoxLabel" }, this._text);
-    public readonly container: HTMLElement = HTML.div({ class: "channelBox", style: `margin: 1px; height: ${ChannelRow.patternHeight - 2}px;` }, this._label);
+    public readonly container: HTMLElement = HTML.div({ class: "channelBox", style: `margin: 1px; height: 28px;` }, this._label);
     private _renderedIndex: number = -1;
     private _renderedLabelColor: string = "?";
     private _renderedVisibility: string = "?";
@@ -29,7 +30,7 @@ export class Box {
         this.container.style.height = (height - 2) + "px"; // there's a 1 pixel margin on either side.
     }
 
-    public setIndex(index: number, selected: boolean, dim: boolean, color: string, isNoise: boolean, isMod: boolean, numberVisibility: number): void {
+    public setIndex(index: number, selected: boolean, dim: boolean, color: string, isNoise: boolean, isMod: boolean, numberVisibility: string): void {
         if (this._renderedIndex != index) {
             if (index >= 100) {
                 this._label.setAttribute("font-size", "16");
@@ -94,9 +95,7 @@ export class ChannelRow {
 
     private _beginsFolder: boolean = false;
     private _isInFolder: boolean = false;
-    private _endsFolder: boolean = false;
     private _renderedBarWidth: number = -1;
-    private _renderedBarHeight: number = -1;
     private _boxes: Box[] = [];
 
     public readonly container: HTMLElement = HTML.div({ class: "channelRow" });
@@ -133,12 +132,10 @@ export class ChannelRow {
         if (this._doc.song.channels[this.index].folder != 0) this._isInFolder = true;
         else this._isInFolder = false;
 
-        let numberVisibility: string = "visible"
         if (this._doc.minimizedFolders.includes(this._doc.song.channels[this.index].folder)) {
             this.patternHeight = 4
         }
 
-        this._renderedBarHeight = this.patternHeight;
         for (let x: number = 0; x < this._boxes.length; x++) {
             this._boxes[x].setHeight(this.patternHeight);
             if (this._beginsFolder) {
@@ -162,10 +159,10 @@ export class ChannelRow {
                 const useColor = dim && !selected ? colors.secondaryChannel : colors.primaryChannel
                 if (!this._doc.minimizedFolders.includes(this._doc.song.channels[this.index].folder)) {
                     box.setIndex(this._doc.song.channels[this.index].bars[i], selected, dim, useColor,
-                    this.index >= this._doc.song.pitchChannelCount && this.index < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount, this.index >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount, "visible");
+                    this._doc.song.channels[this.index].type === ChannelType.noise, this._doc.song.channels[this.index].type === ChannelType.mod, "visible");
                 } else {
                     box.setIndex(this._doc.song.channels[this.index].bars[i], selected, dim, useColor,
-                    this.index >= this._doc.song.pitchChannelCount && this.index < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount, this.index >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount, "hidden");
+                    this._doc.song.channels[this.index].type === ChannelType.noise, this._doc.song.channels[this.index].type === ChannelType.mod, "hidden");
                 }
                 box.setVisibility("visible");
             } else {

@@ -513,10 +513,10 @@ export class InstrumentState {
         let mixVolumeEnd: number = envelopeEnds[EnvelopeComputeIndex.mixVolume] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
 
         // Check for mod-related volume delta
-        if (synth.isModActive(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex)) {
+        if (synth.isModActive(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, 1)) {
             // Linear falloff below 0, normal volume formula above 0. Seems to work best for scaling since the normal volume mult formula has a big gap from -25 to -24.
-            const startVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, -1, false);
-            const endVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, -1, true);
+            const startVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, false);
+            const endVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, true);
             this.mixVolume *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
             mixVolumeEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
         }
