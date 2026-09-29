@@ -571,7 +571,7 @@ export class MuteEditor {
             } else {
                 this._buttons[y].children[0].classList.remove("muted");
             }
-            this._channelCounts[y].style.backgroundColor = this._doc.song.channels[y].visible ? ColorConfig.uiWidgetBackground : "#000000";
+            this._channelCounts[y].style.backgroundColor = this._doc.song.channels[y].visible ? ColorConfig.uiWidgetBackground : ColorConfig.editorBackground;
             if (this._doc.song.channels[y].folder == 0) {
                 this._channelCounts[y].style.color = this._doc.song.channels[y].visible ? ColorConfig.primaryText : ColorConfig.secondaryText;
             } else {
