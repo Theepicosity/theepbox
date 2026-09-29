@@ -126,27 +126,35 @@ export class ChannelRow {
             }
         }
 
-        if (this._doc.song.channels[this.index - 1] && this._doc.song.channels[this.index - 1].folder != this._doc.song.channels[this.index].folder) this._beginsFolder = true;
-        else if (!this._doc.song.channels[this.index - 1] && this._doc.song.channels[this.index].folder != 0) this._beginsFolder = true;
-        else this._beginsFolder = false;
-        if (this._doc.song.channels[this.index].folder != 0) this._isInFolder = true;
-        else this._isInFolder = false;
+        if (this._doc.prefs.enableChannelFolders) {
+            if (this._doc.song.channels[this.index - 1] && this._doc.song.channels[this.index - 1].folder != this._doc.song.channels[this.index].folder) this._beginsFolder = true;
+            else if (!this._doc.song.channels[this.index - 1] && this._doc.song.channels[this.index].folder != 0) this._beginsFolder = true;
+            else this._beginsFolder = false;
+            if (this._doc.song.channels[this.index].folder != 0) this._isInFolder = true;
+            else this._isInFolder = false;
 
-        if (this._doc.minimizedFolders.includes(this._doc.song.channels[this.index].folder)) {
-            this.patternHeight = 4
-        }
+            if (this._doc.minimizedFolders.includes(this._doc.song.channels[this.index].folder)) {
+                this.patternHeight = 4
+            }
 
-        for (let x: number = 0; x < this._boxes.length; x++) {
-            this._boxes[x].setHeight(this.patternHeight);
-            if (this._beginsFolder) {
-                this._boxes[x].container.style.marginTop = "5px";
-                // basically the hackiest hack possible
-                if (this._isInFolder) this._boxes[x].container.style.boxShadow = "0 -5px 0 " + ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel + "60";
+            for (let x: number = 0; x < this._boxes.length; x++) {
+                this._boxes[x].setHeight(this.patternHeight);
+                if (this._beginsFolder) {
+                    this._boxes[x].container.style.marginTop = "5px";
+                    // basically the hackiest hack possible
+                    if (this._isInFolder) this._boxes[x].container.style.boxShadow = "0 -5px 0 " + ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel + "60";
+                }
+            }
+
+            if (this._beginsFolder) this.patternHeight += 4;
+            if (this._isInFolder) this.container.style.backgroundColor = ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel + "30";
+        } else {
+            this._isInFolder = false;
+            this._doc.minimizedFolders = [];
+            for (let x: number = 0; x < this._boxes.length; x++) {
+                this._boxes[x].setHeight(this.patternHeight);
             }
         }
-
-        if (this._beginsFolder) this.patternHeight += 4;
-        if (this._isInFolder) this.container.style.backgroundColor = ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel + "30";
 
         for (let i: number = 0; i < this._boxes.length; i++) {
             const pattern: Pattern | null = this._doc.song.getPattern(this.index, i);

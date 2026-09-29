@@ -4513,7 +4513,7 @@ export class SongEditor {
 
             case this._parseShortcut(event, shortcuts["hideFolder"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) this._doc.selection.hideChannels(false, true);
+                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels && this._doc.prefs.enableChannelFolders) this._doc.selection.hideChannels(false, true);
                 event.preventDefault();
             break;
 
@@ -4533,19 +4533,19 @@ export class SongEditor {
 
             case this._parseShortcut(event, shortcuts["onlyShowFolder"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) this._doc.selection.showChannels(false, true);
+                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels && this._doc.prefs.enableChannelFolders) this._doc.selection.showChannels(false, true);
                 event.preventDefault();
             break;
 
             case this._parseShortcut(event, shortcuts["minFolder"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                this._doc.selection.minimizeFolder();
+                if (this._doc.prefs.enableChannelFolders) this._doc.selection.minimizeFolder();
                 event.preventDefault();
                 break;
 
             case this._parseShortcut(event, shortcuts["newFolder"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                this._doc.selection.createFolder();
+                if (this._doc.prefs.enableChannelFolders) this._doc.selection.createFolder();
                 event.preventDefault();
             break;
 
@@ -4571,7 +4571,7 @@ export class SongEditor {
 
             case this._parseShortcut(event, shortcuts["muteFolder"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (this._doc.prefs.enableChannelMuting) {
+                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.enableChannelFolders) {
                     this._doc.selection.muteChannels(false, true);
                     event.preventDefault();
                 }
@@ -4710,7 +4710,7 @@ export class SongEditor {
 
             case this._parseShortcut(event, shortcuts["soliFolder"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                if (this._doc.prefs.enableChannelMuting) {
+                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.enableChannelFolders) {
                     this._doc.selection.soloChannels(false, true);
                 }
                 event.preventDefault();
@@ -4836,7 +4836,19 @@ export class SongEditor {
 
             case this._parseShortcut(event, shortcuts["patternUp"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                this._doc.selection.setChannelBar((this._doc.channel - 1 + this._doc.song.getChannelCount()) % this._doc.song.getChannelCount(), this._doc.bar);
+                let newChannelIndexAbove: number = (this._doc.channel - 1 + this._doc.song.getChannelCount()) % this._doc.song.getChannelCount();
+                if (this._doc.prefs.channelFolderSelectMethod && this._doc.minimizedFolders.includes(this._doc.song.channels[newChannelIndexAbove].folder)) {
+                    for (let i: number = 0; i < this._doc.song.getChannelCount(); i++) {
+                        newChannelIndexAbove = (newChannelIndexAbove - 1) % this._doc.song.getChannelCount();
+                        if (!this._doc.minimizedFolders.includes(this._doc.song.channels[newChannelIndexAbove].folder)) {
+                            this._doc.selection.setChannelBar(newChannelIndexAbove, this._doc.bar);
+                            break;
+                        }
+                    }
+                }
+                else {
+                    this._doc.selection.setChannelBar(newChannelIndexAbove, this._doc.bar);
+                }
                 this._doc.selection.resetBoxSelection();
                 //envelopes aren't rerendering when channels are changed so...
                 this.envelopeEditor.rerenderExtraSettings();
@@ -4856,7 +4868,19 @@ export class SongEditor {
                 break;
             case this._parseShortcut(event, shortcuts["patternDown"], needControlForShortcuts):
                 if (canPlayNotes) break;
-                this._doc.selection.setChannelBar((this._doc.channel + 1) % this._doc.song.getChannelCount(), this._doc.bar);
+                let newChannelIndexBelow: number = (this._doc.channel + 1 + this._doc.song.getChannelCount()) % this._doc.song.getChannelCount();
+                if (this._doc.prefs.channelFolderSelectMethod && this._doc.minimizedFolders.includes(this._doc.song.channels[newChannelIndexBelow].folder)) {
+                    for (let i: number = 0; i < this._doc.song.getChannelCount(); i++) {
+                        newChannelIndexBelow = (newChannelIndexBelow + 1) % this._doc.song.getChannelCount();
+                        if (!this._doc.minimizedFolders.includes(this._doc.song.channels[newChannelIndexBelow].folder)) {
+                            this._doc.selection.setChannelBar(newChannelIndexBelow, this._doc.bar);
+                            break;
+                        }
+                    }
+                }
+                else {
+                    this._doc.selection.setChannelBar(newChannelIndexBelow, this._doc.bar);
+                }
                 this._doc.selection.resetBoxSelection();
                 this.envelopeEditor.rerenderExtraSettings();
                 event.preventDefault();

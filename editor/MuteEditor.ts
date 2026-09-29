@@ -138,7 +138,11 @@ export class MuteEditor {
             this._channelDropDown.options[8].removeAttribute("hidden");
             this._channelDropDown.options[10].removeAttribute("hidden");
         }
-        if (this._doc.song.channels[this._channelDropDownChannel].folder == 0) {
+        if (!this._doc.prefs.enableChannelFolders) {
+            this._channelDropDown.options[1].hidden = true;
+            this._channelDropDown.options[2].hidden = true;
+        }
+        else if (this._doc.song.channels[this._channelDropDownChannel].folder == 0) {
             this._channelDropDown.options[2].hidden = true;
             this._channelDropDown.options[1].removeAttribute("hidden");
         }
@@ -201,7 +205,7 @@ export class MuteEditor {
         }
 
         // if a channel isnt in a folder i will just hide these attributes tbh
-        if (this._doc.song.channels[this._channelDropDownChannel].folder == 0) {
+        if (this._doc.song.channels[this._channelDropDownChannel].folder == 0 || !this._doc.prefs.enableChannelFolders) {
             this._channelDropDown.options[11].hidden = true;
             this._channelDropDown.options[12].hidden = true;
             this._channelDropDown.options[13].hidden = true;

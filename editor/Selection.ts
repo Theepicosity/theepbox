@@ -113,7 +113,6 @@ export class Selection {
             this._doc.record(this._changeTrack, canReplaceLastChange);
         }
         this.selectionUpdated();
-
     }
 
     public setPattern(pattern: number): void {
@@ -771,13 +770,14 @@ export class Selection {
         let alreadySoloed: boolean = true;
         let possibleFolders: number[] = [];
 
-        if (inFolder) {
-            let skipFolder: number = -1;
-            for (const channelIndexForFolder of this._eachSelectedChannel()) {
-                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
-                skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
-                if (skipFolder != 0) possibleFolders.push(skipFolder);
-            }
+        let skipFolder: number = -1;
+        for (const channelIndexForFolder of this._eachSelectedChannel()) {
+            if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+            skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
+            if (skipFolder != 0) possibleFolders.push(skipFolder);
+        }
+
+        if (inFolder && possibleFolders.length > 0) {
             for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
                 const shouldBeMuted: boolean = !possibleFolders.includes(this._doc.song.channels[channelIndex].folder) ? !invert : invert;
                     if (this._doc.song.channels[channelIndex].muted != shouldBeMuted && this._doc.song.channels[channelIndex].type != ChannelType.mod) {
@@ -869,13 +869,14 @@ export class Selection {
         let alreadyShown: boolean = true;
         let possibleFolders: number[] = [];
 
-        if (inFolder) {
-            let skipFolder: number = -1;
-            for (const channelIndexForFolder of this._eachSelectedChannel()) {
-                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
-                skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
-                if (skipFolder != 0) possibleFolders.push(skipFolder);
-            }
+        let skipFolder: number = -1;
+        for (const channelIndexForFolder of this._eachSelectedChannel()) {
+            if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+            skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
+            if (skipFolder != 0) possibleFolders.push(skipFolder);
+        }
+
+        if (inFolder && possibleFolders.length > 0) {
             for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
                 const shouldBeMuted: boolean = !possibleFolders.includes(this._doc.song.channels[channelIndex].folder) ? invert : !invert;
                 if (this._doc.song.channels[channelIndex].visible != shouldBeMuted) {
@@ -925,30 +926,37 @@ export class Selection {
 
     public minimizeFolder(): void {
         let shouldMaximize: boolean = true;
+        let shouldMakeNew: boolean = true;
         let skipFolder: number = -1;
         let possibleFolders: number[] = [];
 
         // first check if it should maximize or minimize
         for (const channelIndexForFolder of this._eachSelectedChannel()) {
+            if (this._doc.song.channels[channelIndexForFolder].folder != 0) shouldMakeNew = false
             if (this._doc.minimizedFolders.includes(this._doc.song.channels[channelIndexForFolder].folder)) {
                 shouldMaximize = false
                 break;
             }
         }
 
-        if (!shouldMaximize) {
-            for (const channelIndexForFolder of this._eachSelectedChannel()) {
-                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
-                skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
-                if (this._doc.minimizedFolders.includes(skipFolder)) this._doc.minimizedFolders.splice(this._doc.minimizedFolders.findIndex( (value) => value == skipFolder ), 1);
-            }
+        // ive decided that, as a convenience, if there is no folder already there then it should make a new one
+        if (shouldMakeNew) {
+            this._doc.record(new ChangeAddChannelFolder(this._doc, this.boxSelectionChannel, this.boxSelectionChannel + this.boxSelectionHeight - 1));
         } else {
-            for (const channelIndexForFolder of this._eachSelectedChannel()) {
-                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
-                skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
-                if (skipFolder != 0 && !this._doc.minimizedFolders.includes(skipFolder)) possibleFolders.push(skipFolder);
+            if (!shouldMaximize) {
+                for (const channelIndexForFolder of this._eachSelectedChannel()) {
+                    if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+                    skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
+                    if (this._doc.minimizedFolders.includes(skipFolder)) this._doc.minimizedFolders.splice(this._doc.minimizedFolders.findIndex( (value) => value == skipFolder ), 1);
+                }
+            } else {
+                for (const channelIndexForFolder of this._eachSelectedChannel()) {
+                    if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+                    skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
+                    if (skipFolder != 0 && !this._doc.minimizedFolders.includes(skipFolder)) possibleFolders.push(skipFolder);
+                }
+                this._doc.minimizedFolders = this._doc.minimizedFolders.concat(possibleFolders);
             }
-            this._doc.minimizedFolders = this._doc.minimizedFolders.concat(possibleFolders);
         }
 
         this._doc.recalcChannelColors = true;

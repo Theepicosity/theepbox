@@ -504,6 +504,8 @@ export class PreferencesPrompt implements Prompt {
 	private readonly _alwaysFineNoteVol: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _showScrollBar: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _enableChannelMuting: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
+	private readonly _enableChannelFolders: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
+	private readonly _channelFolderSelectMethod: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _displayBrowserUrl: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 	private readonly _closePromptByClickoff: HTMLInputElement = input({ style: "width: 2em; margin-left: 1em;", type: "checkbox" });
 
@@ -739,6 +741,14 @@ export class PreferencesPrompt implements Prompt {
 					div({ style: "width: 50%; text-align: center;" }, this._enableChannelMuting),
 			),
 			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Enable channel folders:",
+					div({ style: "width: 50%; text-align: center;" }, this._enableChannelFolders),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
+					"Move cursor past minimized folders:",
+					div({ style: "width: 50%; text-align: center;" }, this._channelFolderSelectMethod),
+			),
+			label({ style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5em; margin-bottom: 0.5em; height: 2em;" },
 					"Enable song data in URL:",
 					div({ style: "width: 50%; text-align: center;" }, this._displayBrowserUrl),
 			),
@@ -819,6 +829,8 @@ export class PreferencesPrompt implements Prompt {
 		this._alwaysFineNoteVol.checked = this._doc.prefs.alwaysFineNoteVol;
 		this._showScrollBar.checked = this._doc.prefs.showScrollBar;
 		this._enableChannelMuting.checked = this._doc.prefs.enableChannelMuting;
+		this._enableChannelFolders.checked = this._doc.prefs.enableChannelFolders;
+		this._channelFolderSelectMethod.checked = this._doc.prefs.channelFolderSelectMethod;
 		this._displayBrowserUrl.checked = this._doc.prefs.displayBrowserUrl;
 		this._closePromptByClickoff.checked = this._doc.prefs.closePromptByClickoff;
 
@@ -942,6 +954,8 @@ export class PreferencesPrompt implements Prompt {
 		this._doc.prefs.alwaysFineNoteVol = this._alwaysFineNoteVol.checked;
 		this._doc.prefs.showScrollBar = this._showScrollBar.checked;
 		this._doc.prefs.enableChannelMuting = this._enableChannelMuting.checked;
+		this._doc.prefs.enableChannelFolders = this._enableChannelFolders.checked;
+		this._doc.prefs.channelFolderSelectMethod = this._channelFolderSelectMethod.checked;
 		this._doc.prefs.displayBrowserUrl = this._displayBrowserUrl.checked;
 		this._doc.prefs.closePromptByClickoff = this._closePromptByClickoff.checked;
 

@@ -246,6 +246,8 @@ export class Preferences {
 	public instrumentImportExport: number;
 	//public instrumentButtonsAtTop: boolean;
 	public enableChannelMuting: boolean;
+	public enableChannelFolders: boolean;
+	public channelFolderSelectMethod: boolean;
 	public colorTheme: string;
 	public fixChannelColorOrder: boolean;
 	public settingsSectionPadding: number;
@@ -309,6 +311,8 @@ export class Preferences {
 
 		//this.instrumentButtonsAtTop = window.localStorage.getItem("instrumentButtonsAtTop") != "false"
 		this.enableChannelMuting = window.localStorage.getItem("enableChannelMuting") != "false";
+		this.enableChannelFolders = window.localStorage.getItem("enableChannelFolders") != "false";
+		this.channelFolderSelectMethod = window.localStorage.getItem("channelFolderSelectMethod") == "true";
 		this.fixChannelColorOrder = window.localStorage.getItem("fixChannelColorOrder") != "false";
 		this.settingsSectionPadding = Number(window.localStorage.getItem("settingsSectionPadding") || "0")
 		this.settingsSectionDisplay = Number(window.localStorage.getItem("settingsSectionDisplay") || "0")
@@ -360,6 +364,8 @@ export class Preferences {
 		window.localStorage.setItem("alwaysFineNoteVol", this.alwaysFineNoteVol ? "true" : "false");
 		window.localStorage.setItem("displayVolumeBar", this.displayVolumeBar ? "true" : "false");
 		window.localStorage.setItem("enableChannelMuting", this.enableChannelMuting ? "true" : "false");
+		window.localStorage.setItem("enableChannelFolders", this.enableChannelFolders ? "true" : "false");
+		window.localStorage.setItem("channelFolderSelectMethod", this.channelFolderSelectMethod ? "true" : "false");
 		window.localStorage.setItem("fixChannelColorOrder", this.fixChannelColorOrder ? "true" : "false");
 		window.localStorage.setItem("settingsSectionPadding", String(this.settingsSectionPadding));
 		window.localStorage.setItem("settingsSectionDisplay", String(this.settingsSectionDisplay));
