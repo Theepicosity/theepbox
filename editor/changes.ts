@@ -2233,6 +2233,34 @@ export class ChangeChannelCount extends Change {
                         if (setFolder != -1) newChannel.folder = setFolder
                         doc.song.channels.push(newChannel)
                     }
+                } else if (channelsToMake < 0) {
+                    for (let channelDeleteIndex: number = doc.song.getChannelCount() - 1; channelDeleteIndex >= 0; channelDeleteIndex--) {
+                        console.log("hi")
+                        if (doc.song.channels[channelDeleteIndex].type == channelType) {
+                            // Update mods for each channel >.>
+                            for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
+                                if (doc.song.channels[channelIndex].type === ChannelType.mod) {
+                                    for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
+                                        let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
+                                        for (let i: number = 0; i < Config.modCount; i++) {
+                                            for (let j: number = 0; j < instrument.modChannels[i].length; j++) {
+                                                if (instrument.modChannels[i][j] == channelDeleteIndex) instrument.modChannels[i][j] = -2
+                                                else if (instrument.modChannels[i][j] > channelDeleteIndex && instrument.modChannels[i][j] < channelDeleteIndex) {
+                                                    instrument.modChannels[i][j] -= 1;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            doc.song.channels.push(doc.song.channels[channelDeleteIndex]);
+                            doc.song.channels.splice(channelDeleteIndex, 1)
+                            channelsToMake++
+                        }
+                        if (channelsToMake == 0) break;
+
+                    }
                 }
             }
 
@@ -2240,29 +2268,9 @@ export class ChangeChannelCount extends Change {
             changeGroup(noiseChannelsToMake, ChannelType.noise);
             changeGroup(modChannelsToMake, ChannelType.mod);
 
-            //doc.song.channels.length = newPitchChannelCount + newNoiseChannelCount + newModChannelCount;
+            doc.song.channels.length = newPitchChannelCount + newNoiseChannelCount + newModChannelCount;
 
-            doc.channel = Math.min(doc.channel, newPitchChannelCount + newNoiseChannelCount + newModChannelCount);
-
-            // Determine if any mod instruments now refer to an invalid channel. Unset them if so
-            for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-                if (doc.song.channels[channelIndex].type === ChannelType.mod) {
-                    for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                        let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
-                        for (let mod: number = 0; mod < Config.modCount; mod++) {
-                            for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
-
-                                let modChannel: number = instrument.modChannels[mod][i];
-
-                                // Boundary checking
-                                if (instrument.modChannels[mod].length == 1 && ((modChannel >= doc.song.pitchChannelCount && modChannel < oldPitchCount) || modChannel >= doc.song.pitchChannelCount + doc.song.noiseChannelCount)) {
-                                    instrument.modulators[mod] = Config.modulators.dictionary["none"].index;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            doc.channel = Math.min(doc.channel, newPitchChannelCount + newNoiseChannelCount + newModChannelCount - 1);
 
             doc.notifier.changed();
 
