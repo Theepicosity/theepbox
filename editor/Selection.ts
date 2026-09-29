@@ -112,6 +112,7 @@ export class Selection {
         if (!this._doc.hasRedoHistory()) {
             this._doc.record(this._changeTrack, canReplaceLastChange);
         }
+        if (this._doc.song.channels[this._doc.channel].type === ChannelType.mod) this._doc.recalcModChannels = true;
         this.selectionUpdated();
     }
 

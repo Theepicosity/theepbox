@@ -437,7 +437,7 @@ export class Piano {
                         break;
                     case 2:
                         const absoluteChannelVal: number = instrument.modChannels[Config.modCount - j - 1][0];
-                        const relativeChannelVal: number = absoluteChannelVal - this._doc.song.pitchChannelCount;
+                        const relativeChannelVal: number = absoluteChannelVal;
 
                         if (this._doc.song.channels[absoluteChannelVal].name == "") {
 

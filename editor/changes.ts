@@ -2074,6 +2074,7 @@ export class ChangeChannelOrder extends Change {
             || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMax + offset].folder
             || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder)
             && !ignoreFolders
+            && doc.prefs.enableChannelFolders
         ) {
             let prevChannelFolder: number = doc.song.channels[selectionMin - 1] ? doc.song.channels[selectionMin - 1].folder : -1;
             if ((doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMin].folder != prevChannelFolder)
@@ -2149,6 +2150,12 @@ export class ChangeChannelOrder extends Change {
         if (changeOrder) {
             // Change the order of two channels by swapping.
             doc.song.channels.splice(selectionMin + offset, 0, ...doc.song.channels.splice(selectionMin, selectionMax - selectionMin + 1));
+            if (!doc.prefs.enableChannelFolders) {
+                // im only updating this here so that the folders are kept if u just very quickly disable the preference
+                for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
+                    doc.song.channels[channelIndex].folder = 0
+                }
+            }
 
             // Update mods for each channel
             selectionMax = Math.max(selectionMax, selectionMin);
@@ -3946,17 +3953,19 @@ export class ChangeModChannel extends Change {
         let tgtInstrument: number = -5;
 
         //turn selection index into channel + instrument NOTE: this only works for the boxes but this function is called in other places
-        for (let i: number = 0; i < doc.song.pitchChannelCount + doc.song.noiseChannelCount; i++) {
-            for (let j: number = 0; j < doc.song.channels[i].instruments.length; j++) {
-                if(index - 2 == tgtIndex) {
-                    tgtChannel = i;
-                    tgtInstrument = j;
-                    tgtIndex = -5;
-                    break;
+        for (let i: number = 0; i < doc.song.getChannelCount(); i++) {
+            if (doc.song.channels[i].type != ChannelType.mod) {
+                for (let j: number = 0; j < doc.song.channels[i].instruments.length; j++) {
+                    if(index - 2 == tgtIndex) {
+                        tgtChannel = i;
+                        tgtInstrument = j;
+                        tgtIndex = -5;
+                        break;
+                    }
+                    else tgtIndex++;
                 }
-                else tgtIndex++;
+                if(tgtIndex == -5) break;
             }
-            if(tgtIndex == -5) break;
         }
 
         let toggleFlag: boolean = true;
