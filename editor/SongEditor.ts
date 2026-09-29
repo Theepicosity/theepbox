@@ -4554,13 +4554,33 @@ export class SongEditor {
                 if (canPlayNotes) break;
                 if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) this._doc.selection.hideChannels(false);
                 event.preventDefault();
-                break;
+            break;
+
+            case this._parseShortcut(event, shortcuts["hideFolder"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) this._doc.selection.hideChannels(false, true);
+                event.preventDefault();
+            break;
+
+            case this._parseShortcut(event, shortcuts["hideAll"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) {
+                    this._doc.selection.hideChannels(true);
+                }
+                event.preventDefault();
+            break;
 
             case this._parseShortcut(event, shortcuts["onlyShowChannel"], needControlForShortcuts):
                 if (canPlayNotes) break;
                 if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) this._doc.selection.showChannels(false);
                 event.preventDefault();
-                break;
+            break;
+
+            case this._parseShortcut(event, shortcuts["onlyShowFolder"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting && this._doc.prefs.showChannels) this._doc.selection.showChannels(false, true);
+                event.preventDefault();
+            break;
 
             case this._parseShortcut(event, shortcuts["editLimiter"], needControlForShortcuts):
                 if (canPlayNotes) break;
@@ -4578,6 +4598,14 @@ export class SongEditor {
                 if (canPlayNotes) break;
                 if (this._doc.prefs.enableChannelMuting) {
                     this._doc.selection.muteChannels(false);
+                    event.preventDefault();
+                }
+                break;
+
+            case this._parseShortcut(event, shortcuts["muteFolder"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting) {
+                    this._doc.selection.muteChannels(false, true);
                     event.preventDefault();
                 }
                 break;
@@ -4708,11 +4736,15 @@ export class SongEditor {
             case this._parseShortcut(event, shortcuts["soloChannel"], needControlForShortcuts):
                 if (canPlayNotes) break;
                 if (this._doc.prefs.enableChannelMuting) {
-                    // since jummbus put a comment here, i might aswell too:
-                    // i dont want ctrl for default keybinds so ive done shift+s for save
-                    // i also dont have aliases for keybinds yet so if you really want shift+s,
-                    // you should just rebind it to that :p ~ theepie
                     this._doc.selection.soloChannels(false);
+                }
+                event.preventDefault();
+                break;
+
+            case this._parseShortcut(event, shortcuts["soliFolder"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                if (this._doc.prefs.enableChannelMuting) {
+                    this._doc.selection.soloChannels(false, true);
                 }
                 event.preventDefault();
                 break;

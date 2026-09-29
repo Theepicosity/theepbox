@@ -2385,6 +2385,27 @@ export class ChangeAddChannelFolder extends ChangeGroup {
     }
 }
 
+export class ChangeMinimizeChannelFolder extends ChangeGroup {
+    constructor(doc: SongDocument, index: number, maximize: boolean = false) {
+        super();
+        let folder: number = doc.song.channels[index].folder;
+        if (maximize) {
+            doc.minimizedFolders.splice(doc.minimizedFolders.findIndex( (value) => value == folder ), 1)
+            doc.recalcChannelColors = true;
+            doc.notifier.changed();
+        }
+        else {
+            doc.minimizedFolders.push(folder)
+            doc.recalcChannelColors = true;
+            doc.notifier.changed();
+        }
+
+        doc.recalcChannelColors = true;
+        doc.notifier.changed();
+        this._didSomething();
+    }
+}
+
 export class ChangeUnison extends Change {
     constructor(doc: SongDocument, newValue: number) {
         super();

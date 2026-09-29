@@ -57,17 +57,22 @@ export const DefaultShortcuts: Dictionary<Shortcut> = {
 	"prevBar": { displayName: "Previous Bar", category: ShortcutCategory.playback, keyCode: 219, shiftKey: false, ctrlKey: false }, // [
 	"openAllFMDropdowns": { displayName: "Open All FM Dropdowns", category: ShortcutCategory.settings, keyCode: 0, shiftKey: false, ctrlKey: false }, // unbound
 	"snapPlayheadToSelected": { displayName: "Snap Playhead To Selected Pattern", category: ShortcutCategory.playback, keyCode: 72, shiftKey: false, ctrlKey: false }, // h
-	"hideChannel": { displayName: "Hide Channel", category: ShortcutCategory.playback, keyCode: 75, shiftKey: true, ctrlKey: false }, // k
+	"hideChannel": { displayName: "Make Channel Visible", category: ShortcutCategory.playback, keyCode: 75, shiftKey: false, ctrlKey: false }, // k
+	"hideAll": { displayName: "Make All Channels Visible", category: ShortcutCategory.playback, keyCode: 75, shiftKey: true, ctrlKey: false }, // shift + k
+	"hideFolder": { displayName: "Make Folder Visible", category: ShortcutCategory.playback, keyCode: 75, shiftKey: false, ctrlKey: true }, // ctrl + k
 	"onlyShowChannel": { displayName: "Only Show Channel", category: ShortcutCategory.playback, keyCode: 74, shiftKey: false, ctrlKey: false }, // j
+	"onlyShowFolder": { displayName: "Only Show Folder", category: ShortcutCategory.playback, keyCode: 74, shiftKey: false, ctrlKey: true }, // ctrl + j
 	"editLimiter": { displayName: "Edit Limiter Options", category: ShortcutCategory.settings, keyCode: 76, shiftKey: true, ctrlKey: false }, // shift + l
 	"editSongLength": { displayName: "Edit Song Length", category: ShortcutCategory.settings, keyCode: 76, shiftKey: false, ctrlKey: false }, // l
-	"muteChannel": { displayName: "Mute Channel", category: ShortcutCategory.playback, keyCode: 77, shiftKey: false, ctrlKey: false }, // m
-	"muteAll": { displayName: "Mute All", category: ShortcutCategory.playback, keyCode: 77, shiftKey: true, ctrlKey: false }, // shift + m
+	"muteChannel": { displayName: "Mute/Unmute Channel", category: ShortcutCategory.playback, keyCode: 77, shiftKey: false, ctrlKey: false }, // m
+	"muteAll": { displayName: "Mute/Unmute All Channels", category: ShortcutCategory.playback, keyCode: 77, shiftKey: true, ctrlKey: false }, // shift + m
+	"muteFolder": { displayName: "Mute/Unmute Folder", category: ShortcutCategory.playback, keyCode: 77, shiftKey: false, ctrlKey: true }, // ctrl + m
 	"newPattern": { displayName: "New Pattern", category: ShortcutCategory.edit, keyCode: 78, shiftKey: false, ctrlKey: false }, // n
 	"newPatternFromEmpty": { displayName: "New Pattern From Empty", category: ShortcutCategory.edit, keyCode: 78, shiftKey: true, ctrlKey: false }, // shift + n
 	"editChannelSettings": { displayName: "Edit Channel Settings", category: ShortcutCategory.settings, keyCode: 81, shiftKey: false, ctrlKey: false }, // q
 	"editCustomSamples": { displayName: "Edit Custom Samples", category: ShortcutCategory.settings, keyCode: 81, shiftKey: true, ctrlKey: false }, // shift + q
 	"soloChannel": { displayName: "Solo Channel", category: ShortcutCategory.playback, keyCode: 83, shiftKey: false, ctrlKey: false }, // s
+	"soliFolder": { displayName: "Soli Folder", category: ShortcutCategory.playback, keyCode: 83, shiftKey: false, ctrlKey: true }, // ctrl + s
 	"export": { displayName: "Export", category: ShortcutCategory.file, keyCode: 83, shiftKey: true, ctrlKey: false }, // shift + s
 	"import": { displayName: "Import", category: ShortcutCategory.file, keyCode: 79, shiftKey: true, ctrlKey: false }, // shift + o
 	"pastePattern": { displayName: "Paste Notes", category: ShortcutCategory.edit, keyCode: 86, shiftKey: false, ctrlKey: false }, // v

@@ -5,8 +5,9 @@ import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { ColorConfig } from "./ColorConfig";
 import { ChannelRow } from "./ChannelRow";
 import { InputBox } from "./HTMLWrapper";
-import { ChangeChannelOrder, ChangeChannelName, ChangeRemoveChannel, ChangeAddChannelFolder } from "./changes";
+import { ChangeChannelOrder, ChangeChannelName, ChangeRemoveChannel, ChangeAddChannelFolder, ChangeMinimizeChannelFolder } from "./changes";
 import { ChannelType, Config } from "../synth/SynthConfig";
+import { Channel } from "../synth/Channel";
 import { SongEditor } from "./SongEditor";
 
 //namespace beepbox {
@@ -21,18 +22,27 @@ export class MuteEditor {
 
     private readonly _channelDropDown: HTMLSelectElement = HTML.select({ style: "width: 0px; left: 19px; height: 19px; position:absolute; opacity:0" },
         HTML.option({ value: "rename" }, "Rename..."),
-        HTML.option({ value: "addFolder" }, "Add to Folder"),
-        HTML.option({ value: "removeFolder" }, "Remove from Folder"),
-        HTML.option({ value: "chnUp" }, "Move Up"),
-        HTML.option({ value: "chnDown" }, "Move Down"),
+        HTML.option({ value: "addFolder" }, "Add to folder"),
+        HTML.option({ value: "removeFolder" }, "Remove from folder"),
+        HTML.option({ value: "chnUp" }, "Move up"),
+        HTML.option({ value: "chnDown" }, "Move down"),
         HTML.option({ value: "chnMute" }, "Mute"),
         HTML.option({ value: "chnUnmute" }, "Unmute"),
         HTML.option({ value: "chnSolo" }, "Solo"),
-        HTML.option({ value: "chnShow" }, "Show"),
-        HTML.option({ value: "chnHide" }, "Hide"),
-        HTML.option({ value: "chnMin" }, "Minimize Folder"),
-        HTML.option({ value: "chnMax" }, "Maximize Folder"),
-        HTML.option({ value: "chnInsert" }, "Insert"),
+        HTML.option({ value: "chnShow" }, "Make visible"),
+        HTML.option({ value: "chnHide" }, "Make invisible"),
+        HTML.option({ value: "chnOnlyShow" }, "Make only visible"),
+
+        HTML.option({ value: "chnFolMute" }, "Mute folder"),
+        HTML.option({ value: "chnFolUnmute" }, "Unmute folder"),
+        HTML.option({ value: "chnFolSoli" }, "Soli folder"),
+        HTML.option({ value: "chnFolShow" }, "Make folder visible"),
+        HTML.option({ value: "chnFolHide" }, "Make folder invisible"),
+        HTML.option({ value: "chnFolOnlyShow" }, "Only make folder visible"),
+        HTML.option({ value: "chnMin" }, "Minimize folder"),
+        HTML.option({ value: "chnMax" }, "Maximize folder"),
+
+        HTML.option({ value: "chnInsert" }, "Insert below"),
         HTML.option({ value: "chnDelete" }, "Delete"),
     );
 
@@ -114,13 +124,20 @@ export class MuteEditor {
             this._channelDropDown.options[6].hidden = true;
             this._channelDropDown.options[5].removeAttribute("hidden");
         }
-        if (this._doc.song.channels[this._channelDropDownChannel].visible == true) {
+        if (!this._doc.prefs.showChannels) {
+            this._channelDropDown.options[8].hidden = true;
+            this._channelDropDown.options[9].hidden = true;
+            this._channelDropDown.options[10].hidden = true;
+        }
+        else if (this._doc.song.channels[this._channelDropDownChannel].visible == true) {
             this._channelDropDown.options[8].hidden = true;
             this._channelDropDown.options[9].removeAttribute("hidden");
+            this._channelDropDown.options[10].removeAttribute("hidden");
         }
         else {
             this._channelDropDown.options[9].hidden = true;
             this._channelDropDown.options[8].removeAttribute("hidden");
+            this._channelDropDown.options[10].removeAttribute("hidden");
         }
         if (this._doc.song.channels[this._channelDropDownChannel].folder == 0) {
             this._channelDropDown.options[2].hidden = true;
@@ -130,29 +147,83 @@ export class MuteEditor {
             this._channelDropDown.options[1].hidden = true;
             this._channelDropDown.options[2].removeAttribute("hidden");
         }
-        if (this._doc.minimizedFolders.includes(this._doc.song.channels[this._channelDropDownChannel].folder)) {
-            this._channelDropDown.options[10].hidden = true;
+
+        // find out if any channels in the folder are muted, and if so, enable to option to unmute all (and do this for the other options too!)
+        let anyChannelMuted: boolean = false;
+        let anyChannelUnmuted: boolean = false;
+        let anyChannelShown: boolean = false;
+        let anyChannelHidden: boolean = false;
+        for (let i: number = 0; i < this._doc.song.channels.length; i++) {
+            let channel: Channel = this._doc.song.channels[i];
+            if (channel.folder == this._doc.song.channels[this._channelDropDownChannel].folder) {
+                if (channel.muted) anyChannelMuted = true;
+                else anyChannelUnmuted = true;
+                if (channel.visible) anyChannelShown = true;
+                else anyChannelHidden = true;
+            }
+        }
+
+        if (anyChannelMuted) {
+            this._channelDropDown.options[12].removeAttribute("hidden");
+        } else {
+            this._channelDropDown.options[12].hidden = true;
+        }
+        if (anyChannelUnmuted) {
             this._channelDropDown.options[11].removeAttribute("hidden");
+        } else {
+            this._channelDropDown.options[11].hidden = true;
+        }
+        if (this._doc.prefs.showChannels) {
+            if (anyChannelShown) {
+                this._channelDropDown.options[15].removeAttribute("hidden");
+            } else {
+                this._channelDropDown.options[15].hidden = true;
+            }
+            if (anyChannelHidden) {
+                this._channelDropDown.options[14].removeAttribute("hidden");
+            } else {
+                this._channelDropDown.options[14].hidden = true;
+            }
+            this._channelDropDown.options[16].removeAttribute("hidden");
         }
         else {
-            this._channelDropDown.options[11].hidden = true;
-            this._channelDropDown.options[10].removeAttribute("hidden");
+            this._channelDropDown.options[14].hidden = true;
+            this._channelDropDown.options[15].hidden = true;
+            this._channelDropDown.options[16].hidden = true;
+        }
+
+        if (this._doc.minimizedFolders.includes(this._doc.song.channels[this._channelDropDownChannel].folder)) {
+            this._channelDropDown.options[17].hidden = true;
+            this._channelDropDown.options[18].removeAttribute("hidden");
+        }
+        else {
+            this._channelDropDown.options[18].hidden = true;
+            this._channelDropDown.options[17].removeAttribute("hidden");
         }
 
         // if a channel isnt in a folder i will just hide these attributes tbh
         if (this._doc.song.channels[this._channelDropDownChannel].folder == 0) {
-            this._channelDropDown.options[10].hidden = true;
             this._channelDropDown.options[11].hidden = true;
+            this._channelDropDown.options[12].hidden = true;
+            this._channelDropDown.options[13].hidden = true;
+            this._channelDropDown.options[14].hidden = true;
+            this._channelDropDown.options[15].hidden = true;
+            this._channelDropDown.options[16].hidden = true;
+            this._channelDropDown.options[17].hidden = true;
+            this._channelDropDown.options[18].hidden = true;
+        }
+        else {
+            this._channelDropDown.options[13].removeAttribute("hidden");
         }
 
         // Check if channel is at limit, in which case another can't be inserted
-        if ((this._channelDropDownChannel < this._doc.song.pitchChannelCount && this._doc.song.pitchChannelCount == Config.pitchChannelCountMax)
-            || (this._channelDropDownChannel >= this._doc.song.pitchChannelCount && this._channelDropDownChannel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount && this._doc.song.noiseChannelCount == Config.noiseChannelCountMax)
-            || (this._channelDropDownChannel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount && this._doc.song.modChannelCount == Config.modChannelCountMax)) {
-            this._channelDropDown.options[12].disabled = true;
+        if ((this._doc.song.channels[this._channelDropDownChannel].type == ChannelType.pitch && this._doc.song.pitchChannelCount == Config.pitchChannelCountMax)
+            || (this._doc.song.channels[this._channelDropDownChannel].type == ChannelType.noise && this._doc.song.noiseChannelCount == Config.noiseChannelCountMax)
+            || (this._doc.song.channels[this._channelDropDownChannel].type == ChannelType.mod && this._doc.song.modChannelCount == Config.modChannelCountMax)) {
+            this._channelDropDown.options[19].disabled = true;
         }
         else {
-            this._channelDropDown.options[12].disabled = false;
+            this._channelDropDown.options[19].disabled = false;
         }
 
         // Also check if a channel is eligible to move up or down based on the song's channel settings.
@@ -171,10 +242,10 @@ export class MuteEditor {
 
         // Also, can't delete the last pitch channel.
         if (this._doc.song.pitchChannelCount == 1 && this._channelDropDownChannel == 0) {
-            this._channelDropDown.options[13].disabled = true;
+            this._channelDropDown.options[20].disabled = true;
         }
         else {
-            this._channelDropDown.options[13].disabled = false;
+            this._channelDropDown.options[20].disabled = false;
         }
     }
 
@@ -214,6 +285,18 @@ export class MuteEditor {
                 this._doc.song.channels[this._channelDropDownChannel].muted = !this._doc.song.channels[this._channelDropDownChannel].muted;
                 this.render();
                 break;
+            case "chnFolMute":
+                for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                    if (this._doc.song.channels[this._channelDropDownChannel].folder == this._doc.song.channels[channel].folder) this._doc.song.channels[channel].muted = true;
+                }
+                this.render();
+                break;
+            case "chnFolUnmute":
+                for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                    if (this._doc.song.channels[this._channelDropDownChannel].folder == this._doc.song.channels[channel].folder) this._doc.song.channels[channel].muted = false;
+                }
+                this.render();
+                break;
             case "chnSolo": {
                 // Check for any channel not matching solo pattern
                 let shouldSolo: boolean = false;
@@ -236,21 +319,92 @@ export class MuteEditor {
                 this.render();
                 break;
             }
+            case "chnFolSoli": {
+                let shouldSoloFol: boolean = false;
+                for (let channel: number = 0; channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channel++) {
+                    if (this._doc.song.channels[channel].muted == (this._doc.song.channels[this._channelDropDownChannel].folder == this._doc.song.channels[channel].folder)) {
+                        shouldSoloFol = true;
+                        channel = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount;
+                    }
+                }
+                if (shouldSoloFol) {
+                    for (let channel: number = 0; channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channel++) {
+                        this._doc.song.channels[channel].muted = (this._doc.song.channels[this._channelDropDownChannel].folder != this._doc.song.channels[channel].folder);
+                    }
+                }
+                else {
+                    for (let channel: number = 0; channel < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channel++) {
+                        this._doc.song.channels[channel].muted = false;
+                    }
+                }
+                this.render();
+                break;
+            }
             case "chnHide":
             case "chnShow":
                 this._doc.song.channels[this._channelDropDownChannel].visible = !this._doc.song.channels[this._channelDropDownChannel].visible;
+                this._doc.notifier.changed();
+                this.render();
+                break;
+            case "chnFolHide":
+                for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                    if (this._doc.song.channels[this._channelDropDownChannel].folder == this._doc.song.channels[channel].folder) this._doc.song.channels[channel].visible = false;
+                }
+                this.render();
+                break;
+            case "chnFolShow":
+                for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                    if (this._doc.song.channels[this._channelDropDownChannel].folder == this._doc.song.channels[channel].folder) this._doc.song.channels[channel].visible = true;
+                }
+                this.render();
+                break;
+            case "chnOnlyShow":
+                let shouldShow: boolean = false;
+                for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                    if (this._doc.song.channels[channel].visible == (channel != this._channelDropDownChannel)) {
+                        shouldShow = true;
+                        channel = this._doc.song.getChannelCount();
+                    }
+                }
+                if (shouldShow) {
+                    for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                        this._doc.song.channels[channel].visible = (channel == this._channelDropDownChannel);
+                    }
+                }
+                else {
+                    for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                        this._doc.song.channels[channel].visible = true;
+                    }
+                }
+                this._doc.notifier.changed();
+                this.render();
+                break;
+            case "chnFolOnlyShow":
+                let shouldShowFol: boolean = false;
+                for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                    if (this._doc.song.channels[channel].visible == (this._doc.song.channels[this._channelDropDownChannel].folder == this._doc.song.channels[channel].folder)) {
+                        shouldShowFol = true;
+                        channel = this._doc.song.getChannelCount();
+                    }
+                }
+                if (shouldShowFol) {
+                    for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                        this._doc.song.channels[channel].visible = (this._doc.song.channels[this._channelDropDownChannel].folder != this._doc.song.channels[channel].folder);
+                    }
+                }
+                else {
+                    for (let channel: number = 0; channel < this._doc.song.getChannelCount(); channel++) {
+                        this._doc.song.channels[channel].visible = false;
+                    }
+                }
+                this._doc.notifier.changed();
                 this.render();
                 break;
             case "chnMax":
-                let folder: number = this._doc.song.channels[this._channelDropDownChannel].folder;
-                this._doc.minimizedFolders.splice(this._doc.minimizedFolders.findIndex( (value) => value == folder ), 1)
-                this._doc.recalcChannelColors = true;
-                this._doc.notifier.changed();
+                this._doc.record(new ChangeMinimizeChannelFolder(this._doc, this._channelDropDownChannel, true));
                 break;
             case "chnMin":
-                this._doc.minimizedFolders.push(this._doc.song.channels[this._channelDropDownChannel].folder)
-                this._doc.recalcChannelColors = true;
-                this._doc.notifier.changed();
+                this._doc.record(new ChangeMinimizeChannelFolder(this._doc, this._channelDropDownChannel));
                 break;
             case "chnInsert": {
                 this._doc.channel = this._channelDropDownChannel;
@@ -440,14 +594,12 @@ export class MuteEditor {
             this._buttons[y].style.marginBottom = ((this._trackEditor.channels[y].patternHeight - 20) / 2) + "px";
         }
 
-        if (this._renderedModChannels != this._doc.song.modChannelCount || startingChannelCount != this._buttons.length) {
-            for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
-                if (this._doc.song.channels[y].type === ChannelType.mod) {
-                    this._buttons[y].children[0].classList.add("modMute");
-                }
-                else {
-                    this._buttons[y].children[0].classList.remove("modMute");
-                }
+        for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {
+            if (this._doc.song.channels[y].type === ChannelType.mod) {
+                this._buttons[y].children[0].classList.add("modMute");
+            }
+            else {
+                this._buttons[y].children[0].classList.remove("modMute");
             }
         }
 

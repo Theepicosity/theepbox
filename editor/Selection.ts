@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Dictionary, Config } from "../synth/SynthConfig";
+import { Dictionary, Config, ChannelType } from "../synth/SynthConfig";
 import { Note, NotePin, Pattern } from "../synth/Pattern";
 import { SongDocument } from "./SongDocument";
 import { ChangeGroup } from "./Change";
@@ -667,7 +667,7 @@ export class Selection {
         this._doc.record(new ChangeDuplicateSelectedReusedPatterns(this._doc, this.boxSelectionBar, this.boxSelectionWidth, this.boxSelectionChannel, this.boxSelectionHeight, replaceUnused));
     }
 
-    public muteChannels(allChannels: boolean): void {
+    public muteChannels(allChannels: boolean, inFolder: boolean = false): void {
         if (allChannels) {
             let anyMuted: boolean = false;
             for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
@@ -678,6 +678,28 @@ export class Selection {
             }
             for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
                 this._doc.song.channels[channelIndex].muted = !anyMuted;
+            }
+        } else if (inFolder) {
+            let anyUnmuted: boolean = false;
+            let skipFolder: number = -1;
+            for (const channelIndexForFolder of this._eachSelectedChannel()) {
+                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
+                    if (!this._doc.song.channels[channelIndex].muted && this._doc.song.channels[channelIndexForFolder].folder == this._doc.song.channels[channelIndex].folder) {
+                        anyUnmuted = true;
+                        break;
+                    }
+                    skipFolder = this._doc.song.channels[channelIndexForFolder].folder
+                }
+            }
+            skipFolder = -1;
+            for (const channelIndexForFolder of this._eachSelectedChannel()) {
+                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
+                    if (this._doc.song.channels[channelIndexForFolder].folder == this._doc.song.channels[channelIndex].folder) {
+                        this._doc.song.channels[channelIndex].muted = anyUnmuted;
+                    }
+                }
             }
         } else {
             let anyUnmuted: boolean = false;
@@ -695,7 +717,7 @@ export class Selection {
         this._doc.notifier.changed();
     }
 
-    public hideChannels(allChannels: boolean): void {
+    public hideChannels(allChannels: boolean, inFolder: boolean = false): void {
         if (allChannels) {
             let anyVisible: boolean = false;
             for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
@@ -706,6 +728,28 @@ export class Selection {
             }
             for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
                 this._doc.song.channels[channelIndex].visible = !anyVisible;
+            }
+        } else if (inFolder) {
+            let anyInvisible: boolean = false;
+            let skipFolder: number = -1;
+            for (const channelIndexForFolder of this._eachSelectedChannel()) {
+                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
+                    if (!this._doc.song.channels[channelIndex].visible && this._doc.song.channels[channelIndexForFolder].folder == this._doc.song.channels[channelIndex].folder) {
+                        anyInvisible = true;
+                        break;
+                    }
+                    skipFolder = this._doc.song.channels[channelIndexForFolder].folder
+                }
+            }
+            skipFolder = -1;
+            for (const channelIndexForFolder of this._eachSelectedChannel()) {
+                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
+                    if (this._doc.song.channels[channelIndexForFolder].folder == this._doc.song.channels[channelIndex].folder) {
+                        this._doc.song.channels[channelIndex].visible = anyInvisible;
+                    }
+                }
             }
         } else {
             let anyInvisible: boolean = false;
@@ -723,11 +767,62 @@ export class Selection {
         this._doc.notifier.changed();
     }
 
-    public soloChannels(invert: boolean): void {
+    public soloChannels(invert: boolean, inFolder?: boolean = false): void {
         let alreadySoloed: boolean = true;
 
+        if (inFolder) {
+            let skipFolder: number = -1;
+            let possibleFolders: number = [];
+            for (const channelIndexForFolder of this._eachSelectedChannel()) {
+                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+                skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
+                if (skipFolder != 0) possibleFolders.push(skipFolder);
+            }
+            for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                const shouldBeMuted: boolean = !possibleFolders.includes(this._doc.song.channels[channelIndex].folder) ? !invert : invert;
+                    if (this._doc.song.channels[channelIndex].muted != shouldBeMuted && this._doc.song.channels[channelIndex].type != ChannelType.mod) {
+                    alreadySoloed = false;
+                    break;
+                }
+            }
+
+            if (alreadySoloed) {
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
+                    this._doc.song.channels[channelIndex].muted = false;
+                }
+            } else {
+                skipFolder = -1;
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                    this._doc.song.channels[channelIndex].muted = !invert;
+                }
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                    if (possibleFolders.includes(this._doc.song.channels[channelIndex].folder) || this._doc.song.channels[channelIndex].type == ChannelType.mod) {
+                        this._doc.song.channels[channelIndex].muted = invert
+                    }
+                }
+            }
+        }
+        else if (this._doc.song.channels[this.boxSelectionChannel].type != ChannelType.mod) {
+            for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                const shouldBeMuted: boolean = (channelIndex < this.boxSelectionChannel || channelIndex >= this.boxSelectionChannel + this.boxSelectionHeight) ? !invert : invert;
+                if (this._doc.song.channels[channelIndex].muted != shouldBeMuted && this._doc.song.channels[channelIndex].type != ChannelType.mod) {
+                    alreadySoloed = false;
+                    break;
+                }
+            }
+
+            if (alreadySoloed) {
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
+                    this._doc.song.channels[channelIndex].muted = false;
+                }
+            } else {
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                    this._doc.song.channels[channelIndex].muted = ((channelIndex < this.boxSelectionChannel || channelIndex >= this.boxSelectionChannel + this.boxSelectionHeight) && this._doc.song.channels[channelIndex].type != ChannelType.mod) ? !invert : invert;
+                }
+            }
+        }
         // Soloing mod channels - solo all channels affected by the mod, instead
-        if (this.boxSelectionChannel >= this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount) {
+        else {
 
             const currentChannel = this._doc.song.channels[this.boxSelectionChannel];
             const bar: number = currentChannel.bars[this._doc.bar] - 1;
@@ -736,7 +831,7 @@ export class Selection {
             let matchesSoloPattern: boolean = !invert;
 
             // First pass: determine solo pattern
-            for (let channelIndex: number = 0; channelIndex < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex++) {
+            for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
                 soloPattern[channelIndex] = false;
                 for (let mod: number = 0; mod < Config.modCount; mod++) {
                     for (let channels: number = 0; channels < modInstrument.modChannels[mod].length; channels++) {
@@ -748,16 +843,16 @@ export class Selection {
             }
 
             // Second pass: determine if channels match solo pattern, overall
-            for (let channelIndex: number = 0; channelIndex < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex++) {
-                if (this._doc.song.channels[channelIndex].muted == soloPattern[channelIndex]) {
+            for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                if (this._doc.song.channels[channelIndex].muted == soloPattern[channelIndex] && this._doc.song.channels[channelIndex].type != ChannelType.mod) {
                     matchesSoloPattern = invert;
                     break;
                 }
             }
 
             // Third pass: Actually apply solo pattern or unmute all
-            for (let channelIndex: number = 0; channelIndex < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex++) {
-                if (matchesSoloPattern) {
+            for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                if (matchesSoloPattern || this._doc.song.channels[channelIndex].type == ChannelType.mod) {
                     this._doc.song.channels[channelIndex].muted = false;
                 }
                 else {
@@ -766,49 +861,62 @@ export class Selection {
             }
 
         }
-        else {
-
-            for (let channelIndex: number = 0; channelIndex < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex++) {
-                const shouldBeMuted: boolean = (channelIndex < this.boxSelectionChannel || channelIndex >= this.boxSelectionChannel + this.boxSelectionHeight) ? !invert : invert;
-                if (this._doc.song.channels[channelIndex].muted != shouldBeMuted) {
-                    alreadySoloed = false;
-                    break;
-                }
-            }
-
-            if (alreadySoloed) {
-                for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
-                    this._doc.song.channels[channelIndex].muted = false;
-                }
-            } else {
-                for (let channelIndex: number = 0; channelIndex < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex++) {
-                    this._doc.song.channels[channelIndex].muted = (channelIndex < this.boxSelectionChannel || channelIndex >= this.boxSelectionChannel + this.boxSelectionHeight) ? !invert : invert;
-                }
-            }
-
-        }
 
         this._doc.notifier.changed();
     }
 
-    public showChannels(invert: boolean): void {
+    public showChannels(invert: boolean, inFolder?: boolean = false): void {
         let alreadyShown: boolean = true;
 
-        for (let channelIndex: number = 0; channelIndex < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex++) {
-            const shouldBeHidden: boolean = (channelIndex < this.boxSelectionChannel || channelIndex >= this.boxSelectionChannel + this.boxSelectionHeight) ? invert : !invert;
-            if (this._doc.song.channels[channelIndex].visible != shouldBeHidden) {
-                alreadyShown = false;
-                break;
+        if (inFolder) {
+            let skipFolder: number = -1;
+            let possibleFolders: number = [];
+            for (const channelIndexForFolder of this._eachSelectedChannel()) {
+                if (this._doc.song.channels[channelIndexForFolder].folder == skipFolder) continue;
+                skipFolder = this._doc.song.channels[channelIndexForFolder].folder;
+                if (skipFolder != 0) possibleFolders.push(skipFolder);
+            }
+            for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                const shouldBeMuted: boolean = !possibleFolders.includes(this._doc.song.channels[channelIndex].folder) ? invert : !invert;
+                if (this._doc.song.channels[channelIndex].visible != shouldBeMuted) {
+                    alreadyShown = false;
+                    break;
+                }
+            }
+
+            if (alreadyShown) {
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
+                    this._doc.song.channels[channelIndex].visible = true;
+                }
+            } else {
+                skipFolder = -1;
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                    this._doc.song.channels[channelIndex].visible = invert;
+                }
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                    if (possibleFolders.includes(this._doc.song.channels[channelIndex].folder)) {
+                        this._doc.song.channels[channelIndex].visible = !invert
+                    }
+                }
             }
         }
-
-        if (alreadyShown) {
-            for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
-                this._doc.song.channels[channelIndex].visible = true;
+        else {
+            for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                const shouldBeHidden: boolean = (channelIndex < this.boxSelectionChannel || channelIndex >= this.boxSelectionChannel + this.boxSelectionHeight) ? invert : !invert;
+                if (this._doc.song.channels[channelIndex].visible != shouldBeHidden) {
+                    alreadyShown = false;
+                    break;
+                }
             }
-        } else {
-            for (let channelIndex: number = 0; channelIndex < this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex++) {
-                this._doc.song.channels[channelIndex].visible = (channelIndex < this.boxSelectionChannel || channelIndex >= this.boxSelectionChannel + this.boxSelectionHeight) ? invert : !invert;
+
+            if (alreadyShown) {
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.channels.length; channelIndex++) {
+                    this._doc.song.channels[channelIndex].visible = true;
+                }
+            } else {
+                for (let channelIndex: number = 0; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
+                    this._doc.song.channels[channelIndex].visible = (channelIndex < this.boxSelectionChannel || channelIndex >= this.boxSelectionChannel + this.boxSelectionHeight) ? invert : !invert;
+                }
             }
         }
 
