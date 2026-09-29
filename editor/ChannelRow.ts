@@ -142,7 +142,7 @@ export class ChannelRow {
                 if (this._beginsFolder) {
                     this._boxes[x].container.style.marginTop = "5px";
                     // basically the hackiest hack possible
-                    if (this._isInFolder) this._boxes[x].container.style.boxShadow = "0 -5px 0 " + ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel + "60";
+                    if (this._isInFolder) this._boxes[x].container.style.boxShadow = "0 -5px 0 " + ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel;
                 }
             }
 
