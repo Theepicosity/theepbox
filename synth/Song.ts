@@ -1651,10 +1651,23 @@ export class Song {
 
         let willLoadLegacySamplesForOldSongs: boolean = false;
 
-        if (fromSlarmoosBox || fromUltraBox || fromGoldBox) {
+        // if (!(fromTheepBox && !beforeSix) && !(fromBeepBox)) {
+        //     Song._restoreChipWaveListToDefault();
+        //     customSampleUrls.push("legacyChipWaves");
+        //     loadBuiltInSamples(3);
+        // }
+
+        if (fromTheepBox || fromSlarmoosBox || fromUltraBox || fromGoldBox) {
             compressed = compressed.replaceAll("%7C", "|")
             var compressed_array = compressed.split("|");
             compressed = compressed_array.shift()!;
+        } else if (fromJummBox) {
+            var compressed_array = [];
+        }
+        if (!(fromTheepBox && !beforeSix) && !(fromBeepBox)) {
+            compressed_array.unshift("legacyChipWaves")
+        }
+        if (!(fromBeepBox)) {
             if (EditorConfig.customSamples == null || EditorConfig.customSamples.join(", ") != compressed_array.join(", ")) {
 
                 Song._restoreChipWaveListToDefault();
@@ -1662,6 +1675,7 @@ export class Song {
                 let willLoadLegacySamples = false;
                 let willLoadNintariboxSamples = false;
                 let willLoadMarioPaintboxSamples = false;
+                let willLoadUltraboxSamples = false;
                 const customSampleUrls = [];
                 const customSamplePresets: Preset[] = [];
                 sampleLoadingState.statusTable = {};
@@ -1692,6 +1706,13 @@ export class Song {
                             willLoadMarioPaintboxSamples = true;
                             customSampleUrls.push(url);
                             loadBuiltInSamples(2);
+                        }
+                    }
+                    else if (url.toLowerCase() === "legacychipwaves") {
+                        if (!willLoadUltraboxSamples) {
+                            willLoadUltraboxSamples = true;
+                            customSampleUrls.push(url);
+                            loadBuiltInSamples(3);
                         }
                     }
 
@@ -1938,8 +1959,10 @@ export class Song {
                             }
                         }
 
-                        for (let j: number = legacySettingsCache![channelIndex].length; j < instrumentsPerChannel; j++) {
-                            legacySettingsCache![channelIndex][j] = {};
+                        if (legacySettingsCache) {
+                            for (let j: number = legacySettingsCache![channelIndex].length; j < instrumentsPerChannel; j++) {
+                                legacySettingsCache![channelIndex][j] = {};
+                            }
                         }
                     }
                 }
@@ -2111,6 +2134,14 @@ export class Song {
                                 this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator].chipWave = clamp(0, Config.chipWaves.length, chipWaveReal + 62);
                             } else {
                                 this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator].chipWave = clamp(0, Config.chipWaves.length, chipWaveReal);
+                            }
+
+                            // putting this here cuz sure
+                            if (fromTheepBox && beforeSix) {
+                                const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
+                                if (instrument.type == InstrumentType.chip && (Config.chipWaves[instrument.chipWave].stereoChannels == undefined || Config.chipWaves[instrument.chipWave].stereoChannels != 2)) {
+                                    instrument.volume = clamp(-Config.volumeRange / 2, Config.volumeRange / 2 + 1, Math.floor((instrument.volume + Config.volumeRange / 2) * 1.41 - Config.volumeRange / 2))
+                                }
                             }
 
                         } else {
@@ -3028,11 +3059,6 @@ export class Song {
                 } else if (!fromTheepBox) {
                     const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                     instrument.volume = Math.round(clamp(-Config.volumeRange / 2, Config.volumeRange / 2 + 1, ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)])) - Config.volumeRange / 2) * 2.0);
-                } else if (beforeSix) {
-                    //fixes a bug where chip instruments are twice as loud as they should be
-                    const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
-                    if (instrument.type == InstrumentType.chip) instrument.volume = Math.round(clamp(-Config.volumeRange / 2, Config.volumeRange / 2 + 1, ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)])) / 2 - Config.volumeRange / 2));
-                    else instrument.volume = Math.round(clamp(-Config.volumeRange / 2, Config.volumeRange / 2 + 1, ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)])) - Config.volumeRange / 2));
                 } else {
                     // shoutouts to later waffling
                     const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
@@ -4444,6 +4470,7 @@ export class Song {
                 let willLoadLegacySamples: boolean = false;
                 let willLoadNintariboxSamples: boolean = false;
                 let willLoadMarioPaintboxSamples: boolean = false;
+                let willLoadUltraboxSamples: boolean = false;
                 const customSampleUrls: string[] = [];
                 const customSamplePresets: Preset[] = [];
                 for (const url of customSamples) {
@@ -4466,6 +4493,13 @@ export class Song {
                             willLoadMarioPaintboxSamples = true;
                             customSampleUrls.push(url);
                             loadBuiltInSamples(2);
+                        }
+                    }
+                    else if (url.toLowerCase() === "legacychipwaves") {
+                        if (!willLoadUltraboxSamples) {
+                            willLoadUltraboxSamples = true;
+                            customSampleUrls.push(url);
+                            loadBuiltInSamples(3);
                         }
                     }
 

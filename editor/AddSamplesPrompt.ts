@@ -46,19 +46,21 @@ export class AddSamplesPrompt {
         this._addSampleButton,
         this._addMultipleSamplesButton
     );
-    private readonly _instructionsLink: HTMLAnchorElement = a({ href: "#" }, "Here's more information and some instructions on how to use custom samples in Slarmoo's Box.");
+    private readonly _instructionsLink: HTMLAnchorElement = a({ href: "#" }, "How do I use sample URLs?");
     private readonly _description: HTMLDivElement = div(
         div({ style: "margin-bottom: 0.5em; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text;" },
-            "In order to use the old Slarmoo's Box samples, you should add ",
+            "Use ",
+            code("legacyChipWaves"),
+            " to import Ultrabox chip waves. You can also use ",
             code("legacySamples"),
-            " as an URL. You can also use ",
+            ", ",
             code("nintariboxSamples"),
-            " and ",
+            ", and ",
             code("marioPaintboxSamples"),
             " for more built-in sample packs."
         ),
         div({ style: "margin-bottom: 0.5em;" },
-            "The order of these samples is important - if you change it you'll break your song!"
+            "The order of these samples is important, so try to avoid changing it!"
         ),
         div({ style: "margin-bottom: 0.5em;" },
             this._instructionsLink,
@@ -441,6 +443,7 @@ export class AddSamplesPrompt {
         let useLegacySamples: boolean = false;
         let useNintariboxSamples: boolean = false;
         let useMarioPaintboxSamples: boolean = false;
+        let useUltraboxSamples: boolean = false;
         const parsedEntries: SampleEntry[] = [];
         for (const url of urls) {
             if (url === "") continue;
@@ -492,6 +495,22 @@ export class AddSamplesPrompt {
                     });
                 }
                 useMarioPaintboxSamples = true;
+            } else if (url.toLowerCase() === "legacychipwaves") {
+                if (!useUltraboxSamples) {
+                    parsedEntries.push({
+                        url: "legacyChipWaves",
+                        sampleRate: 44100,
+                        rootKey: 60,
+                        percussion: 0,
+                        chipWaveLoopStart: null,
+                        chipWaveLoopEnd: null,
+                        chipWaveStartOffset: null,
+                        chipWaveLoopMode: 0,
+                        chipWavePlayBackwards: false,
+                        stereoChannels: 0,
+                    });
+                }
+                useUltraboxSamples = true;
             } else {
                 let urlSliced: string = url;
                 let sampleRate: number = 44100;
@@ -600,6 +619,7 @@ export class AddSamplesPrompt {
             urlInLowerCase === "legacysamples"
             || urlInLowerCase === "nintariboxsamples"
             || urlInLowerCase === "mariopaintboxsamples"
+            || urlInLowerCase === "legacychipwaves"
         );
         const options: string[] = [];
         if (sampleRate !== 44100) options.push("s" + sampleRate);
