@@ -48,6 +48,7 @@ export const DefaultShortcuts: Dictionary<Shortcut> = {
 	"deleteChannel": { displayName: "Delete Channel", category: ShortcutCategory.edit, keyCode: 8, shiftKey: false, ctrlKey: true }, // ctrl + backspace
 	"selectAll": { displayName: "Select All", category: ShortcutCategory.edit, keyCode: 65, shiftKey: false, ctrlKey: false }, // a
 	"selectChannel": { displayName: "Select Channel", category: ShortcutCategory.edit, keyCode: 65, shiftKey: true, ctrlKey: false }, // shift + a
+	"selectFolder": { displayName: "Select Folder", category: ShortcutCategory.edit, keyCode: 65, shiftKey: false, ctrlKey: true }, // ctrl + a
 	"duplicatePattern": { displayName: "Duplicate Pattern", category: ShortcutCategory.edit, keyCode: 68, shiftKey: false, ctrlKey: false }, // d
 	"editSongEQ": { displayName: "Edit Song EQ", category: ShortcutCategory.settings, keyCode: 69, shiftKey: false, ctrlKey: false }, // e
 	"generateEuclideanRhythm": { displayName: "Generate Euclidean Rhythm", category: ShortcutCategory.edit, keyCode: 69, shiftKey: true, ctrlKey: false }, // shift + e
@@ -313,6 +314,7 @@ export class Preferences {
 		this.enableChannelMuting = window.localStorage.getItem("enableChannelMuting") != "false";
 		this.enableChannelFolders = window.localStorage.getItem("enableChannelFolders") != "false";
 		this.channelFolderSelectMethod = window.localStorage.getItem("channelFolderSelectMethod") == "true";
+		this.channelFolderMovementMethod = window.localStorage.getItem("channelFolderMovementMethod") == "true";
 		this.fixChannelColorOrder = window.localStorage.getItem("fixChannelColorOrder") != "false";
 		this.settingsSectionPadding = Number(window.localStorage.getItem("settingsSectionPadding") || "0")
 		this.settingsSectionDisplay = Number(window.localStorage.getItem("settingsSectionDisplay") || "0")
@@ -366,6 +368,7 @@ export class Preferences {
 		window.localStorage.setItem("enableChannelMuting", this.enableChannelMuting ? "true" : "false");
 		window.localStorage.setItem("enableChannelFolders", this.enableChannelFolders ? "true" : "false");
 		window.localStorage.setItem("channelFolderSelectMethod", this.channelFolderSelectMethod ? "true" : "false");
+		window.localStorage.setItem("channelFolderMovementMethod", this.channelFolderMovementMethod ? "true" : "false");
 		window.localStorage.setItem("fixChannelColorOrder", this.fixChannelColorOrder ? "true" : "false");
 		window.localStorage.setItem("settingsSectionPadding", String(this.settingsSectionPadding));
 		window.localStorage.setItem("settingsSectionDisplay", String(this.settingsSectionDisplay));

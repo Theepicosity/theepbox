@@ -4390,6 +4390,12 @@ export class SongEditor {
                 event.preventDefault();
                 break;
 
+            case this._parseShortcut(event, shortcuts["selectFolder"], needControlForShortcuts):
+                if (canPlayNotes) break;
+                this._doc.selection.selectFolder();
+                event.preventDefault();
+            break;
+
             case this._parseShortcut(event, shortcuts["duplicatePattern"], needControlForShortcuts):
                 if (canPlayNotes) break;
                 this._doc.selection.duplicatePatterns(true);

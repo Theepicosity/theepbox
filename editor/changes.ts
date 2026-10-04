@@ -2059,7 +2059,7 @@ export class ChangeLimiterSettings extends Change {
 }
 
 export class ChangeChannelOrder extends Change {
-    constructor(doc: SongDocument, selectionMin: number, selectionMax: number, offset: number, ignoreFolders: boolean = false) {
+    constructor(doc: SongDocument, selectionMin: number, selectionMax: number, offset: number, ignoreFolders: boolean = false, keepHeader: boolean = false) {
         super();
 
         // mechanics for channel folders:
@@ -2070,13 +2070,15 @@ export class ChangeChannelOrder extends Change {
         let changeOrder: boolean = true;
         let folderMax: number = selectionMin;
         let folderMin: number = selectionMin;
+        let prevChannelFolder: number = doc.song.channels[selectionMin - 1] ? doc.song.channels[selectionMin - 1].folder : -1;
         if ((doc.song.channels[selectionMin].folder != doc.song.channels[selectionMin + offset].folder
             || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMax + offset].folder
             || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder)
+            || (doc.song.channels[selectionMin].folder != prevChannelFolder && keepHeader)
             && !ignoreFolders
             && doc.prefs.enableChannelFolders
         ) {
-            let prevChannelFolder: number = doc.song.channels[selectionMin - 1] ? doc.song.channels[selectionMin - 1].folder : -1;
+            console.log("hi")
             if ((doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMin].folder != prevChannelFolder)
                 || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder
                 || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder

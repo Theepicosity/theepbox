@@ -663,6 +663,27 @@ export class Selection {
         this.selectionUpdated();
     }
 
+    public selectFolder(): void {
+        const targetFolder: number = this._doc.song.channels[this.boxSelectionChannel].folder
+        let folderStart: number = -1;
+        let folderHeight: number = 0;
+        for (let i: number = 0; i < this._doc.song.getChannelCount(); i++) {
+            if (this._doc.song.channels[i].folder == targetFolder) {
+                if (folderStart == -1) folderStart = i;
+                folderHeight++;
+            } else if (folderStart != -1) {
+                break;
+            }
+        }
+        new ChangePatternSelection(this._doc, 0, 0);
+        if (this.boxSelectionBar == 0 && this.boxSelectionWidth == this._doc.song.barCount && this.boxSelectionHeight == folderHeight && this.boxSelectionChannel == folderStart) {
+            this.setTrackSelection(this._doc.bar, this._doc.bar, this._doc.channel, this._doc.channel);
+        } else {
+            this.setTrackSelection(0, this._doc.song.barCount - 1, folderStart, folderStart + folderHeight - 1);
+        }
+        this.selectionUpdated();
+    }
+
     public duplicatePatterns(replaceUnused: boolean): void {
         this._doc.record(new ChangeDuplicateSelectedReusedPatterns(this._doc, this.boxSelectionBar, this.boxSelectionWidth, this.boxSelectionChannel, this.boxSelectionHeight, replaceUnused));
     }
@@ -1055,7 +1076,7 @@ export class Selection {
             this._changeReorder = new ChangeGroup();
             this.boxSelectionY0 = newSelectionMin + offset;
             this.boxSelectionY1 = newSelectionMax + offset;
-            this._changeReorder.append(new ChangeChannelOrder(this._doc, newSelectionMin, newSelectionMax, offset));
+            this._changeReorder.append(new ChangeChannelOrder(this._doc, newSelectionMin, newSelectionMax, offset, false, this._doc.prefs.channelFolderMovementMethod));
             this._changeReorder.append(new ChangeChannelBar(this._doc, Math.max(this.boxSelectionY0, Math.min(this.boxSelectionY1, this._doc.channel + offset)), this._doc.bar));
             this.selectionUpdated();
             this._doc.record(this._changeReorder, canReplaceLastChange);
