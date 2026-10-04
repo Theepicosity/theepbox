@@ -710,7 +710,7 @@ export class Song {
     }
 
     // iterate over all channels, instruments, and modulators
-    public* modChannelGenerator(property: string = "modChannels"): void {
+    public* modChannelGenerator(property: string = "modChannels") {
         for (let channelIndex: number = 0; channelIndex < this.channels.length; channelIndex++) {
             const channel: Channel = this.channels[channelIndex];
             if (channel.type === ChannelType.mod) {
@@ -749,7 +749,6 @@ export class Song {
         for (let i: number = 0; i < this.channels.length; i++) {
             modIndices.push(this.channels[i].modIndex)
         }
-        console.log(modIndices)
         // step 2: iterate over all mod instruments
         const generator = this.modChannelGenerator("modChannels")
         let modResult = generator.next();
@@ -759,7 +758,6 @@ export class Song {
                 else if (modResult.value[0] >= 0) modResult.value[modChannelIndex] = modIndices.indexOf(modResult.value[modChannelIndex])
             }
             if (modResult.value.length == 0) modResult.value[0] = -2
-            console.log(modResult.value)
             modResult = generator.next()
         }
         // last step: update channel indices
@@ -1716,12 +1714,11 @@ export class Song {
         //     loadBuiltInSamples(3);
         // }
 
+        var compressed_array: string[] = [];
         if (fromTheepBox || fromSlarmoosBox || fromUltraBox || fromGoldBox) {
             compressed = compressed.replaceAll("%7C", "|")
-            var compressed_array = compressed.split("|");
+            compressed_array = compressed.split("|");
             compressed = compressed_array.shift()!;
-        } else if (fromJummBox) {
-            var compressed_array = [];
         }
         if (!(fromTheepBox && !beforeSix) && !(fromBeepBox)) {
             compressed_array.unshift("legacyChipWaves")

@@ -145,7 +145,7 @@ export class TrackEditor {
                 this._doc.performance.play();
             }
 
-            this._songEditor._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+            this._songEditor.updateLoopPosition();
         }
         else if (this._barDropDown.value == "deleteBar") {
 

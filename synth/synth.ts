@@ -1024,11 +1024,12 @@ export class Synth {
 
     public getModValue(setting: number, channel?: number | null, instrument?: number | null, effect?: number | null, nextVal?: boolean): number {
         const forSong: boolean = Config.modulators[setting].forSong;
+        const noEffect: boolean = Config.modulators[setting].associatedEffect == EffectType.length;
         if (forSong) {
             if (this.modValues[setting] != null && this.nextModValues[setting] != null) {
                 return nextVal ? this.nextModValues[setting]! : this.modValues[setting]!;
             }
-        } else if (channel != undefined && instrument != undefined && Config.modulators[setting].associatedEffect == EffectType.length) {
+        } else if (channel != undefined && instrument != undefined && noEffect) {
             if (this.modInsValues[channel][instrument][setting][1] != null && this.nextModInsValues[channel][instrument][setting][1] != null) {
                 return nextVal ? this.nextModInsValues[channel][instrument][setting][1]! : this.modInsValues[channel][instrument][setting][1]!;
             }
@@ -1095,8 +1096,11 @@ export class Synth {
 
     public isModActive(setting: number, channel?: number, instrument?: number, effect?: number): boolean {
         const forSong: boolean = Config.modulators[setting].forSong;
+        const noEffect: boolean = Config.modulators[setting].associatedEffect == EffectType.length;
         if (forSong) {
             return (this.modValues != undefined && this.modValues[setting] != null);
+        } else if (channel != undefined && instrument != undefined && noEffect && this.modInsValues != undefined && this.modInsValues[channel] != null && this.modInsValues[channel][instrument] != null) {
+            return (this.modInsValues[channel][instrument][setting] != null);
         } else if (channel != undefined && instrument != undefined && effect != undefined && this.modInsValues != undefined && this.modInsValues[channel] != null && this.modInsValues[channel][instrument] != null && this.modInsValues[channel][instrument][setting] != null) {
             return (this.modInsValues[channel][instrument][setting][effect] != null);
         }

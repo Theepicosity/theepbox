@@ -998,11 +998,10 @@ export function loadBuiltInSamples(set: number): void {
     Config.rawRawChipWaves.push(...rawRawChipWaves);
     Config.chipWaves.push(...chipWaves);
 
-    const startIndex: number = Config.rawRawChipWaves.length;
-    for (const rawChipWave of rawChipWaves) {
-        //sampleLoadingState.statusTable[startIndex + i] = SampleLoadingStatus.loading;
-        //sampleLoadingState.urlTable[startIndex + 1] = "legacyChipWaves";
-    }
+    // for (const rawChipWave of rawChipWaves) {
+    //     sampleLoadingState.statusTable[startIndex + i] = SampleLoadingStatus.loading;
+    //     sampleLoadingState.urlTable[startIndex + 1] = "legacyChipWaves";
+    // }
 
     }
     else {

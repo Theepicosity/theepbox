@@ -2078,7 +2078,6 @@ export class ChangeChannelOrder extends Change {
             && !ignoreFolders
             && doc.prefs.enableChannelFolders
         ) {
-            console.log("hi")
             if ((doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMin].folder != prevChannelFolder)
                 || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder
                 || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder
@@ -2188,7 +2187,6 @@ export class ChangeChannelCount extends Change {
     constructor(doc: SongDocument, newPitchChannelCount: number, newNoiseChannelCount: number, newModChannelCount: number, setFolder: number = -1) {
         super();
         if (doc.song.pitchChannelCount != newPitchChannelCount || doc.song.noiseChannelCount != newNoiseChannelCount || doc.song.modChannelCount != newModChannelCount) {
-            const oldPitchCount: number = doc.song.pitchChannelCount;
             let pitchChannelsToMake: number = newPitchChannelCount - doc.song.pitchChannelCount;
             let noiseChannelsToMake: number = newNoiseChannelCount - doc.song.noiseChannelCount;
             let modChannelsToMake: number = newModChannelCount - doc.song.modChannelCount;
@@ -2278,8 +2276,6 @@ export class ChangeAddChannel extends ChangeGroup {
 export class ChangeRemoveChannel extends ChangeGroup {
     constructor(doc: SongDocument, minIndex: number, maxIndex: number) {
         super();
-
-        const oldMax: number = maxIndex;
 
         while (maxIndex >= minIndex) {
             const isNoise: boolean = doc.song.getChannelIsNoise(maxIndex);

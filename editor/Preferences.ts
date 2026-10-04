@@ -249,6 +249,7 @@ export class Preferences {
 	public enableChannelMuting: boolean;
 	public enableChannelFolders: boolean;
 	public channelFolderSelectMethod: boolean;
+	public channelFolderMovementMethod: boolean;
 	public colorTheme: string;
 	public fixChannelColorOrder: boolean;
 	public settingsSectionPadding: number;
