@@ -15,7 +15,9 @@ export class Channel {
     public name: string = "";
     public color: number = 0;
     public folder: number = 0;
-    constructor(type: ChannelType = ChannelType.pitch) {
+    public modIndex: number = 0; // this helps keep the mod channels in check ~ theepie
+    constructor(type: ChannelType = ChannelType.pitch, modIndex: number = 0) {
         this.type = type;
+        this.modIndex = modIndex;
     }
 }

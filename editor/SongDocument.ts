@@ -451,6 +451,11 @@ export class SongDocument {
         this.synth.volume = this._calcVolume();
     }
 
+    public recalculateModChannels(): void {
+        this.song.recalculateModChannels();
+        this.recalcModChannels = true;
+    }
+
     private _calcVolume(): number {
         return Math.min(1.0, Math.pow(this.prefs.volume / 50.0, 0.5)) * Math.pow(2.0, (this.prefs.volume - 75.0) / 25.0);
     }

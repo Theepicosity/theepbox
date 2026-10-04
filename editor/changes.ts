@@ -2158,27 +2158,7 @@ export class ChangeChannelOrder extends Change {
                     doc.song.channels[channelIndex].folder = 0
                 }
             }
-
-            // Update mods for each channel
-            selectionMax = Math.max(selectionMax, selectionMin);
-            for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-                if (doc.song.channels[channelIndex].type === ChannelType.mod) {
-                    for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                        let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
-                        for (let i: number = 0; i < Config.modCount; i++) {
-                            for (let j: number = 0; j < instrument.modChannels[i].length; j++) {
-                                if (instrument.modChannels[i][j] >= selectionMin && instrument.modChannels[i][j] <= selectionMax) {
-                                    instrument.modChannels[i][j] += offset;
-                                }
-                                else if (instrument.modChannels[i][j] >= selectionMin + offset && instrument.modChannels[i][j] <= selectionMax + offset) {
-                                    instrument.modChannels[i][j] -= offset * (selectionMax - selectionMin + 1);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            doc.recalcModChannels = true;
+            doc.recalculateModChannels();
         } else {
             doc.selection.boxSelectionY0 -= offset;
             doc.selection.boxSelectionY1 -= offset;
@@ -2246,23 +2226,6 @@ export class ChangeChannelCount extends Change {
                     for (let channelDeleteIndex: number = doc.song.getChannelCount() - 1; channelDeleteIndex >= 0; channelDeleteIndex--) {
                         console.log("hi")
                         if (doc.song.channels[channelDeleteIndex].type == channelType) {
-                            // Update mods for each channel >.>
-                            for (let channelIndex: number = 0; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-                                if (doc.song.channels[channelIndex].type === ChannelType.mod) {
-                                    for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                                        let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
-                                        for (let i: number = 0; i < Config.modCount; i++) {
-                                            for (let j: number = 0; j < instrument.modChannels[i].length; j++) {
-                                                if (instrument.modChannels[i][j] == channelDeleteIndex) instrument.modChannels[i][j] = -2
-                                                else if (instrument.modChannels[i][j] > channelDeleteIndex && instrument.modChannels[i][j] < channelDeleteIndex) {
-                                                    instrument.modChannels[i][j] -= 1;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
                             doc.song.channels.push(doc.song.channels[channelDeleteIndex]);
                             doc.song.channels.splice(channelDeleteIndex, 1)
                             channelsToMake++
@@ -2285,7 +2248,7 @@ export class ChangeChannelCount extends Change {
 
             ColorConfig.resetColors();
             doc.recalcChannelColors = true;
-            doc.recalcModChannels = true;
+            doc.recalculateModChannels();
 
             this._didSomething();
         }
@@ -2317,25 +2280,6 @@ export class ChangeRemoveChannel extends ChangeGroup {
         super();
 
         const oldMax: number = maxIndex;
-
-        // Update modulators - if a higher index was removed, shift down
-        for (let modChannel: number = 0; modChannel < doc.song.channels.length; modChannel++) {
-            if (doc.song.channels[modChannel].type === ChannelType.mod) {
-                for (let instrumentIndex: number = 0; instrumentIndex < doc.song.channels[modChannel].instruments.length; instrumentIndex++) {
-                    const modInstrument: Instrument = doc.song.channels[modChannel].instruments[instrumentIndex];
-                    for (let mod: number = 0; mod < Config.modCount; mod++) {
-                        for (let channelIndex: number = 0; channelIndex < modInstrument.modChannels[mod].length; channelIndex++) {
-                            if (modInstrument.modChannels[mod][channelIndex] >= minIndex && modInstrument.modChannels[mod][channelIndex] <= oldMax) {
-                                this.append(new ChangeReplaceModChannel(doc, mod, channelIndex, modInstrument));
-                            }
-                            else if (modInstrument.modChannels[mod][channelIndex] > oldMax) {
-                                this.append(new ChangeReplaceModChannel(doc, mod, channelIndex, modInstrument, -(oldMax - minIndex + 1)));
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         while (maxIndex >= minIndex) {
             const isNoise: boolean = doc.song.getChannelIsNoise(maxIndex);
@@ -3936,7 +3880,7 @@ export class ChangeReplaceModChannel extends Change {
         }
         else instrument.modChannels[mod][index] += offset
 
-        doc.recalcModChannels = true;
+        doc.recalculateModChannels();
 
         doc.notifier.changed();
         this._didSomething();
@@ -4009,7 +3953,7 @@ export class ChangeModChannel extends Change {
             }
         }
 
-        doc.recalcModChannels = true;
+        doc.recalculateModChannels();
 
         doc.notifier.changed();
         this._didSomething();

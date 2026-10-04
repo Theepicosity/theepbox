@@ -250,9 +250,7 @@ export class Synth {
 
 
     public computeLatestModValues(): void {
-
         if (this.song != null && this.song.modChannelCount > 0) {
-
             // Clear all mod values, and set up temp variables for the time a mod would be set at.
             let latestModTimes: (number | null)[] = [];
             let latestModInsTimes: (number | null)[][][][] = [];

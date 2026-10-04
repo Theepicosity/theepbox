@@ -365,11 +365,14 @@ export class Piano {
                 let instrumentVal: number = instrument.modInstruments[Config.modCount - j - 1][0] + 1; //TODO: something special for when there are multiple channel targets?
                 let channelVal: number = instrument.modChannels[Config.modCount - j - 1][0] + 1;
                 let modulator: number = instrument.modulators[Config.modCount - j - 1];
-                let status: number = this._doc.song.channels[Math.max(0, channelVal - 1)].type === ChannelType.pitch ? 1 : 2;
+                let status: number = 0;
+
                 if (instrument.modChannels[Config.modCount - j - 1][0] == -2)
                     status = 0;
                 else if (instrument.modChannels[Config.modCount - j - 1][0] == -1)
                     status = 3;
+                else
+                    status = this._doc.song.channels[Math.max(0, channelVal - 1)].type === ChannelType.pitch ? 1 : 2;
                 let instrumentsLength: number = this._doc.song.channels[Math.max(0, channelVal - 1)].instruments.length;
                 // 0 - none
                 // 1 - pitch

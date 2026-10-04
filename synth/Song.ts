@@ -709,6 +709,65 @@ export class Song {
         return Config.fadeOutTicks.length - 1;
     }
 
+    // iterate over all channels, instruments, and modulators
+    public* modChannelGenerator(property: string = "modChannels"): void {
+        for (let channelIndex: number = 0; channelIndex < this.channels.length; channelIndex++) {
+            const channel: Channel = this.channels[channelIndex];
+            if (channel.type === ChannelType.mod) {
+                for (let instrumentIndex: number = 0; instrumentIndex < channel.instruments.length; instrumentIndex++) {
+                    const instrument: Instrument = channel.instruments[instrumentIndex];
+                    switch (property) {
+                        case "modChannels":
+                            for (let modulatorIndex: number = 0; modulatorIndex < Config.modCount; modulatorIndex++) {
+                                yield instrument.modChannels[modulatorIndex];
+                            }
+                            break;
+                        case "modInstruments":
+                            for (let modulatorIndex: number = 0; modulatorIndex < Config.modCount; modulatorIndex++) {
+                                yield instrument.modInstruments[modulatorIndex];
+                            }
+                            break;
+                        case "modEffects":
+                            for (let modulatorIndex: number = 0; modulatorIndex < Config.modCount; modulatorIndex++) {
+                                yield instrument.modEffects[modulatorIndex];
+                            }
+                            break;
+                        // case "modulators":
+                        //     yield instrument.modulators;
+                        //     break;
+                    }
+                }
+            }
+        }
+    }
+
+    // this will update the mod channel target channels
+    public recalculateModChannels(): void {
+        // step 1: assemble an array of the out-of-order indices
+        // (if its -2, this is ok; these are baby channels and should not have mods on them)
+        let modIndices: number[] = []
+        for (let i: number = 0; i < this.channels.length; i++) {
+            modIndices.push(this.channels[i].modIndex)
+        }
+        console.log(modIndices)
+        // step 2: iterate over all mod instruments
+        const generator = this.modChannelGenerator("modChannels")
+        let modResult = generator.next();
+        while (!modResult.done) {
+            for (let modChannelIndex: number = 0; modChannelIndex < modResult.value.length; modChannelIndex++) {
+                if (!modIndices.includes(modResult.value[modChannelIndex])) modResult.value.splice(modChannelIndex, 1)
+                else if (modResult.value[0] >= 0) modResult.value[modChannelIndex] = modIndices.indexOf(modResult.value[modChannelIndex])
+            }
+            if (modResult.value.length == 0) modResult.value[0] = -2
+            console.log(modResult.value)
+            modResult = generator.next()
+        }
+        // last step: update channel indices
+        for (let i: number = 0; i < this.channels.length; i++) {
+            this.channels[i].modIndex = i
+        }
+    }
+
     public initToDefault(andResetChannels: boolean = true): void {
         this.scale = 1;
         this.scaleCustom = [true, false, true, true, false, false, false, true, true, false, true, true];
@@ -736,9 +795,9 @@ export class Song {
 
         if (andResetChannels) {
             this.channels.length = 0;
-            // build 3 pitch, 1 noise, 1 mod—then they can be reordered/mixed later
-            for (let i = 0; i < 4; i++) this.channels.push(new Channel(ChannelType.pitch));
-            this.channels.push(new Channel(ChannelType.noise));
+            // build 4 pitch, 1 noise and then they can be reordered/mixed later
+            for (let i = 0; i < 4; i++) this.channels.push(new Channel(ChannelType.pitch, i));
+            this.channels.push(new Channel(ChannelType.noise, 4));
             for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
                 // set defaults (octave, name, patterns, instruments, bars)
                 const channel: Channel = this.channels[channelIndex];
@@ -1795,7 +1854,7 @@ export class Song {
                     this.channels.length = 0;
                     for (let i = 0; i < totalChannels; i++) {
                         const channelType = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] as ChannelType;
-                        this.channels.push(new Channel(channelType));
+                        this.channels.push(new Channel(channelType, i));
                     }
                 } else {
                     let pitchCount: number = validateRange(Config.pitchChannelCountMin, Config.pitchChannelCountMax, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
@@ -1806,9 +1865,9 @@ export class Song {
                     }
 
                     this.channels.length = 0;
-                    for (let i = 0; i < pitchCount; i++) this.channels.push(new Channel(ChannelType.pitch));
-                    for (let i = 0; i < noiseCount; i++) this.channels.push(new Channel(ChannelType.noise));
-                    for (let i = 0; i < modCount; i++) this.channels.push(new Channel(ChannelType.mod));
+                    for (let i = 0; i < pitchCount; i++) this.channels.push(new Channel(ChannelType.pitch, i));
+                    for (let i = 0; i < noiseCount; i++) this.channels.push(new Channel(ChannelType.noise, i + pitchCount));
+                    for (let i = 0; i < modCount; i++) this.channels.push(new Channel(ChannelType.mod, i + pitchCount + noiseCount));
 
                     if ((fromBeepBox && beforeNine) || ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox))) {
                         for (let i: number = legacySettingsCache!.length; i < this.getChannelCount(); i++) {
@@ -4955,6 +5014,7 @@ export class Song {
                 let channelObject: any = jsonObject["channels"][channelIndex];
 
                 const channel: Channel = new Channel();
+                channel.modIndex = channelIndex;
 
                 let isNoiseChannel: boolean = false;
                 let isModChannel: boolean = false;
