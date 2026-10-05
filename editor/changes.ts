@@ -2186,6 +2186,7 @@ export class ChangeCustomScale extends Change {
 export class ChangeChannelCount extends Change {
     constructor(doc: SongDocument, newPitchChannelCount: number, newNoiseChannelCount: number, newModChannelCount: number, setFolder: number = -1) {
         super();
+        if (newPitchChannelCount == 0) newPitchChannelCount = 1;
         if (doc.song.pitchChannelCount != newPitchChannelCount || doc.song.noiseChannelCount != newNoiseChannelCount || doc.song.modChannelCount != newModChannelCount) {
             let pitchChannelsToMake: number = newPitchChannelCount - doc.song.pitchChannelCount;
             let noiseChannelsToMake: number = newNoiseChannelCount - doc.song.noiseChannelCount;
@@ -2222,7 +2223,6 @@ export class ChangeChannelCount extends Change {
                     }
                 } else if (channelsToMake < 0) {
                     for (let channelDeleteIndex: number = doc.song.getChannelCount() - 1; channelDeleteIndex >= 0; channelDeleteIndex--) {
-                        console.log("hi")
                         if (doc.song.channels[channelDeleteIndex].type == channelType) {
                             doc.song.channels.push(doc.song.channels[channelDeleteIndex]);
                             doc.song.channels.splice(channelDeleteIndex, 1)
@@ -2280,19 +2280,17 @@ export class ChangeRemoveChannel extends ChangeGroup {
         while (maxIndex >= minIndex) {
             const isNoise: boolean = doc.song.getChannelIsNoise(maxIndex);
             const isMod: boolean = doc.song.getChannelIsMod(maxIndex);
-            doc.song.channels.splice(maxIndex, 1);
             if (isNoise) {
+                doc.song.channels.splice(maxIndex, 1);
                 doc.song.noiseChannelCount--;
             } else if (isMod) {
+                doc.song.channels.splice(maxIndex, 1);
                 doc.song.modChannelCount--;
-            } else {
+            } else if (doc.song.pitchChannelCount > Config.pitchChannelCountMin) {
+                doc.song.channels.splice(maxIndex, 1);
                 doc.song.pitchChannelCount--;
             }
             maxIndex--;
-        }
-
-        if (doc.song.pitchChannelCount < Config.pitchChannelCountMin) {
-            this.append(new ChangeChannelCount(doc, Config.pitchChannelCountMin, doc.song.noiseChannelCount, doc.song.modChannelCount));
         }
 
         ColorConfig.resetColors();
