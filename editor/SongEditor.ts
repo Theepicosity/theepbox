@@ -1165,8 +1165,8 @@ export class SongEditor {
                     this._envelopeDropdown,
                     this._addEnvelopeButton,
                 ),
+                this._envelopeDropdownGroup,
             ),
-            this._envelopeDropdownGroup,
             this.envelopeEditor.container,
         )
     );

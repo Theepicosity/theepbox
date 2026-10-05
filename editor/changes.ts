@@ -4002,7 +4002,6 @@ export class ChangeModSetting extends Change {
                 for (let i: number = 0; i < instrument.modInstruments[mod].length; i++) {
                     let usedInstrument: Instrument = doc.song.channels[instrument.modChannels[mod][i]].instruments[instrument.modInstruments[mod][i]];
                     for (let k: number = 0; k < usedInstrument.effects.length; k++) {
-                        console.log(Config.modulators.dictionary[text].associatedEffect)
                         if (usedInstrument.effects[k].type == Config.modulators.dictionary[text].associatedEffect) {
                             instrument.modEffects[mod] = [k];
                             break;
