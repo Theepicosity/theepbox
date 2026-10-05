@@ -754,7 +754,7 @@ export class Song {
         let modResult = generator.next();
         while (!modResult.done) {
             for (let modChannelIndex: number = 0; modChannelIndex < modResult.value.length; modChannelIndex++) {
-                if (!modIndices.includes(modResult.value[modChannelIndex])) modResult.value.splice(modChannelIndex, 1)
+                if (!modIndices.includes(modResult.value[modChannelIndex]) && modResult.value[0] != -1) modResult.value.splice(modChannelIndex, 1)
                 else if (modResult.value[0] >= 0) modResult.value[modChannelIndex] = modIndices.indexOf(modResult.value[modChannelIndex])
             }
             if (modResult.value.length == 0) modResult.value[0] = -2

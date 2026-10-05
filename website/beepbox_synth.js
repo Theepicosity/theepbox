@@ -5335,6 +5335,7 @@ var beepbox = (function (exports) {
             }
         }
         recalculateModChannels() {
+            console.log("hi");
             let modIndices = [];
             for (let i = 0; i < this.channels.length; i++) {
                 modIndices.push(this.channels[i].modIndex);
@@ -5343,7 +5344,7 @@ var beepbox = (function (exports) {
             let modResult = generator.next();
             while (!modResult.done) {
                 for (let modChannelIndex = 0; modChannelIndex < modResult.value.length; modChannelIndex++) {
-                    if (!modIndices.includes(modResult.value[modChannelIndex]))
+                    if (!modIndices.includes(modResult.value[modChannelIndex]) && modResult.value[0] != -1)
                         modResult.value.splice(modChannelIndex, 1);
                     else if (modResult.value[0] >= 0)
                         modResult.value[modChannelIndex] = modIndices.indexOf(modResult.value[modChannelIndex]);
