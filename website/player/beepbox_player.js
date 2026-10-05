@@ -12027,7 +12027,6 @@ var beepbox = (function (exports) {
             for (let i = 0; i < this.channels.length; i++) {
                 modIndices.push(this.channels[i].modIndex);
             }
-            console.log(modIndices);
             const generator = this.modChannelGenerator("modChannels");
             let modResult = generator.next();
             while (!modResult.done) {
@@ -12039,7 +12038,6 @@ var beepbox = (function (exports) {
                 }
                 if (modResult.value.length == 0)
                     modResult.value[0] = -2;
-                console.log(modResult.value);
                 modResult = generator.next();
             }
             for (let i = 0; i < this.channels.length; i++) {

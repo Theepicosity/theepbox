@@ -13972,7 +13972,6 @@ li.select2-results__option[role=group] > strong:hover {
             for (let i = 0; i < this.channels.length; i++) {
                 modIndices.push(this.channels[i].modIndex);
             }
-            console.log(modIndices);
             const generator = this.modChannelGenerator("modChannels");
             let modResult = generator.next();
             while (!modResult.done) {
@@ -13984,7 +13983,6 @@ li.select2-results__option[role=group] > strong:hover {
                 }
                 if (modResult.value.length == 0)
                     modResult.value[0] = -2;
-                console.log(modResult.value);
                 modResult = generator.next();
             }
             for (let i = 0; i < this.channels.length; i++) {
@@ -29214,7 +29212,6 @@ li.select2-results__option[role=group] > strong:hover {
                 || (doc.song.channels[selectionMin].folder != prevChannelFolder && keepHeader)
                     && !ignoreFolders
                     && doc.prefs.enableChannelFolders) {
-                console.log("hi");
                 if ((doc.song.channels[selectionMin].folder != 0 && doc.song.channels[selectionMin].folder != prevChannelFolder)
                     || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder
                     || doc.song.channels[selectionMax].folder != doc.song.channels[selectionMin].folder
@@ -46873,7 +46870,7 @@ You should be redirected to the song at:<br /><br />
                     if (this._beginsFolder) {
                         this._boxes[x].container.style.marginTop = "5px";
                         if (this._isInFolder)
-                            this._boxes[x].container.style.boxShadow = "0 -1px 0px 1px " + ColorConfig.editorBackground + ", 0 -1px 0px 1px " + ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel + "30, 0px -3px 0px 1px " + ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel;
+                            this._boxes[x].container.style.boxShadow = "0 -1px 0px 1px " + ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel + "30, 0 -1px 0px 1px " + ColorConfig.editorBackground + ", 0px -3px 0px 1px " + ColorConfig.getArbitaryChannelColor("mod", this._doc.song.channels[this.index].folder - 1).secondaryChannel;
                     }
                 }
                 if (this._beginsFolder)
