@@ -710,31 +710,14 @@ export class Song {
     }
 
     // iterate over all channels, instruments, and modulators
-    public* modChannelGenerator(property: string = "modChannels") {
+    public* modChannelGenerator() {
         for (let channelIndex: number = 0; channelIndex < this.channels.length; channelIndex++) {
             const channel: Channel = this.channels[channelIndex];
             if (channel.type === ChannelType.mod) {
                 for (let instrumentIndex: number = 0; instrumentIndex < channel.instruments.length; instrumentIndex++) {
                     const instrument: Instrument = channel.instruments[instrumentIndex];
-                    switch (property) {
-                        case "modChannels":
-                            for (let modulatorIndex: number = 0; modulatorIndex < Config.modCount; modulatorIndex++) {
-                                yield instrument.modChannels[modulatorIndex];
-                            }
-                            break;
-                        case "modInstruments":
-                            for (let modulatorIndex: number = 0; modulatorIndex < Config.modCount; modulatorIndex++) {
-                                yield instrument.modInstruments[modulatorIndex];
-                            }
-                            break;
-                        case "modEffects":
-                            for (let modulatorIndex: number = 0; modulatorIndex < Config.modCount; modulatorIndex++) {
-                                yield instrument.modEffects[modulatorIndex];
-                            }
-                            break;
-                        // case "modulators":
-                        //     yield instrument.modulators;
-                        //     break;
+                    for (let modulatorIndex: number = 0; modulatorIndex < Config.modCount; modulatorIndex++) {
+                        yield { modChannels: instrument.modChannels[modulatorIndex], modInstruments: instrument.modInstruments[modulatorIndex], modEffects: instrument.modEffects[modulatorIndex] };
                     }
                 }
             }
@@ -743,7 +726,6 @@ export class Song {
 
     // this will update the mod channel target channels
     public recalculateModChannels(): void {
-        console.log("hi")
         // step 1: assemble an array of the out-of-order indices
         // (if its -2, this is ok; these are baby channels and should not have mods on them)
         let modIndices: number[] = []
@@ -751,14 +733,15 @@ export class Song {
             modIndices.push(this.channels[i].modIndex)
         }
         // step 2: iterate over all mod instruments
-        const generator = this.modChannelGenerator("modChannels")
+        const generator = this.modChannelGenerator()
         let modResult = generator.next();
         while (!modResult.done) {
-            for (let modChannelIndex: number = 0; modChannelIndex < modResult.value.length; modChannelIndex++) {
-                if (!modIndices.includes(modResult.value[modChannelIndex]) && modResult.value[0] != -1) modResult.value.splice(modChannelIndex, 1)
-                else if (modResult.value[0] >= 0) modResult.value[modChannelIndex] = modIndices.indexOf(modResult.value[modChannelIndex])
+            let modChannels = modResult.value["modChannels"];
+            for (let modChannelIndex: number = 0; modChannelIndex < modChannels.length; modChannelIndex++) {
+                if (!modIndices.includes(modChannels[modChannelIndex]) && modChannels[0] != -1) modChannels.splice(modChannelIndex, 1)
+                else if (modChannels[0] >= 0) modChannels[modChannelIndex] = modIndices.indexOf(modChannels[modChannelIndex])
             }
-            if (modResult.value.length == 0) modResult.value[0] = -2
+            if (modChannels.length == 0) modChannels[0] = -2
             modResult = generator.next()
         }
         // last step: update channel indices

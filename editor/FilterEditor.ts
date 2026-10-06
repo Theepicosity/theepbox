@@ -394,9 +394,11 @@ export class FilterEditor {
                                 const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
                                 instrument.tmpNoteFilterStart = instrument.noteFilter;
                                 instrument.tmpNoteFilterEnd = null;
-                                let effect: Effect = instrument.effects[this._effectIndex] as Effect;
-                                effect.tmpEqFilterStart = effect.eqFilter;
-                                effect.tmpEqFilterEnd = null;
+                                if (!this._useNoteFilter) {
+                                    let effect: Effect = instrument.effects[this._effectIndex] as Effect;
+                                    effect.tmpEqFilterStart = effect.eqFilter;
+                                    effect.tmpEqFilterEnd = null;
+                                }
                             }
                         }
                     }
