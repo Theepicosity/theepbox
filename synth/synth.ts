@@ -416,13 +416,13 @@ export class Synth {
                                                             }
                                                         }
                                                         tgtEffect.tmpEqFilterEnd = tgtEffect.tmpEqFilterStart;
-                                                    }
+                                                        }
+                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = []
+                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                                 }
-                                                latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = []
-                                                latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                             } else if (noteFilterParam) {
                                                 if (latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
-                                                    || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex]!) {
+                                                    || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0]!) {
                                                     let tgtInstrument: Instrument = this.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
                                                     if (instrument.modFilterTypes[mod] == 0) {
                                                         tgtInstrument.tmpNoteFilterStart = tgtInstrument.noteSubFilters[latestPinValues[mod]];
@@ -445,13 +445,15 @@ export class Synth {
                                                 }
                                                 latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = []
                                                 latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
-                                            } else if (latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
-                                                    || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex]!) {
-                                                for (let i: number = 0; i < instrument.modEffects[mod].length; i++) {
-                                                    if (Config.modulators[modulatorAdjust]) this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], modulatorAdjust, instrument.modEffects[mod][i]);
+                                            } else {
+                                                for (let effectIndex: number = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
+                                                    if (latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
+                                                        || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0]!) {
+                                                        if (Config.modulators[modulatorAdjust]) this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], modulatorAdjust, instrument.modEffects[mod][effectIndex]);
+                                                    }
+                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = []
+                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                                 }
-                                                latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = []
-                                                latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                             }
                                         }
                                     }
