@@ -1828,19 +1828,17 @@ export class ChangeRemoveEffects extends Change {
         let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         if (useInstrument != null) instrument = useInstrument;
 
-        // Update mods for each channel
-        for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                let modInstrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx];
-                    for (let i: number = 0; i < Config.modCount; i++) {
-                    if (modInstrument.modInstruments[i].indexOf(doc.getCurrentInstrument()) != -1 && modInstrument.modChannels[i].indexOf(doc.channel) != -1) {
-                        for (let j: number = 0; j < modInstrument.modEffects[i].length; j++) {
-                            if (modInstrument.modEffects[i][j] == effectIndex) modInstrument.modEffects[i].splice(effectIndex, 1);
-                            if (modInstrument.modEffects[i][j] > effectIndex) modInstrument.modEffects[i][j]--
-                        }
-                    }
+        const generator = doc.song.modChannelGenerator()
+        let modResult = generator.next();
+        while (!modResult.done) {
+            let modEffects = modResult.value["modEffects"];
+            if (modResult.value["modInstruments"].indexOf(doc.getCurrentInstrument()) != -1 && modResult.value["modChannels"].indexOf(doc.channel) != -1) {
+                for (let modEffectIndex: number = 0; modEffectIndex < modEffects.length; modEffectIndex++) {
+                    if (modEffects[modEffectIndex] == effectIndex) modEffects.splice(effectIndex, 1);
+                    if (modEffects[modEffectIndex] > effectIndex) modEffects[modEffectIndex]--
                 }
             }
+            modResult = generator.next()
         }
 
         // Remove AA when distortion is turned off.
@@ -2296,6 +2294,7 @@ export class ChangeRemoveChannel extends ChangeGroup {
         ColorConfig.resetColors();
         doc.recalcChannelColors = true;
         doc.recalcChannelNames = true;
+        doc.recalculateModChannels();
 
         this.append(new ChangeChannelBar(doc, Math.max(0, minIndex - 1), doc.bar));
 
@@ -3578,25 +3577,6 @@ export class ChangeAddChannelInstrument extends Change {
         if (!isMod) { // Mod channels lose information when changing set instrument
             doc.viewedInstrument[doc.channel] = channel.instruments.length - 1;
         }
-
-        // Determine if any mod instruments were setting 'all' or 'active'. If so, bump indices since there is now a new instrument in the list.
-        for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            for (let instrumentIndex: number = 0; instrumentIndex < doc.song.channels[channelIndex].instruments.length; instrumentIndex++) {
-                for (let mod: number = 0; mod < Config.modCount; mod++) {
-
-                    let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIndex];
-                    let modInstrument: number = instrument.modInstruments[mod][0];
-                    let modChannel: number = instrument.modChannels[mod][0];
-
-                    if (modChannel == doc.channel && modInstrument >= doc.song.channels[modChannel].instruments.length - 1) {
-                        //BUGFIX FROM JUMMBOX
-                        instrument.modInstruments[mod][0]++;
-                    }
-                }
-            }
-        }
-        // Also, make synth re-compute mod values, since 'all'/'active' mods now retroactively apply to this new instrument.
-        doc.synth.computeLatestModValues();
 
         doc.notifier.changed();
         this._didSomething();
