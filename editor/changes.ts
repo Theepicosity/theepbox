@@ -3606,26 +3606,29 @@ export class ChangeRemoveChannelInstrument extends Change {
             }
         }
 
-        // Determine if any mod instruments now refer to an invalid instrument number. Unset them if so
-        for (let channelIndex: number = doc.song.pitchChannelCount + doc.song.noiseChannelCount; channelIndex < doc.song.getChannelCount(); channelIndex++) {
-            for (let instrumentIdx: number = 0; instrumentIdx < doc.song.channels[channelIndex].instruments.length; instrumentIdx++) {
-                let instrument: Instrument = doc.song.channels[channelIndex].instruments[instrumentIdx]
-                for (let mod: number = 0; mod < Config.modCount; mod++) {
-                    let modInstruments: number[] = instrument.modInstruments[mod];
-                    let modChannels: number[] = instrument.modChannels[mod];
-                    // Boundary checking - check if setting was 'all' or 'active' previously
-                    if (modChannels[0] == doc.channel && modInstruments[0] > removedIndex) {
-                        instrument.modInstruments[mod][0]--;
-                    }
-                    for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
-                        if (modChannels[i] == doc.channel && modInstruments[i] == removedIndex) {
-                            // Boundary checking - check if setting was set to the last instrument before splice
-                            instrument.modInstruments[mod][i] = 0;
-                            instrument.modulators[mod] = 0;
-                        }
+        const generator = doc.song.modChannelGenerator()
+        let modResult = generator.next();
+        while (!modResult.done) {
+            let modInstruments = modResult.value["modInstruments"];
+            let modChannels = modResult.value["modChannels"];
+
+            for (let modIndex: number = 0; modIndex < modChannels.length; modIndex++) {
+                if (modChannels[modIndex] == doc.channel) {
+                    if (modInstruments[modIndex] > removedIndex) {
+                        modInstruments[modIndex]--;
+                    } else if (modInstruments[modIndex] == removedIndex) {
+                        modInstruments.splice(modIndex, 1);
+                        modIndex--;
                     }
                 }
             }
+            if (modInstruments.length == 0) {
+                modInstruments[0] = 0;
+                modChannels.length = 0;
+                modChannels[0] = -2;
+            }
+
+            modResult = generator.next()
         }
 
         doc.notifier.changed();

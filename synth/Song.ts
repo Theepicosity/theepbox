@@ -736,12 +736,12 @@ export class Song {
         const generator = this.modChannelGenerator()
         let modResult = generator.next();
         while (!modResult.done) {
-            let modChannel = modResult.value["modChannels"];
-            for (let modChannelIndex: number = 0; modChannelIndex < modChannel.length; modChannelIndex++) {
-                if (!modIndices.includes(modChannel[modChannelIndex]) && modChannel[0] != -1) modChannel.splice(modChannelIndex, 1)
-                else if (modChannel[0] >= 0) modChannel[modChannelIndex] = modIndices.indexOf(modChannel[modChannelIndex])
+            let modChannels = modResult.value["modChannels"];
+            for (let modChannelIndex: number = 0; modChannelIndex < modChannels.length; modChannelIndex++) {
+                if (!modIndices.includes(modChannels[modChannelIndex]) && modChannels[0] != -1) modChannels.splice(modChannelIndex, 1)
+                else if (modChannels[0] >= 0) modChannels[modChannelIndex] = modIndices.indexOf(modChannels[modChannelIndex])
             }
-            if (modChannel.length == 0) modChannel[0] = -2
+            if (modChannels.length == 0) modChannels[0] = -2
             modResult = generator.next()
         }
         // last step: update channel indices
