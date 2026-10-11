@@ -811,7 +811,7 @@ export class SongEditor {
     private readonly _optionsMenu: HTMLButtonElement = button({ style: "width: 100%;", class: "preferences", type: "button", onclick: () => this._openPrompt("preferences")}, "Preferences" );
     private readonly _scaleSelect: HTMLSelectElement = buildOptions(select(), Config.scales.map(scale => scale.name));
     private readonly _keySelect: HTMLSelectElement = buildOptions(select(), Config.keys.map(key => key.name).reverse());
-    private readonly _octaveStepper: HTMLInputElement = input({ style: "width: 18%;", type: "number", min: Config.octaveMin, max: Config.octaveMax, value: "0" });
+    private readonly _octaveStepper: HTMLInputElement = input({ style: "width: 4em; font-size: 80%; margin-left: 0.4em; vertical-align: middle;", type: "number", min: Config.octaveMin + 4, max: Config.octaveMax + 4, value: "4" });
     private readonly _tempoSlider: Slider = new Slider(input({ style: "margin: 0; vertical-align: middle;", type: "range", min: "1", max: "500", value: "160", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeTempo(this._doc, oldValue, newValue), false);
     private readonly _tempoStepper: HTMLInputElement = input({ style: "width: 4em; font-size: 80%; margin-left: 0.4em; vertical-align: middle;", type: "number", step: "1" });
     private readonly _songEqFilterEditor: FilterEditor = new FilterEditor(this._doc, false, false, true);
@@ -1281,8 +1281,10 @@ export class SongEditor {
                 ),
                 div({ class: "selectRow" },
                     span({ class: "tip", onclick: () => this._openPrompt("key") }, "Key: "),
-                    this._octaveStepper,
-                    div({ class: "selectContainer" }, this._keySelect),
+                    span({ style: "display: flex;" },
+                        div({ class: "selectContainer" }, this._keySelect),
+                        this._octaveStepper,
+                    )
                 ),
                 div({ class: "selectRow" },
                     span({ class: "tip", onclick: () => this._openPrompt("tempo") }, "Tempo: "),
@@ -2363,7 +2365,7 @@ export class SongEditor {
         setSelectedValue(this._scaleSelect, this._doc.song.scale);
         this._scaleSelect.title = Config.scales[this._doc.song.scale].realName;
         setSelectedValue(this._keySelect, Config.keys.length - 1 - this._doc.song.key);
-        this._octaveStepper.value = Math.round(this._doc.song.octave).toString();
+        this._octaveStepper.value = (Math.round(this._doc.song.octave) + 4).toString();
         this._tempoSlider.updateValue(Math.max(0, Math.round(this._doc.song.tempo)));
         this._tempoStepper.value = Math.round(this._doc.song.tempo).toString();
         this._songTitleInputBox.updateValue(this._doc.song.title);
@@ -3421,25 +3423,33 @@ export class SongEditor {
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
                     $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
 
+                    let useChannel: number = instrument.modChannels[mod][0];
                     let useInstrument: number = instrument.modInstruments[mod][0];
                     let useEffect: number = 0;
+                    let tmpCount: number = -1;
+                    let matchingEffectCount: number = -1;
+
                     for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
-                        let modChannel: Channel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod][i])];
-                        let tmpCount: number = -1;
+                        let modChannel: Channel = this._doc.song.channels[instrument.modChannels[mod][i]];
                         for (let j: number = 0; j < modChannel.instruments.length; j++) {
                             if (filterType == "post eq") {
-                                for (let k: number = 0; k < instrument.modEffects[mod].length; k++) {
-                                    if (modChannel.instruments[j].effects[k] == null) continue;
-                                    let effect: Effect = modChannel.instruments[j].effects[k] as Effect;
-                                    if (effect.type == EffectType.eqFilter && effect.eqFilter.controlPointCount > tmpCount) {
-                                        tmpCount = effect.eqFilter.controlPointCount;
-                                        useInstrument = j;
-                                        useEffect = k;
+                                for (let k: number = 0; k < modChannel.instruments[j].effects.length; k++) {
+                                    let effect: Effect = modChannel.instruments[j].effects[k];
+                                    if (effect.type != EffectType.eqFilter) continue;
+                                    else {
+                                        matchingEffectCount++;
+                                        if (k == instrument.modEffects[mod][matchingEffectCount] && effect.eqFilter.controlPointCount > tmpCount) {
+                                            tmpCount = effect.eqFilter.controlPointCount;
+                                            useChannel = instrument.modChannels[mod][i];
+                                            useInstrument = j;
+                                            useEffect = k;
+                                        }
                                     }
                                 }
                             } else {
                                 if (modChannel.instruments[j].noteFilter.controlPointCount > tmpCount) {
                                     tmpCount = modChannel.instruments[j].noteFilter.controlPointCount;
+                                    useChannel = instrument.modChannels[mod][i];
                                     useInstrument = j;
                                     useEffect = 0;
                                 }
@@ -3447,62 +3457,59 @@ export class SongEditor {
                         }
                     }
 
-                    for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
-                        let modChannel: Channel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod][i])];
-                        // Build options for modulator filters (make sure it has the right number of filter dots).
-                        if (!modChannel.instruments[useInstrument] || (filterType == "post eq" && (!modChannel.instruments[useInstrument].effects[useEffect] || modChannel.instruments[useInstrument].effects[useEffect].type != EffectType.eqFilter))) break;
+                    let modChannel: Channel = this._doc.song.channels[useChannel];
+                    console.log(useChannel)
 
-                        let dotCount: number = (filterType == "post eq")
-                            ? modChannel.instruments[useInstrument].getLargestControlPointCount(false)
-                            : modChannel.instruments[useInstrument].getLargestControlPointCount(true);
+                    let dotCount: number = (filterType == "post eq")
+                        ? modChannel.instruments[useInstrument].getLargestControlPointCount(false, useEffect)
+                        : modChannel.instruments[useInstrument].getLargestControlPointCount(true);
 
-                        let effect: Effect = modChannel.instruments[useInstrument].effects[useEffect];
+                    let effect: Effect = modChannel.instruments[useInstrument].effects[useEffect];
 
-                        const isSimple: boolean = useSongEq ? false : (filterType == "pre eq" ? modChannel.instruments[useInstrument].noteFilterType : effect.eqFilterType);
-                        if (isSimple)
-                            dotCount = 0;
-                        if (useSongEq) {
-                            dotCount = this._doc.song.eqFilter.controlPointCount;
-                            if(this._modFilterBoxes[mod].children.length != 1 + dotCount * 2) {
-                                while (this._modFilterBoxes[mod].firstChild) this._modFilterBoxes[mod].remove(0);
-                                const dotList: string[] = [];
-                                dotList.push("morph");
-                                for (let i: number = 0; i < dotCount; i++) {
-                                    dotList.push("dot " + (i + 1) + " x");
-                                    dotList.push("dot " + (i + 1) + " y");
-                                }
-                                buildOptions(this._modFilterBoxes[mod], dotList);
-                            }
-                        } else if (isSimple || this._modFilterBoxes[mod].children.length != 1 + dotCount * 2) {
+                    const isSimple: boolean = useSongEq ? false : (filterType == "pre eq" ? modChannel.instruments[useInstrument].noteFilterType : effect.eqFilterType);
+                    if (isSimple)
+                        dotCount = 0;
+                    if (useSongEq) {
+                        dotCount = this._doc.song.eqFilter.controlPointCount;
+                        if(this._modFilterBoxes[mod].children.length != 1 + dotCount * 2) {
                             while (this._modFilterBoxes[mod].firstChild) this._modFilterBoxes[mod].remove(0);
                             const dotList: string[] = [];
-                            if (!isSimple)
-                                dotList.push("morph");
+                            dotList.push("morph");
                             for (let i: number = 0; i < dotCount; i++) {
                                 dotList.push("dot " + (i + 1) + " x");
                                 dotList.push("dot " + (i + 1) + " y");
                             }
                             buildOptions(this._modFilterBoxes[mod], dotList);
                         }
-
-                        if (isSimple || instrument.modFilterTypes[mod] >= this._modFilterBoxes[mod].length) {
-                            this._modFilterBoxes[mod].classList.add("invalidSetting");
-                            instrument.invalidModulators[mod] = true;
-                            let useName: string = ((instrument.modFilterTypes[mod] - 1) % 2 == 1) ?
-                                "dot " + (Math.floor((instrument.modFilterTypes[mod] - 1) / 2) + 1) + " y"
-                                : "dot " + (Math.floor((instrument.modFilterTypes[mod] - 1) / 2) + 1) + " x";
-                            if (instrument.modFilterTypes[mod] == 0)
-                                useName = "morph";
-                            this._modFilterBoxes[mod].insertBefore(option({ value: useName, style: "color: red;" }, useName), this._modFilterBoxes[mod].children[0]);
-                            this._modFilterBoxes[mod].selectedIndex = 0;
-
+                    } else if (isSimple || this._modFilterBoxes[mod].children.length != 1 + dotCount * 2) {
+                        while (this._modFilterBoxes[mod].firstChild) this._modFilterBoxes[mod].remove(0);
+                        const dotList: string[] = [];
+                        if (!isSimple)
+                            dotList.push("morph");
+                        for (let i: number = 0; i < dotCount; i++) {
+                            dotList.push("dot " + (i + 1) + " x");
+                            dotList.push("dot " + (i + 1) + " y");
                         }
-                        else {
-                            this._modFilterBoxes[mod].classList.remove("invalidSetting");
-                            instrument.invalidModulators[mod] = false;
-                            this._modFilterBoxes[mod].selectedIndex = instrument.modFilterTypes[mod];
-                        }
+                        buildOptions(this._modFilterBoxes[mod], dotList);
                     }
+
+                    if (isSimple || instrument.modFilterTypes[mod] >= this._modFilterBoxes[mod].length) {
+                        this._modFilterBoxes[mod].classList.add("invalidSetting");
+                        instrument.invalidModulators[mod] = true;
+                        let useName: string = ((instrument.modFilterTypes[mod] - 1) % 2 == 1) ?
+                            "dot " + (Math.floor((instrument.modFilterTypes[mod] - 1) / 2) + 1) + " y"
+                            : "dot " + (Math.floor((instrument.modFilterTypes[mod] - 1) / 2) + 1) + " x";
+                        if (instrument.modFilterTypes[mod] == 0)
+                            useName = "morph";
+                        this._modFilterBoxes[mod].insertBefore(option({ value: useName, style: "color: red;" }, useName), this._modFilterBoxes[mod].children[0]);
+                        this._modFilterBoxes[mod].selectedIndex = 0;
+
+                    }
+                    else {
+                        this._modFilterBoxes[mod].classList.remove("invalidSetting");
+                        instrument.invalidModulators[mod] = false;
+                        this._modFilterBoxes[mod].selectedIndex = instrument.modFilterTypes[mod];
+                        }
                 } else {
                     $("#modFilterText" + mod).get(0)!.style.display = "none";
                     $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
@@ -5260,7 +5267,7 @@ export class SongEditor {
     }
 
     private _whenSetOctave = (): void => {
-        this._doc.record(new ChangeKeyOctave(this._doc, this._doc.song.octave, parseInt(this._octaveStepper.value) | 0));
+        this._doc.record(new ChangeKeyOctave(this._doc, this._doc.song.octave, (parseInt(this._octaveStepper.value) | 0) - 4));
         this._piano.forceRender();
     }
 
