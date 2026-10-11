@@ -1519,7 +1519,7 @@ export class Instrument {
     }
     // advloop addition
 
-    public getLargestControlPointCount(forNoteFilter: boolean) {
+    public getLargestControlPointCount(forNoteFilter: boolean, effectIndex: number = 0) {
         let largest: number;
         if (forNoteFilter) {
             largest = this.noteFilter.controlPointCount;
@@ -1534,12 +1534,10 @@ export class Instrument {
             } else {
                 largest = 0
             }
-            for (let effectIndex: number = 0; effectIndex < this.effectCount; effectIndex++) {
-                if (this.effects[effectIndex] != null && this.effects[effectIndex]!.type == EffectType.eqFilter) {
-                    for (let i: number = 0; i < Config.filterMorphCount; i++) {
-                        if (this.effects[effectIndex]!.eqSubFilters[i] != null && this.effects[effectIndex]!.eqSubFilters[i]!.controlPointCount > largest)
-                            largest = this.effects[effectIndex]!.eqSubFilters[i]!.controlPointCount;
-                    }
+            if (this.effects[effectIndex] != null && this.effects[effectIndex]!.type == EffectType.eqFilter) {
+                for (let i: number = 0; i < Config.filterMorphCount; i++) {
+                    if (this.effects[effectIndex]!.eqSubFilters[i] != null && this.effects[effectIndex]!.eqSubFilters[i]!.controlPointCount > largest)
+                        largest = this.effects[effectIndex]!.eqSubFilters[i]!.controlPointCount;
                 }
             }
         }

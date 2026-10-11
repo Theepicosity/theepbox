@@ -248,7 +248,7 @@ export class TrackEditor {
         this._mouseX = (event.clientX || event.pageX) - boundingRect.left;
         this._mouseY = (event.clientY || event.pageY) - boundingRect.top;
         this._mouseBar = Math.floor(Math.min(this._doc.song.barCount - 1, Math.max(0, this._mouseX / this._barWidth)));
-        this._mouseChannel = this._doc.song.getChannelCount() - 1
+        this._mouseChannel = 0
         for (let i: number = 0; i < this.patternTops.length; i++) {
             if (this._mouseY > this.patternTops[i]) this._mouseChannel = Math.min(this._doc.song.getChannelCount() - 1, i);
             else break;
