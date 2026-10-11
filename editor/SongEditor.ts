@@ -811,7 +811,7 @@ export class SongEditor {
     private readonly _optionsMenu: HTMLButtonElement = button({ style: "width: 100%;", class: "preferences", type: "button", onclick: () => this._openPrompt("preferences")}, "Preferences" );
     private readonly _scaleSelect: HTMLSelectElement = buildOptions(select(), Config.scales.map(scale => scale.name));
     private readonly _keySelect: HTMLSelectElement = buildOptions(select(), Config.keys.map(key => key.name).reverse());
-    private readonly _octaveStepper: HTMLInputElement = input({ style: "width: 18%;", type: "number", min: Config.octaveMin, max: Config.octaveMax, value: "0" });
+    private readonly _octaveStepper: HTMLInputElement = input({ style: "width: 4em; font-size: 80%; margin-left: 0.4em; vertical-align: middle;", type: "number", min: Config.octaveMin + 4, max: Config.octaveMax + 4, value: "4" });
     private readonly _tempoSlider: Slider = new Slider(input({ style: "margin: 0; vertical-align: middle;", type: "range", min: "1", max: "500", value: "160", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeTempo(this._doc, oldValue, newValue), false);
     private readonly _tempoStepper: HTMLInputElement = input({ style: "width: 4em; font-size: 80%; margin-left: 0.4em; vertical-align: middle;", type: "number", step: "1" });
     private readonly _songEqFilterEditor: FilterEditor = new FilterEditor(this._doc, false, false, true);
@@ -1281,8 +1281,10 @@ export class SongEditor {
                 ),
                 div({ class: "selectRow" },
                     span({ class: "tip", onclick: () => this._openPrompt("key") }, "Key: "),
-                    this._octaveStepper,
-                    div({ class: "selectContainer" }, this._keySelect),
+                    span({ style: "display: flex;" },
+                        div({ class: "selectContainer" }, this._keySelect),
+                        this._octaveStepper,
+                    )
                 ),
                 div({ class: "selectRow" },
                     span({ class: "tip", onclick: () => this._openPrompt("tempo") }, "Tempo: "),
@@ -2363,7 +2365,7 @@ export class SongEditor {
         setSelectedValue(this._scaleSelect, this._doc.song.scale);
         this._scaleSelect.title = Config.scales[this._doc.song.scale].realName;
         setSelectedValue(this._keySelect, Config.keys.length - 1 - this._doc.song.key);
-        this._octaveStepper.value = Math.round(this._doc.song.octave).toString();
+        this._octaveStepper.value = (Math.round(this._doc.song.octave) + 4).toString();
         this._tempoSlider.updateValue(Math.max(0, Math.round(this._doc.song.tempo)));
         this._tempoStepper.value = Math.round(this._doc.song.tempo).toString();
         this._songTitleInputBox.updateValue(this._doc.song.title);
@@ -5265,7 +5267,7 @@ export class SongEditor {
     }
 
     private _whenSetOctave = (): void => {
-        this._doc.record(new ChangeKeyOctave(this._doc, this._doc.song.octave, parseInt(this._octaveStepper.value) | 0));
+        this._doc.record(new ChangeKeyOctave(this._doc, this._doc.song.octave, (parseInt(this._octaveStepper.value) | 0) - 4));
         this._piano.forceRender();
     }
 
