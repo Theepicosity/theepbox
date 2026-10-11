@@ -1062,9 +1062,9 @@ export class Song {
                     }
                     else if (effect.type == EffectType.granular) {
                         buffer.push(base64IntToCharCode[effect.granular]);
-                        buffer.push(base64IntToCharCode[effect.grainSize]);
+                        buffer.push(base64IntToCharCode[Math.round(effect.grainSize) >> 6], base64IntToCharCode[Math.round(effect.grainSize) & 0x3F]);
                         buffer.push(base64IntToCharCode[effect.grainAmounts]);
-                        buffer.push(base64IntToCharCode[effect.grainRange]);
+                        buffer.push(base64IntToCharCode[Math.round(effect.grainRange / Config.grainSizeStep) >> 6], base64IntToCharCode[Math.round(effect.grainRange / Config.grainSizeStep) & 0x3F]);
                     }
                     else if (effect.type == EffectType.ringModulation) {
                         buffer.push(base64IntToCharCode[effect.ringModulation]);
@@ -2992,10 +2992,10 @@ export class Song {
                                 }
                             }
                             if (newEffect.type == EffectType.granular) {
-                                newEffect.granular = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                newEffect.grainSize = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                newEffect.grainAmounts = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                newEffect.grainRange = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                newEffect.granular = clamp(0, Config.granularRange + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                newEffect.grainSize = clamp(Config.grainSizeMin / Config.grainSizeStep, Config.grainSizeMax / Config.grainSizeStep, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                newEffect.grainAmounts = clamp(0, Config.grainAmountsMax + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                newEffect.grainRange = clamp(0, Config.grainRangeMax, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) * Config.grainSizeStep + base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * Config.grainSizeStep);
                             }
                             if (newEffect.type == EffectType.ringModulation) {
                                 newEffect.ringModulation = clamp(0, Config.ringModRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
