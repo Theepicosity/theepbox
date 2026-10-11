@@ -2993,7 +2993,7 @@ export class Song {
                             }
                             if (newEffect.type == EffectType.granular) {
                                 newEffect.granular = clamp(0, Config.granularRange + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                newEffect.grainSize = clamp(Config.grainSizeMin / Config.grainSizeStep, Config.grainSizeMax / Config.grainSizeStep, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                newEffect.grainSize = clamp(Config.grainSizeMin / Config.grainSizeStep, Config.grainSizeMax / Config.grainSizeStep + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 newEffect.grainAmounts = clamp(0, Config.grainAmountsMax + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 newEffect.grainRange = clamp(0, Config.grainRangeMax, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) * Config.grainSizeStep + base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * Config.grainSizeStep);
                             }
