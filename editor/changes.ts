@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Algorithm, Dictionary, FilterType, SustainType, ChannelType, InstrumentType, MDEffectType, EffectType, AutomationTarget, Config, LFOEnvelopeTypes, RandomEnvelopeTypes } from "../synth/SynthConfig";
+import { Algorithm, Dictionary, FilterType, SustainType, ChannelType, InstrumentType, MDEffectType, EffectType, AutomationParameter, Config, LFOEnvelopeTypes, RandomEnvelopeTypes } from "../synth/SynthConfig";
 import { Synth } from "../synth/synth";
 import { clamp } from "../synth/utils";
 import { Song } from "../synth/Song";
@@ -817,7 +817,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                 instrument.pitchShift = selectCurvedDistribution(0, Config.pitchShiftRange - 1, Config.pitchShiftCenter, 2);
                 if (instrument.pitchShift != Config.pitchShiftCenter) {
                     instrument.mdeffects |= 1 << MDEffectType.pitchShift;
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["pitchShift"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["pitchShift"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 1 },
                         { item: "random", weight: 2},
                         { item: "flare", weight: 2 },
@@ -845,7 +845,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                 applyFilterPoints(newEffect.eqFilter, [
                     new PotentialFilterPoint(1.0, FilterType.lowPass, midFreq, maxFreq, 8000.0, -1),
                 ]);
-                instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["noteFilterAllFreqs"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                instrument.addEnvelope(Config.automationParams.dictionary["noteFilterAllFreqs"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                     { item: "note size", weight: 2 },
                     { item: "pitch", weight: 2 },
                     { item: "punch", weight: 4 },
@@ -914,7 +914,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                 ])].index;
 
                 if (instrument.unison != Config.unisons.dictionary["none"].index && Math.random() > 0.4)
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["unison"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["unison"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 2 },
                         { item: "pitch", weight: 2 },
                         { item: "twang", weight: 6 },
@@ -1079,7 +1079,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                 instrument.pitchShift = selectCurvedDistribution(0, Config.pitchShiftRange - 1, Config.pitchShiftCenter, 1);
                 if (instrument.pitchShift != Config.pitchShiftCenter) {
                     instrument.mdeffects |= 1 << MDEffectType.pitchShift;
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["pitchShift"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["pitchShift"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 2 },
                         { item: "pitch", weight: 2 },
                         { item: "random", weight: 3},
@@ -1112,7 +1112,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                         envelopeLowerBound = 0;
                         envelopeUpperBound = 1;
                     }
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["distortion"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["distortion"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 3 },
                         { item: "pitch", weight: 4 },
                         { item: "random", weight: 1 },
@@ -1148,7 +1148,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                     envelopeLowerBound = 0;
                     envelopeUpperBound = 1;
                 }
-                instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["eqFilterAllFreqs"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                instrument.addEnvelope(Config.automationParams.dictionary["eqFilterAllFreqs"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                     { item: "note size", weight: 2 },
                     { item: "pitch", weight: 2 },
                     { item: "punch", weight: 6 },
@@ -1175,7 +1175,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                     envelopeUpperBound = 1;
                 }
                 if (Math.random() < 0.3) {
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["bitcrusherFrequency"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["bitcrusherFrequency"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 4 },
                         { item: "pitch", weight: 3 },
                         { item: "random", weight: 12 },
@@ -1193,7 +1193,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                         selectWeightedRandom([{ item: LFOEnvelopeTypes.sine, weight: 3 }, { item: LFOEnvelopeTypes.triangle, weight: 1 }]));
                 }
                 if (Math.random() < 0.5) {
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["bitcrusherQuantization"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["bitcrusherQuantization"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 8 },
                         { item: "pitch", weight: 3 },
                         { item: "random", weight: 12 },
@@ -1210,8 +1210,8 @@ export class ChangeRandomGeneratedInstrument extends Change {
                     ])].index, true, 0, -1, selectWeightedRandom([{ item: false, weight: 8 }, { item: true, weight: 1 }]), Config.perEnvelopeSpeedIndices[selectCurvedDistribution(1, 63, 20, 34)], envelopeLowerBound, envelopeUpperBound, selectCurvedDistribution(2, 16, 2, 6), selectCurvedDistribution(1, 63, 32, 31),
                         selectWeightedRandom([{ item: LFOEnvelopeTypes.sine, weight: 3 }, { item: LFOEnvelopeTypes.triangle, weight: 1 }]));
                 } else if (type == InstrumentType.spectrum) {
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["noteVolume"].index, 0, Config.newEnvelopes.dictionary["note size"].index, true);
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["bitcrusherQuantization"].index, 0, Config.newEnvelopes.dictionary["note size"].index, true);
+                    instrument.addEnvelope(Config.automationParams.dictionary["noteVolume"].index, 0, Config.newEnvelopes.dictionary["note size"].index, true);
+                    instrument.addEnvelope(Config.automationParams.dictionary["bitcrusherQuantization"].index, 0, Config.newEnvelopes.dictionary["note size"].index, true);
                  }
             }
             if (Math.random() < 0.1) {
@@ -1224,7 +1224,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                         envelopeLowerBound = 0;
                         envelopeUpperBound = 1;
                     }
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["chorus"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["chorus"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 3 },
                         { item: "pitch", weight: 4 },
                         { item: "random", weight: 1 },
@@ -1254,7 +1254,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                             envelopeLowerBound = 0;
                             envelopeUpperBound = 1;
                         }
-                        instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["echoDelay"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                        instrument.addEnvelope(Config.automationParams.dictionary["echoDelay"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                             { item: "note size", weight: 4 },
                             { item: "pitch", weight: 8 },
                             { item: "random", weight: 7 },
@@ -1285,7 +1285,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                             envelopeLowerBound = 0;
                             envelopeUpperBound = 1;
                         }
-                        instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["ringModulation"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                        instrument.addEnvelope(Config.automationParams.dictionary["ringModulation"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                             { item: "note size", weight: 4 },
                             { item: "pitch", weight: 8 },
                             { item: "random", weight: 7 },
@@ -1310,7 +1310,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                             envelopeLowerBound = 0;
                             envelopeUpperBound = 1;
                         }
-                        instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["ringModulationHz"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                        instrument.addEnvelope(Config.automationParams.dictionary["ringModulationHz"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                             { item: "note size", weight: 4 },
                             { item: "pitch", weight: 8 },
                             { item: "random", weight: 7 },
@@ -1339,7 +1339,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                         envelopeLowerBound = 0;
                         envelopeUpperBound = 1;
                     }
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["reverb"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["reverb"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 3 },
                         { item: "pitch", weight: 4 },
                         { item: "random", weight: 1 },
@@ -1371,7 +1371,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                         envelopeLowerBound = 0;
                         envelopeUpperBound = 1;
                     }
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["granular"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["granular"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 10 },
                         { item: "pitch", weight: 8 },
                         { item: "random", weight: 2 },
@@ -1394,7 +1394,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                         envelopeLowerBound = 0;
                         envelopeUpperBound = 1;
                     }
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["grainFreq"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["grainFreq"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 10 },
                         { item: "pitch", weight: 8 },
                         { item: "random", weight: 7 },
@@ -1418,7 +1418,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                         envelopeLowerBound = 0;
                         envelopeUpperBound = 1;
                     }
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["grainSize"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["grainSize"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 10 },
                         { item: "pitch", weight: 8 },
                         { item: "random", weight: 7 },
@@ -1443,7 +1443,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                         envelopeLowerBound = 0;
                         envelopeUpperBound = 1;
                     }
-                    instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["grainRange"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                    instrument.addEnvelope(Config.automationParams.dictionary["grainRange"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                         { item: "note size", weight: 10 },
                         { item: "pitch", weight: 8 },
                         { item: "random", weight: 7 },
@@ -1468,7 +1468,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                     envelopeLowerBound = 0;
                     envelopeUpperBound = 1;
                 }
-                instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["noteVolume"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                instrument.addEnvelope(Config.automationParams.dictionary["noteVolume"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                     { item: "pitch", weight: 1 },
                     { item: "random", weight: 4},
                     { item: "punch", weight: 6 },
@@ -1516,7 +1516,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                     instrument.decimalOffset = 0;
 
                     if (Math.random() < 0.6) {
-                        instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["pulseWidth"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                        instrument.addEnvelope(Config.automationParams.dictionary["pulseWidth"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                             { item: "note size", weight: 2 },
                             { item: "pitch", weight: 1 },
                             { item: "random", weight: 3 },
@@ -1657,7 +1657,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                                 envelopeLowerBound = 0;
                                 envelopeUpperBound = 1;
                             }
-                            instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["operatorAmplitude"].index, i, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                            instrument.addEnvelope(Config.automationParams.dictionary["operatorAmplitude"].index, i, Config.newEnvelopes.dictionary[selectWeightedRandom([
                                 { item: "punch", weight: 2 },
                                 { item: "pitch", weight: 1 },
                                 { item: "flare", weight: 3 },
@@ -1679,7 +1679,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                                 envelopeLowerBound = 0;
                                 envelopeUpperBound = 1;
                             }
-                            instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["operatorFrequency"].index, i, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                            instrument.addEnvelope(Config.automationParams.dictionary["operatorFrequency"].index, i, Config.newEnvelopes.dictionary[selectWeightedRandom([
                                 { item: "punch", weight: 2 },
                                 { item: "pitch", weight: 1 },
                                 { item: "flare", weight: 3 },
@@ -1727,7 +1727,7 @@ export class ChangeRandomGeneratedInstrument extends Change {
                             envelopeLowerBound = 0;
                             envelopeUpperBound = 1;
                         }
-                        instrument.addEnvelope(Config.instrumentAutomationTargets.dictionary["feedbackAmplitude"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
+                        instrument.addEnvelope(Config.automationParams.dictionary["feedbackAmplitude"].index, 0, Config.newEnvelopes.dictionary[selectWeightedRandom([
                             { item: "note size", weight: 4 },
                             { item: "punch", weight: 2 },
                             { item: "pitch", weight: 1 },
@@ -1867,11 +1867,11 @@ export class ChangeReorderEffects extends Change {
                         for (let j: number = 0; j < modInstrument.modEffects[i].length; j++) {
                             if (modInstrument.modInstruments[i].indexOf(doc.getCurrentInstrument()) != -1 && modInstrument.modChannels[i].indexOf(doc.channel) != -1) {
                                 if (moveUp && effectIndex - 1 >= 0) {
-                                    if (modInstrument.modEffects[i][j] == effectIndex && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex].type) modInstrument.modEffects[i][j]--
-                                    else if (modInstrument.modEffects[i][j] == effectIndex - 1 && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex - 1].type) modInstrument.modEffects[i][j]++
+                                    if (modInstrument.modEffects[i][j] == effectIndex && Config.automationParams[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex].type) modInstrument.modEffects[i][j]--
+                                    else if (modInstrument.modEffects[i][j] == effectIndex - 1 && Config.automationParams[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex - 1].type) modInstrument.modEffects[i][j]++
                                 } else if (!moveUp && effectIndex + 1 < instrument.effects.length) {
-                                    if (modInstrument.modEffects[i][j] == effectIndex && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex].type) modInstrument.modEffects[i][j]++
-                                    else if (modInstrument.modEffects[i][j] == effectIndex + 1 && Config.modulators[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex + 1].type) modInstrument.modEffects[i][j]--
+                                    if (modInstrument.modEffects[i][j] == effectIndex && Config.automationParams[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex].type) modInstrument.modEffects[i][j]++
+                                    else if (modInstrument.modEffects[i][j] == effectIndex + 1 && Config.automationParams[modInstrument.modulators[i]].associatedEffect == instrument.effects[effectIndex + 1].type) modInstrument.modEffects[i][j]--
                                 }
                             }
                         }
@@ -2500,7 +2500,7 @@ export class ChangeVibratoDepth extends Change {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         let prevVibrato: number = instrument.vibrato;
-        doc.synth.unsetMod(Config.modulators.dictionary["vibrato depth"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["vibrato depth"].index, doc.channel, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
@@ -2517,7 +2517,7 @@ export class ChangeEnvelopeSpeed extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
-        doc.synth.unsetMod(Config.modulators.dictionary["envelope speed"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["envelope speed"].index, doc.channel, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue) {
@@ -2534,7 +2534,7 @@ export class ChangeVibratoSpeed extends Change {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         let prevVibrato: number = instrument.vibrato;
-        doc.synth.unsetMod(Config.modulators.dictionary["vibrato speed"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["vibrato speed"].index, doc.channel, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
@@ -2552,7 +2552,7 @@ export class ChangeVibratoDelay extends Change {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         let prevVibrato: number = instrument.vibrato;
-        doc.synth.unsetMod(Config.modulators.dictionary["vibrato delay"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["vibrato delay"].index, doc.channel, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue || prevVibrato != Config.vibratos.length) {
@@ -2588,7 +2588,7 @@ export class ChangeArpeggioSpeed extends Change {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         instrument.arpeggioSpeed = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["arp speed"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["arpeggio speed"].index, doc.channel, doc.getCurrentInstrument());
 
         doc.notifier.changed();
         if (oldValue != newValue) {
@@ -2726,7 +2726,7 @@ export class ChangePulseWidth extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.pulseWidth = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["pulse width"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["pulse width"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2736,7 +2736,7 @@ export class ChangeDecimalOffset extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.decimalOffset = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["decimal offset"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["decimal offset"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2746,7 +2746,7 @@ export class ChangeSupersawDynamism extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.supersawDynamism = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["dynamism"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["dynamism"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2755,7 +2755,7 @@ export class ChangeSupersawSpread extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.supersawSpread = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["spread"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["spread"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2764,7 +2764,7 @@ export class ChangeSupersawShape extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.supersawShape = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["saw shape"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["saw shape"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2784,7 +2784,7 @@ export class ChangeDetune extends ChangeInstrumentSlider {
         super(doc);
         this._instrument.detune = newValue + Config.detuneCenter;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["detune"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["detune"].index, doc.channel, doc.getCurrentInstrument());
         if (oldValue != newValue) this._didSomething();
     }
 }
@@ -2794,7 +2794,7 @@ export class ChangeRingMod extends ChangeInstrumentSlider {
         super(doc);
         effect.ringModulation = newValue;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["ring modulation"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["ring modulation"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         this._didSomething();
     }
@@ -2805,7 +2805,7 @@ export class ChangeRingModHz extends ChangeInstrumentSlider {
         super(doc);
         effect.ringModulationHz = newValue;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["ring mod hertz"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["ring modulation frequency"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         this._didSomething();
     }
@@ -2828,7 +2828,7 @@ export class ChangeGranular extends ChangeInstrumentSlider {
         super(doc);
         effect.granular = newValue;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         this._didSomething();
     }
@@ -2839,7 +2839,7 @@ export class ChangeGrainSize extends ChangeInstrumentSlider {
         super(doc);
         effect.grainSize = newValue;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         this._didSomething();
     }
@@ -2850,7 +2850,7 @@ export class ChangeGrainAmounts extends ChangeInstrumentSlider {
         super(doc);
         effect.grainAmounts = newValue;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["granular"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         this._didSomething();
     }
@@ -2861,7 +2861,7 @@ export class ChangeGrainRange extends ChangeInstrumentSlider {
         super(doc);
         effect.grainRange = newValue;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         this._didSomething();
     }
@@ -2872,7 +2872,7 @@ export class ChangeDistortion extends ChangeInstrumentSlider {
         super(doc);
         effect.distortion = newValue;
         doc.notifier.changed();
-        doc.synth.unsetMod(Config.modulators.dictionary["distortion"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["distortion"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         this._didSomething();
     }
@@ -2884,7 +2884,7 @@ export class ChangeClippingInGain extends ChangeInstrumentSlider {
         effect.clippingInGain = newValue;
         doc.notifier.changed();
         doc.changedEffect = true;
-        //doc.synth.unsetMod(Config.modulators.dictionary["clipping ingain"].index, doc.channel, doc.getCurrentInstrument());
+        //doc.synth.unsetMod(Config.automationParams.dictionary["clipping ingain"].index, doc.channel, doc.getCurrentInstrument());
         this._didSomething();
     }
 }
@@ -2895,7 +2895,7 @@ export class ChangeClippingThreshold extends ChangeInstrumentSlider {
         effect.clippingThreshold = newValue;
         doc.notifier.changed();
         doc.changedEffect = true;
-        //doc.synth.unsetMod(Config.modulators.dictionary["clipping threshold"].index, doc.channel, doc.getCurrentInstrument());
+        //doc.synth.unsetMod(Config.automationParams.dictionary["clipping threshold"].index, doc.channel, doc.getCurrentInstrument());
         this._didSomething();
     }
 }
@@ -2914,7 +2914,7 @@ export class ChangeBitcrusherFreq extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.bitcrusherFreq = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["bit crush"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["bit crush"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -2924,7 +2924,7 @@ export class ChangeBitcrusherFreq extends ChangeInstrumentSlider {
 export class ChangeBitcrusherQuantization extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
-        doc.synth.unsetMod(Config.modulators.dictionary["freq crush"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["frequency crush"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         effect.bitcrusherQuantization = newValue;
         doc.notifier.changed();
@@ -2936,7 +2936,7 @@ export class ChangeStringSustain extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.stringSustain = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["sustain"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["sustain"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -3004,7 +3004,7 @@ export class ChangeEQFilterSimpleCut extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.eqFilterSimpleCut = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["post eq cut"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["eq filter cut"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         doc.changedEffect = true;
         this._didSomething();
@@ -3015,7 +3015,7 @@ export class ChangeEQFilterSimplePeak extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.eqFilterSimplePeak = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["post eq peak"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["eq filter peak"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         doc.changedEffect = true;
         this._didSomething();
@@ -3026,7 +3026,7 @@ export class ChangeNoteFilterSimpleCut extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.noteFilterSimpleCut = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["pre eq cut"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["pre eq cut"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -3036,7 +3036,7 @@ export class ChangeNoteFilterSimplePeak extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.noteFilterSimplePeak = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["pre eq peak"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["pre eq peak"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -3110,18 +3110,18 @@ export class ChangeFilterAddPoint extends UndoableChange {
                 // When deleting a filter control point, find all envelopes that targeted that
                 // point and clear them, and all envelopes that targeted later points and
                 // decrement those to keep them in sync with the new list of points.
-                const automationTarget: AutomationTarget = Config.instrumentAutomationTargets[target];
-                if (automationTarget.isFilter && (automationTarget.effect == EffectType.eqFilter) == isNoteFilter) {
-                    if (automationTarget.maxCount == Config.filterMaxPoints) {
+                const automationTarget: AutomationParameter = Config.automationParams[target];
+                if (automationTarget.isFilter && (automationTarget.associatedEffect == EffectType.eqFilter) == isNoteFilter) {
+                    if (automationTarget.maxIndex == Config.filterMaxPoints - 1) {
                         if (targetIndex == index) {
-                            target = Config.instrumentAutomationTargets.dictionary["none"].index;
+                            target = Config.automationParams.dictionary["none"].index;
                             targetIndex = 0;
                         } else if (targetIndex > index) {
                             targetIndex--;
                         }
                     } else {
                         if (filterSettings.controlPointCount <= 1) {
-                            target = Config.instrumentAutomationTargets.dictionary["none"].index;
+                            target = Config.automationParams.dictionary["none"].index;
                             targetIndex = 0;
                         }
                     }
@@ -3918,8 +3918,8 @@ export class ChangeModChannel extends Change {
         }
 
         // None, or swapping from song to instrument/vice-versa
-        if (index == 0 || index == 1 || (Config.modulators[instrument.modulators[mod]].forSong && index >= 2) || (!Config.modulators[instrument.modulators[mod]].forSong && index < 2)) {
-            instrument.modulators[mod] = Config.modulators.dictionary["none"].index;
+        if (index == 0 || index == 1 || (Config.automationParams[instrument.modulators[mod]].forSong && index >= 2) || (!Config.automationParams[instrument.modulators[mod]].forSong && index < 2)) {
+            instrument.modulators[mod] = Config.automationParams.dictionary["none"].index;
             if (index == 0) {
                 instrument.modChannels[mod] = [-2]
                 instrument.modInstruments[mod] = [0]
@@ -3965,27 +3965,27 @@ export class ChangeModSetting extends Change {
         //     text = text.substr(2);
         //     for (let i: number = 0; i < usedInstruments.length; i++) {
         //         const tgtInstrument: Instrument = usedInstruments[i];
-        //         if (!(tgtInstrument.effectsIncludeType(Config.modulators.dictionary[text].associatedEffect))) {
-        //             doc.record(new ChangeToggleEffects(doc, Config.modulators.dictionary[text].associatedEffect, tgtInstrument));
+        //         if (!(tgtInstrument.effectsIncludeType(Config.automationParams.dictionary[text].associatedEffect))) {
+        //             doc.record(new ChangeToggleEffects(doc, Config.automationParams.dictionary[text].associatedEffect, tgtInstrument));
         //         }
-        //         if (!(tgtInstrument.mdeffects & (1 << Config.modulators.dictionary[text].associatedMDEffect))) {
-        //             doc.record(new ChangeToggleMDEffects(doc, Config.modulators.dictionary[text].associatedMDEffect, tgtInstrument));
+        //         if (!(tgtInstrument.mdeffects & (1 << Config.automationParams.dictionary[text].associatedMDEffect))) {
+        //             doc.record(new ChangeToggleMDEffects(doc, Config.automationParams.dictionary[text].associatedMDEffect, tgtInstrument));
         //         }
         //     }
         // }
 
-        let setting: number = Config.modulators.dictionary[text].index;
+        let setting: number = Config.automationParams.dictionary[text].index;
 
         if (instrument.modulators[mod] != setting) {
 
             instrument.modulators[mod] = setting;
-            if (Config.modulators.dictionary[text].associatedEffect == EffectType.length) instrument.modEffects[mod] = [-1]
+            if (Config.automationParams.dictionary[text].associatedEffect == EffectType.length) instrument.modEffects[mod] = [-1]
             else {
                 instrument.modEffects[mod] = [0];
                 for (let i: number = 0; i < instrument.modInstruments[mod].length; i++) {
                     let usedInstrument: Instrument = doc.song.channels[instrument.modChannels[mod][i]].instruments[instrument.modInstruments[mod][i]];
                     for (let k: number = 0; k < usedInstrument.effects.length; k++) {
-                        if (usedInstrument.effects[k].type == Config.modulators.dictionary[text].associatedEffect) {
+                        if (usedInstrument.effects[k].type == Config.automationParams.dictionary[text].associatedEffect) {
                             instrument.modEffects[mod] = [k];
                             break;
                         }
@@ -3994,7 +3994,7 @@ export class ChangeModSetting extends Change {
             }
 
             // Go through each pattern where this instrument is set, and clean up any notes that are out of bounds
-            let cap: number = Config.modulators[setting].maxRawVol;
+            let cap: number = Config.automationParams[setting].maxRawVol;
 
             for (let i: number = 0; i < doc.song.patternsPerChannel; i++) {
                 const pattern: Pattern = doc.song.channels[doc.channel].patterns[i];
@@ -4025,7 +4025,7 @@ export class ChangeModEffect extends Change {
         let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
 
         // find the effect that this goes to
-        let effectType: EffectType = Config.modulators[instrument.modulators[mod]].associatedEffect
+        let effectType: EffectType = Config.automationParams[instrument.modulators[mod]].associatedEffect as EffectType
 
         let validEffects: number[] = [];
         for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
@@ -4841,7 +4841,7 @@ export class ChangeTempo extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
         doc.song.tempo = Math.max(Config.tempoMin, Math.min(Config.tempoMax, Math.round(newValue)));
-        doc.synth.unsetMod(Config.modulators.dictionary["tempo"].index);
+        doc.synth.unsetMod(Config.automationParams.dictionary["tempo"].index);
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -4851,7 +4851,7 @@ export class ChangeEchoDelay extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.echoDelay = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["echo delay"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["echo delay"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4862,7 +4862,7 @@ export class ChangeEchoSustain extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.echoSustain = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["echo"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["echo"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4873,7 +4873,7 @@ export class ChangeEchoPingPong extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.echoPingPong = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["echo ping pong"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["echo ping pong"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4884,7 +4884,7 @@ export class ChangeFlanger extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.flanger = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["flanger"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["flanger"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4895,7 +4895,7 @@ export class ChangeFlangerSpeed extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.flangerSpeed = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["flanger speed"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["flanger speed"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4906,7 +4906,7 @@ export class ChangeFlangerDepth extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.flangerDepth = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["flanger depth"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["flanger depth"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4917,7 +4917,7 @@ export class ChangeFlangerFeedback extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.flangerFeedback = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["flanger feedback"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["flanger feedback"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4928,7 +4928,7 @@ export class ChangeChorus extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.chorus = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["chorus"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["chorus"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4939,7 +4939,7 @@ export class ChangeReverb extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.reverb = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["reverb"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["reverb"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4950,7 +4950,7 @@ export class ChangeReverbWetDryMix extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.reverbWetDryMix = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["reverb wet/dry"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["reverb wet/dry"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4961,7 +4961,7 @@ export class ChangeReverbSend extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super(doc);
         effect.reverbSend = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["reverb send"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["reverb send"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -4972,7 +4972,7 @@ export class ChangeSongReverb extends Change {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super();
         doc.song.reverb = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["song reverb"].index);
+        doc.synth.unsetMod(Config.automationParams.dictionary["song reverb"].index);
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -5563,7 +5563,7 @@ export class ChangeGain extends Change {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super();
         effect.gain = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["gain"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["gain"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -5574,7 +5574,7 @@ export class ChangePan extends Change {
     constructor(doc: SongDocument, effect: Effect, newValue: number) {
         super();
         effect.pan = newValue;
-        doc.synth.unsetMod(Config.modulators.dictionary["pan"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["pan"].index, doc.channel, doc.getCurrentInstrument());
         doc.changedEffect = true;
         doc.notifier.changed();
         this._didSomething();
@@ -5821,6 +5821,7 @@ export class ChangeSetEnvelopeTarget extends Change {
         const oldIndex: number = instrument.envelopes[envelopeIndex].index;
         if (oldTarget != target || oldIndex != targetIndex) {
             instrument.envelopes[envelopeIndex].target = target;
+            console.log(instrument.envelopes[envelopeIndex].target)
             instrument.envelopes[envelopeIndex].index = targetIndex;
             instrument.preset = instrument.type;
             doc.notifier.changed();
@@ -5904,7 +5905,7 @@ export class ChangePerEnvelopeSpeed extends IndexableChange {
     constructor(doc: SongDocument, oldSpeed: number, speed: number, index: number) {
         super(index, doc);
         this._instrument.envelopes[index].perEnvelopeSpeed = speed;
-        doc.synth.unsetMod(Config.modulators.dictionary["individual envelope speed"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["individual envelope speed"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldSpeed != speed) this._didSomething();
     }
@@ -5915,7 +5916,7 @@ export class ChangeEnvelopeLowerBound extends IndexableChange {
         super(index, doc);
         bound = bound > Config.perEnvelopeBoundMax ? Config.perEnvelopeBoundMax : bound < Config.perEnvelopeBoundMin ? Config.perEnvelopeBoundMin : Math.round(bound * 10) != bound * 10 ? Config.perEnvelopeBoundMin : bound;
         this._instrument.envelopes[index].perEnvelopeLowerBound = bound;
-        doc.synth.unsetMod(Config.modulators.dictionary["individual envelope lower bound"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["individual envelope lower bound"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldBound != bound) this._didSomething();
     }
@@ -5926,7 +5927,7 @@ export class ChangeEnvelopeUpperBound extends IndexableChange {
         super(index, doc);
         bound = bound > Config.perEnvelopeBoundMax ? Config.perEnvelopeBoundMax : bound < Config.perEnvelopeBoundMin ? Config.perEnvelopeBoundMin : Math.round(bound * 10) != bound * 10 ? Config.perEnvelopeBoundMin : bound;
         this._instrument.envelopes[index].perEnvelopeUpperBound = bound;
-        doc.synth.unsetMod(Config.modulators.dictionary["individual envelope upper bound"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["individual envelope upper bound"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldBound != bound) this._didSomething();
     }

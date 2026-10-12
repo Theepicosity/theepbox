@@ -134,56 +134,6 @@ export const enum EffectType {
     length,
 }
 
-export const enum EnvelopeComputeIndex {
-    noteVolume,
-    mixVolume,
-    noteFilterAllFreqs,
-    pulseWidth,
-    stringSustain,
-    unison,
-    operatorFrequency0, operatorFrequency1, operatorFrequency2, operatorFrequency3, operatorFrequency4, operatorFrequency5,
-    operatorAmplitude0, operatorAmplitude1, operatorAmplitude2, operatorAmplitude3, operatorAmplitude4, operatorAmplitude5,
-    feedbackAmplitude,
-    pitchShift,
-    detune,
-    vibratoDepth,
-    //vibratoSpeed, doesn't follow normal envelope pattern; will figure out. //if you fix this you need to update the url
-    noteFilterFreq0, noteFilterFreq1, noteFilterFreq2, noteFilterFreq3, noteFilterFreq4, noteFilterFreq5, noteFilterFreq6, noteFilterFreq7,
-    noteFilterGain0, noteFilterGain1, noteFilterGain2, noteFilterGain3, noteFilterGain4, noteFilterGain5, noteFilterGain6, noteFilterGain7,
-    decimalOffset, 
-    supersawDynamism, 
-	supersawSpread, 
-    supersawShape, 
-    panning,
-    distortion,
-    bitcrusherQuantization,
-    bitcrusherFrequency,
-    chorus,
-    echoSustain,
-    reverb,
-    arpeggioSpeed,
-    ringModulation,
-    ringModulationHz,
-    granular,
-    grainAmount,
-    grainSize,
-    grainRange,
-    echoDelay,
-    gain,
-    flanger,
-    flangerSpeed,
-    flangerDepth,
-    flangerFeedback,
-    clippingInGain,
-    clippingThreshold,
-    reverbWetDryMix,
-    reverbSend,
-    echoPingPong,
-    //Add more here
-
-    length,
-}
-
 export const enum LFOEnvelopeTypes {
     sine,
     square,
@@ -276,21 +226,6 @@ export interface Unison extends BeepBoxOption {
     readonly sign: number;
 }
 
-export interface Modulator extends BeepBoxOption {
-    readonly name: string; // name that shows up in song editor UI
-    readonly pianoName: string; // short name that shows up in mod piano UI
-    readonly maxRawVol: number; // raw
-    readonly newNoteVol: number; // raw
-    readonly forSong: boolean; // true - setting is song scope
-    convertRealFactor: number; // offset that needs to be applied to get a "real" number display of value, for UI purposes
-    readonly associatedEffect: EffectType; // effect that should be enabled for this modulator to work properly. If unused, set to EffectType.length.
-    readonly associatedMDEffect: MDEffectType; // like above but for MD effects. If unused, set to MDEffectType.length.
-    readonly promptName: string; // long-as-needed name that shows up in tip prompt
-    readonly promptDesc: string[]; // paragraph(s) describing how to use this mod
-    invertSliderIndicator?: boolean; // for whether or not you want to invert the slider indicator
-    readonly maxIndex: number;
-}
-
 export interface Chord extends BeepBoxOption {
     readonly customInterval: boolean;
     readonly arpeggiates: boolean;
@@ -319,17 +254,24 @@ export interface Envelope extends BeepBoxOption {
     readonly speed: number;
 }
 
-export interface AutomationTarget extends BeepBoxOption {
-    readonly computeIndex: EnvelopeComputeIndex /*| InstrumentAutomationIndex*/ | null;
-    readonly displayName: string;
-    //readonly perNote: boolean; // Whether to compute envelopes on a per-note basis.
-    readonly interleave: boolean; // Whether to interleave this target with the next one in the menu (e.g. filter frequency and gain).
-	readonly isFilter: boolean; // Filters are special because the maxCount depends on other instrument settings.
-	//readonly range: number | null; // set if automation is allowed.
-    readonly maxCount: number;
-    readonly effect: EffectType | null;
-    readonly mdeffect: MDEffectType | null;
-    readonly compatibleInstruments: InstrumentType[] | null;
+export interface AutomationParameter extends BeepBoxOption {
+    readonly name: string; // name that shows up in song editor UI
+    readonly displayName: string; // short name that shows up in mod piano UI
+    readonly maxRawVol: number; // raw
+    readonly newNoteVol: number; // raw
+    readonly forSong: boolean; // true - setting is song scope
+    convertRealFactor: number; // offset that needs to be applied to get a "real" number display of value, for UI purposes
+    readonly isFilter: boolean; // Filters are special because the maxCount depends on other instrument settings.
+    readonly associatedInstruments: InstrumentType[] | null; // instrument that applies to this modulator. If unused, set to [InstrumentType.length].
+    readonly associatedEffect: EffectType | null; // effect that should be enabled for this modulator to work properly. If unused, set to EffectType.length.
+    readonly associatedMDEffect: MDEffectType | null; // like above but for MD effects. If unused, set to MDEffectType.length.
+    readonly canBeEnvelope: boolean;
+    readonly canBeModulator: boolean;
+    readonly promptName: string; // long-as-needed name that shows up in tip prompt
+    //readonly promptDesc: string[]; // paragraph(s) describing how to use this mod
+    invertSliderIndicator?: boolean; // for whether or not you want to invert the slider indicator
+    readonly interleave?: boolean; // Whether to interleave this target with the next one in the menu (e.g. filter frequency and gain).
+    readonly maxIndex: number; // add 1 to get the maxCount...?
 }
 
 export const enum SampleLoadingStatus {
@@ -1259,7 +1201,7 @@ export class Config {
         //for modbox; voices = riffapp, spread = intervals, offset = offsets, expression = volume, and sign = signs
     ]);
     //i wanna have these in alphabetical order cuz the alphabet is cool!
-    public static readonly effectNames: ReadonlyArray<string> = ["bitcrusher", "chorus", "clipping", "distortion", "echo", "flanger", "gain", "granular", "panning", "post eq", "reverb", "ring mod" ];
+    public static readonly effectNames: ReadonlyArray<string> = ["bitcrusher", "chorus", "clipping", "distortion", "echo", "flanger", "gain", "granular", "panning", "eq filter", "reverb", "ring modulation" ];
     public static readonly effectDisplayNames: ReadonlyArray<string> = ["Bitcrusher", "Chorus", "Clipping", "Distortion", "Echo", "Flanger", "Gain", "Granular", "Panning", "Post EQ", "Reverb", "Ring Mod" ];
     public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.bitcrusher, EffectType.chorus, EffectType.clipping, EffectType.distortion, EffectType.echo, EffectType.flanger, EffectType.gain, EffectType.granular, EffectType.panning, EffectType.eqFilter, EffectType.reverb, EffectType.ringModulation];
     public static readonly effectCount: 12;
@@ -1782,60 +1724,7 @@ export class Config {
 
     public static readonly maxEnvelopeCount: number = 16;
     public static readonly defaultAutomationRange: number = 13;
-    public static readonly instrumentAutomationTargets: DictionaryArray<AutomationTarget> = toNameMap([
-        { name: "none", computeIndex: null, displayName: "none",             /*perNote: false,*/ interleave: false, isFilter: false, /*range: 0,                              */    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "noteVolume", computeIndex: EnvelopeComputeIndex.noteVolume, displayName: "pre volume",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.volumeRange,             */    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "mixVolume", computeIndex: EnvelopeComputeIndex.mixVolume, displayName: "post volume",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.volumeRange,             */    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "pulseWidth", computeIndex: EnvelopeComputeIndex.pulseWidth, displayName: "pulse width",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.pulseWidthRange,         */    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [InstrumentType.pwm, InstrumentType.supersaw] },
-        { name: "stringSustain", computeIndex: EnvelopeComputeIndex.stringSustain, displayName: "sustain",          /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.stringSustainRange,      */    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [InstrumentType.pickedString] },
-        { name: "unison", computeIndex: EnvelopeComputeIndex.unison, displayName: "unison",           /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [InstrumentType.chip, InstrumentType.harmonics, InstrumentType.pickedString, InstrumentType.customChipWave, InstrumentType.pwm, InstrumentType.noise, InstrumentType.spectrum, InstrumentType.drumset] },
-        { name: "operatorFrequency", computeIndex: EnvelopeComputeIndex.operatorFrequency0, displayName: "fm# freq",         /*perNote:  true,*/ interleave: true, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: Config.operatorCount+2, effect: null, mdeffect: null, compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
-        { name: "operatorAmplitude", computeIndex: EnvelopeComputeIndex.operatorAmplitude0, displayName: "fm# volume",       /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.operatorAmplitudeMax + 1,*/    maxCount: Config.operatorCount+2, effect: null, mdeffect: null, compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
-        { name: "feedbackAmplitude", computeIndex: EnvelopeComputeIndex.feedbackAmplitude, displayName: "fm feedback",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.operatorAmplitudeMax + 1,*/    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
-        { name: "pitchShift", computeIndex: EnvelopeComputeIndex.pitchShift, displayName: "pitch shift",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.pitchShiftRange,         */    maxCount: 1, effect: null, mdeffect: MDEffectType.pitchShift, compatibleInstruments: null },
-        { name: "detune", computeIndex: EnvelopeComputeIndex.detune, displayName: "detune",           /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.detuneMax + 1,           */    maxCount: 1, effect: null, mdeffect: MDEffectType.detune, compatibleInstruments: null },
-        { name: "vibratoDepth", computeIndex: EnvelopeComputeIndex.vibratoDepth, displayName: "vibrato depth",    /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: null, mdeffect: MDEffectType.vibrato, compatibleInstruments: null },
-        //{ name: "vibratoSpeed", computeIndex: EnvelopeComputeIndex.vibratoSpeed, displayName: "vibrato speed", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.vibrato, compatibleInstruments: null },
-        { name: "noteFilterAllFreqs", computeIndex: EnvelopeComputeIndex.noteFilterAllFreqs, displayName: "pre eq freqs",  /*perNote:  true,*/ interleave: false, isFilter: true, /*range: null,                           */    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "noteFilterFreq", computeIndex: EnvelopeComputeIndex.noteFilterFreq0, displayName: "pre eq # freq", /*perNote:  true,*/ interleave: false/*true*/, isFilter: true, /*range: Config.filterFreqRange,     */        maxCount: Config.filterMaxPoints, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "decimalOffset", computeIndex: EnvelopeComputeIndex.decimalOffset, displayName: "decimal offset",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.pulseWidthRange,         */    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [InstrumentType.pwm, InstrumentType.supersaw] },
-        { name: "supersawDynamism",       computeIndex:       EnvelopeComputeIndex.supersawDynamism,       displayName: "dynamism",         /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.supersawDynamismMax + 1, */    maxCount: 1,    effect: null, mdeffect: null,                    compatibleInstruments: [InstrumentType.supersaw]},
-		{ name: "supersawSpread",         computeIndex:       EnvelopeComputeIndex.supersawSpread,         displayName: "spread",           /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.supersawSpreadMax + 1,   */    maxCount: 1,    effect: null, mdeffect: null,                    compatibleInstruments: [InstrumentType.supersaw]},
-        { name: "supersawShape", computeIndex: EnvelopeComputeIndex.supersawShape, displayName: "saw↔pulse",        /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.supersawShapeMax + 1,    */    maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [InstrumentType.supersaw] },
-        { name: "gain", computeIndex: EnvelopeComputeIndex.gain, displayName: "gain",  /*perNote:  false,*/                  interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.gain, mdeffect: null, compatibleInstruments: null },
-        { name: "panning", computeIndex: EnvelopeComputeIndex.panning, displayName: "panning",  /*perNote:  false,*/                  interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.panning, mdeffect: null, compatibleInstruments: null },
-        { name: "distortion", computeIndex: EnvelopeComputeIndex.distortion, displayName: "distortion", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.distortion, mdeffect: null, compatibleInstruments: null },
-        { name: "clippingInGain", computeIndex: EnvelopeComputeIndex.clippingInGain, displayName: "clipping in-gain", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.clipping, mdeffect: null, compatibleInstruments: null },
-        { name: "clippingThreshold", computeIndex: EnvelopeComputeIndex.clippingThreshold, displayName: "clipping threshold", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.clipping, mdeffect: null, compatibleInstruments: null },
-        { name: "bitcrusherQuantization", computeIndex: EnvelopeComputeIndex.bitcrusherQuantization, displayName: "bitcrush", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.bitcrusher, mdeffect: null, compatibleInstruments: null },
-        { name: "bitcrusherFrequency", computeIndex: EnvelopeComputeIndex.bitcrusherFrequency, displayName: "freq crush", /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.bitcrusher, mdeffect: null, compatibleInstruments: null },
-        { name: "flanger", computeIndex: EnvelopeComputeIndex.flanger, displayName: "flanger", /*perNote:  false,*/                      interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.flanger, mdeffect: null, compatibleInstruments: null },
-        { name: "flangerSpeed", computeIndex: EnvelopeComputeIndex.flanger, displayName: "flanger speed", /*perNote:  false,*/                      interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.flanger, mdeffect: null, compatibleInstruments: null },
-        { name: "flangerDepth", computeIndex: EnvelopeComputeIndex.flanger, displayName: "flanger depth", /*perNote:  false,*/                      interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.flanger, mdeffect: null, compatibleInstruments: null },
-        { name: "flangerFeedback", computeIndex: EnvelopeComputeIndex.flanger, displayName: "flanger feedback", /*perNote:  false,*/                      interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.flanger, mdeffect: null, compatibleInstruments: null },
-        { name: "chorus", computeIndex: EnvelopeComputeIndex.chorus, displayName: "chorus", /*perNote:  false,*/                      interleave: false, isFilter: false, /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.chorus, mdeffect: null, compatibleInstruments: null },
-        { name: "echoSustain", computeIndex: EnvelopeComputeIndex.echoSustain, displayName: "echo", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.echo, mdeffect: null, compatibleInstruments: null },
-        { name: "reverb", computeIndex: EnvelopeComputeIndex.reverb, displayName: "reverb", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.reverb, mdeffect: null, compatibleInstruments: null },
-        { name: "reverbWetDryMix", computeIndex: EnvelopeComputeIndex.reverbWetDryMix, displayName: "reverb wet/dry", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.reverb, mdeffect: null, compatibleInstruments: null },
-        { name: "reverbSend", computeIndex: EnvelopeComputeIndex.reverbSend, displayName: "reverb send", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: EffectType.reverb, mdeffect: null, compatibleInstruments: null },
-        { name: "arpeggioSpeed", computeIndex: EnvelopeComputeIndex.arpeggioSpeed, displayName: "arpeggio speed", /*perNote:  false,*/              interleave: false, isFilter: false,  /*range: Config.chorusRange,    */  maxCount: 1, effect: null, mdeffect: MDEffectType.chord, compatibleInstruments: null },
-        { name: "ringModulation", computeIndex: EnvelopeComputeIndex.ringModulation, displayName: "ring mod", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.ringModulation, mdeffect: null, compatibleInstruments: null },
-        { name: "ringModulationHz", computeIndex: EnvelopeComputeIndex.ringModulationHz, displayName: "ring mod hz", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.ringModulation, mdeffect: null, compatibleInstruments: null },
-        { name: "granular", computeIndex: EnvelopeComputeIndex.granular, displayName: "granular", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.granular, mdeffect: null, compatibleInstruments: null },
-        { name: "grainFreq", computeIndex: EnvelopeComputeIndex.grainAmount, displayName: "grain freq", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.granular, mdeffect: null, compatibleInstruments: null },
-        { name: "grainSize", computeIndex: EnvelopeComputeIndex.grainSize, displayName: "grain size", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.granular, mdeffect: null, compatibleInstruments: null },
-        { name: "grainRange", computeIndex: EnvelopeComputeIndex.grainRange, displayName: "grain range", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.granular, mdeffect: null, compatibleInstruments: null },
-        { name: "echoDelay", computeIndex: EnvelopeComputeIndex.echoDelay, displayName: "echo delay", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.echo, mdeffect: null, compatibleInstruments: null },
-        { name: "echoPingPong", computeIndex: EnvelopeComputeIndex.echoPingPong, displayName: "echo ping pong", interleave: false, isFilter: false, maxCount: 1, effect: EffectType.echo, mdeffect: null, compatibleInstruments: null },
-        // Controlling filter gain is less obvious and intuitive than controlling filter freq, so to avoid confusion I've disabled it for now...
-        //{name: "noteFilterGain",         computeIndex:       EnvelopeComputeIndex.noteFilterGain0,        displayName: "n. filter # vol",  /*perNote:  true,*/ interleave: false, isFilter:  true, range: Config.filterGainRange,             maxCount: Config.filterMaxPoints, effect: EffectType.eqFilter, compatibleInstruments: null},
-        /*
-        {name: "eqFilterAllFreqs",       computeIndex: InstrumentAutomationIndex.eqFilterAllFreqs,       displayName: "eq filter freqs",  perNote: false, interleave: false, isFilter:  true, range: null,                               maxCount: 1,    effect: null,                    compatibleInstruments: null},
-        {name: "eqFilterFreq",           computeIndex: InstrumentAutomationIndex.eqFilterFreq0,          displayName: "eq filter # freq", perNote: false, interleave:  true, isFilter:  true, range: Config.filterFreqRange,             maxCount: Config.filterMaxPoints, effect: null,  compatibleInstruments: null},
-        {name: "eqFilterGain",           computeIndex: InstrumentAutomationIndex.eqFilterGain0,          displayName: "eq filter # vol",  perNote: false, interleave: false, isFilter:  true, range: Config.filterGainRange,             maxCount: Config.filterMaxPoints, effect: null,  compatibleInstruments: null},
-        {name: "envelope#",              computeIndex: null,                                             displayName: "envelope",         perNote: false, interleave: false, isFilter: false, range: Config.defaultAutomationRange,      maxCount: Config.maxEnvelopeCount, effect: null, compatibleInstruments: null}, // maxCount special case for envelopes to be allowed to target earlier ones.
-        */
-    ]);
+
     public static readonly operatorWaves: DictionaryArray<OperatorWave> = toNameMap([
 		{ name: "sine", samples: Config.sineWave },
 		{ name: "triangle", samples: Config.generateTriWave() },
@@ -1866,143 +1755,1017 @@ export class Config {
     public static readonly barEditorHeight: number = 10;
 
     // Careful about changing index ordering for this. Index is stored in URL/JSON etc.
-    public static readonly modulators: DictionaryArray<Modulator> = toNameMap([
-        { name: "none", pianoName: "None", maxRawVol: 6, newNoteVol: 6, forSong: true, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "No Mod Setting", promptDesc: [ "No setting has been chosen yet, so this modulator will have no effect. Try choosing a setting with the dropdown, then click this '?' again for more info.", "[$LO - $HI]" ] },
-        { name: "song volume", pianoName: "Volume", maxRawVol: 100, newNoteVol: 100, forSong: true, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Song Volume", promptDesc: [ "This setting affects the overall volume of the song, just like the main volume slider.", "At $HI, the volume will be unchanged from default, and it will get gradually quieter down to $LO.", "[MULTIPLICATIVE] [$LO - $HI] [%]" ] },
-        { name: "tempo", pianoName: "Tempo", maxRawVol: Config.tempoMax - Config.tempoMin, newNoteVol: Math.ceil((Config.tempoMax - Config.tempoMin) / 2), forSong: true, convertRealFactor: Config.tempoMin, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Song Tempo", promptDesc: [ "This setting controls the speed your song plays at, just like the tempo slider.", "When you first make a note for this setting, it will default to your current tempo. Raising it speeds up the song, up to $HI BPM, and lowering it slows it down, to a minimum of $LO BPM.", "Note that you can make a 'swing' effect by rapidly changing between two tempo values.", "[OVERWRITING] [$LO - $HI] [BPM]" ] },
-        { name: "song reverb", pianoName: "Reverb", maxRawVol: Config.reverbRange * 2, newNoteVol: Config.reverbRange, forSong: true, convertRealFactor: -Config.reverbRange, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Song Reverb", promptDesc: [ "This setting affects the overall reverb of your song. It works by multiplying existing reverb for instruments, so those with no reverb set will be unaffected.", "At $MID, all instruments' reverb will be unchanged from default. This increases up to double the reverb value at $HI, or down to no reverb at $LO.", "[MULTIPLICATIVE] [$LO - $HI]" ] },
-        { name: "next bar", pianoName: "Next Bar", maxRawVol: 1, newNoteVol: 1, forSong: true, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Go To Next Bar", promptDesc: [ "This setting functions a little different from most. Wherever a note is placed, the song will jump immediately to the next bar when it is encountered.", "This jump happens at the very start of the note, so the length of a next-bar note is irrelevant. Also, the note can be value 0 or 1, but the value is also irrelevant - wherever you place a note, the song will jump.", "You can make mixed-meter songs or intro sections by cutting off unneeded beats with a next-bar modulator.", "[$LO - $HI]" ] },
-        { name: "pre volume", pianoName: "Pre Vol.", maxRawVol: Config.volumeRange, newNoteVol: Math.ceil(Config.volumeRange / 2), forSong: false, convertRealFactor: Math.ceil(-Config.volumeRange / 2.0), associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Pre Volume", promptDesc: [ "This setting affects the volume of your instrument as if its note size had been scaled.", "At $MID, an instrument's volume will be unchanged from default. This means you can still use the volume sliders to mix the base volume of instruments. The volume gradually increases up to $HI, or decreases down to mute at $LO.", "This setting was the default for volume modulation in JummBox for a long time. Due to some new effects like distortion and bitcrush, pre volume doesn't always allow fine volume control. Also, this modulator affects the value of FM modulator waves instead of just carriers. This can distort the sound which may be useful, but also may be undesirable. In those cases, use the 'post volume' modulator instead, which will always just scale the volume with no added effects.", "For display purposes, this mod will show up on the instrument volume slider, as long as there is not also an active 'post volume' modulator anyhow. However, as mentioned, it works more like changing pre volume.", "[MULTIPLICATIVE] [$LO - $HI]" ] },
-        { name: "gain", pianoName: "Gain", maxRawVol: Config.volumeRange / 2 * Config.gainRangeMult, newNoteVol: Math.ceil(Config.volumeRange / 2 * Config.gainRangeMult / 2), forSong: false, convertRealFactor: 0, associatedEffect: EffectType.gain, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Gain", promptDesc: [ "This setting controls the gain of your instrument.", "At $LO, the instrument is muted, at $MID it will be unchanged, and at $HI, it will have maximum gain.", "[OVERWRITING] [$LO - $HI] [L-R]" ] },
-        { name: "pan", pianoName: "Pan", maxRawVol: Config.panMax, newNoteVol: Math.ceil(Config.panMax / 2), forSong: false, convertRealFactor: 0, associatedEffect: EffectType.panning, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Panning", promptDesc: [ "This setting controls the panning of your instrument, just like the panning slider.", "At $LO, your instrument will sound like it is coming fully from the left-ear side. At $MID it will be right in the middle, and at $HI, it will sound like it's on the right.", "[OVERWRITING] [$LO - $HI] [L-R]" ] },
-        { name: "reverb", pianoName: "Reverb", maxRawVol: Config.reverbRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.reverb, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Reverb", promptDesc: [ "This setting controls the reverb of your insturment, just like the reverb slider.", "At $LO, your instrument will have no reverb. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "reverb wet/dry", pianoName: "Reverb Wet/Dry", maxRawVol: Config.reverbWetDryMixRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.reverb, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Reverb Wet/Dry", promptDesc: [ "This setting controls the wet/dry mix of the instrument reverb.", "At $LO, 100% of the original instrument will come through. At $HI, only the effect will come through.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "reverb send", pianoName: "Reverb Send", maxRawVol: Config.reverbSendRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.reverb, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Reverb", promptDesc: [ "This setting controls the send of the instrument reverb.", "At $LO, the instrument will not have any reverb, and at $HI, the instrument will receive maximum reverb.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "distortion", pianoName: "Distortion", maxRawVol: Config.distortionRange-1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.distortion, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Distortion", promptDesc: [ "This setting controls the amount of distortion for your instrument, just like the distortion slider.", "At $LO, your instrument will have no distortion. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]" ] },
-        { name: "clipping in-gain", pianoName: "Clip In-Gain", maxRawVol: Config.distortionRange-1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.clipping, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Clipping In-Gain", promptDesc: [ "This setting controls the amount of added gain for the instrument clipping effect.", "At $LO, your instrument will have no added gain. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]" ] },
-        { name: "clipping threshold", pianoName: "Clip Threshold", maxRawVol: Config.volumeRange / 2 * Config.gainRangeMult, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.clipping, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Clipping Threshold", promptDesc: [ "This setting controls the threshold for the instrument clipping effect.", "At $LO, the threshold will be at maximum. At $HI, it will be at the minimum.", "[OVERWRITING] [$LO - $HI]" ]  },
-        { name: "fm slider 1", pianoName: "FM 1", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "FM Slider 1", promptDesc: [ "This setting affects the strength of the first FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "fm slider 2", pianoName: "FM 2", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "FM Slider 2", promptDesc: ["This setting affects the strength of the second FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]" ] },
-        { name: "fm slider 3", pianoName: "FM 3", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "FM Slider 3", promptDesc: ["This setting affects the strength of the third FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]" ] },
-        { name: "fm slider 4", pianoName: "FM 4", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "FM Slider 4", promptDesc: ["This setting affects the strength of the fourth FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "fm feedback", pianoName: "FM Feedbck", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "FM Feedback", promptDesc: ["This setting affects the strength of the FM feedback slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "pulse width", pianoName: "Pulse Width", maxRawVol: Config.pulseWidthRange, newNoteVol: Config.pulseWidthRange, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Pulse Width", promptDesc: ["This setting controls the width of this instrument's pulse wave, just like the pulse width slider.", "At $HI, your instrument will sound like a pure square wave (on 50% of the time). It will gradually sound narrower down to $LO, where it will be inaudible (as it is on 0% of the time).", "Changing pulse width randomly between a few values is a common strategy in chiptune music to lend some personality to a lead instrument.", "[OVERWRITING] [$LO - $HI] [%Duty]"] },
-        { name: "detune", pianoName: "Detune", maxRawVol: Config.detuneMax - Config.detuneMin, newNoteVol: Config.detuneCenter, forSong: false, convertRealFactor: -Config.detuneCenter, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.detune, maxIndex: 0,
-            promptName: "Instrument Detune", promptDesc: ["This setting controls the detune for this instrument, just like the detune slider.", "At $MID, your instrument will have no detune applied. Each tick corresponds to one cent, or one-hundredth of a pitch. Thus, each change of 100 ticks corresponds to one half-step of detune, up to two half-steps up at $HI, or two half-steps down at $LO.", "[OVERWRITING] [$LO - $HI] [cents]"] },
-        { name: "vibrato depth", pianoName: "Vibrato Depth", maxRawVol: 50, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.vibrato, maxIndex: 0,
-            promptName: "Vibrato Depth", promptDesc: ["This setting controls the amount that your pitch moves up and down by during vibrato, just like the vibrato depth slider.", "At $LO, your instrument will have no vibrato depth so its vibrato would be inaudible. This increases up to $HI, where an extreme pitch change will be noticeable.", "[OVERWRITING] [$LO - $HI] [pitch ÷25]"] },
-        { name: "song detune", pianoName: "Detune", maxRawVol: Config.songDetuneMax - Config.songDetuneMin, newNoteVol: Math.ceil((Config.songDetuneMax - Config.songDetuneMin) / 2), forSong: true, convertRealFactor: -250, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Song Detune", promptDesc: ["This setting controls the overall detune of the entire song. There is no associated slider.", "At $MID, your song will have no extra detune applied and sound unchanged from default. Each tick corresponds to four cents, or four hundredths of a pitch. Thus, each change of 25 ticks corresponds to one half-step of detune, up to 10 half-steps up at $HI, or 10 half-steps down at $LO.", "[MULTIPLICATIVE] [$LO - $HI] [cents x4]"] },
-        { name: "vibrato speed", pianoName: "Vibrato Speed", maxRawVol: 30, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.vibrato, maxIndex: 0,
-            promptName: "Vibrato Speed", promptDesc: ["This setting controls the speed your instrument will vibrato at, just like the slider.", "A setting of $LO means there will be no oscillation, and vibrato will be disabled. Higher settings will increase the speed, up to a dramatic trill at the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "vibrato delay", pianoName: "Vibrato Delay", maxRawVol: 50, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.vibrato, maxIndex: 0,
-            promptName: "Vibrato Delay", promptDesc: ["This setting controls the amount of time vibrato will be held off for before triggering for every new note, just like the slider.", "A setting of $LO means there will be no delay. A setting of 24 corresponds to one full beat of delay. As a sole exception to this scale, setting delay to $HI will completely disable vibrato (as if it had infinite delay).", "[OVERWRITING] [$LO - $HI] [beats ÷24]"] },
-        { name: "arp speed", pianoName: "Arp Speed", maxRawVol: 50, newNoteVol: 12, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.chord, maxIndex: 0,
-            promptName: "Arpeggio Speed", promptDesc: ["This setting controls the speed at which your instrument's chords arpeggiate, just like the arpeggio speed slider.", "Each setting corresponds to a different speed, from the slowest to the fastest. The speeds are listed below.",
-                "[0-4]: x0, x1/16, x⅛, x⅕, x¼,", "[5-9]: x⅓, x⅖, x½, x⅔, x¾,", "[10-14]: x⅘, x0.9, x1, x1.1, x1.2,", "[15-19]: x1.3, x1.4, x1.5, x1.6, x1.7,", "[20-24]: x1.8, x1.9, x2, x2.1, x2.2,", "[25-29]: x2.3, x2.4, x2.5, x2.6, x2.7,", "[30-34]: x2.8, x2.9, x3, x3.1, x3.2,", "[35-39]: x3.3, x3.4, x3.5, x3.6, x3.7," ,"[40-44]: x3.8, x3.9, x4, x4.15, x4.3,", "[45-50]: x4.5, x4.8, x5, x5.5, x6, x8", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pan delay", pianoName: "Pan Delay", maxRawVol: 20, newNoteVol: 10, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.panning, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Panning Delay", promptDesc: ["This setting controls the delay applied to panning for your instrument, just like the pan delay slider.", "With more delay, the panning effect will generally be more pronounced. $MID is the default value, whereas $LO will remove any delay at all. No delay can be desirable for chiptune songs.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "reset arp", pianoName: "Reset Arp", maxRawVol: 1, newNoteVol: 1, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.chord, maxIndex: 0,
-            promptName: "Reset Arpeggio", promptDesc: ["This setting functions a little different from most. Wherever a note is placed, the arpeggio of this instrument will reset at the very start of that note. This is most noticeable with lower arpeggio speeds. The lengths and values of notes for this setting don't matter, just the note start times.", "This mod can be used to sync up your apreggios so that they always sound the same, even if you are using an odd-ratio arpeggio speed or modulating arpeggio speed.", "[$LO - $HI]"] },
-        { name: "post eq", pianoName: "PostEQ", maxRawVol: 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.eqFilter, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Post EQ", promptDesc: ["This setting controls a few separate things for your instrument's EQ filter.", "When the option 'morph' is selected, your modulator values will indicate a sub-filter index of your EQ filter to 'morph' to over time. For example, a change from 0 to 1 means your main filter (default) will morph to sub-filter 1 over the specified duration. You can shape the main filter and sub-filters in the large filter editor ('+' button). If your two filters' number, type, and order of filter dots all match up, the morph will happen smoothly and you'll be able to hear them changing. If they do not match up, the filters will simply jump between each other.", "Note that filters will morph based on endpoints in the pattern editor. So, if you specify a morph from sub-filter 1 to 4 but do not specifically drag in new endpoints for 2 and 3, it will morph directly between 1 and 4 without going through the others.", "If you target Dot X or Dot Y, you can finely tune the coordinates of a single dot for your filter. The number of available dots to choose is dependent on your main filter's dot count.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pre eq", pianoName: "PreEQ", maxRawVol: 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Pre EQ", promptDesc: ["This setting controls a few separate things for your instrument's EQ filter.", "When the option 'morph' is selected, your modulator values will indicate a sub-filter index of your EQ filter to 'morph' to over time. For example, a change from 0 to 1 means your main filter (default) will morph to sub-filter 1 over the specified duration. You can shape the main filter and sub-filters in the large filter editor ('+' button). If your two filters' number, type, and order of filter dots all match up, the morph will happen smoothly and you'll be able to hear them changing. If they do not match up, the filters will simply jump between each other.", "Note that filters will morph based on endpoints in the pattern editor. So, if you specify a morph from sub-filter 1 to 4 but do not specifically drag in new endpoints for 2 and 3, it will morph directly between 1 and 4 without going through the others.", "If you target Dot X or Dot Y, you can finely tune the coordinates of a single dot for your filter. The number of available dots to choose is dependent on your main filter's dot count.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "bit crush", pianoName: "Bitcrush", maxRawVol: Config.bitcrusherQuantizationRange-1, newNoteVol: Math.round(Config.bitcrusherQuantizationRange / 2), forSong: false, convertRealFactor: 0, associatedEffect: EffectType.bitcrusher, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Bit Crush", promptDesc: ["This setting controls the bit crush of your instrument, just like the bit crush slider.", "At a value of $LO, no bit crush will be applied. This increases and the bit crush effect gets more noticeable up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "freq crush", pianoName: "Freq Crush", maxRawVol: Config.bitcrusherFreqRange-1, newNoteVol: Math.round(Config.bitcrusherFreqRange / 2), forSong: false, convertRealFactor: 0, associatedEffect: EffectType.bitcrusher, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Frequency Crush", promptDesc: ["This setting controls the frequency crush of your instrument, just like the freq crush slider.", "At a value of $LO, no frequency crush will be applied. This increases and the frequency crush effect gets more noticeable up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "echo", pianoName: "Echo", maxRawVol: Config.echoSustainRange-1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.echo, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Echo Sustain", promptDesc: ["This setting controls the echo sustain (echo loudness) of your instrument, just like the echo slider.", "At $LO, your instrument will have no echo sustain and echo will not be audible. Echo sustain increases and the echo effect gets more noticeable up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "echo delay", pianoName: "Echo Delay", maxRawVol: Config.echoDelayRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.echo, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Echo Delay", promptDesc: ["This setting controls the echo delay of your instrument, just like the echo delay slider.", "At $LO, your instrument will have very little echo delay, and this increases up to 2 beats of delay at $HI.", "[OVERWRITING] [$LO - $HI] [~beats ÷12]" ]
-        }, 
-        { name: "echo ping pong", pianoName: "Ping-Pong", maxRawVol: Config.panMax, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.echo, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Ping Pong", promptDesc: ["This setting controls the echo ping-pong of your instrument, just like the echo delay slider.", "At $LO, the echo will start fully from the left-ear side. At $MID there will be no echo ping pong, and at $HI, it will start coming fully from the right.", "[OVERWRITING] [$LO - $HI] [L-R]" ]
+    public static readonly automationParams: DictionaryArray<AutomationParameter> = toNameMap([
+        {
+            name: "none",
+
+            displayName: "None",
+            maxRawVol: 6,
+            newNoteVol: 6,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "None"
+        }, {
+            name: "song volume",
+
+            displayName: "Volume",
+            maxRawVol: 100,
+            newNoteVol: 100,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Song Volume"
+        }, {
+            name: "tempo",
+
+            displayName: "Tempo",
+            maxRawVol: Config.tempoMax - Config.tempoMin,
+            newNoteVol: Math.ceil((Config.tempoMax - Config.tempoMin) / 2),
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Song Tempo"
+        }, {
+            name: "song reverb",
+
+            displayName: "Song Reverb",
+            maxRawVol: Config.reverbRange * 2,
+            newNoteVol: Config.reverbRange,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Song Reverb"
+        }, {
+            name: "song detune",
+
+            displayName: "Song Detune",
+            maxRawVol: Config.songDetuneMax - Config.songDetuneMin,
+            newNoteVol: Math.ceil((Config.songDetuneMax - Config.songDetuneMin) / 2),
+            forSong: true,
+            convertRealFactor: -250,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Song Detune"
+        }, {
+            name: "next bar",
+
+            displayName: "Next Bar",
+            maxRawVol: 1,
+            newNoteVol: 1,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Go To Next Bar"
+        }, {
+            name: "pre volume",
+
+            displayName: "Pre Volume",
+            maxRawVol: Config.volumeRange,
+            newNoteVol: Math.ceil(Config.volumeRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Pre Volume"
+        }, {
+            name: "gain",
+
+            displayName: "Gain",
+            maxRawVol: Config.volumeRange / 2 * Config.gainRangeMult,
+            newNoteVol: Math.ceil(Config.volumeRange / 2 * Config.gainRangeMult / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.gain,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Gain"
+        }, {
+            name: "pan",
+
+            displayName: "Pan",
+            maxRawVol: Config.panMax,
+            newNoteVol: Math.ceil(Config.panMax / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.panning,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Instrument Panning"
+        }, {
+            name: "pan delay",
+
+            displayName: "Pan Delay",
+            maxRawVol: 20,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.panning,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Panning Delay"
+        }, {
+            name: "reverb",
+
+            displayName: "Reverb",
+            maxRawVol: Config.reverbRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.reverb,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Instrument Reverb"
+        }, {
+            name: "reverb wet/dry",
+
+            displayName: "Reverb Wet/Dry",
+            maxRawVol: Config.reverbWetDryMixRange,
+            newNoteVol: Math.ceil(Config.reverbWetDryMixRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.reverb,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Reverb Wet/Dry"
+        }, {
+            name: "reverb send",
+
+            displayName: "Reverb Send",
+            maxRawVol: Config.reverbSendRange,
+            newNoteVol: Config.reverbSendRange,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.reverb,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Reverb Send"
+        }, {
+            name: "distortion",
+
+            displayName: "Distortion",
+            maxRawVol: Config.distortionRange-1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.distortion,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Distortion"
+        }, {
+            name: "clipping in-gain",
+
+            displayName: "Clip In-Gain",
+            maxRawVol: Config.distortionRange-1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.clipping,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Clipping In-Gain"
+        }, {
+            name: "clipping threshold",
+
+            displayName: "Clip Threshold",
+            maxRawVol: Config.distortionRange-1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.clipping,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Clipping Threshold"
+        }, {
+            name: "fm slider 1",
+
+            displayName: "FM 1",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.fm, InstrumentType.fm6op],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 1"
+        }, {
+            name: "fm slider 2",
+
+            displayName: "FM 2",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.fm, InstrumentType.fm6op],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 2"
+        }, {
+            name: "fm slider 3",
+
+            displayName: "FM 3",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.fm, InstrumentType.fm6op],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 3"
+        }, {
+            name: "fm slider 4",
+
+            displayName: "FM 4",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.fm, InstrumentType.fm6op],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 4"
+        }, {
+            name: "fm slider 5",
+
+            displayName: "FM 5",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.fm6op],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 5"
+        }, {
+            name: "fm slider 6",
+
+            displayName: "FM 6",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.fm6op],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 6"
+        }, {
+            name: "fm feedback",
+
+            displayName: "FM Feedback",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.fm, InstrumentType.fm6op],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Feedback"
+        }, {
+            name: "detune",
+
+            displayName: "Detune",
+            maxRawVol: Config.detuneMax - Config.detuneMin,
+            newNoteVol: Config.detuneCenter,
+            forSong: false,
+            convertRealFactor: -Config.detuneCenter,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: MDEffectType.detune,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Instrument Detune"
+        }, {
+            name: "vibrato depth",
+
+            displayName: "Vibrato Depth",
+            maxRawVol: 50,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: MDEffectType.vibrato,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Vibrato Depth"
+        }, {
+            name: "vibrato speed",
+
+            displayName: "Vibrato Speed",
+            maxRawVol: 30,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: MDEffectType.vibrato,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Vibrato Speed"
+        }, {
+            name: "vibrato delay",
+
+            displayName: "Vibrato Delay",
+            maxRawVol: 50,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: MDEffectType.vibrato,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Vibrato Delay"
+        }, {
+            name: "arpeggio speed",
+
+            displayName: "Arp Speed",
+            maxRawVol: 50,
+            newNoteVol: 12,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: MDEffectType.chord,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Arpeggio Speed"
+        }, {
+            name: "reset arpeggio",
+
+            displayName: "Reset Arpeggio",
+            maxRawVol: 1,
+            newNoteVol: 1,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: MDEffectType.chord,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Reset Arpeggio"
+        }, {
+            name: "song eq filter",
+
+            displayName: "Song EQ",
+            maxRawVol: 10,
+            newNoteVol: 0,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: true,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: Config.filterMaxPoints - 1,
+            promptName: "Song EQ Filter"
+        }, {
+            name: "eq filter",
+
+            displayName: "EQ",
+            maxRawVol: 10,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: true,
+            associatedInstruments: null,
+            associatedEffect: EffectType.eqFilter,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: Config.filterMaxPoints - 1,
+            promptName: "EQ Filter"
+        }, {
+            name: "eq filter cut",
+
+            displayName: "EQ Cut",
+            maxRawVol: Config.filterSimpleCutRange - 1,
+            newNoteVol: Config.filterSimpleCutRange - 1,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: true,
+            associatedInstruments: null,
+            associatedEffect: EffectType.eqFilter,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "EQ Filter Cut"
+        }, {
+            name: "eq filter peak",
+
+            displayName: "EQ Peak",
+            maxRawVol: Config.filterSimplePeakRange - 1,
+            newNoteVol: Config.filterSimplePeakRange - 1,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: true,
+            associatedInstruments: null,
+            associatedEffect: EffectType.eqFilter,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "EQ Filter Peak"
+        }, {
+            name: "bit crush",
+
+            displayName: "Bit Crush",
+            maxRawVol: Config.bitcrusherQuantizationRange,
+            newNoteVol: Math.round(Config.bitcrusherQuantizationRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.bitcrusher,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Bit Crush"
+        }, {
+            name: "frequency crush",
+
+            displayName: "Freq Crush",
+            maxRawVol: Config.bitcrusherFreqRange,
+            newNoteVol: Math.round(Config.bitcrusherFreqRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.bitcrusher,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Frequncy Crush"
+        }, {
+            name: "echo",
+
+            displayName: "Echo",
+            maxRawVol: Config.echoSustainRange-1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.echo,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Echo"
+        }, {
+            name: "echo delay",
+
+            displayName: "Echo Delay",
+            maxRawVol: Config.echoDelayRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.echo,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Echo Delay"
+        }, {
+            name: "echo ping pong",
+
+            displayName: "Echo Ping Pong",
+            maxRawVol: Config.panMax,
+            newNoteVol: Math.round(Config.panMax / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.echo,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Echo Ping Pong"
+        }, {
+            name: "flanger",
+
+            displayName: "Flanger",
+            maxRawVol: Config.flangerRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.flanger,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Flanger"
+        }, {
+            name: "flanger speed",
+
+            displayName: "Flanger Speed",
+            maxRawVol: Config.flangerSpeedRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.flanger,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Flanger Speed"
+        }, {
+            name: "flanger depth",
+
+            displayName: "Flanger Depth",
+            maxRawVol: Config.flangerDepthRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.flanger,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Flanger Depth"
+        }, {
+            name: "flanger feedback",
+
+            displayName: "Flanger Feedback",
+            maxRawVol: Config.flangerFeedbackRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.flanger,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Flanger Feedback"
+        }, {
+            name: "chorus",
+
+            displayName: "Chorus",
+            maxRawVol: Config.chorusRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.chorus,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Chorus"
+        }, {
+            name: "pitch shift",
+
+            displayName: "Pitch Shift",
+            maxRawVol: Config.pitchShiftRange - 1,
+            newNoteVol: Config.pitchShiftCenter,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: MDEffectType.pitchShift,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Pitch Shift"
+        }, {
+            name: "sustain",
+
+            displayName: "Sustain",
+            maxRawVol: Config.stringSustainRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.pickedString],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Picked String Sustain"
+        }, {
+            name: "post volume",
+
+            displayName: "Post Volume",
+            maxRawVol: Config.volumeRange,
+            newNoteVol: Math.ceil(Config.volumeRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Post Volume"
+        }, {
+            name: "pulse width",
+
+            displayName: "Pulse Width",
+            maxRawVol: Config.pulseWidthRange,
+            newNoteVol: Config.pulseWidthRange,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.pwm, InstrumentType.supersaw],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Pulse Width"
+        }, {
+            name: "decimal offset",
+
+            displayName: "Decimal Offset",
+            maxRawVol: 99,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.pwm, InstrumentType.supersaw],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Decimal Offset"
+        }, {
+            name: "dynamism",
+
+            displayName: "Dynamism",
+            maxRawVol: Config.supersawDynamismMax,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.supersaw],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Supersaw Dynamism"
+        }, {
+            name: "spread",
+
+            displayName: "Spread",
+            maxRawVol: Config.supersawSpreadMax,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.supersaw],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Supersaw Spread"
+        }, {
+            name: "saw shape",
+
+            displayName: "Shape",
+            maxRawVol: Config.supersawShapeMax,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.supersaw],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Supersaw Shape"
+        }, {
+            name: "envelope speed",
+
+            displayName: "Env. Speed",
+            maxRawVol: 50,
+            newNoteVol: 12,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Envelope Speed"
+        }, {
+            name: "individual envelope speed",
+
+            displayName: "I. Env. Speed",
+            maxRawVol: 50,
+            newNoteVol: 12,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Individual Envelope Speed"
+        }, {
+            name: "reset envelope",
+
+            displayName: "Reset Envelope",
+            maxRawVol: 1,
+            newNoteVol: 1,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Reset Envelope"
+        }, {
+            name: "individual envelope lower bound",
+
+            displayName: "Individual Envelope Lower Bound",
+            maxRawVol: Config.perEnvelopeBoundMax * 10,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Individual Envelope Lower Bound"
+        }, {
+            name: "individual envelope upper bound",
+
+            displayName: "Individual Envelope Upper Bound",
+            maxRawVol: Config.perEnvelopeBoundMax * 10,
+            newNoteVol: 10,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Individual Envelope Upper Bound"
+        }, {
+            name: "ring modulation",
+
+            displayName: "Ring Mod",
+            maxRawVol: Config.ringModRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.ringModulation,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Ring Modulation"
+        }, {
+            name: "ring modulation frequency",
+
+            displayName: "Ring Mod Freq.",
+            maxRawVol: Config.ringModHzRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.ringModulation,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Ring Modulation Frequency"
+        }, {
+            name: "granular",
+
+            displayName: "Granular",
+            maxRawVol: Config.granularRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.granular,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Granular Wet/Dry Mix"
+        }, {
+            name: "grain frequency",
+
+            displayName: "Grain Freq.",
+            maxRawVol: Config.grainAmountsMax,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.granular,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Grain Frequency"
+        }, {
+            name: "grain size",
+
+            displayName: "Grain Size",
+            maxRawVol: Config.grainSizeMax/Config.grainSizeStep,
+            newNoteVol: Config.grainSizeMin/Config.grainSizeStep,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.granular,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Grain Size"
+        }, {
+            name: "grain range",
+
+            displayName: "Grain Range",
+            maxRawVol: Config.grainRangeMax/Config.grainSizeStep,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: EffectType.granular,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Grain Range"
+        }, {
+            name: "unison",
+
+            displayName: "Unison",
+            maxRawVol: 10,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [InstrumentType.chip, InstrumentType.harmonics, InstrumentType.pickedString, InstrumentType.customChipWave, InstrumentType.pwm, InstrumentType.noise, InstrumentType.spectrum, InstrumentType.drumset],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Grain Range"
         },
-        { name: "flanger", pianoName: "Flanger", maxRawVol: Config.flangerRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.flanger, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Flanger", promptDesc: ["This setting controls the flanger strength of your instrument, just like the flanger slider.", "At $LO, the flanger effect will be disabled. The strength of the flanger effect increases up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "flanger speed", pianoName: "Flanger Spd", maxRawVol: Config.flangerSpeedRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.flanger, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Flanger Speed", promptDesc: ["This setting controls the flanger speed of your instrument, just like the flanger speed slider."] },
-        { name: "flanger depth", pianoName: "Flanger Dpth", maxRawVol: Config.flangerDepthRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.flanger, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Flanger Depth", promptDesc: ["This setting controls the flanger depth of your instrument, just like the flanger depth slider."] },
-        { name: "flanger feedback", pianoName: "Flanger Fbck", maxRawVol: Config.flangerFeedbackRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.flanger, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Flanger Feedback", promptDesc: ["This setting controls the flanger feedback of your instrument, just like the flanger feedback slider."] },
-        { name: "chorus", pianoName: "Chorus", maxRawVol: Config.chorusRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.chorus, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Chorus", promptDesc: ["This setting controls the chorus strength of your instrument, just like the chorus slider.", "At $LO, the chorus effect will be disabled. The strength of the chorus effect increases up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "post eq cut", pianoName: "PostEQ Cut", maxRawVol: Config.filterSimpleCutRange - 1, newNoteVol: Config.filterSimpleCutRange - 1, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Post EQ Cutoff Frequency", promptDesc: ["This setting controls the filter cut position of your instrument, just like the filter cut slider.", "This setting is roughly analagous to the horizontal position of a single low-pass dot on the advanced filter editor. At lower values, a wider range of frequencies is cut off.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "post eq peak", pianoName: "PostEQ Peak", maxRawVol: Config.filterSimplePeakRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Post EQ Peak Gain", promptDesc: ["This setting controls the filter peak position of your instrument, just like the filter peak slider.", "This setting is roughly analagous to the vertical position of a single low-pass dot on the advanced filter editor. At lower values, the cutoff frequency will not be emphasized, and at higher values you will hear emphasis on the cutoff frequency.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pre eq cut", pianoName: "PreEQ Cut", maxRawVol: Config.filterSimpleCutRange - 1, newNoteVol: Config.filterSimpleCutRange - 1, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.eqFilter, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Pre EQ Cutoff Frequency", promptDesc: ["This setting controls the filter cut position of your instrument, just like the filter cut slider.", "This setting is roughly analagous to the horizontal position of a single low-pass dot on the advanced filter editor. At lower values, a wider range of frequencies is cut off.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pre eq peak", pianoName: "PreEQ Peak", maxRawVol: Config.filterSimplePeakRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.eqFilter, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Pre EQ Peak Gain", promptDesc: ["This setting controls the filter peak position of your instrument, just like the filter peak slider.", "This setting is roughly analagous to the vertical position of a single low-pass dot on the advanced filter editor. At lower values, the cutoff frequency will not be emphasized, and at higher values you will hear emphasis on the cutoff frequency.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pitch shift", pianoName: "Pitch Shift", maxRawVol: Config.pitchShiftRange - 1, newNoteVol: Config.pitchShiftCenter, forSong: false, convertRealFactor: -Config.pitchShiftCenter, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.pitchShift, maxIndex: 0,
-            promptName: "Pitch Shift", promptDesc: ["This setting controls the pitch offset of your instrument, just like the pitch shift slider.", "At $MID your instrument will have no pitch shift. This increases as you decrease toward $LO pitches (half-steps) at the low end, or increases towards +$HI pitches at the high end.", "[OVERWRITING] [$LO - $HI] [pitch]"] },
-        { name: "sustain", pianoName: "Sustain", maxRawVol: Config.stringSustainRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Picked String Sustain", promptDesc: ["This setting controls the sustain of your picked string instrument, just like the sustain slider.", "At $LO, your instrument will have minimum sustain and sound 'plucky'. This increases to a more held sound as your modulator approaches the maximum, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "post volume", pianoName: "Post Vol.", maxRawVol: Config.volumeRange, newNoteVol: Math.ceil(Config.volumeRange / 2), forSong: false, convertRealFactor: Math.ceil(-Config.volumeRange / 2.0), associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Instrument Post Volume", promptDesc: ["This setting affects the volume of your instrument as if its volume slider had been moved.", "At $MID, an instrument's volume will be unchanged from default. This means you can still use the volume sliders to mix the base volume of instruments, since this setting and the default value work multiplicatively. The volume gradually increases up to $HI, or decreases down to mute at $LO.", "Unlike the 'note volume' setting, mix volume is very straightforward and simply affects the resultant instrument volume after all effects are applied.", "[MULTIPLICATIVE] [$LO - $HI]"] },
-        { name: "fm slider 5", pianoName: "FM 5", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "FM Slider 5", promptDesc: ["This setting affects the strength of the fifth FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "fm slider 6", pianoName: "FM 6", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "FM Slider 6", promptDesc: ["This setting affects the strength of the sixth FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "decimal offset", pianoName: "Decimal Offset", maxRawVol: 99, newNoteVol: 0, forSong: false, convertRealFactor: 0, invertSliderIndicator: true, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Decimal Offset", promptDesc: ["This setting controls the decimal offset that is subtracted from the pulse width; use this for creating values like 12.5 or 6.25.", "[$LO - $HI]"] },
-        { name: "envelope speed", pianoName: "EnvelopeSpd", maxRawVol: 50, newNoteVol: 12, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Envelope Speed", promptDesc: ["This setting controls how fast all of the envelopes for the instrument play.", "At $LO, your instrument's envelopes will be frozen, and at values near there they will change very slowly. At 12, the envelopes will work as usual, performing at normal speed. This increases up to $HI, where the envelopes will change very quickly. The speeds are given below:",
-                "[0-4]: x0, x1/16, x⅛, x⅕, x¼,", "[5-9]: x⅓, x⅖, x½, x⅔, x¾,", "[10-14]: x⅘, x0.9, x1, x1.1, x1.2,", "[15-19]: x1.3, x1.4, x1.5, x1.6, x1.7,", "[20-24]: x1.8, x1.9, x2, x2.1, x2.2,", "[25-29]: x2.3, x2.4, x2.5, x2.6, x2.7,", "[30-34]: x2.8, x2.9, x3, x3.1, x3.2,", "[35-39]: x3.3, x3.4, x3.5, x3.6, x3.7," ,"[40-44]: x3.8, x3.9, x4, x4.15, x4.3,", "[45-50]: x4.5, x4.8, x5, x5.5, x6, x8", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "dynamism", pianoName: "Dynamism", maxRawVol: Config.supersawDynamismMax, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Supersaw Dynamism", promptDesc: ["This setting controls the supersaw dynamism of your instrument, just like the dynamism slider.", "At $LO, your instrument will have only a single pulse contributing. Increasing this will raise the contribution of other waves which is similar to a chorus effect. The effect gets more noticeable up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "spread", pianoName: "Spread", maxRawVol: Config.supersawSpreadMax, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Supersaw Spread", promptDesc: ["This setting controls the supersaw spread of your instrument, just like the spread slider.", "At $LO, all the pulses in your supersaw will be at the same frequency. Increasing this value raises the frequency spread of the contributing waves, up to a dissonant spread at the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "saw shape", pianoName: "Saw Shape", maxRawVol: Config.supersawShapeMax, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Supersaw Shape", promptDesc: ["This setting controls the supersaw shape of your instrument, just like the Saw↔Pulse slider.", "As the slider's name implies, this effect will give you a sawtooth wave at $LO, and a full pulse width wave at $HI. Values in between will be a blend of the two.", "[OVERWRITING] [$LO - $HI] [%]"] },
-        { name: "individual envelope speed", pianoName: "IndvEnvSpd", maxRawVol: 63, newNoteVol: 23, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: this.maxEnvelopeCount-1,
-            promptName: "Individual Envelope Speed", promptDesc: ["This setting controls how fast the specified envelope of the instrument will play.", "At $LO, your the envelope will be frozen, and at values near there they will change very slowly. At 23, the envelope will work as usual, performing at normal speed. This increases up to $HI, where the envelope will change very quickly. The speeds are given below:",
-                "[0-4]: x0, x0.01, x0.02, x0.03, x0.04,", "[5-9]: x0.05, x0.06, x0.07, x0.08, x0.09,", "[10-14]: x0.1, x0.2, x0.25, x0.3, x0.33,", "[15-19]: x0.4, x0.5, x0.6, x0.6667, x0.7,", "[20-24]: x0.75, x0.8, x0.9, x1, x1.25,", "[25-29]: x1.3333, x1.5, x1.6667, x1.75, x2,", "[30-34]: x2.25, x2.5, x2.75, x3, x3.5,", "[35-39]: x4, x4.5, x5, x5.5, x6,", "[40-44]: x6.5, x7, x7.5, x8, x8.5,", "[45-49]: x9, x9.5, x10, x11, x12", "[50-54]: x13, x14, x15, x16, x17", "[55-59]: x18, x19, x20, x24, x32", "[60-63]: x40, x64, x128, x256", "[OVERWRITING] [$LO - $HI]"]},
-        { name: "song eq", pianoName: "Song EQ", maxRawVol: 10, newNoteVol: 0, forSong: true, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Song EQ Filter", promptDesc: ["This setting overwrites every instrument's eq filter. You can do this in a few separate ways, similar to the per instrument eq filter modulator.", "When the option 'morph' is selected, your modulator values will indicate a sub-filter index of your EQ filter to 'morph' to over time. For example, a change from 0 to 1 means your main filter (default) will morph to sub-filter 1 over the specified duration. You can shape the main filter and sub-filters in the large filter editor ('+' button). If your two filters' number, type, and order of filter dots all match up, the morph will happen smoothly and you'll be able to hear them changing. If they do not match up, the filters will simply jump between each other.", "Note that filters will morph based on endpoints in the pattern editor. So, if you specify a morph from sub-filter 1 to 4 but do not specifically drag in new endpoints for 2 and 3, it will morph directly between 1 and 4 without going through the others.", "If you target Dot X or Dot Y, you can finely tune the coordinates of a single dot for your filter. The number of available dots to choose is dependent on your main filter's dot count.", "[OVERWRITING] [$LO - $HI]"]},
-        { name: "reset envelope", pianoName: "ResetEnv", maxRawVol: 1, newNoteVol: 1, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: this.maxEnvelopeCount-1,
-             promptName: "Reset Envelope", promptDesc: ["This setting functions a lot like the reset arp modulator. Wherever a note is placed, the envelope of this instrument at the specified index will reset at the very start of that note. ", "[$LO - $HI]",]},
-        { name: "ring modulation", pianoName: "Ring Mod", maxRawVol: Config.ringModRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.ringModulation, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Ring Modulation", promptDesc: [ "This setting controls the Ring Modulation effect in your instrument.", "[OVERWRITING] [$LO - $HI]" ] },
-        { name: "ring mod hertz", pianoName: "Ring Mod(Hz)", maxRawVol: Config.ringModHzRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.ringModulation, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Ring Modulation (Hertz)", promptDesc: [ "This setting controls the Hertz (Hz) used in the Ring Modulation effect in your instrument.", "[OVERWRITING] [$LO - $HI]" ] },
-        { name: "granular", pianoName: "Granular", maxRawVol: Config.granularRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.granular, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Granular", promptDesc: [ "This setting controls the granular effect in your instrument.", "[OVERWRITING] [$LO - $HI]" ] },
-        { name: "grain freq", pianoName: "Grain #", maxRawVol: Config.grainAmountsMax, newNoteVol: 8, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.granular, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Grain Count", promptDesc: [ "This setting controls the density of grains for the granular effect on your instrument." ,"[OVERWRITING] [$LO - $HI]" ] },
-        { name: "grain size", pianoName: "Grain Size", maxRawVol: Config.grainSizeMax/Config.grainSizeStep, newNoteVol: Config.grainSizeMin/Config.grainSizeStep, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.granular, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Grain Size", promptDesc: [ "This setting controls the grain size of the granular effect in your instrument.", "The number shown in the mod channel is multiplied by " + Config.grainSizeStep + " to get the actual grain size." ,"[OVERWRITING] [$LO - $HI]" ] },
-        { name: "grain range", pianoName: "Grain Range", maxRawVol: Config.grainRangeMax/Config.grainSizeStep, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.granular, associatedMDEffect: MDEffectType.length, maxIndex: 0,
-            promptName: "Grain Range", promptDesc: [ "This setting controls the range of values for your grain size of the granular effect in your instrument, from no variation to a lot", "The number shown in the mod channel is multiplied by " + Config.grainSizeStep + " to get the actual grain size." ,"[OVERWRITING] [$LO - $HI]" ] },
-        { name: "individual envelope lower bound", pianoName: "IndvEnvLow", maxRawVol: Config.perEnvelopeBoundMax * 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: this.maxEnvelopeCount-1,
-            promptName: "Individual Envelope Lower Bound", promptDesc: ["This setting controls the envelope lower bound", "At $LO, your the envelope will output an upper envelope bound to 0, and at $HI your envelope will output an upper envelope bound to 2.", "This settings will not work if your lower envelope bound is higher than your upper envelope bound", ]},
-        { name: "individual envelope upper bound", pianoName: "IndvEnvUp", maxRawVol: Config.perEnvelopeBoundMax * 10, newNoteVol: 10, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length, associatedMDEffect: MDEffectType.length, maxIndex: this.maxEnvelopeCount-1,
-            promptName: "Individual Envelope Upper Bound", promptDesc: ["This setting controls the envelope upper bound", "At $LO, your the envelope will output a 0 to lower envelope bound, and at $HI your envelope will output a 2 to lower envelope bound.", "This settings will not work if your lower envelope bound is higher than your upper envelope bound", ]},
-        ]);
+    ]);
 }
 
 function centerWave(wave: Array<number>): Float32Array {

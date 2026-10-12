@@ -172,7 +172,7 @@ const enum CharCode {
 const enum SongTagCode {
     beatCount           = CharCode.a, // added in BeepBox URL version 2
 	bars                = CharCode.b, // added in BeepBox URL version 2
-	songEq              = CharCode.c, // added in BeepBox URL version 2 for vibrato, switched to song eq in Slarmoo's Box 1.3
+	songEq              = CharCode.c, // added in BeepBox URL version 2 for vibrato, switched to song eq filter in Slarmoo's Box 1.3
 	fadeInOut           = CharCode.d, // added in BeepBox URL version 3 for transition, switched to fadeInOut in 9
 	loopEnd             = CharCode.e, // added in BeepBox URL version 2
 	noteFilter          = CharCode.f, // added in BeepBox URL version 3
@@ -386,9 +386,8 @@ export class Song {
     private static readonly _oldestSlarmoosBoxVersion: number = 1;
     private static readonly _latestSlarmoosBoxVersion: number = 5;
     private static readonly _oldestTheepBoxVersion: number = 5;
-    private static readonly _latestTheepBoxVersion: number = 6;
+    private static readonly _latestTheepBoxVersion: number = 7;
     // One-character variant detection at the start of URL to distinguish variants such as JummBox, Or Goldbox. "j" and "g" respectively
-    //also "u" is ultrabox lol
     private static readonly _variant = 0x74; //"t" ~ theepbox
 
     public title: string;
@@ -443,125 +442,125 @@ export class Song {
             modCount = Config.modCount - modCount - 1;
 
             const instrument: Instrument = this.channels[modChannel].instruments[modInstrument];
-            let vol: number | undefined = Config.modulators[instrument.modulators[modCount]].newNoteVol;
+            let vol: number | undefined = Config.automationParams[instrument.modulators[modCount]].newNoteVol;
 
             let currentIndex: number = instrument.modulators[modCount];
             // For tempo, actually use user defined tempo
-            let tempoIndex: number = Config.modulators.dictionary["tempo"].index;
-            if(currentIndex == tempoIndex) vol = this.tempo - Config.modulators[tempoIndex].convertRealFactor;
+            let tempoIndex: number = Config.automationParams.dictionary["tempo"].index;
+            if(currentIndex == tempoIndex) vol = this.tempo - Config.automationParams[tempoIndex].convertRealFactor;
             //for effects and envelopes, use the user defined value of the selected instrument (or the default value if all or active is selected)
-            if (!Config.modulators[currentIndex].forSong && instrument.modInstruments[modCount][0] < this.channels[instrument.modChannels[modCount][0]].instruments.length) {
-                let chorusIndex: number = Config.modulators.dictionary["chorus"].index;
-                let reverbIndex: number = Config.modulators.dictionary["reverb"].index;
-                let gainIndex: number = Config.modulators.dictionary["gain"].index;
-                let panningIndex: number = Config.modulators.dictionary["pan"].index;
-                let panDelayIndex: number = Config.modulators.dictionary["pan delay"].index;
-                let distortionIndex: number = Config.modulators.dictionary["distortion"].index;
-                let detuneIndex: number = Config.modulators.dictionary["detune"].index;
-                let vibratoDepthIndex: number = Config.modulators.dictionary["vibrato depth"].index;
-                let vibratoSpeedIndex: number = Config.modulators.dictionary["vibrato speed"].index;
-                let vibratoDelayIndex: number = Config.modulators.dictionary["vibrato delay"].index;
-                let arpSpeedIndex: number = Config.modulators.dictionary["arp speed"].index;
-                let bitCrushIndex: number = Config.modulators.dictionary["bit crush"].index;
-                let freqCrushIndex: number = Config.modulators.dictionary["freq crush"].index;
-                let echoIndex: number = Config.modulators.dictionary["echo"].index;
-                let echoDelayIndex: number = Config.modulators.dictionary["echo delay"].index;
-                let echoPingPongIndex: number = Config.modulators.dictionary["echo ping pong"].index;
-                let pitchShiftIndex: number = Config.modulators.dictionary["pitch shift"].index;
-                let ringModIndex: number = Config.modulators.dictionary["ring modulation"].index;
-                let ringModHertzIndex: number = Config.modulators.dictionary["ring mod hertz"].index;
-                let granularIndex: number = Config.modulators.dictionary["granular"].index;
-                let grainAmountIndex: number = Config.modulators.dictionary["grain freq"].index;
-                let grainSizeIndex: number = Config.modulators.dictionary["grain size"].index;
-                let grainRangeIndex: number = Config.modulators.dictionary["grain range"].index;
-                let envSpeedIndex: number = Config.modulators.dictionary["envelope speed"].index;
-                let perEnvSpeedIndex: number = Config.modulators.dictionary["individual envelope speed"].index;
-                let perEnvLowerIndex: number = Config.modulators.dictionary["individual envelope lower bound"].index;
-                let perEnvUpperIndex: number = Config.modulators.dictionary["individual envelope upper bound"].index;
+            if (!Config.automationParams[currentIndex].forSong && instrument.modInstruments[modCount][0] < this.channels[instrument.modChannels[modCount][0]].instruments.length) {
+                let chorusIndex: number = Config.automationParams.dictionary["chorus"].index;
+                let reverbIndex: number = Config.automationParams.dictionary["reverb"].index;
+                let gainIndex: number = Config.automationParams.dictionary["gain"].index;
+                let panningIndex: number = Config.automationParams.dictionary["pan"].index;
+                let panDelayIndex: number = Config.automationParams.dictionary["pan delay"].index;
+                let distortionIndex: number = Config.automationParams.dictionary["distortion"].index;
+                let detuneIndex: number = Config.automationParams.dictionary["detune"].index;
+                let vibratoDepthIndex: number = Config.automationParams.dictionary["vibrato depth"].index;
+                let vibratoSpeedIndex: number = Config.automationParams.dictionary["vibrato speed"].index;
+                let vibratoDelayIndex: number = Config.automationParams.dictionary["vibrato delay"].index;
+                let arpSpeedIndex: number = Config.automationParams.dictionary["arpeggio speed"].index;
+                let bitCrushIndex: number = Config.automationParams.dictionary["bit crush"].index;
+                let freqCrushIndex: number = Config.automationParams.dictionary["frequency crush"].index;
+                let echoIndex: number = Config.automationParams.dictionary["echo"].index;
+                let echoDelayIndex: number = Config.automationParams.dictionary["echo delay"].index;
+                let echoPingPongIndex: number = Config.automationParams.dictionary["echo ping pong"].index;
+                let pitchShiftIndex: number = Config.automationParams.dictionary["pitch shift"].index;
+                let ringModIndex: number = Config.automationParams.dictionary["ring modulation"].index;
+                let ringModHertzIndex: number = Config.automationParams.dictionary["ring modulation frequency"].index;
+                let granularIndex: number = Config.automationParams.dictionary["granular"].index;
+                let grainAmountIndex: number = Config.automationParams.dictionary["grain frequency"].index;
+                let grainSizeIndex: number = Config.automationParams.dictionary["grain size"].index;
+                let grainRangeIndex: number = Config.automationParams.dictionary["grain range"].index;
+                let envSpeedIndex: number = Config.automationParams.dictionary["envelope speed"].index;
+                let perEnvSpeedIndex: number = Config.automationParams.dictionary["individual envelope speed"].index;
+                let perEnvLowerIndex: number = Config.automationParams.dictionary["individual envelope lower bound"].index;
+                let perEnvUpperIndex: number = Config.automationParams.dictionary["individual envelope upper bound"].index;
                 let instrumentIndex: number = instrument.modInstruments[modCount][0];
                 let effectIndex: number = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effectCount; //in a moment i should be working to make this work with mods
 
                 switch (currentIndex) {
                     case chorusIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.chorus - Config.modulators[chorusIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.chorus - Config.automationParams[chorusIndex].convertRealFactor;
                         break;
                     case reverbIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.reverb - Config.modulators[reverbIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.reverb - Config.automationParams[reverbIndex].convertRealFactor;
                         break;
                     case gainIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.gain - Config.modulators[gainIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.gain - Config.automationParams[gainIndex].convertRealFactor;
                         break;
                     case panningIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.pan - Config.modulators[panningIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.pan - Config.automationParams[panningIndex].convertRealFactor;
                         break;
                     case panDelayIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.panDelay - Config.modulators[panDelayIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.panDelay - Config.automationParams[panDelayIndex].convertRealFactor;
                         break;
                     case distortionIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.distortion - Config.modulators[distortionIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.distortion - Config.automationParams[distortionIndex].convertRealFactor;
                         break;
                     case detuneIndex:
                         vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].detune;
                         break;
                     case vibratoDepthIndex:
-                        vol = Math.round(this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoDepth * 25 - Config.modulators[vibratoDepthIndex].convertRealFactor);
+                        vol = Math.round(this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoDepth * 25 - Config.automationParams[vibratoDepthIndex].convertRealFactor);
                         break;
                     case vibratoSpeedIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoSpeed - Config.modulators[vibratoSpeedIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoSpeed - Config.automationParams[vibratoSpeedIndex].convertRealFactor;
                         break;
                     case vibratoDelayIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoDelay - Config.modulators[vibratoDelayIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoDelay - Config.automationParams[vibratoDelayIndex].convertRealFactor;
                         break;
                     case arpSpeedIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].arpeggioSpeed - Config.modulators[arpSpeedIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].arpeggioSpeed - Config.automationParams[arpSpeedIndex].convertRealFactor;
                         break;
                     case bitCrushIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.bitcrusherQuantization - Config.modulators[bitCrushIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.bitcrusherQuantization - Config.automationParams[bitCrushIndex].convertRealFactor;
                         break;
                     case freqCrushIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.bitcrusherFreq - Config.modulators[freqCrushIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.bitcrusherFreq - Config.automationParams[freqCrushIndex].convertRealFactor;
                         break;
                     case echoIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.echoSustain - Config.modulators[echoIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.echoSustain - Config.automationParams[echoIndex].convertRealFactor;
                         break;
                     case echoDelayIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.echoDelay - Config.modulators[echoDelayIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.echoDelay - Config.automationParams[echoDelayIndex].convertRealFactor;
                         break;
                     case echoPingPongIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.echoPingPong - Config.modulators[echoPingPongIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.echoPingPong - Config.automationParams[echoPingPongIndex].convertRealFactor;
                         break;
                     case pitchShiftIndex:
                         vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].pitchShift;
                         break;
                     case ringModIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.ringModulation - Config.modulators[ringModIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.ringModulation - Config.automationParams[ringModIndex].convertRealFactor;
                         break;
                     case ringModHertzIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.ringModulationHz - Config.modulators[ringModHertzIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.ringModulationHz - Config.automationParams[ringModHertzIndex].convertRealFactor;
                         break;
                     case granularIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.granular - Config.modulators[granularIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.granular - Config.automationParams[granularIndex].convertRealFactor;
                         break;
                     case grainAmountIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.grainAmounts - Config.modulators[grainAmountIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.grainAmounts - Config.automationParams[grainAmountIndex].convertRealFactor;
                         break;
                     case grainSizeIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.grainSize - Config.modulators[grainSizeIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.grainSize - Config.automationParams[grainSizeIndex].convertRealFactor;
                         break;
                     case grainRangeIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.grainRange - Config.modulators[grainRangeIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex]!.grainRange - Config.automationParams[grainRangeIndex].convertRealFactor;
                         break;
                     case envSpeedIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopeSpeed - Config.modulators[envSpeedIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopeSpeed - Config.automationParams[envSpeedIndex].convertRealFactor;
                         break;
                     case perEnvSpeedIndex:
-                        vol = Config.perEnvelopeSpeedToIndices[this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeSpeed] - Config.modulators[perEnvSpeedIndex].convertRealFactor;
+                        vol = Config.perEnvelopeSpeedToIndices[this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeSpeed] - Config.automationParams[perEnvSpeedIndex].convertRealFactor;
                         break;
                     case perEnvLowerIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeLowerBound - Config.modulators[perEnvLowerIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeLowerBound - Config.automationParams[perEnvLowerIndex].convertRealFactor;
                         break;
                     case perEnvUpperIndex:
-                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeUpperBound - Config.modulators[perEnvUpperIndex].convertRealFactor;
+                        vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeUpperBound - Config.automationParams[perEnvUpperIndex].convertRealFactor;
                         break;
                 }
             }
@@ -582,12 +581,12 @@ export class Song {
             modCount = Config.modCount - modCount - 1;
 
             let instrument: Instrument = this.channels[modChannel].instruments[modInstrument];
-            let modulator = Config.modulators[instrument.modulators[modCount]];
+            let modulator = Config.automationParams[instrument.modulators[modCount]];
             let cap: number | undefined = modulator.maxRawVol;
 
             if (cap != undefined) {
                 // For filters, cap is dependent on which filter setting is targeted
-                if (modulator.name == "post eq" || modulator.name == "pre eq" || modulator.name == "song eq") {
+                if (modulator.name == "eq filter" || modulator.name == "pre eq" || modulator.name == "song eq filter") {
                     // type 0: number of filter morphs
                     // type 1/odd: number of filter x positions
                     // type 2/even: number of filter y positions
@@ -609,11 +608,11 @@ export class Song {
         if (!isMod)
             return Config.noteSizeMax;
         else {
-            let cap: number | undefined = Config.modulators[modSetting].maxRawVol;
+            let cap: number | undefined = Config.automationParams[modSetting].maxRawVol;
             if (cap != undefined) {
 
                 // For filters, cap is dependent on which filter setting is targeted
-                if (filterType != undefined && (Config.modulators[modSetting].name == "post eq" || Config.modulators[modSetting].name == "pre eq" || Config.modulators[modSetting].name == "song eq")) {
+                if (filterType != undefined && (Config.automationParams[modSetting].name == "eq filter" || Config.automationParams[modSetting].name == "pre eq" || Config.automationParams[modSetting].name == "song eq filter")) {
                     // type 0: number of filter morphs
                     // type 1/odd: number of filter x positions
                     // type 2/even: number of filter y positions
@@ -872,7 +871,7 @@ export class Song {
         if (this.eqFilter == null) {
             // Push null filter settings
             buffer.push(base64IntToCharCode[0]);
-            console.log("Null post eq settings detected in toBase64String for song");
+            console.log("Null eq filter settings detected in toBase64String for song");
         } else {
             buffer.push(base64IntToCharCode[this.eqFilter.controlPointCount]);
             for (let j: number = 0; j < this.eqFilter.controlPointCount; j++) {
@@ -993,7 +992,7 @@ export class Song {
                             if (effect.eqFilter == null) {
                                 // Push null filter settings
                                 buffer.push(base64IntToCharCode[0]);
-                                console.log("Null post eq settings detected in toBase64String for channelIndex " + channelIndex + ", instrumentIndex " + i);
+                                console.log("Null eq filter settings detected in toBase64String for channelIndex " + channelIndex + ", instrumentIndex " + i);
                             }
                             else {
                                 buffer.push(base64IntToCharCode[effect.eqFilter.controlPointCount]);
@@ -1299,7 +1298,7 @@ export class Song {
                 buffer.push(base64IntToCharCode[instrument.envelopeSpeed]);
                 for (let envelopeIndex: number = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                     buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].target]);
-                    if (Config.instrumentAutomationTargets[instrument.envelopes[envelopeIndex].target].maxCount > 1) {
+                    if (Config.automationParams[instrument.envelopes[envelopeIndex].target].maxIndex > 0) {
                         buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].index]);
                     }
                     buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].envelope]);
@@ -1381,8 +1380,8 @@ export class Song {
                         // 2 - For song
                         // 3 - None
 
-                        let status: number = Config.modulators[modSetting].forSong ? 2 : 0;
-                        if (modSetting == Config.modulators.dictionary["none"].index)
+                        let status: number = Config.automationParams[modSetting].forSong ? 2 : 0;
+                        if (modSetting == Config.automationParams.dictionary["none"].index)
                             status = 3;
 
                         bits.write(2, status);
@@ -1397,25 +1396,25 @@ export class Song {
 
                         // Only used if setting isn't "none".
                         if (status != 3) {
-                            bits.write(6, modSetting);
+                            bits.write(8, modSetting);
                         }
 
                         //hum hm
-                        if (Config.modulators[instrument.modulators[mod]].associatedEffect < EffectType.length) {
+                        if (Config.automationParams[instrument.modulators[mod]].associatedEffect != null) {
                             bits.write(8, modEffects.length);
                             for (let i: number = 0; i < modEffects.length; i++) bits.write(8, modEffects[i]);
                         }
 
                         // Write mod filter info, only if this is a filter mod
-                        if (Config.modulators[instrument.modulators[mod]].name == "post eq" || Config.modulators[instrument.modulators[mod]].name == "pre eq" || Config.modulators[instrument.modulators[mod]].name == "song eq") {
+                        if (Config.automationParams[instrument.modulators[mod]].name == "eq filter" || Config.automationParams[instrument.modulators[mod]].name == "pre eq" || Config.automationParams[instrument.modulators[mod]].name == "song eq filter") {
                             bits.write(6, modFilter);
                         }
 
                         //write envelope info only if needed
-                        if (Config.modulators[instrument.modulators[mod]].name == "individual envelope speed" ||
-                            Config.modulators[instrument.modulators[mod]].name == "reset envelope" ||
-                            Config.modulators[instrument.modulators[mod]].name == "individual envelope lower bound" ||
-                            Config.modulators[instrument.modulators[mod]].name == "individual envelope upper bound"
+                        if (Config.automationParams[instrument.modulators[mod]].name == "individual envelope speed" ||
+                            Config.automationParams[instrument.modulators[mod]].name == "reset envelope" ||
+                            Config.automationParams[instrument.modulators[mod]].name == "individual envelope lower bound" ||
+                            Config.automationParams[instrument.modulators[mod]].name == "individual envelope upper bound"
                         ) {
                             bits.write(6, modEnvelope);
                         }
@@ -2086,7 +2085,7 @@ export class Song {
                     newEffect.distortion = 0;
                 }
                 if (useSlowerArpSpeed) {
-                    instrument.arpeggioSpeed = 9; // x3/4 speed. This used to be tied to rhythm, but now it is decoupled to each instrument's arp speed slider. This flag gets set when importing older songs to keep things consistent.
+                    instrument.arpeggioSpeed = 9; // x3/4 speed. This used to be tied to rhythm, but now it is decoupled to each instrument's arpeggio speed slider. This flag gets set when importing older songs to keep things consistent.
                 }
                 if (useFastTwoNoteArp) {
                     instrument.fastTwoNoteArp = true;
@@ -2243,7 +2242,7 @@ export class Song {
                 } else {
                     const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                     let typeCheck: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                    if (fromTheepBox) { //in mods that arent theepbox, pre eq is switched with post eq
+                    if (fromTheepBox) { //in mods that arent theepbox, pre eq is switched with eq filter
                         if (typeCheck == 0) {
                             instrument.noteFilterType = false;
                             typeCheck = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
@@ -2654,9 +2653,9 @@ export class Song {
                         }
                         // Custom vibrato
                         if (vibrato == Config.vibratos.length) {
-                            instrument.vibratoDepth = clamp(0, Config.modulators.dictionary["vibrato depth"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 50;
-                            instrument.vibratoSpeed = clamp(0, Config.modulators.dictionary["vibrato speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                            instrument.vibratoDelay = clamp(0, Config.modulators.dictionary["vibrato delay"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 2;
+                            instrument.vibratoDepth = clamp(0, Config.automationParams.dictionary["vibrato depth"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 50;
+                            instrument.vibratoSpeed = clamp(0, Config.automationParams.dictionary["vibrato speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                            instrument.vibratoDelay = clamp(0, Config.automationParams.dictionary["vibrato delay"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 2;
                             instrument.vibratoType = clamp(0, Config.vibratoTypes.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             instrument.mdeffects |= 1 << MDEffectType.vibrato;
                         }
@@ -2723,7 +2722,7 @@ export class Song {
                 // Deprecated, but supported for legacy purposes
                 if ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox)) {
                     const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
-                    instrument.arpeggioSpeed = clamp(0, Config.modulators.dictionary["arp speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                    instrument.arpeggioSpeed = clamp(0, Config.automationParams.dictionary["arpeggio speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                     instrument.fastTwoNoteArp = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false; // Two note arp setting piggybacks on this
                 }
                 else {
@@ -3061,9 +3060,9 @@ export class Song {
 
                         // Custom vibrato
                         if (instrument.vibrato == Config.vibratos.length && (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)) {
-                            instrument.vibratoDepth = clamp(0, Config.modulators.dictionary["vibrato depth"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 25;
-                            instrument.vibratoSpeed = clamp(0, Config.modulators.dictionary["vibrato speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                            instrument.vibratoDelay = clamp(0, Config.modulators.dictionary["vibrato delay"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                            instrument.vibratoDepth = clamp(0, Config.automationParams.dictionary["vibrato depth"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 25;
+                            instrument.vibratoSpeed = clamp(0, Config.automationParams.dictionary["vibrato speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                            instrument.vibratoDelay = clamp(0, Config.automationParams.dictionary["vibrato delay"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             instrument.vibratoType = clamp(0, Config.vibratoTypes.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                         }
                         // Enforce standard vibrato settings
@@ -3362,17 +3361,17 @@ export class Song {
                     // JB v6 adds some envelope options here in the sequence.
                     let envelopeDiscrete: boolean = false;
                     if ((fromJummBox && !beforeSix) || (fromUltraBox && !beforeFive) || (fromSlarmoosBox)) {
-                        instrument.envelopeSpeed = clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                        instrument.envelopeSpeed = clamp(0, Config.automationParams.dictionary["envelope speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                         if(!fromSlarmoosBox || beforeFive) {
                             envelopeDiscrete = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) ? true : false;
                         }
                     }
                     for (let i: number = 0; i < envelopeCount; i++) {
-                        const target: number = clamp(0, Config.instrumentAutomationTargets.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                        const target: number = clamp(0, Config.automationParams.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                         let index: number = 0;
-                        const maxCount: number = Config.instrumentAutomationTargets[target].maxCount;
-                        if (maxCount > 1) {
-                            index = clamp(0, maxCount, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                        const maxIndex: number = Config.automationParams[target].maxIndex;
+                        if (maxIndex > 0) {
+                            index = clamp(0, maxIndex, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                         }
                         let aa: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                         if ((beforeTwo && fromGoldBox) || (fromBeepBox)) aa = pregoldToEnvelope[aa];
@@ -3692,7 +3691,8 @@ export class Song {
 
                                 // Mod setting is only used if the status isn't "none".
                                 if (status != 3) {
-                                    instrument.modulators[mod] = bits.read(6);
+                                    if (fromTheepBox && !beforeSeven) instrument.modulators[mod] = bits.read(8);
+                                    else instrument.modulators[mod] = bits.read(6);
                                 }
 
                                 // In legacy formats, a status of 1 meant "noise channel" and the index was relative.
@@ -3701,7 +3701,7 @@ export class Song {
                                     instrument.modChannels[mod][0] = this.channels.findIndex((ch, i) => this.getChannelIsNoise(i) && i >= this.pitchChannelCount && (i - this.pitchChannelCount) === noiseChannelIndex);
                                 }
 
-                                if (fromTheepBox && !beforeSix && Config.modulators[instrument.modulators[mod]].associatedEffect < EffectType.length) {
+                                if (fromTheepBox && !beforeSix && Config.automationParams[instrument.modulators[mod]].associatedEffect != null) {
                                     let modEffectLength: number = bits.read(8);
                                     for (let i: number = 0; i < modEffectLength; i++) {
                                         // maybe should clamp...
@@ -3709,14 +3709,14 @@ export class Song {
                                     }
                                 }
 
-                                if (!jumfive && (Config.modulators[instrument.modulators[mod]].name == "post eq" || Config.modulators[instrument.modulators[mod]].name == "pre eq" || Config.modulators[instrument.modulators[mod]].name == "song eq")) {
+                                if (!jumfive && (Config.automationParams[instrument.modulators[mod]].name == "eq filter" || Config.automationParams[instrument.modulators[mod]].name == "pre eq" || Config.automationParams[instrument.modulators[mod]].name == "song eq filter")) {
                                     instrument.modFilterTypes[mod] = bits.read(6);
                                 }
 
-                                if (Config.modulators[instrument.modulators[mod]].name == "individual envelope speed" ||
-                                    Config.modulators[instrument.modulators[mod]].name == "reset envelope" ||
-                                    Config.modulators[instrument.modulators[mod]].name == "individual envelope lower bound" ||
-                                    Config.modulators[instrument.modulators[mod]].name == "individual envelope upper bound"
+                                if (Config.automationParams[instrument.modulators[mod]].name == "individual envelope speed" ||
+                                    Config.automationParams[instrument.modulators[mod]].name == "reset envelope" ||
+                                    Config.automationParams[instrument.modulators[mod]].name == "individual envelope lower bound" ||
+                                    Config.automationParams[instrument.modulators[mod]].name == "individual envelope upper bound"
                                 ) {
                                     instrument.modEnvelopeNumbers[mod] = bits.read(6);
                                 }
@@ -3730,10 +3730,10 @@ export class Song {
                                         // Check if there is no filter dot on prospective filter. If so, add a low pass at max possible freq.
 
                                         if (forNoteFilter) {
-                                            instrument.modulators[mod] = Config.modulators.dictionary["pre eq cut"].index;
+                                            instrument.modulators[mod] = Config.automationParams.dictionary["pre eq cut"].index;
                                         }
                                         else {
-                                            instrument.modulators[mod] = Config.modulators.dictionary["post eq cut"].index;
+                                            instrument.modulators[mod] = Config.automationParams.dictionary["eq filter cut"].index;
                                         }
 
                                         instrument.modFilterTypes[mod] = 1; // Dot 1 X
@@ -3742,10 +3742,10 @@ export class Song {
                                     else if (instrument.modulators[mod] == 8) {
                                         // Legacy filter peak index
                                         if (forNoteFilter) {
-                                            instrument.modulators[mod] = Config.modulators.dictionary["pre eq peak"].index;
+                                            instrument.modulators[mod] = Config.automationParams.dictionary["pre eq peak"].index;
                                         }
                                         else {
-                                            instrument.modulators[mod] = Config.modulators.dictionary["post eq peak"].index;
+                                            instrument.modulators[mod] = Config.automationParams.dictionary["eq filter peak"].index;
                                         }
 
                                         instrument.modFilterTypes[mod] = 2; // Dot 1 Y
@@ -3753,7 +3753,7 @@ export class Song {
                                 }
                                 else if (jumfive) {
                                     // Check for song reverb mod, which must be handled differently now that it is a multiplier
-                                    if (instrument.modulators[mod] == Config.modulators.dictionary["song reverb"].index) {
+                                    if (instrument.modulators[mod] == Config.automationParams.dictionary["song reverb"].index) {
                                         songReverbChannel = channelIndex;
                                         songReverbInstrument = instrumentIndex;
                                         songReverbIndex = mod;
@@ -3763,8 +3763,8 @@ export class Song {
                                 // Based on setting, enable some effects for the modulated instrument. This isn't always set, say if the instrument's pan was right in the center.
                                 // Only used on import of old songs, because sometimes an invalid effect can be set in a mod in the new version that is actually unused. In that case,
                                 // keeping the mod invalid is better since it preserves the state.
-                                if (jumfive && Config.modulators[instrument.modulators[mod]].associatedEffect != EffectType.length) {
-                                    this.channels[instrument.modChannels[mod][0]].instruments[instrument.modInstruments[mod][0]].addEffect(Config.modulators[instrument.modulators[mod]].associatedEffect);
+                                if (jumfive && Config.automationParams[instrument.modulators[mod]].associatedEffect != null) {
+                                    this.channels[instrument.modChannels[mod][0]].instruments[instrument.modInstruments[mod][0]].addEffect(Config.automationParams[instrument.modulators[mod]].associatedEffect as EffectType);
                                 }
                             }
                         }
@@ -3775,7 +3775,7 @@ export class Song {
                     for (let j: number = 0; j < channel.instruments.length; j++) {
                         detuneScaleNotes[j] = [];
                         for (let i: number = 0; i < Config.modCount; i++) {
-                            detuneScaleNotes[j][Config.modCount - 1 - i] = 1 + 3 * +(((beforeFive && fromJummBox) || (beforeFour && fromGoldBox)) && isModChannel && (channel.instruments[j].modulators[i] == Config.modulators.dictionary["detune"].index));
+                            detuneScaleNotes[j][Config.modCount - 1 - i] = 1 + 3 * +(((beforeFive && fromJummBox) || (beforeFour && fromGoldBox)) && isModChannel && (channel.instruments[j].modulators[i] == Config.automationParams.dictionary["detune"].index));
                         }
                     }
                     const octaveOffset: number = (isNoiseChannel || isModChannel) ? 0 : channel.octave * 12;
@@ -3962,7 +3962,7 @@ export class Song {
                                 }
                                 note.pitches.length = pitchCount;
                                 pitchBends.unshift(note.pitches[0]); // TODO: Use Deque?
-                                const noteIsForTempoMod: boolean = isModChannel && channel.instruments[newPattern.instruments[0]].modulators[Config.modCount - 1 - note.pitches[0]] === Config.modulators.dictionary["tempo"].index;
+                                const noteIsForTempoMod: boolean = isModChannel && channel.instruments[newPattern.instruments[0]].modulators[Config.modCount - 1 - note.pitches[0]] === Config.automationParams.dictionary["tempo"].index;
                                 let tempoOffset: number = 0;
                                 if (shouldCorrectTempoMods && noteIsForTempoMod) {
                                     tempoOffset = jummboxTempoMin - Config.tempoMin; // convertRealFactor will add back Config.tempoMin as necessary
@@ -4455,7 +4455,7 @@ export class Song {
             "channels": channelArray,
         };
 
-        //song eq subfilters
+        //song eq filter subfilters
         for (let i: number = 0; i < Config.filterMorphCount - 1; i++) {
             result["songEq" + i] = this.eqSubFilters[i];
         }

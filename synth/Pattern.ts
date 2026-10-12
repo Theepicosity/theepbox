@@ -254,7 +254,7 @@ export class Pattern {
                     note.continuesLastPattern = false;
                 }
 
-                if ((format != "ultrabox" && format != "slarmoosbox") && instrument.modulators[mod] == Config.modulators.dictionary["tempo"].index) {
+                if ((format != "ultrabox" && format != "slarmoosbox") && instrument.modulators[mod] == Config.automationParams.dictionary["tempo"].index) {
                     for (const pin of note.pins) {
                         const oldMin: number = 30;
                         const newMin: number = 1;

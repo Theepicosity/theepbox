@@ -501,12 +501,12 @@ export class Piano {
 
                 // When unused, show name of mod on second row
                 if (usingSecondRow) {
-                    secondRow = Config.modulators[modulator].pianoName;
-                    if (modulator == Config.modulators.dictionary["none"].index) {
+                    secondRow = Config.automationParams[modulator].displayName;
+                    if (modulator == Config.automationParams.dictionary["none"].index) {
                         useSecondColor = ColorConfig.modLabelSecondaryText;
                         usingMod = false;
                     }
-                    else if (modulator == Config.modulators.dictionary["post eq"].index || modulator == Config.modulators.dictionary["pre eq"].index || modulator == Config.modulators.dictionary["song eq"].index) {
+                    else if (modulator == Config.automationParams.dictionary["eq filter"].index || modulator == Config.automationParams.dictionary["song eq filter"].index) {
                         var text = " Morph";
                         var filterVal = instrument.modFilterTypes[Config.modCount - j - 1];
                         if (filterVal > 0 && (filterVal % 2)) {

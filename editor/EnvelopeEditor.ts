@@ -91,8 +91,8 @@ export class EnvelopeEditor {
 		const LFOStepsSliderIndex: number = this._LFOStepsSliders.indexOf(<any>event.target);
 		if (targetSelectIndex != -1) {
 			const combinedValue: number = parseInt(this._targetSelects[targetSelectIndex].value);
-			const target: number = combinedValue % Config.instrumentAutomationTargets.length;
-			const index: number = (combinedValue / Config.instrumentAutomationTargets.length) >>> 0;
+			const target: number = combinedValue % Config.automationParams.length;
+			const index: number = (combinedValue / Config.automationParams.length) >>> 0;
 			this._doc.record(new ChangeSetEnvelopeTarget(this._doc, targetSelectIndex, target, index));
 		} else if (envelopeSelectIndex != -1) {
 			const envelopeIndex: number = this._envelopeSelects.indexOf(<any>event.target);
@@ -179,23 +179,23 @@ export class EnvelopeEditor {
 	}
 
 	private _makeOption(target: number, index: number): HTMLOptionElement {
-		let displayName = Config.instrumentAutomationTargets[target].displayName;
-		if (Config.instrumentAutomationTargets[target].maxCount > 1) {
+		let displayName = Config.automationParams[target].name;
+		if (Config.automationParams[target].maxIndex > 0) {
 			if (displayName.indexOf("#") != -1) {
 				displayName = displayName.replace("#", String(index + 1));
 			} else {
 				displayName += " " + (index + 1);
 			}
 		}
-		return HTML.option({ value: target + index * Config.instrumentAutomationTargets.length }, displayName);
+		return HTML.option({ value: target + index * Config.automationParams.length }, displayName);
 	}
 
 	private _updateTargetOptionVisibility(menu: HTMLSelectElement, instrument: Instrument): void {
 		for (let optionIndex: number = 0; optionIndex < menu.childElementCount; optionIndex++) {
 			const option: HTMLOptionElement = <HTMLOptionElement>menu.children[optionIndex];
 			const combinedValue: number = parseInt(option.value);
-			const target: number = combinedValue % Config.instrumentAutomationTargets.length;
-			const index: number = (combinedValue / Config.instrumentAutomationTargets.length) >>> 0;
+			const target: number = combinedValue % Config.automationParams.length;
+			const index: number = (combinedValue / Config.automationParams.length) >>> 0;
 			option.hidden = !instrument.supportsEnvelopeTarget(target, index);
 		}
 	}
@@ -377,9 +377,9 @@ export class EnvelopeEditor {
 
 		for (let envelopeIndex: number = this._rows.length; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
 			const targetSelect: HTMLSelectElement = HTML.select();
-			for (let target: number = 0; target < Config.instrumentAutomationTargets.length; target++) {
-				const interleaved: boolean = (Config.instrumentAutomationTargets[target].interleave);
-				for (let index: number = 0; index < Config.instrumentAutomationTargets[target].maxCount; index++) {
+			for (let target: number = 0; target < Config.automationParams.length; target++) {
+				const interleaved: boolean = (Config.automationParams[target].interleave) != undefined;
+				for (let index: number = 0; index < Config.automationParams[target].maxIndex + 1; index++) {
 					targetSelect.appendChild(this._makeOption(target, index));
 					if (interleaved) {
 						targetSelect.appendChild(this._makeOption(target + 1, index));
@@ -588,7 +588,7 @@ export class EnvelopeEditor {
 		}
 
 		for (let envelopeIndex: number = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
-			this._targetSelects[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].target + instrument.envelopes[envelopeIndex].index * Config.instrumentAutomationTargets.length);
+			this._targetSelects[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].target + instrument.envelopes[envelopeIndex].index * Config.automationParams.length);
 			this._envelopeSelects[envelopeIndex].selectedIndex = instrument.envelopes[envelopeIndex].envelope;
 			this.pitchStartBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].pitchEnvelopeStart);
 			this.pitchEndBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].pitchEnvelopeEnd);

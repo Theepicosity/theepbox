@@ -1,6 +1,6 @@
 // Copyright (c) John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Dictionary, DictionaryArray, toNameMap, SustainType, EnvelopeType, InstrumentType, EffectType, MDEffectType, Transition, Unison, Chord, Vibrato, Envelope, AutomationTarget, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, LFOEnvelopeTypes } from "./SynthConfig";
+import { Dictionary, DictionaryArray, toNameMap, SustainType, EnvelopeType, InstrumentType, EffectType, MDEffectType, Transition, Unison, Chord, Vibrato, Envelope, AutomationParameter, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, LFOEnvelopeTypes } from "./SynthConfig";
 import { FilterSettings } from "./Filter";
 import { EnvelopeSettings } from "./Envelope";
 import { Effect } from "./Effect";
@@ -288,7 +288,7 @@ export class Instrument {
 
         // @jummbus - My screed on how modulator arrays for instruments work, for the benefit of myself in the future, or whoever else.
         //
-        // modulators[mod] is the index in Config.modulators to use, with "none" being the first entry.
+        // modulators[mod] is the index in Config.automationParams to use, with "none" being the first entry.
         //
         // modChannels[mod] gives the index of a channel set for this mod. Two special values:
         //   -2 "none"
@@ -309,7 +309,7 @@ export class Instrument {
                 this.modChannels.push([-2]);
                 this.modInstruments.push([0]);
                 this.modEffects.push([0]);
-                this.modulators.push(Config.modulators.dictionary["none"].index);
+                this.modulators.push(Config.automationParams.dictionary["none"].index);
             }
         }
 
@@ -487,7 +487,7 @@ export class Instrument {
                     this.modChannels.push([-2]);
                     this.modInstruments.push([0]);
                     this.modEffects.push([0]);
-                    this.modulators.push(Config.modulators.dictionary["none"].index);
+                    this.modulators.push(Config.automationParams.dictionary["none"].index);
                     this.invalidModulators[mod] = false;
                     this.modFilterTypes[mod] = 0;
                     this.modEnvelopeNumbers[mod] = 0;
@@ -558,9 +558,9 @@ export class Instrument {
 
         if (this.type == InstrumentType.fm || this.type == InstrumentType.fm6op) {
             if (allCarriersControlledByNoteSize && noteSizeControlsSomethingElse) {
-                this.addEnvelope(Config.instrumentAutomationTargets.dictionary["noteVolume"].index, 0, Config.envelopes.dictionary["note size"].index, false);
+                this.addEnvelope(Config.automationParams.dictionary["pre volume"].index, 0, Config.envelopes.dictionary["note size"].index, false);
             } else if (noCarriersControlledByNoteSize && !noteSizeControlsSomethingElse) {
-                this.addEnvelope(Config.instrumentAutomationTargets.dictionary["none"].index, 0, Config.envelopes.dictionary["note size"].index, false);
+                this.addEnvelope(Config.automationParams.dictionary["none"].index, 0, Config.envelopes.dictionary["note size"].index, false);
             }
         }
 
@@ -592,18 +592,18 @@ export class Instrument {
         */
 
         if (legacyPulseEnv.type != EnvelopeType.none) {
-            this.addEnvelope(Config.instrumentAutomationTargets.dictionary["pulseWidth"].index, 0, legacyPulseEnv.index, false);
+            this.addEnvelope(Config.automationParams.dictionary["pulse width"].index, 0, legacyPulseEnv.index, false);
         }
 
         for (let i: number = 0; i < legacyOperatorEnvelopes.length; i++) {
             if (i < carrierCount && allCarriersControlledByNoteSize) continue;
             if (legacyOperatorEnvelopes[i].type != EnvelopeType.none) {
-                this.addEnvelope(Config.instrumentAutomationTargets.dictionary["operatorAmplitude"].index, i, legacyOperatorEnvelopes[i].index, false);
+                this.addEnvelope(Config.automationParams.dictionary["fm slider 1"].index + i, 0, legacyOperatorEnvelopes[i].index, false);
             }
         }
 
         if (legacyFeedbackEnv.type != EnvelopeType.none) {
-            this.addEnvelope(Config.instrumentAutomationTargets.dictionary["feedbackAmplitude"].index, 0, legacyFeedbackEnv.index, false);
+            this.addEnvelope(Config.automationParams.dictionary["fm feedback"].index, 0, legacyFeedbackEnv.index, false);
         }
     }
 
@@ -884,7 +884,7 @@ export class Instrument {
         }
 
         //These can probably be condensed with ternary operators
-        this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
+        this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.automationParams.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
 
         if (format == "theepbox") {
             if (instrumentObject["effects"] != undefined) {
@@ -1578,7 +1578,7 @@ export class Instrument {
         if (this.envelopeCount >= Config.maxEnvelopeCount) throw new Error();
         while (this.envelopes.length <= this.envelopeCount) this.envelopes[this.envelopes.length] = new EnvelopeSettings(this.isNoiseInstrument);
         const envelopeSettings: EnvelopeSettings = this.envelopes[this.envelopeCount];
-        envelopeSettings.target = makeEmpty ? Config.instrumentAutomationTargets.dictionary["none"].index : target;
+        envelopeSettings.target = makeEmpty ? Config.automationParams.dictionary["none"].index : target;
         envelopeSettings.index = makeEmpty ? 0 : index;
         if (!newEnvelopes) {
             envelopeSettings.envelope = clamp(0, Config.newEnvelopes.length, Config.envelopes[envelope].type);
@@ -1599,17 +1599,17 @@ export class Instrument {
     }
 
     public supportsEnvelopeTarget(target: number, index: number): boolean {
-        const automationTarget: AutomationTarget = Config.instrumentAutomationTargets[target];
-        if (automationTarget.computeIndex == null && automationTarget.name != "none") {
+        const automationTarget: AutomationParameter = Config.automationParams[target];
+        if (!automationTarget.canBeEnvelope) {
             return false;
         }
-        if (index >= automationTarget.maxCount) {
+        if (index > automationTarget.maxIndex) {
             return false;
         }
-        if (automationTarget.compatibleInstruments != null && automationTarget.compatibleInstruments.indexOf(this.type) == -1) {
+        if (automationTarget.associatedInstruments != null && automationTarget.associatedInstruments.indexOf(this.type) == -1) {
             return false;
         }
-        if ((automationTarget.effect != null && !this.effectsIncludeType(automationTarget.effect)) || (automationTarget.mdeffect != null && (this.mdeffects & (1 << automationTarget.mdeffect)) == 0)) {
+        if ((automationTarget.associatedEffect != null && !this.effectsIncludeType(automationTarget.associatedEffect)) || (automationTarget.associatedMDEffect != null && (this.mdeffects & (1 << automationTarget.associatedMDEffect)) == 0)) {
             return false;
         }
         if (automationTarget.isFilter) {
@@ -1633,7 +1633,7 @@ export class Instrument {
             const target: number = this.envelopes[envelopeIndex].target;
             const index: number = this.envelopes[envelopeIndex].index;
             if (!this.supportsEnvelopeTarget(target, index)) {
-                this.envelopes[envelopeIndex].target = Config.instrumentAutomationTargets.dictionary["none"].index;
+                this.envelopes[envelopeIndex].target = Config.automationParams.dictionary["none"].index;
                 this.envelopes[envelopeIndex].index = 0;
             }
         }

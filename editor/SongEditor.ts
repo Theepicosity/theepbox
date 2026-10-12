@@ -952,7 +952,7 @@ export class SongEditor {
 
     private readonly _chordSelectRow: HTMLElement = div({ class: "selectRow", style: "display: flex; flex-direction: row" }, span({ class: "tip", onclick: () => this._openPrompt("chords") }, "Chords:"), this._monophonicNoteInputBox, this._chordDropdown, this._chordSelectContainer);
     private readonly _arpeggioSpeedDisplay: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: smaller; text-overflow: clip;` }, "x1");
-    private readonly _arpeggioSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.modulators.dictionary["arp speed"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeArpeggioSpeed(this._doc, oldValue, newValue), false);
+    private readonly _arpeggioSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.automationParams.dictionary["arpeggio speed"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeArpeggioSpeed(this._doc, oldValue, newValue), false);
     private readonly _arpeggioSpeedRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("arpeggioSpeed") }, "‣ Spd:"), this._arpeggioSpeedDisplay, this._arpeggioSpeedSlider.container);
     private readonly _twoNoteArpBox: HTMLInputElement = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-right: 4em;" });
     private readonly _twoNoteArpRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("twoNoteArpeggio") }, "‣ Fast Two-Note:"), this._twoNoteArpBox);
@@ -962,12 +962,12 @@ export class SongEditor {
     private readonly _vibratoSelect: HTMLSelectElement = buildOptions(select(), Config.vibratos.map(vibrato => vibrato.name));
     private readonly _vibratoDropdown: HTMLButtonElement = button({ style: "margin-left:0em; height:1.5em; width: 10px; padding: 0px; font-size: 8px;", onclick: () => this._toggleDropdownMenu(DropdownID.Vibrato) }, "▼");
     private readonly _vibratoSelectRow: HTMLElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("vibrato") }, "Vibrato:"), this._vibratoDropdown, div({ class: "selectContainer", style: "width: 61.5%;" }, this._vibratoSelect));
-    private readonly _vibratoDepthSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.modulators.dictionary["vibrato depth"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeVibratoDepth(this._doc, oldValue, newValue), false);
+    private readonly _vibratoDepthSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.automationParams.dictionary["vibrato depth"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeVibratoDepth(this._doc, oldValue, newValue), false);
     private readonly _vibratoDepthRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("vibratoDepth") }, "‣ Depth:"), this._vibratoDepthSlider.container);
     private readonly _vibratoSpeedDisplay: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: smaller; text-overflow: clip;` }, "x1");
-    private readonly _vibratoSpeedSlider: Slider = new Slider(input({ style: "margin: 0; text-overflow: clip;", type: "range", min: "0", max: Config.modulators.dictionary["vibrato speed"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeVibratoSpeed(this._doc, oldValue, newValue), false);
+    private readonly _vibratoSpeedSlider: Slider = new Slider(input({ style: "margin: 0; text-overflow: clip;", type: "range", min: "0", max: Config.automationParams.dictionary["vibrato speed"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeVibratoSpeed(this._doc, oldValue, newValue), false);
     private readonly _vibratoSpeedRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("vibratoSpeed") }, "‣ Spd:"), this._vibratoSpeedDisplay, this._vibratoSpeedSlider.container);
-    private readonly _vibratoDelaySlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.modulators.dictionary["vibrato delay"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeVibratoDelay(this._doc, oldValue, newValue), false);
+    private readonly _vibratoDelaySlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.automationParams.dictionary["vibrato delay"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeVibratoDelay(this._doc, oldValue, newValue), false);
     private readonly _vibratoDelayRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("vibratoDelay") }, "‣ Delay:"), this._vibratoDelaySlider.container);
     private readonly _vibratoTypeSelect: HTMLSelectElement = buildOptions(select(), Config.vibratoTypes.map(vibrato => vibrato.name));
     private readonly _vibratoTypeSelectRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("vibratoType") }, "‣ Type:"), div({ class: "selectContainer", style: "width: 61.5%;" }, this._vibratoTypeSelect));
@@ -985,7 +985,7 @@ export class SongEditor {
     //SongEditor.ts
     readonly envelopeEditor: EnvelopeEditor = new EnvelopeEditor(this._doc, (id: number, submenu: number, subtype: string) => this._toggleDropdownMenu(id, submenu, subtype), (name: string) => this._openPrompt(name));
     private readonly _envelopeSpeedDisplay: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: smaller; text-overflow: clip;` }, "x1");
-    private readonly _envelopeSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.modulators.dictionary["envelope speed"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeEnvelopeSpeed(this._doc, oldValue, newValue), false);
+    private readonly _envelopeSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.automationParams.dictionary["envelope speed"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeEnvelopeSpeed(this._doc, oldValue, newValue), false);
     private readonly _envelopeSpeedRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("envelopeSpeed") }, "‣ Spd:"), this._envelopeSpeedDisplay, this._envelopeSpeedSlider.container);
     private readonly _envelopeDropdownGroup: HTMLElement = div({ class: "editor-controls", style: "display: none;" }, this._envelopeSpeedRow);
     private readonly _envelopeDropdown: HTMLButtonElement = button({ style: "margin-left:0em; margin-right: 1em; height:1.5em; width: 10px; padding: 0px; font-size: 8px;", onclick: () => this._toggleDropdownMenu(DropdownID.Envelope) }, "▼");
@@ -1423,10 +1423,10 @@ export class SongEditor {
 
         this._unisonSelect.appendChild(option({ hidden: true, value: Config.unisons.length }, "custom"));
 
-        this._showModSliders = new Array<boolean[]>(Config.modulators.length);
-        this._modSliderValues = new Array<number[]>(Config.modulators.length);
+        this._showModSliders = new Array<boolean[]>(Config.automationParams.length);
+        this._modSliderValues = new Array<number[]>(Config.automationParams.length);
         //set default values
-        for (let i = 0; i < Config.modulators.length; i++) {
+        for (let i = 0; i < Config.automationParams.length; i++) {
             this._newShowModSliders[i] = [];
             this._showModSliders[i] = [];
             this._modSliderValues[i] = [];
@@ -1839,8 +1839,8 @@ export class SongEditor {
             this._hasActiveModSliders = false;
             this._songEqFilterEditor.render();
 
-            for (let setting: number = 0; setting < Config.modulators.length; setting++) {
-                const maxIndex = Math.max(Config.modulators[setting].maxIndex, instrument.effects.length)
+            for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
+                const maxIndex = Math.max(Config.automationParams[setting].maxIndex, instrument.effects.length)
                 for (let index: number = 0; index <= maxIndex; index++) {
                     if (this._showModSliders[setting][index] == true) {
                         this._showModSliders[setting][index] = false;
@@ -1863,23 +1863,23 @@ export class SongEditor {
 
                 function updateModSlider(editor: SongEditor, slider: Slider, setting: number, channel: number, instrumentIndex: number, index: number): boolean {
                     if (editor._doc.synth.isModActive(setting, channel, instrumentIndex, index)) {
-                        if (Config.modulators[setting].maxIndex > 0) {
+                        if (Config.automationParams[setting].maxIndex > 0) {
                             //detect that the mod actually does need updating for the specific index
                             const envelope = editor._doc.synth.song!.channels[channel].instruments[instrumentIndex].envelopes[index];
                             switch (setting) {
-                                case Config.modulators.dictionary["individual envelope speed"].index: {
+                                case Config.automationParams.dictionary["individual envelope speed"].index: {
                                     if (envelope.tempEnvelopeSpeed == null) {
                                         return false;
                                     }
                                     break;
                                 }
-                                case Config.modulators.dictionary["individual envelope lower bound"].index: {
+                                case Config.automationParams.dictionary["individual envelope lower bound"].index: {
                                     if (envelope.tempEnvelopeLowerBound == null) {
                                         return false;
                                     }
                                     break;
                                 }
-                                case Config.modulators.dictionary["individual envelope upper bound"].index: {
+                                case Config.automationParams.dictionary["individual envelope upper bound"].index: {
                                     if (envelope.tempEnvelopeUpperBound == null) {
                                         return false;
                                     }
@@ -1887,9 +1887,9 @@ export class SongEditor {
                                 }
                             }
                         }
-                        let currentVal: number = (editor._doc.synth.getModValue(setting, channel, instrumentIndex, index, false) - Config.modulators[setting].convertRealFactor) / Config.modulators[setting].maxRawVol;
+                        let currentVal: number = (editor._doc.synth.getModValue(setting, channel, instrumentIndex, index, false) - Config.automationParams[setting].convertRealFactor) / Config.automationParams[setting].maxRawVol;
 
-                        if (Config.modulators[setting].invertSliderIndicator == true) {
+                        if (Config.automationParams[setting].invertSliderIndicator == true) {
                             currentVal = 1 - currentVal;
                         }
 
@@ -1903,8 +1903,8 @@ export class SongEditor {
                 }
 
                 // Set mod sliders to present values
-                for (let setting: number = 0; setting < Config.modulators.length; setting++) {
-                    const maxIndex = Math.max(Config.modulators[setting].maxIndex, instrument.effects.length)
+                for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
+                    const maxIndex = Math.max(Config.automationParams[setting].maxIndex, instrument.effects.length)
                     for (let index: number = 0; index <= maxIndex; index++) {
                         // Set to last value
                         this._newShowModSliders[setting][index] = Boolean(this._showModSliders[setting][index]);
@@ -1921,8 +1921,8 @@ export class SongEditor {
             }
             else if (this._hasActiveModSliders) {
                 // Zero out show-mod-slider settings (since none are active) to kill active mod slider flag
-                for (let setting: number = 0; setting < Config.modulators.length; setting++) {
-                    for (let index: number = 0; index <= Config.modulators[setting].maxIndex; index++) {
+                for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
+                    for (let index: number = 0; index <= Config.automationParams[setting].maxIndex; index++) {
                         this._newShowModSliders[setting][index] = false;
                     }
                 }
@@ -1933,8 +1933,8 @@ export class SongEditor {
 
                 let anySliderActive: boolean = false;
 
-                for (let setting: number = 0; setting < Config.modulators.length; setting++) {
-                    const maxIndex = Math.max(Config.modulators[setting].maxIndex, instrument.effects.length)
+                for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
+                    const maxIndex = Math.max(Config.automationParams[setting].maxIndex, instrument.effects.length)
                     for (let index: number = 0; index <= maxIndex; index++) {
                         if (this._newShowModSliders[setting][index] != this._showModSliders[setting][index]) {
                             this._showModSliders[setting][index] = this._newShowModSliders[setting][index];
@@ -1968,121 +1968,117 @@ export class SongEditor {
     public getSliderForModSetting(setting: number, index?: number): Slider | null {
         index = index == undefined ? 1 : index;
         switch (setting) {
-            case Config.modulators.dictionary["gain"].index:
+            case Config.automationParams.dictionary["gain"].index:
                 return this.effectEditor.gainSliders[index];
-            case Config.modulators.dictionary["pan"].index:
+            case Config.automationParams.dictionary["pan"].index:
                 return this.effectEditor.panSliders[index];
-            case Config.modulators.dictionary["detune"].index:
+            case Config.automationParams.dictionary["detune"].index:
                 return this._detuneSlider;
-            case Config.modulators.dictionary["fm slider 1"].index:
+            case Config.automationParams.dictionary["fm slider 1"].index:
                 return this._operatorAmplitudeSliders[0];
-            case Config.modulators.dictionary["fm slider 2"].index:
+            case Config.automationParams.dictionary["fm slider 2"].index:
                 return this._operatorAmplitudeSliders[1];
-            case Config.modulators.dictionary["fm slider 3"].index:
+            case Config.automationParams.dictionary["fm slider 3"].index:
                 return this._operatorAmplitudeSliders[2];
-            case Config.modulators.dictionary["fm slider 4"].index:
+            case Config.automationParams.dictionary["fm slider 4"].index:
                 return this._operatorAmplitudeSliders[3];
-            case Config.modulators.dictionary["fm feedback"].index:
+            case Config.automationParams.dictionary["fm feedback"].index:
                 return this._feedbackAmplitudeSlider;
-            case Config.modulators.dictionary["pulse width"].index:
+            case Config.automationParams.dictionary["pulse width"].index:
                 return this._pulseWidthSlider;
-            case Config.modulators.dictionary["decimal offset"].index:
+            case Config.automationParams.dictionary["decimal offset"].index:
                 return this._decimalOffsetSlider;
-            case Config.modulators.dictionary["reverb"].index:
+            case Config.automationParams.dictionary["reverb"].index:
                 return this.effectEditor.reverbSliders[index];
-            case Config.modulators.dictionary["reverb wet/dry"].index:
+            case Config.automationParams.dictionary["reverb wet/dry"].index:
                 return this.effectEditor.reverbWetDryMixSliders[index];
-            case Config.modulators.dictionary["reverb send"].index:
+            case Config.automationParams.dictionary["reverb send"].index:
                 return this.effectEditor.reverbSendSliders[index];
-            case Config.modulators.dictionary["distortion"].index:
+            case Config.automationParams.dictionary["distortion"].index:
                 return this.effectEditor.distortionSliders[index];
-            case Config.modulators.dictionary["clipping in-gain"].index:
+            case Config.automationParams.dictionary["clipping in-gain"].index:
                 return this.effectEditor.clippingInGainSliders[index];
-            case Config.modulators.dictionary["clipping threshold"].index:
+            case Config.automationParams.dictionary["clipping threshold"].index:
                 return this.effectEditor.clippingThresholdSliders[index];
-            case Config.modulators.dictionary["pre volume"].index:
+            case Config.automationParams.dictionary["pre volume"].index:
                 // So, this should technically not affect this slider, but it will look better as legacy songs used this mod as 'volume'.
                 // In the case that mix volume is used as well, they'd fight for the display, so just don't use this.
-                if (!this._showModSliders[Config.modulators.dictionary["post volume"].index])
+                if (!this._showModSliders[Config.automationParams.dictionary["post volume"].index])
                     return this._instrumentVolumeSlider;
                 return null;
-            case Config.modulators.dictionary["post volume"].index:
+            case Config.automationParams.dictionary["post volume"].index:
                 return this._instrumentVolumeSlider;
-            case Config.modulators.dictionary["vibrato depth"].index:
+            case Config.automationParams.dictionary["vibrato depth"].index:
                 return this._vibratoDepthSlider;
-            case Config.modulators.dictionary["vibrato speed"].index:
+            case Config.automationParams.dictionary["vibrato speed"].index:
                 return this._vibratoSpeedSlider;
-            case Config.modulators.dictionary["vibrato delay"].index:
+            case Config.automationParams.dictionary["vibrato delay"].index:
                 return this._vibratoDelaySlider;
-            case Config.modulators.dictionary["arp speed"].index:
+            case Config.automationParams.dictionary["arpeggio speed"].index:
                 return this._arpeggioSpeedSlider;
-            case Config.modulators.dictionary["pan delay"].index:
+            case Config.automationParams.dictionary["pan delay"].index:
                 return this.effectEditor.panDelaySliders[index];
-            case Config.modulators.dictionary["tempo"].index:
+            case Config.automationParams.dictionary["tempo"].index:
                 return this._tempoSlider;
-            case Config.modulators.dictionary["song volume"].index:
+            case Config.automationParams.dictionary["song volume"].index:
                 return this._volumeSlider;
-            case Config.modulators.dictionary["post eq cut"].index:
+            case Config.automationParams.dictionary["eq filter cut"].index:
                 return this.effectEditor.eqFilterSimpleCutSliders[index];
-            case Config.modulators.dictionary["post eq peak"].index:
+            case Config.automationParams.dictionary["eq filter peak"].index:
                 return this.effectEditor.eqFilterSimplePeakSliders[index];
-            case Config.modulators.dictionary["pre eq cut"].index:
-                return this._noteFilterSimpleCutSlider;
-            case Config.modulators.dictionary["pre eq peak"].index:
-                return this._noteFilterSimplePeakSlider;
-            case Config.modulators.dictionary["bit crush"].index:
+            case Config.automationParams.dictionary["bit crush"].index:
                 return this.effectEditor.bitcrusherQuantizationSliders[index];
-            case Config.modulators.dictionary["freq crush"].index:
+            case Config.automationParams.dictionary["frequency crush"].index:
                 return this.effectEditor.bitcrusherFreqSliders[index];
-            case Config.modulators.dictionary["pitch shift"].index:
+            case Config.automationParams.dictionary["pitch shift"].index:
                 return this._pitchShiftSlider;
-            case Config.modulators.dictionary["flanger"].index:
+            case Config.automationParams.dictionary["flanger"].index:
                 return this.effectEditor.flangerSliders[index];
-            case Config.modulators.dictionary["flanger speed"].index:
+            case Config.automationParams.dictionary["flanger speed"].index:
                 return this.effectEditor.flangerSpeedSliders[index];
-            case Config.modulators.dictionary["flanger depth"].index:
+            case Config.automationParams.dictionary["flanger depth"].index:
                 return this.effectEditor.flangerDepthSliders[index];
-            case Config.modulators.dictionary["flanger feedback"].index:
+            case Config.automationParams.dictionary["flanger feedback"].index:
                 return this.effectEditor.flangerFeedbackSliders[index];
-            case Config.modulators.dictionary["chorus"].index:
+            case Config.automationParams.dictionary["chorus"].index:
                 return this.effectEditor.chorusSliders[index];
-            case Config.modulators.dictionary["echo"].index:
+            case Config.automationParams.dictionary["echo"].index:
                 return this.effectEditor.echoSustainSliders[index];
-            case Config.modulators.dictionary["echo delay"].index:
+            case Config.automationParams.dictionary["echo delay"].index:
                 return this.effectEditor.echoDelaySliders[index];
-            case Config.modulators.dictionary["echo ping pong"].index:
+            case Config.automationParams.dictionary["echo ping pong"].index:
                 return this.effectEditor.echoPingPongSliders[index];
-            case Config.modulators.dictionary["sustain"].index:
+            case Config.automationParams.dictionary["sustain"].index:
                 return this._stringSustainSlider;
-            case Config.modulators.dictionary["fm slider 5"].index:
+            case Config.automationParams.dictionary["fm slider 5"].index:
                 return this._operatorAmplitudeSliders[4];
-            case Config.modulators.dictionary["fm slider 6"].index:
+            case Config.automationParams.dictionary["fm slider 6"].index:
                 return this._operatorAmplitudeSliders[5];
-            case Config.modulators.dictionary["envelope speed"].index:
+            case Config.automationParams.dictionary["envelope speed"].index:
                 return this._envelopeSpeedSlider;
-            case Config.modulators.dictionary["dynamism"].index:
+            case Config.automationParams.dictionary["dynamism"].index:
                 return this._supersawDynamismSlider;
-            case Config.modulators.dictionary["spread"].index:
+            case Config.automationParams.dictionary["spread"].index:
                 return this._supersawSpreadSlider;
-            case Config.modulators.dictionary["saw shape"].index:
+            case Config.automationParams.dictionary["saw shape"].index:
                 return this._supersawShapeSlider;
-            case Config.modulators.dictionary["individual envelope speed"].index:
+            case Config.automationParams.dictionary["individual envelope speed"].index:
                 return this.envelopeEditor.perEnvelopeSpeedSliders[index];
-            case Config.modulators.dictionary["individual envelope lower bound"].index:
+            case Config.automationParams.dictionary["individual envelope lower bound"].index:
                 return this.envelopeEditor.perEnvelopeLowerBoundSliders[index];
-            case Config.modulators.dictionary["individual envelope upper bound"].index:
+            case Config.automationParams.dictionary["individual envelope upper bound"].index:
                 return this.envelopeEditor.perEnvelopeUpperBoundSliders[index];
-            case Config.modulators.dictionary["ring modulation"].index:
+            case Config.automationParams.dictionary["ring modulation"].index:
                 return this.effectEditor.ringModSliders[index]
-            case Config.modulators.dictionary["ring mod hertz"].index:
+            case Config.automationParams.dictionary["ring modulation frequency"].index:
                 return this.effectEditor.ringModHzSliders[index]
-            case Config.modulators.dictionary["granular"].index:
+            case Config.automationParams.dictionary["granular"].index:
                 return this.effectEditor.granularSliders[index];
-            case Config.modulators.dictionary["grain freq"].index:
+            case Config.automationParams.dictionary["grain frequency"].index:
                 return this.effectEditor.grainAmountsSliders[index];
-            case Config.modulators.dictionary["grain size"].index:
+            case Config.automationParams.dictionary["grain size"].index:
                 return this.effectEditor.grainSizeSliders[index];
-            case Config.modulators.dictionary["grain range"].index:
+            case Config.automationParams.dictionary["grain range"].index:
                 return this.effectEditor.grainRangeSliders[index];
             default:
                 return null;
@@ -2935,7 +2931,7 @@ export class SongEditor {
                         settingList.push("song reverb");
                         settingList.push("next bar");
                         settingList.push("song detune");
-                        settingList.push("song eq");
+                        settingList.push("song eq filter");
                     }
                     // Populate mod setting options for instrument scope.
                     else {
@@ -3125,8 +3121,8 @@ export class SongEditor {
                             settingList.push("sustain");
                         }
                         if (anyInstrumentArps) {
-                            settingList.push("arp speed");
-                            settingList.push("reset arp");
+                            settingList.push("arpeggio speed");
+                            settingList.push("reset arpeggio");
                         }
                         if (anyInstrumentPitchShifts) {
                             settingList.push("pitch shift");
@@ -3159,14 +3155,14 @@ export class SongEditor {
                         }
                         if (anyInstrumentEQFilters) {
                             if (anyInstrumentAdvancedEQ) {
-                                settingList.push("post eq");
+                                settingList.push("eq filter");
                             }
                             if (anyInstrumentSimpleEQ) {
-                                settingList.push("post eq cut");
-                                settingList.push("post eq peak");
+                                settingList.push("eq filter cut");
+                                settingList.push("eq filter peak");
                             }
                         }
-                        if (!allInstrumentEQFilters) unusedSettingList.push("+ post eq");
+                        if (!allInstrumentEQFilters) unusedSettingList.push("+ eq filter");
                         if (anyInstrumentDistorts) {
                             settingList.push("distortion");
                         }
@@ -3183,11 +3179,11 @@ export class SongEditor {
                         }
                         if (anyInstrumentBitcrushes) {
                             settingList.push("bit crush");
-                            settingList.push("freq crush");
+                            settingList.push("frequency crush");
                         }
                         if (!allInstrumentBitcrushes) {
                             unusedSettingList.push("+ bit crush");
-                            unusedSettingList.push("+ freq crush");
+                            unusedSettingList.push("+ frequency crush");
                         }
                         if (anyInstrumentGain) {
                             settingList.push("gain");
@@ -3243,21 +3239,21 @@ export class SongEditor {
                         }
                         if (anyInstrumentRingMods) {
                             settingList.push("ring modulation");
-                            settingList.push("ring mod hertz");
+                            settingList.push("ring modulation frequency");
                         }
                         if (!allInstrumentRingMods) {
                             unusedSettingList.push("+ ring modulation");
-                            unusedSettingList.push("+ ring mod hertz");
+                            unusedSettingList.push("+ ring modulation frequency");
                         }
                         if (anyInstrumentGranulars) {
                             settingList.push("granular");
-                            settingList.push("grain freq");
+                            settingList.push("grain frequency");
                             settingList.push("grain size");
                             settingList.push("grain range");
                         }
                         if (!allInstrumentGranulars) {
                             unusedSettingList.push("+ granular");
-                            unusedSettingList.push("+ grain freq");
+                            unusedSettingList.push("+ grain frequency");
                             unusedSettingList.push("+ grain size");
                             unusedSettingList.push("+ grain range");
                         }
@@ -3279,11 +3275,11 @@ export class SongEditor {
                         // buildOptions(this._modSetBoxes[mod], unusedSettingList);
                     }
 
-                    let setIndex: number = settingList.indexOf(Config.modulators[instrument.modulators[mod]].name);
+                    let setIndex: number = settingList.indexOf(Config.automationParams[instrument.modulators[mod]].name);
 
                     // Catch instances where invalid set forced setting to "none"
                     if (setIndex == -1) {
-                        this._modSetBoxes[mod].insertBefore(option({ value: Config.modulators[instrument.modulators[mod]].name, style: "color: red;" }, Config.modulators[instrument.modulators[mod]].name), this._modSetBoxes[mod].children[0]);
+                        this._modSetBoxes[mod].insertBefore(option({ value: Config.automationParams[instrument.modulators[mod]].name, style: "color: red;" }, Config.automationParams[instrument.modulators[mod]].name), this._modSetBoxes[mod].children[0]);
                         this._modSetBoxes[mod].selectedIndex = 0;
                         this._whenSetModSetting(mod, true);
                     }
@@ -3339,14 +3335,14 @@ export class SongEditor {
                     this._modTargetIndicators[mod].classList.add("modTarget");
                 }
 
-                let modName: string = Config.modulators[instrument.modulators[mod]].name;
-                let usesEffect: boolean = Config.modulators[instrument.modulators[mod]].associatedEffect < EffectType.length
+                let modName: string = Config.automationParams[instrument.modulators[mod]].name;
+                let usesEffect: boolean = Config.automationParams[instrument.modulators[mod]].associatedEffect != null
 
                 if (usesEffect) {
                     $("#modEffectText" + mod).get(0)!.style.display = "";
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
 
-                    let effectType: EffectType = Config.modulators[instrument.modulators[mod]].associatedEffect
+                    let effectType: EffectType = Config.automationParams[instrument.modulators[mod]].associatedEffect as EffectType;
 
                     let validEffects: number[] = [];
                     let validEffectCounts: number[] = [];
@@ -3414,10 +3410,10 @@ export class SongEditor {
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
                 }
 
-                let filterType: string = Config.modulators[instrument.modulators[mod]].name;
-                let useSongEq: boolean = filterType == "song eq";
+                let filterType: string = Config.automationParams[instrument.modulators[mod]].name;
+                let useSongEq: boolean = filterType == "song eq filter";
                 if (useSongEq) filterType = "pre eq";
-                if (filterType == "post eq" || filterType == "pre eq") {
+                if (filterType == "eq filter" || filterType == "pre eq") {
                     $("#modFilterText" + mod).get(0)!.style.display = "";
                     $("#modEnvelopeText" + mod).get(0)!.style.display = "none";
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
@@ -3432,7 +3428,7 @@ export class SongEditor {
                     for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
                         let modChannel: Channel = this._doc.song.channels[instrument.modChannels[mod][i]];
                         for (let j: number = 0; j < modChannel.instruments.length; j++) {
-                            if (filterType == "post eq") {
+                            if (filterType == "eq filter") {
                                 for (let k: number = 0; k < modChannel.instruments[j].effects.length; k++) {
                                     let effect: Effect = modChannel.instruments[j].effects[k];
                                     if (effect.type != EffectType.eqFilter) continue;
@@ -3460,7 +3456,7 @@ export class SongEditor {
                     let modChannel: Channel = this._doc.song.channels[useChannel];
                     console.log(useChannel)
 
-                    let dotCount: number = (filterType == "post eq")
+                    let dotCount: number = (filterType == "eq filter")
                         ? modChannel.instruments[useInstrument].getLargestControlPointCount(false, useEffect)
                         : modChannel.instruments[useInstrument].getLargestControlPointCount(true);
 
@@ -3557,7 +3553,7 @@ export class SongEditor {
 
                 } else {
                     $("#modEnvelopeText" + mod).get(0)!.style.display = "none";
-                    if (!(filterType == "post eq" || filterType == "pre eq")) {
+                    if (!(filterType == "eq filter" || filterType == "pre eq")) {
                         $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
                     }
 

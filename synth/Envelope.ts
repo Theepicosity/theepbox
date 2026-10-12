@@ -1,6 +1,6 @@
 // Copyright (c) John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Config, LFOEnvelopeTypes, EnvelopeType, Envelope, AutomationTarget } from "./SynthConfig";
+import { Config, LFOEnvelopeTypes, EnvelopeType, Envelope, AutomationParameter } from "./SynthConfig";
 import { clamp } from "./utils";
 export class EnvelopeSettings {
     public target: number = 0;
@@ -52,7 +52,7 @@ export class EnvelopeSettings {
 
     public toJsonObject(): Object {
         const envelopeObject: any = {
-            "target": Config.instrumentAutomationTargets[this.target].name,
+            "target": Config.automationParams[this.target].name,
             "envelope": Config.newEnvelopes[this.envelope].name,
             "inverse": this.inverse,
             "perEnvelopeSpeed": this.perEnvelopeSpeed,
@@ -60,7 +60,7 @@ export class EnvelopeSettings {
             "perEnvelopeUpperBound": this.perEnvelopeUpperBound,
             "discrete": this.discrete,
         };
-        if (Config.instrumentAutomationTargets[this.target].maxCount > 1) {
+        if (Config.automationParams[this.target].maxIndex > 0) {
             envelopeObject["index"] = this.index;
         }
         if (Config.newEnvelopes[this.envelope].name == "pitch") {
@@ -80,8 +80,8 @@ export class EnvelopeSettings {
     public fromJsonObject(envelopeObject: any, format: string): void {
         this.reset();
 
-        let target: AutomationTarget = Config.instrumentAutomationTargets.dictionary[envelopeObject["target"]];
-        if (target == null) target = Config.instrumentAutomationTargets.dictionary["noteVolume"];
+        let target: AutomationParameter = Config.automationParams.dictionary[envelopeObject["target"]];
+        if (target == null) target = Config.automationParams.dictionary["noteVolume"];
         this.target = target.index;
 
         let envelope: Envelope = Config.envelopes.dictionary["none"];
@@ -121,7 +121,7 @@ export class EnvelopeSettings {
         this.envelope = envelope.index;
 
         if (envelopeObject["index"] != undefined) {
-            this.index = clamp(0, Config.instrumentAutomationTargets[this.target].maxCount, envelopeObject["index"] | 0);
+            this.index = clamp(0, Config.automationParams[this.target].maxIndex + 1, envelopeObject["index"] | 0);
         } else {
             this.index = 0;
         }

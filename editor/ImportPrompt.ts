@@ -826,7 +826,7 @@ export class ImportPrompt implements Prompt {
             modChannels.push(tempoModChannel);
             let tempoModInstrument = new Instrument(false, true);
             tempoModInstrument.setTypeAndReset(9 /* InstrumentType.mod */, false, true);
-            tempoModInstrument.modulators[0] = Config.modulators.dictionary["tempo"].index;
+            tempoModInstrument.modulators[0] = Config.automationParams.dictionary["tempo"].index;
             tempoModInstrument.modChannels[0][0] = -1;
             tempoModChannel.instruments.push(tempoModInstrument);
             // We're using the first modulator in the channel, but the pitch values are
@@ -871,7 +871,7 @@ export class ImportPrompt implements Prompt {
                             pattern.instruments.length = 1;
                         }
                         // Create a new note.
-                        const newBPM = Math.max(Config.tempoMin, Math.min(Config.tempoMax, Math.round(microsecondsPerMinute / change.microsecondsPerBeat) - Config.modulators.dictionary["tempo"].convertRealFactor));
+                        const newBPM = Math.max(Config.tempoMin, Math.min(Config.tempoMax, Math.round(microsecondsPerMinute / change.microsecondsPerBeat) - Config.automationParams.dictionary["tempo"].convertRealFactor));
                         const note = new Note(tempoModPitch, noteStartPart, noteEndPart, newBPM, false);
                         pattern.notes.push(note);
                     }

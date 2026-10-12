@@ -31,7 +31,6 @@ var beepbox = (function (exports) {
             step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
     };
-    var _a;
     var ChannelType;
     (function (ChannelType) {
         ChannelType[ChannelType["pitch"] = 0] = "pitch";
@@ -515,52 +514,51 @@ var beepbox = (function (exports) {
     }
     class Config {
         static generateSineWave() {
-            const wave = new Float32Array(_a.sineWaveLength + 1);
-            for (let i = 0; i < _a.sineWaveLength + 1; i++) {
-                wave[i] = Math.sin(i * Math.PI * 2.0 / _a.sineWaveLength);
+            const wave = new Float32Array(Config.sineWaveLength + 1);
+            for (let i = 0; i < Config.sineWaveLength + 1; i++) {
+                wave[i] = Math.sin(i * Math.PI * 2.0 / Config.sineWaveLength);
             }
             return wave;
         }
         static generateTriWave() {
-            const wave = new Float32Array(_a.sineWaveLength + 1);
-            for (let i = 0; i < _a.sineWaveLength + 1; i++) {
-                wave[i] = Math.asin(Math.sin(i * Math.PI * 2.0 / _a.sineWaveLength)) / (Math.PI / 2);
+            const wave = new Float32Array(Config.sineWaveLength + 1);
+            for (let i = 0; i < Config.sineWaveLength + 1; i++) {
+                wave[i] = Math.asin(Math.sin(i * Math.PI * 2.0 / Config.sineWaveLength)) / (Math.PI / 2);
             }
             return wave;
         }
         static generateTrapezoidWave(drive = 2) {
-            const wave = new Float32Array(_a.sineWaveLength + 1);
-            for (let i = 0; i < _a.sineWaveLength + 1; i++) {
-                wave[i] = Math.max(-1.0, Math.min(1.0, Math.asin(Math.sin(i * Math.PI * 2.0 / _a.sineWaveLength)) * drive));
+            const wave = new Float32Array(Config.sineWaveLength + 1);
+            for (let i = 0; i < Config.sineWaveLength + 1; i++) {
+                wave[i] = Math.max(-1.0, Math.min(1.0, Math.asin(Math.sin(i * Math.PI * 2.0 / Config.sineWaveLength)) * drive));
             }
             return wave;
         }
         static generateSquareWave(phaseWidth = 0) {
-            const wave = new Float32Array(_a.sineWaveLength + 1);
-            const centerPoint = _a.sineWaveLength / 4;
-            for (let i = 0; i < _a.sineWaveLength + 1; i++) {
-                wave[i] = +((Math.abs(i - centerPoint) < phaseWidth * _a.sineWaveLength / 2)
-                    || ((Math.abs(i - _a.sineWaveLength - centerPoint) < phaseWidth * _a.sineWaveLength / 2))) * 2 - 1;
+            const wave = new Float32Array(Config.sineWaveLength + 1);
+            const centerPoint = Config.sineWaveLength / 4;
+            for (let i = 0; i < Config.sineWaveLength + 1; i++) {
+                wave[i] = +((Math.abs(i - centerPoint) < phaseWidth * Config.sineWaveLength / 2)
+                    || ((Math.abs(i - Config.sineWaveLength - centerPoint) < phaseWidth * Config.sineWaveLength / 2))) * 2 - 1;
             }
             return wave;
         }
         static generateSawWave(inverse = false) {
-            const wave = new Float32Array(_a.sineWaveLength + 1);
-            for (let i = 0; i < _a.sineWaveLength + 1; i++) {
-                wave[i] = ((i + (_a.sineWaveLength / 4.0)) * 2.0 / _a.sineWaveLength) % 2 - 1;
+            const wave = new Float32Array(Config.sineWaveLength + 1);
+            for (let i = 0; i < Config.sineWaveLength + 1; i++) {
+                wave[i] = ((i + (Config.sineWaveLength / 4.0)) * 2.0 / Config.sineWaveLength) % 2 - 1;
                 wave[i] = inverse ? -wave[i] : wave[i];
             }
             return wave;
         }
         static generateQuasiSineWave() {
-            const wave = new Float32Array(_a.sineWaveLength + 1);
-            for (let i = 0; i < _a.sineWaveLength + 1; i++) {
-                wave[i] = Math.round(Math.sin(i * Math.PI * 2.0 / _a.sineWaveLength));
+            const wave = new Float32Array(Config.sineWaveLength + 1);
+            for (let i = 0; i < Config.sineWaveLength + 1; i++) {
+                wave[i] = Math.round(Math.sin(i * Math.PI * 2.0 / Config.sineWaveLength));
             }
             return wave;
         }
     }
-    _a = Config;
     Config.thresholdVal = -10;
     Config.kneeVal = 40;
     Config.ratioVal = 12;
@@ -625,7 +623,7 @@ var beepbox = (function (exports) {
     Config.reverbWetDryMixRange = 24;
     Config.reverbSendRange = 24;
     Config.reverbDelayBufferSize = 16384;
-    Config.reverbDelayBufferMask = _a.reverbDelayBufferSize - 1;
+    Config.reverbDelayBufferMask = Config.reverbDelayBufferSize - 1;
     Config.beatsPerBarMin = 1;
     Config.beatsPerBarMax = 64;
     Config.barCountMin = 1;
@@ -671,9 +669,9 @@ var beepbox = (function (exports) {
         { name: "double pulse", expression: 0.4, samples: centerWave([1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0]) },
         { name: "spiky", expression: 0.4, samples: centerWave([1.0, -1.0, 1.0, -1.0, 1.0, 0.0]) }
     ]);
-    Config.chipWaves = rawChipToIntegrated(_a.rawChipWaves);
-    Config.rawRawChipWaves = _a.rawChipWaves;
-    Config.firstIndexForSamplesInChipWaveList = _a.chipWaves.length;
+    Config.chipWaves = rawChipToIntegrated(Config.rawChipWaves);
+    Config.rawRawChipWaves = Config.rawChipWaves;
+    Config.firstIndexForSamplesInChipWaveList = Config.chipWaves.length;
     Config.chipNoises = toNameMap([
         { name: "retro", expression: 0.25, basePitch: 69, pitchFilterMult: 1024.0, isSoft: false, samples: null },
         { name: "white", expression: 1.0, basePitch: 69, pitchFilterMult: 8.0, isSoft: true, samples: null },
@@ -695,7 +693,7 @@ var beepbox = (function (exports) {
     Config.filterFreqRange = 34;
     Config.filterFreqReferenceSetting = 28;
     Config.filterFreqReferenceHz = 8000.0;
-    Config.filterFreqMaxHz = _a.filterFreqReferenceHz * Math.pow(2.0, _a.filterFreqStep * (_a.filterFreqRange - 1 - _a.filterFreqReferenceSetting));
+    Config.filterFreqMaxHz = Config.filterFreqReferenceHz * Math.pow(2.0, Config.filterFreqStep * (Config.filterFreqRange - 1 - Config.filterFreqReferenceSetting));
     Config.filterFreqMinHz = 8.0;
     Config.filterGainRange = 15;
     Config.filterGainCenter = 7;
@@ -765,7 +763,7 @@ var beepbox = (function (exports) {
         { name: "extraterrestrial", voices: 6, spread: 15.2, offset: -6, expression: 0.35, sign: 0.7 },
         { name: "bow", voices: 9, spread: 0.006, offset: 0, expression: 0.15, sign: 0.5 }
     ]);
-    Config.effectNames = ["bitcrusher", "chorus", "clipping", "distortion", "echo", "flanger", "gain", "granular", "panning", "post eq", "reverb", "ring mod"];
+    Config.effectNames = ["bitcrusher", "chorus", "clipping", "distortion", "echo", "flanger", "gain", "granular", "panning", "eq filter", "reverb", "ring modulation"];
     Config.effectDisplayNames = ["Bitcrusher", "Chorus", "Clipping", "Distortion", "Echo", "Flanger", "Gain", "Granular", "Panning", "Post EQ", "Reverb", "Ring Mod"];
     Config.effectOrder = [4, 1, 11, 3, 6, 10, 9, 8, 2, 5, 0, 7];
     Config.mdeffectNames = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
@@ -775,7 +773,7 @@ var beepbox = (function (exports) {
     Config.volumeLogScale = 0.0714;
     Config.gainRangeMult = 2;
     Config.panCenter = 50;
-    Config.panMax = _a.panCenter * 2;
+    Config.panMax = Config.panCenter * 2;
     Config.panDelaySecondsMax = 0.001;
     Config.panModes = ["stereo", "split stereo", "mono"];
     Config.clippingTypes = ["soft", "hard", "wavefold", "wavewrap"];
@@ -805,7 +803,7 @@ var beepbox = (function (exports) {
     Config.chorusDelayRange = 0.0034;
     Config.chorusDelayOffsets = [[1.51, 2.10, 3.35], [1.47, 2.15, 3.25]];
     Config.chorusPhaseOffsets = [[0.0, 2.1, 4.2], [3.2, 5.3, 1.0]];
-    Config.chorusMaxDelay = _a.chorusDelayRange * (1.0 + _a.chorusDelayOffsets[0].concat(_a.chorusDelayOffsets[1]).reduce((x, y) => Math.max(x, y)));
+    Config.chorusMaxDelay = Config.chorusDelayRange * (1.0 + Config.chorusDelayOffsets[0].concat(Config.chorusDelayOffsets[1]).reduce((x, y) => Math.max(x, y)));
     Config.chords = toNameMap([
         { name: "simultaneous", customInterval: false, arpeggiates: false, strumParts: 0, singleTone: false },
         { name: "strum", customInterval: false, arpeggiates: false, strumParts: 1, singleTone: false },
@@ -815,7 +813,7 @@ var beepbox = (function (exports) {
     ]);
     Config.maxChordSize = 9;
     Config.operatorCount = 4;
-    Config.maxPitchOrOperatorCount = Math.max(_a.maxChordSize, _a.operatorCount + 2);
+    Config.maxPitchOrOperatorCount = Math.max(Config.maxChordSize, Config.operatorCount + 2);
     Config.algorithms = toNameMap([
         { name: "1←(2 3 4)", carrierCount: 1, associatedCarrier: [1, 1, 1, 1], modulatedBy: [[2, 3, 4], [], [], []] },
         { name: "1←(2 3←4)", carrierCount: 1, associatedCarrier: [1, 1, 1, 1], modulatedBy: [[2, 3], [], [4], []] },
@@ -1058,12 +1056,12 @@ var beepbox = (function (exports) {
     Config.spectrumControlPoints = 30;
     Config.spectrumControlPointsPerOctave = 7;
     Config.spectrumControlPointBits = 3;
-    Config.spectrumMax = (1 << _a.spectrumControlPointBits) - 1;
+    Config.spectrumMax = (1 << Config.spectrumControlPointBits) - 1;
     Config.harmonicsControlPoints = 28;
     Config.harmonicsRendered = 64;
     Config.harmonicsRenderedForPickedString = 1 << 8;
     Config.harmonicsControlPointBits = 3;
-    Config.harmonicsMax = (1 << _a.harmonicsControlPointBits) - 1;
+    Config.harmonicsMax = (1 << Config.harmonicsControlPointBits) - 1;
     Config.harmonicsWavelength = 1 << 11;
     Config.pulseWidthRange = 50;
     Config.pulseWidthStepPower = 0.5;
@@ -1082,11 +1080,11 @@ var beepbox = (function (exports) {
     Config.drumCount = 12;
     Config.pitchOctaves = 8;
     Config.modCount = 6;
-    Config.maxPitch = _a.pitchOctaves * _a.pitchesPerOctave;
-    Config.maximumTonesPerChannel = _a.maxChordSize * 2;
-    Config.justIntonationSemitones = [1.0 / 2.0, 8.0 / 15.0, 9.0 / 16.0, 3.0 / 5.0, 5.0 / 8.0, 2.0 / 3.0, 32.0 / 45.0, 3.0 / 4.0, 4.0 / 5.0, 5.0 / 6.0, 8.0 / 9.0, 15.0 / 16.0, 1.0, 16.0 / 15.0, 9.0 / 8.0, 6.0 / 5.0, 5.0 / 4.0, 4.0 / 3.0, 45.0 / 32.0, 3.0 / 2.0, 8.0 / 5.0, 5.0 / 3.0, 16.0 / 9.0, 15.0 / 8.0, 2.0].map(x => Math.log2(x) * _a.pitchesPerOctave);
-    Config.pitchShiftRange = _a.justIntonationSemitones.length;
-    Config.pitchShiftCenter = _a.pitchShiftRange >> 1;
+    Config.maxPitch = Config.pitchOctaves * Config.pitchesPerOctave;
+    Config.maximumTonesPerChannel = Config.maxChordSize * 2;
+    Config.justIntonationSemitones = [1.0 / 2.0, 8.0 / 15.0, 9.0 / 16.0, 3.0 / 5.0, 5.0 / 8.0, 2.0 / 3.0, 32.0 / 45.0, 3.0 / 4.0, 4.0 / 5.0, 5.0 / 6.0, 8.0 / 9.0, 15.0 / 16.0, 1.0, 16.0 / 15.0, 9.0 / 8.0, 6.0 / 5.0, 5.0 / 4.0, 4.0 / 3.0, 45.0 / 32.0, 3.0 / 2.0, 8.0 / 5.0, 5.0 / 3.0, 16.0 / 9.0, 15.0 / 8.0, 2.0].map(x => Math.log2(x) * Config.pitchesPerOctave);
+    Config.pitchShiftRange = Config.justIntonationSemitones.length;
+    Config.pitchShiftCenter = Config.pitchShiftRange >> 1;
     Config.detuneCenter = 200;
     Config.detuneMax = 400;
     Config.detuneMin = 0;
@@ -1103,8 +1101,8 @@ var beepbox = (function (exports) {
     Config.unisonSignMin = -2;
     Config.unisonSignMax = 2;
     Config.sineWaveLength = 1 << 8;
-    Config.sineWaveMask = _a.sineWaveLength - 1;
-    Config.sineWave = _a.generateSineWave();
+    Config.sineWaveMask = Config.sineWaveLength - 1;
+    Config.sineWave = Config.generateSineWave();
     Config.perEnvelopeSpeedIndices = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.25, 0.3, 0.3333, 0.4, 0.5, 0.6, 0.6667, 0.7, 0.75, 0.8, 0.9, 1, 1.25, 1.3333, 1.5, 1.6667, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 32, 40, 64, 128, 256];
     Config.perEnvelopeSpeedToIndices = {
         0: 0,
@@ -1190,210 +1188,976 @@ var beepbox = (function (exports) {
     Config.bitcrusherQuantizationRange = 8;
     Config.maxEnvelopeCount = 16;
     Config.defaultAutomationRange = 13;
-    Config.instrumentAutomationTargets = toNameMap([
-        { name: "none", computeIndex: null, displayName: "none", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "noteVolume", computeIndex: 0, displayName: "pre volume", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "mixVolume", computeIndex: 1, displayName: "post volume", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "pulseWidth", computeIndex: 3, displayName: "pulse width", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [6, 8] },
-        { name: "stringSustain", computeIndex: 4, displayName: "sustain", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [7] },
-        { name: "unison", computeIndex: 5, displayName: "unison", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [0, 5, 7, 9, 6, 2, 3, 4] },
-        { name: "operatorFrequency", computeIndex: 6, displayName: "fm# freq", interleave: true, isFilter: false, maxCount: _a.operatorCount + 2, effect: null, mdeffect: null, compatibleInstruments: [1, 11] },
-        { name: "operatorAmplitude", computeIndex: 12, displayName: "fm# volume", interleave: false, isFilter: false, maxCount: _a.operatorCount + 2, effect: null, mdeffect: null, compatibleInstruments: [1, 11] },
-        { name: "feedbackAmplitude", computeIndex: 18, displayName: "fm feedback", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [1, 11] },
-        { name: "pitchShift", computeIndex: 19, displayName: "pitch shift", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: 0, compatibleInstruments: null },
-        { name: "detune", computeIndex: 20, displayName: "detune", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: 1, compatibleInstruments: null },
-        { name: "vibratoDepth", computeIndex: 21, displayName: "vibrato depth", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: 2, compatibleInstruments: null },
-        { name: "noteFilterAllFreqs", computeIndex: 2, displayName: "pre eq freqs", interleave: false, isFilter: true, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "noteFilterFreq", computeIndex: 22, displayName: "pre eq # freq", interleave: false, isFilter: true, maxCount: _a.filterMaxPoints, effect: null, mdeffect: null, compatibleInstruments: null },
-        { name: "decimalOffset", computeIndex: 38, displayName: "decimal offset", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [6, 8] },
-        { name: "supersawDynamism", computeIndex: 39, displayName: "dynamism", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [8] },
-        { name: "supersawSpread", computeIndex: 40, displayName: "spread", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [8] },
-        { name: "supersawShape", computeIndex: 41, displayName: "saw↔pulse", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: null, compatibleInstruments: [8] },
-        { name: "gain", computeIndex: 57, displayName: "gain", interleave: false, isFilter: false, maxCount: 1, effect: 9, mdeffect: null, compatibleInstruments: null },
-        { name: "panning", computeIndex: 42, displayName: "panning", interleave: false, isFilter: false, maxCount: 1, effect: 2, mdeffect: null, compatibleInstruments: null },
-        { name: "distortion", computeIndex: 43, displayName: "distortion", interleave: false, isFilter: false, maxCount: 1, effect: 3, mdeffect: null, compatibleInstruments: null },
-        { name: "clippingInGain", computeIndex: 62, displayName: "clipping in-gain", interleave: false, isFilter: false, maxCount: 1, effect: 11, mdeffect: null, compatibleInstruments: null },
-        { name: "clippingThreshold", computeIndex: 63, displayName: "clipping threshold", interleave: false, isFilter: false, maxCount: 1, effect: 11, mdeffect: null, compatibleInstruments: null },
-        { name: "bitcrusherQuantization", computeIndex: 44, displayName: "bitcrush", interleave: false, isFilter: false, maxCount: 1, effect: 4, mdeffect: null, compatibleInstruments: null },
-        { name: "bitcrusherFrequency", computeIndex: 45, displayName: "freq crush", interleave: false, isFilter: false, maxCount: 1, effect: 4, mdeffect: null, compatibleInstruments: null },
-        { name: "flanger", computeIndex: 58, displayName: "flanger", interleave: false, isFilter: false, maxCount: 1, effect: 10, mdeffect: null, compatibleInstruments: null },
-        { name: "flangerSpeed", computeIndex: 58, displayName: "flanger speed", interleave: false, isFilter: false, maxCount: 1, effect: 10, mdeffect: null, compatibleInstruments: null },
-        { name: "flangerDepth", computeIndex: 58, displayName: "flanger depth", interleave: false, isFilter: false, maxCount: 1, effect: 10, mdeffect: null, compatibleInstruments: null },
-        { name: "flangerFeedback", computeIndex: 58, displayName: "flanger feedback", interleave: false, isFilter: false, maxCount: 1, effect: 10, mdeffect: null, compatibleInstruments: null },
-        { name: "chorus", computeIndex: 46, displayName: "chorus", interleave: false, isFilter: false, maxCount: 1, effect: 1, mdeffect: null, compatibleInstruments: null },
-        { name: "echoSustain", computeIndex: 47, displayName: "echo", interleave: false, isFilter: false, maxCount: 1, effect: 6, mdeffect: null, compatibleInstruments: null },
-        { name: "reverb", computeIndex: 48, displayName: "reverb", interleave: false, isFilter: false, maxCount: 1, effect: 0, mdeffect: null, compatibleInstruments: null },
-        { name: "reverbWetDryMix", computeIndex: 64, displayName: "reverb wet/dry", interleave: false, isFilter: false, maxCount: 1, effect: 0, mdeffect: null, compatibleInstruments: null },
-        { name: "reverbSend", computeIndex: 65, displayName: "reverb send", interleave: false, isFilter: false, maxCount: 1, effect: 0, mdeffect: null, compatibleInstruments: null },
-        { name: "arpeggioSpeed", computeIndex: 49, displayName: "arpeggio speed", interleave: false, isFilter: false, maxCount: 1, effect: null, mdeffect: 4, compatibleInstruments: null },
-        { name: "ringModulation", computeIndex: 50, displayName: "ring mod", interleave: false, isFilter: false, maxCount: 1, effect: 7, mdeffect: null, compatibleInstruments: null },
-        { name: "ringModulationHz", computeIndex: 51, displayName: "ring mod hz", interleave: false, isFilter: false, maxCount: 1, effect: 7, mdeffect: null, compatibleInstruments: null },
-        { name: "granular", computeIndex: 52, displayName: "granular", interleave: false, isFilter: false, maxCount: 1, effect: 8, mdeffect: null, compatibleInstruments: null },
-        { name: "grainFreq", computeIndex: 53, displayName: "grain freq", interleave: false, isFilter: false, maxCount: 1, effect: 8, mdeffect: null, compatibleInstruments: null },
-        { name: "grainSize", computeIndex: 54, displayName: "grain size", interleave: false, isFilter: false, maxCount: 1, effect: 8, mdeffect: null, compatibleInstruments: null },
-        { name: "grainRange", computeIndex: 55, displayName: "grain range", interleave: false, isFilter: false, maxCount: 1, effect: 8, mdeffect: null, compatibleInstruments: null },
-        { name: "echoDelay", computeIndex: 56, displayName: "echo delay", interleave: false, isFilter: false, maxCount: 1, effect: 6, mdeffect: null, compatibleInstruments: null },
-        { name: "echoPingPong", computeIndex: 66, displayName: "echo ping pong", interleave: false, isFilter: false, maxCount: 1, effect: 6, mdeffect: null, compatibleInstruments: null },
-    ]);
     Config.operatorWaves = toNameMap([
-        { name: "sine", samples: _a.sineWave },
-        { name: "triangle", samples: _a.generateTriWave() },
-        { name: "pulse width", samples: _a.generateSquareWave(0.5) },
-        { name: "sawtooth", samples: _a.generateSawWave() },
-        { name: "ramp", samples: _a.generateSawWave(true) },
-        { name: "trapezoid", samples: _a.generateTrapezoidWave(2) },
-        { name: "quasi-sine", samples: _a.generateQuasiSineWave() },
+        { name: "sine", samples: Config.sineWave },
+        { name: "triangle", samples: Config.generateTriWave() },
+        { name: "pulse width", samples: Config.generateSquareWave(0.5) },
+        { name: "sawtooth", samples: Config.generateSawWave() },
+        { name: "ramp", samples: Config.generateSawWave(true) },
+        { name: "trapezoid", samples: Config.generateTrapezoidWave(2) },
+        { name: "quasi-sine", samples: Config.generateQuasiSineWave() },
     ]);
     Config.pwmOperatorWaves = toNameMap([
-        { name: "1%", samples: _a.generateSquareWave(0.01) },
-        { name: "5%", samples: _a.generateSquareWave(0.05) },
-        { name: "12.5%", samples: _a.generateSquareWave(0.125) },
-        { name: "25%", samples: _a.generateSquareWave(0.25) },
-        { name: "33%", samples: _a.generateSquareWave(1 / 3) },
-        { name: "50%", samples: _a.generateSquareWave(0.5) },
-        { name: "66%", samples: _a.generateSquareWave(2 / 3) },
-        { name: "75%", samples: _a.generateSquareWave(0.75) },
-        { name: "87.5%", samples: _a.generateSquareWave(0.875) },
-        { name: "95%", samples: _a.generateSquareWave(0.95) },
-        { name: "99%", samples: _a.generateSquareWave(0.99) },
+        { name: "1%", samples: Config.generateSquareWave(0.01) },
+        { name: "5%", samples: Config.generateSquareWave(0.05) },
+        { name: "12.5%", samples: Config.generateSquareWave(0.125) },
+        { name: "25%", samples: Config.generateSquareWave(0.25) },
+        { name: "33%", samples: Config.generateSquareWave(1 / 3) },
+        { name: "50%", samples: Config.generateSquareWave(0.5) },
+        { name: "66%", samples: Config.generateSquareWave(2 / 3) },
+        { name: "75%", samples: Config.generateSquareWave(0.75) },
+        { name: "87.5%", samples: Config.generateSquareWave(0.875) },
+        { name: "95%", samples: Config.generateSquareWave(0.95) },
+        { name: "99%", samples: Config.generateSquareWave(0.99) },
     ]);
     Config.barEditorHeight = 10;
-    Config.modulators = toNameMap([
-        { name: "none", pianoName: "None", maxRawVol: 6, newNoteVol: 6, forSong: true, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "No Mod Setting", promptDesc: ["No setting has been chosen yet, so this modulator will have no effect. Try choosing a setting with the dropdown, then click this '?' again for more info.", "[$LO - $HI]"] },
-        { name: "song volume", pianoName: "Volume", maxRawVol: 100, newNoteVol: 100, forSong: true, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Song Volume", promptDesc: ["This setting affects the overall volume of the song, just like the main volume slider.", "At $HI, the volume will be unchanged from default, and it will get gradually quieter down to $LO.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "tempo", pianoName: "Tempo", maxRawVol: _a.tempoMax - _a.tempoMin, newNoteVol: Math.ceil((_a.tempoMax - _a.tempoMin) / 2), forSong: true, convertRealFactor: _a.tempoMin, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Song Tempo", promptDesc: ["This setting controls the speed your song plays at, just like the tempo slider.", "When you first make a note for this setting, it will default to your current tempo. Raising it speeds up the song, up to $HI BPM, and lowering it slows it down, to a minimum of $LO BPM.", "Note that you can make a 'swing' effect by rapidly changing between two tempo values.", "[OVERWRITING] [$LO - $HI] [BPM]"] },
-        { name: "song reverb", pianoName: "Reverb", maxRawVol: _a.reverbRange * 2, newNoteVol: _a.reverbRange, forSong: true, convertRealFactor: -_a.reverbRange, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Song Reverb", promptDesc: ["This setting affects the overall reverb of your song. It works by multiplying existing reverb for instruments, so those with no reverb set will be unaffected.", "At $MID, all instruments' reverb will be unchanged from default. This increases up to double the reverb value at $HI, or down to no reverb at $LO.", "[MULTIPLICATIVE] [$LO - $HI]"] },
-        { name: "next bar", pianoName: "Next Bar", maxRawVol: 1, newNoteVol: 1, forSong: true, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Go To Next Bar", promptDesc: ["This setting functions a little different from most. Wherever a note is placed, the song will jump immediately to the next bar when it is encountered.", "This jump happens at the very start of the note, so the length of a next-bar note is irrelevant. Also, the note can be value 0 or 1, but the value is also irrelevant - wherever you place a note, the song will jump.", "You can make mixed-meter songs or intro sections by cutting off unneeded beats with a next-bar modulator.", "[$LO - $HI]"] },
-        { name: "pre volume", pianoName: "Pre Vol.", maxRawVol: _a.volumeRange, newNoteVol: Math.ceil(_a.volumeRange / 2), forSong: false, convertRealFactor: Math.ceil(-_a.volumeRange / 2.0), associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Pre Volume", promptDesc: ["This setting affects the volume of your instrument as if its note size had been scaled.", "At $MID, an instrument's volume will be unchanged from default. This means you can still use the volume sliders to mix the base volume of instruments. The volume gradually increases up to $HI, or decreases down to mute at $LO.", "This setting was the default for volume modulation in JummBox for a long time. Due to some new effects like distortion and bitcrush, pre volume doesn't always allow fine volume control. Also, this modulator affects the value of FM modulator waves instead of just carriers. This can distort the sound which may be useful, but also may be undesirable. In those cases, use the 'post volume' modulator instead, which will always just scale the volume with no added effects.", "For display purposes, this mod will show up on the instrument volume slider, as long as there is not also an active 'post volume' modulator anyhow. However, as mentioned, it works more like changing pre volume.", "[MULTIPLICATIVE] [$LO - $HI]"] },
-        { name: "gain", pianoName: "Gain", maxRawVol: _a.volumeRange / 2 * _a.gainRangeMult, newNoteVol: Math.ceil(_a.volumeRange / 2 * _a.gainRangeMult / 2), forSong: false, convertRealFactor: 0, associatedEffect: 9, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Gain", promptDesc: ["This setting controls the gain of your instrument.", "At $LO, the instrument is muted, at $MID it will be unchanged, and at $HI, it will have maximum gain.", "[OVERWRITING] [$LO - $HI] [L-R]"] },
-        { name: "pan", pianoName: "Pan", maxRawVol: _a.panMax, newNoteVol: Math.ceil(_a.panMax / 2), forSong: false, convertRealFactor: 0, associatedEffect: 2, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Panning", promptDesc: ["This setting controls the panning of your instrument, just like the panning slider.", "At $LO, your instrument will sound like it is coming fully from the left-ear side. At $MID it will be right in the middle, and at $HI, it will sound like it's on the right.", "[OVERWRITING] [$LO - $HI] [L-R]"] },
-        { name: "reverb", pianoName: "Reverb", maxRawVol: _a.reverbRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 0, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Reverb", promptDesc: ["This setting controls the reverb of your insturment, just like the reverb slider.", "At $LO, your instrument will have no reverb. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "reverb wet/dry", pianoName: "Reverb Wet/Dry", maxRawVol: _a.reverbWetDryMixRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 0, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Reverb Wet/Dry", promptDesc: ["This setting controls the wet/dry mix of the instrument reverb.", "At $LO, 100% of the original instrument will come through. At $HI, only the effect will come through.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "reverb send", pianoName: "Reverb Send", maxRawVol: _a.reverbSendRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 0, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Reverb", promptDesc: ["This setting controls the send of the instrument reverb.", "At $LO, the instrument will not have any reverb, and at $HI, the instrument will receive maximum reverb.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "distortion", pianoName: "Distortion", maxRawVol: _a.distortionRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 3, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Distortion", promptDesc: ["This setting controls the amount of distortion for your instrument, just like the distortion slider.", "At $LO, your instrument will have no distortion. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "clipping in-gain", pianoName: "Clip In-Gain", maxRawVol: _a.distortionRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 11, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Clipping In-Gain", promptDesc: ["This setting controls the amount of added gain for the instrument clipping effect.", "At $LO, your instrument will have no added gain. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "clipping threshold", pianoName: "Clip Threshold", maxRawVol: _a.volumeRange / 2 * _a.gainRangeMult, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 11, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Clipping Threshold", promptDesc: ["This setting controls the threshold for the instrument clipping effect.", "At $LO, the threshold will be at maximum. At $HI, it will be at the minimum.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "fm slider 1", pianoName: "FM 1", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "FM Slider 1", promptDesc: ["This setting affects the strength of the first FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "fm slider 2", pianoName: "FM 2", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "FM Slider 2", promptDesc: ["This setting affects the strength of the second FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "fm slider 3", pianoName: "FM 3", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "FM Slider 3", promptDesc: ["This setting affects the strength of the third FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "fm slider 4", pianoName: "FM 4", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "FM Slider 4", promptDesc: ["This setting affects the strength of the fourth FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "fm feedback", pianoName: "FM Feedbck", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "FM Feedback", promptDesc: ["This setting affects the strength of the FM feedback slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "pulse width", pianoName: "Pulse Width", maxRawVol: _a.pulseWidthRange, newNoteVol: _a.pulseWidthRange, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Pulse Width", promptDesc: ["This setting controls the width of this instrument's pulse wave, just like the pulse width slider.", "At $HI, your instrument will sound like a pure square wave (on 50% of the time). It will gradually sound narrower down to $LO, where it will be inaudible (as it is on 0% of the time).", "Changing pulse width randomly between a few values is a common strategy in chiptune music to lend some personality to a lead instrument.", "[OVERWRITING] [$LO - $HI] [%Duty]"] },
-        { name: "detune", pianoName: "Detune", maxRawVol: _a.detuneMax - _a.detuneMin, newNoteVol: _a.detuneCenter, forSong: false, convertRealFactor: -_a.detuneCenter, associatedEffect: 12, associatedMDEffect: 1, maxIndex: 0,
-            promptName: "Instrument Detune", promptDesc: ["This setting controls the detune for this instrument, just like the detune slider.", "At $MID, your instrument will have no detune applied. Each tick corresponds to one cent, or one-hundredth of a pitch. Thus, each change of 100 ticks corresponds to one half-step of detune, up to two half-steps up at $HI, or two half-steps down at $LO.", "[OVERWRITING] [$LO - $HI] [cents]"] },
-        { name: "vibrato depth", pianoName: "Vibrato Depth", maxRawVol: 50, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 2, maxIndex: 0,
-            promptName: "Vibrato Depth", promptDesc: ["This setting controls the amount that your pitch moves up and down by during vibrato, just like the vibrato depth slider.", "At $LO, your instrument will have no vibrato depth so its vibrato would be inaudible. This increases up to $HI, where an extreme pitch change will be noticeable.", "[OVERWRITING] [$LO - $HI] [pitch ÷25]"] },
-        { name: "song detune", pianoName: "Detune", maxRawVol: _a.songDetuneMax - _a.songDetuneMin, newNoteVol: Math.ceil((_a.songDetuneMax - _a.songDetuneMin) / 2), forSong: true, convertRealFactor: -250, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Song Detune", promptDesc: ["This setting controls the overall detune of the entire song. There is no associated slider.", "At $MID, your song will have no extra detune applied and sound unchanged from default. Each tick corresponds to four cents, or four hundredths of a pitch. Thus, each change of 25 ticks corresponds to one half-step of detune, up to 10 half-steps up at $HI, or 10 half-steps down at $LO.", "[MULTIPLICATIVE] [$LO - $HI] [cents x4]"] },
-        { name: "vibrato speed", pianoName: "Vibrato Speed", maxRawVol: 30, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 2, maxIndex: 0,
-            promptName: "Vibrato Speed", promptDesc: ["This setting controls the speed your instrument will vibrato at, just like the slider.", "A setting of $LO means there will be no oscillation, and vibrato will be disabled. Higher settings will increase the speed, up to a dramatic trill at the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "vibrato delay", pianoName: "Vibrato Delay", maxRawVol: 50, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 2, maxIndex: 0,
-            promptName: "Vibrato Delay", promptDesc: ["This setting controls the amount of time vibrato will be held off for before triggering for every new note, just like the slider.", "A setting of $LO means there will be no delay. A setting of 24 corresponds to one full beat of delay. As a sole exception to this scale, setting delay to $HI will completely disable vibrato (as if it had infinite delay).", "[OVERWRITING] [$LO - $HI] [beats ÷24]"] },
-        { name: "arp speed", pianoName: "Arp Speed", maxRawVol: 50, newNoteVol: 12, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 4, maxIndex: 0,
-            promptName: "Arpeggio Speed", promptDesc: ["This setting controls the speed at which your instrument's chords arpeggiate, just like the arpeggio speed slider.", "Each setting corresponds to a different speed, from the slowest to the fastest. The speeds are listed below.",
-                "[0-4]: x0, x1/16, x⅛, x⅕, x¼,", "[5-9]: x⅓, x⅖, x½, x⅔, x¾,", "[10-14]: x⅘, x0.9, x1, x1.1, x1.2,", "[15-19]: x1.3, x1.4, x1.5, x1.6, x1.7,", "[20-24]: x1.8, x1.9, x2, x2.1, x2.2,", "[25-29]: x2.3, x2.4, x2.5, x2.6, x2.7,", "[30-34]: x2.8, x2.9, x3, x3.1, x3.2,", "[35-39]: x3.3, x3.4, x3.5, x3.6, x3.7,", "[40-44]: x3.8, x3.9, x4, x4.15, x4.3,", "[45-50]: x4.5, x4.8, x5, x5.5, x6, x8", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pan delay", pianoName: "Pan Delay", maxRawVol: 20, newNoteVol: 10, forSong: false, convertRealFactor: 0, associatedEffect: 2, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Panning Delay", promptDesc: ["This setting controls the delay applied to panning for your instrument, just like the pan delay slider.", "With more delay, the panning effect will generally be more pronounced. $MID is the default value, whereas $LO will remove any delay at all. No delay can be desirable for chiptune songs.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "reset arp", pianoName: "Reset Arp", maxRawVol: 1, newNoteVol: 1, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 4, maxIndex: 0,
-            promptName: "Reset Arpeggio", promptDesc: ["This setting functions a little different from most. Wherever a note is placed, the arpeggio of this instrument will reset at the very start of that note. This is most noticeable with lower arpeggio speeds. The lengths and values of notes for this setting don't matter, just the note start times.", "This mod can be used to sync up your apreggios so that they always sound the same, even if you are using an odd-ratio arpeggio speed or modulating arpeggio speed.", "[$LO - $HI]"] },
-        { name: "post eq", pianoName: "PostEQ", maxRawVol: 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 5, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Post EQ", promptDesc: ["This setting controls a few separate things for your instrument's EQ filter.", "When the option 'morph' is selected, your modulator values will indicate a sub-filter index of your EQ filter to 'morph' to over time. For example, a change from 0 to 1 means your main filter (default) will morph to sub-filter 1 over the specified duration. You can shape the main filter and sub-filters in the large filter editor ('+' button). If your two filters' number, type, and order of filter dots all match up, the morph will happen smoothly and you'll be able to hear them changing. If they do not match up, the filters will simply jump between each other.", "Note that filters will morph based on endpoints in the pattern editor. So, if you specify a morph from sub-filter 1 to 4 but do not specifically drag in new endpoints for 2 and 3, it will morph directly between 1 and 4 without going through the others.", "If you target Dot X or Dot Y, you can finely tune the coordinates of a single dot for your filter. The number of available dots to choose is dependent on your main filter's dot count.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pre eq", pianoName: "PreEQ", maxRawVol: 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Pre EQ", promptDesc: ["This setting controls a few separate things for your instrument's EQ filter.", "When the option 'morph' is selected, your modulator values will indicate a sub-filter index of your EQ filter to 'morph' to over time. For example, a change from 0 to 1 means your main filter (default) will morph to sub-filter 1 over the specified duration. You can shape the main filter and sub-filters in the large filter editor ('+' button). If your two filters' number, type, and order of filter dots all match up, the morph will happen smoothly and you'll be able to hear them changing. If they do not match up, the filters will simply jump between each other.", "Note that filters will morph based on endpoints in the pattern editor. So, if you specify a morph from sub-filter 1 to 4 but do not specifically drag in new endpoints for 2 and 3, it will morph directly between 1 and 4 without going through the others.", "If you target Dot X or Dot Y, you can finely tune the coordinates of a single dot for your filter. The number of available dots to choose is dependent on your main filter's dot count.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "bit crush", pianoName: "Bitcrush", maxRawVol: _a.bitcrusherQuantizationRange - 1, newNoteVol: Math.round(_a.bitcrusherQuantizationRange / 2), forSong: false, convertRealFactor: 0, associatedEffect: 4, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Bit Crush", promptDesc: ["This setting controls the bit crush of your instrument, just like the bit crush slider.", "At a value of $LO, no bit crush will be applied. This increases and the bit crush effect gets more noticeable up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "freq crush", pianoName: "Freq Crush", maxRawVol: _a.bitcrusherFreqRange - 1, newNoteVol: Math.round(_a.bitcrusherFreqRange / 2), forSong: false, convertRealFactor: 0, associatedEffect: 4, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Frequency Crush", promptDesc: ["This setting controls the frequency crush of your instrument, just like the freq crush slider.", "At a value of $LO, no frequency crush will be applied. This increases and the frequency crush effect gets more noticeable up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "echo", pianoName: "Echo", maxRawVol: _a.echoSustainRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 6, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Echo Sustain", promptDesc: ["This setting controls the echo sustain (echo loudness) of your instrument, just like the echo slider.", "At $LO, your instrument will have no echo sustain and echo will not be audible. Echo sustain increases and the echo effect gets more noticeable up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "echo delay", pianoName: "Echo Delay", maxRawVol: _a.echoDelayRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 6, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Echo Delay", promptDesc: ["This setting controls the echo delay of your instrument, just like the echo delay slider.", "At $LO, your instrument will have very little echo delay, and this increases up to 2 beats of delay at $HI.", "[OVERWRITING] [$LO - $HI] [~beats ÷12]"]
+    Config.automationParams = toNameMap([
+        {
+            name: "none",
+            displayName: "None",
+            maxRawVol: 6,
+            newNoteVol: 6,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "None"
+        }, {
+            name: "song volume",
+            displayName: "Volume",
+            maxRawVol: 100,
+            newNoteVol: 100,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Song Volume"
+        }, {
+            name: "tempo",
+            displayName: "Tempo",
+            maxRawVol: Config.tempoMax - Config.tempoMin,
+            newNoteVol: Math.ceil((Config.tempoMax - Config.tempoMin) / 2),
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Song Tempo"
+        }, {
+            name: "song reverb",
+            displayName: "Song Reverb",
+            maxRawVol: Config.reverbRange * 2,
+            newNoteVol: Config.reverbRange,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Song Reverb"
+        }, {
+            name: "song detune",
+            displayName: "Song Detune",
+            maxRawVol: Config.songDetuneMax - Config.songDetuneMin,
+            newNoteVol: Math.ceil((Config.songDetuneMax - Config.songDetuneMin) / 2),
+            forSong: true,
+            convertRealFactor: -250,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Song Detune"
+        }, {
+            name: "next bar",
+            displayName: "Next Bar",
+            maxRawVol: 1,
+            newNoteVol: 1,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Go To Next Bar"
+        }, {
+            name: "pre volume",
+            displayName: "Pre Volume",
+            maxRawVol: Config.volumeRange,
+            newNoteVol: Math.ceil(Config.volumeRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Pre Volume"
+        }, {
+            name: "gain",
+            displayName: "Gain",
+            maxRawVol: Config.volumeRange / 2 * Config.gainRangeMult,
+            newNoteVol: Math.ceil(Config.volumeRange / 2 * Config.gainRangeMult / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 9,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Gain"
+        }, {
+            name: "pan",
+            displayName: "Pan",
+            maxRawVol: Config.panMax,
+            newNoteVol: Math.ceil(Config.panMax / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 2,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Instrument Panning"
+        }, {
+            name: "pan delay",
+            displayName: "Pan Delay",
+            maxRawVol: 20,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 2,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Panning Delay"
+        }, {
+            name: "reverb",
+            displayName: "Reverb",
+            maxRawVol: Config.reverbRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 0,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Instrument Reverb"
+        }, {
+            name: "reverb wet/dry",
+            displayName: "Reverb Wet/Dry",
+            maxRawVol: Config.reverbWetDryMixRange,
+            newNoteVol: Math.ceil(Config.reverbWetDryMixRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 0,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Reverb Wet/Dry"
+        }, {
+            name: "reverb send",
+            displayName: "Reverb Send",
+            maxRawVol: Config.reverbSendRange,
+            newNoteVol: Config.reverbSendRange,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 0,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Reverb Send"
+        }, {
+            name: "distortion",
+            displayName: "Distortion",
+            maxRawVol: Config.distortionRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 3,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Distortion"
+        }, {
+            name: "clipping in-gain",
+            displayName: "Clip In-Gain",
+            maxRawVol: Config.distortionRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 11,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Clipping In-Gain"
+        }, {
+            name: "clipping threshold",
+            displayName: "Clip Threshold",
+            maxRawVol: Config.distortionRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 11,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Clipping Threshold"
+        }, {
+            name: "fm slider 1",
+            displayName: "FM 1",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [1, 11],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 1"
+        }, {
+            name: "fm slider 2",
+            displayName: "FM 2",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [1, 11],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 2"
+        }, {
+            name: "fm slider 3",
+            displayName: "FM 3",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [1, 11],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 3"
+        }, {
+            name: "fm slider 4",
+            displayName: "FM 4",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [1, 11],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 4"
+        }, {
+            name: "fm slider 5",
+            displayName: "FM 5",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [11],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 5"
+        }, {
+            name: "fm slider 6",
+            displayName: "FM 6",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [11],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Slider 6"
+        }, {
+            name: "fm feedback",
+            displayName: "FM Feedback",
+            maxRawVol: 15,
+            newNoteVol: 15,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [1, 11],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "FM Feedback"
+        }, {
+            name: "detune",
+            displayName: "Detune",
+            maxRawVol: Config.detuneMax - Config.detuneMin,
+            newNoteVol: Config.detuneCenter,
+            forSong: false,
+            convertRealFactor: -Config.detuneCenter,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: 1,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Instrument Detune"
+        }, {
+            name: "vibrato depth",
+            displayName: "Vibrato Depth",
+            maxRawVol: 50,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: 2,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Vibrato Depth"
+        }, {
+            name: "vibrato speed",
+            displayName: "Vibrato Speed",
+            maxRawVol: 30,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: 2,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Vibrato Speed"
+        }, {
+            name: "vibrato delay",
+            displayName: "Vibrato Delay",
+            maxRawVol: 50,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: 2,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Vibrato Delay"
+        }, {
+            name: "arpeggio speed",
+            displayName: "Arp Speed",
+            maxRawVol: 50,
+            newNoteVol: 12,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: 4,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Arpeggio Speed"
+        }, {
+            name: "reset arpeggio",
+            displayName: "Reset Arpeggio",
+            maxRawVol: 1,
+            newNoteVol: 1,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: 4,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Reset Arpeggio"
+        }, {
+            name: "song eq filter",
+            displayName: "Song EQ",
+            maxRawVol: 10,
+            newNoteVol: 0,
+            forSong: true,
+            convertRealFactor: 0,
+            isFilter: true,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Song EQ Filter"
+        }, {
+            name: "eq filter",
+            displayName: "EQ",
+            maxRawVol: 10,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: true,
+            associatedInstruments: null,
+            associatedEffect: 5,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "EQ Filter"
+        }, {
+            name: "eq filter cut",
+            displayName: "EQ Cut",
+            maxRawVol: Config.filterSimpleCutRange - 1,
+            newNoteVol: Config.filterSimpleCutRange - 1,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: true,
+            associatedInstruments: null,
+            associatedEffect: 5,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "EQ Filter Cut"
+        }, {
+            name: "eq filter peak",
+            displayName: "EQ Peak",
+            maxRawVol: Config.filterSimplePeakRange - 1,
+            newNoteVol: Config.filterSimplePeakRange - 1,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: true,
+            associatedInstruments: null,
+            associatedEffect: 5,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "EQ Filter Peak"
+        }, {
+            name: "bit crush",
+            displayName: "Bit Crush",
+            maxRawVol: Config.bitcrusherQuantizationRange,
+            newNoteVol: Math.round(Config.bitcrusherQuantizationRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 4,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Bit Crush"
+        }, {
+            name: "frequency crush",
+            displayName: "Freq Crush",
+            maxRawVol: Config.bitcrusherFreqRange,
+            newNoteVol: Math.round(Config.bitcrusherFreqRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 4,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Frequncy Crush"
+        }, {
+            name: "echo",
+            displayName: "Echo",
+            maxRawVol: Config.echoSustainRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 6,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Echo"
+        }, {
+            name: "echo delay",
+            displayName: "Echo Delay",
+            maxRawVol: Config.echoDelayRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 6,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Echo Delay"
+        }, {
+            name: "echo ping pong",
+            displayName: "Echo Ping Pong",
+            maxRawVol: Config.panMax,
+            newNoteVol: Math.round(Config.panMax / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 6,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Echo Ping Pong"
+        }, {
+            name: "flanger",
+            displayName: "Flanger",
+            maxRawVol: Config.flangerRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 10,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Flanger"
+        }, {
+            name: "flanger speed",
+            displayName: "Flanger Speed",
+            maxRawVol: Config.flangerSpeedRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 10,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Flanger Speed"
+        }, {
+            name: "flanger depth",
+            displayName: "Flanger Depth",
+            maxRawVol: Config.flangerDepthRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 10,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Flanger Depth"
+        }, {
+            name: "flanger feedback",
+            displayName: "Flanger Feedback",
+            maxRawVol: Config.flangerFeedbackRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 10,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Flanger Feedback"
+        }, {
+            name: "chorus",
+            displayName: "Chorus",
+            maxRawVol: Config.chorusRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 1,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Chorus"
+        }, {
+            name: "pitch shift",
+            displayName: "Pitch Shift",
+            maxRawVol: Config.pitchShiftRange - 1,
+            newNoteVol: Config.pitchShiftCenter,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: 0,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Pitch Shift"
+        }, {
+            name: "sustain",
+            displayName: "Sustain",
+            maxRawVol: Config.stringSustainRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [7],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Picked String Sustain"
+        }, {
+            name: "post volume",
+            displayName: "Post Volume",
+            maxRawVol: Config.volumeRange,
+            newNoteVol: Math.ceil(Config.volumeRange / 2),
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Post Volume"
+        }, {
+            name: "pulse width",
+            displayName: "Pulse Width",
+            maxRawVol: Config.pulseWidthRange,
+            newNoteVol: Config.pulseWidthRange,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [6, 8],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Pulse Width"
+        }, {
+            name: "decimal offset",
+            displayName: "Decimal Offset",
+            maxRawVol: 99,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [6, 8],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Decimal Offset"
+        }, {
+            name: "dynamism",
+            displayName: "Dynamism",
+            maxRawVol: Config.supersawDynamismMax,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [8],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Supersaw Dynamism"
+        }, {
+            name: "spread",
+            displayName: "Spread",
+            maxRawVol: Config.supersawSpreadMax,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [8],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Supersaw Spread"
+        }, {
+            name: "saw shape",
+            displayName: "Shape",
+            maxRawVol: Config.supersawShapeMax,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [8],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Supersaw Shape"
+        }, {
+            name: "envelope speed",
+            displayName: "Env. Speed",
+            maxRawVol: 50,
+            newNoteVol: 12,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Envelope Speed"
+        }, {
+            name: "individual envelope speed",
+            displayName: "I. Env. Speed",
+            maxRawVol: 50,
+            newNoteVol: 12,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Individual Envelope Speed"
+        }, {
+            name: "reset envelope",
+            displayName: "Reset Envelope",
+            maxRawVol: 1,
+            newNoteVol: 1,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Reset Envelope"
+        }, {
+            name: "individual envelope lower bound",
+            displayName: "Individual Envelope Lower Bound",
+            maxRawVol: Config.perEnvelopeBoundMax * 10,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Individual Envelope Lower Bound"
+        }, {
+            name: "individual envelope upper bound",
+            displayName: "Individual Envelope Upper Bound",
+            maxRawVol: Config.perEnvelopeBoundMax * 10,
+            newNoteVol: 10,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Individual Envelope Upper Bound"
+        }, {
+            name: "ring modulation",
+            displayName: "Ring Mod",
+            maxRawVol: Config.ringModRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 7,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Ring Modulation"
+        }, {
+            name: "ring modulation frequency",
+            displayName: "Ring Mod Freq.",
+            maxRawVol: Config.ringModHzRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 7,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Ring Modulation Frequency"
+        }, {
+            name: "granular",
+            displayName: "Granular",
+            maxRawVol: Config.granularRange,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 8,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Granular Wet/Dry Mix"
+        }, {
+            name: "grain frequency",
+            displayName: "Grain Freq.",
+            maxRawVol: Config.grainAmountsMax,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 8,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Grain Frequency"
+        }, {
+            name: "grain size",
+            displayName: "Grain Size",
+            maxRawVol: Config.grainSizeMax / Config.grainSizeStep,
+            newNoteVol: Config.grainSizeMin / Config.grainSizeStep,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 8,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Grain Size"
+        }, {
+            name: "grain range",
+            displayName: "Grain Range",
+            maxRawVol: Config.grainRangeMax / Config.grainSizeStep,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: null,
+            associatedEffect: 8,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Grain Range"
+        }, {
+            name: "unison",
+            displayName: "Unison",
+            maxRawVol: 10,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            associatedInstruments: [0, 5, 7, 9, 6, 2, 3, 4],
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Grain Range"
         },
-        { name: "echo ping pong", pianoName: "Ping-Pong", maxRawVol: _a.panMax, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 6, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Ping Pong", promptDesc: ["This setting controls the echo ping-pong of your instrument, just like the echo delay slider.", "At $LO, the echo will start fully from the left-ear side. At $MID there will be no echo ping pong, and at $HI, it will start coming fully from the right.", "[OVERWRITING] [$LO - $HI] [L-R]"]
-        },
-        { name: "flanger", pianoName: "Flanger", maxRawVol: _a.flangerRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 10, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Flanger", promptDesc: ["This setting controls the flanger strength of your instrument, just like the flanger slider.", "At $LO, the flanger effect will be disabled. The strength of the flanger effect increases up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "flanger speed", pianoName: "Flanger Spd", maxRawVol: _a.flangerSpeedRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 10, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Flanger Speed", promptDesc: ["This setting controls the flanger speed of your instrument, just like the flanger speed slider."] },
-        { name: "flanger depth", pianoName: "Flanger Dpth", maxRawVol: _a.flangerDepthRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 10, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Flanger Depth", promptDesc: ["This setting controls the flanger depth of your instrument, just like the flanger depth slider."] },
-        { name: "flanger feedback", pianoName: "Flanger Fbck", maxRawVol: _a.flangerFeedbackRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 10, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Flanger Feedback", promptDesc: ["This setting controls the flanger feedback of your instrument, just like the flanger feedback slider."] },
-        { name: "chorus", pianoName: "Chorus", maxRawVol: _a.chorusRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 1, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Chorus", promptDesc: ["This setting controls the chorus strength of your instrument, just like the chorus slider.", "At $LO, the chorus effect will be disabled. The strength of the chorus effect increases up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "post eq cut", pianoName: "PostEQ Cut", maxRawVol: _a.filterSimpleCutRange - 1, newNoteVol: _a.filterSimpleCutRange - 1, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Post EQ Cutoff Frequency", promptDesc: ["This setting controls the filter cut position of your instrument, just like the filter cut slider.", "This setting is roughly analagous to the horizontal position of a single low-pass dot on the advanced filter editor. At lower values, a wider range of frequencies is cut off.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "post eq peak", pianoName: "PostEQ Peak", maxRawVol: _a.filterSimplePeakRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Post EQ Peak Gain", promptDesc: ["This setting controls the filter peak position of your instrument, just like the filter peak slider.", "This setting is roughly analagous to the vertical position of a single low-pass dot on the advanced filter editor. At lower values, the cutoff frequency will not be emphasized, and at higher values you will hear emphasis on the cutoff frequency.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pre eq cut", pianoName: "PreEQ Cut", maxRawVol: _a.filterSimpleCutRange - 1, newNoteVol: _a.filterSimpleCutRange - 1, forSong: false, convertRealFactor: 0, associatedEffect: 5, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Pre EQ Cutoff Frequency", promptDesc: ["This setting controls the filter cut position of your instrument, just like the filter cut slider.", "This setting is roughly analagous to the horizontal position of a single low-pass dot on the advanced filter editor. At lower values, a wider range of frequencies is cut off.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pre eq peak", pianoName: "PreEQ Peak", maxRawVol: _a.filterSimplePeakRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 5, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Pre EQ Peak Gain", promptDesc: ["This setting controls the filter peak position of your instrument, just like the filter peak slider.", "This setting is roughly analagous to the vertical position of a single low-pass dot on the advanced filter editor. At lower values, the cutoff frequency will not be emphasized, and at higher values you will hear emphasis on the cutoff frequency.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "pitch shift", pianoName: "Pitch Shift", maxRawVol: _a.pitchShiftRange - 1, newNoteVol: _a.pitchShiftCenter, forSong: false, convertRealFactor: -_a.pitchShiftCenter, associatedEffect: 12, associatedMDEffect: 0, maxIndex: 0,
-            promptName: "Pitch Shift", promptDesc: ["This setting controls the pitch offset of your instrument, just like the pitch shift slider.", "At $MID your instrument will have no pitch shift. This increases as you decrease toward $LO pitches (half-steps) at the low end, or increases towards +$HI pitches at the high end.", "[OVERWRITING] [$LO - $HI] [pitch]"] },
-        { name: "sustain", pianoName: "Sustain", maxRawVol: _a.stringSustainRange - 1, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Picked String Sustain", promptDesc: ["This setting controls the sustain of your picked string instrument, just like the sustain slider.", "At $LO, your instrument will have minimum sustain and sound 'plucky'. This increases to a more held sound as your modulator approaches the maximum, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "post volume", pianoName: "Post Vol.", maxRawVol: _a.volumeRange, newNoteVol: Math.ceil(_a.volumeRange / 2), forSong: false, convertRealFactor: Math.ceil(-_a.volumeRange / 2.0), associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Instrument Post Volume", promptDesc: ["This setting affects the volume of your instrument as if its volume slider had been moved.", "At $MID, an instrument's volume will be unchanged from default. This means you can still use the volume sliders to mix the base volume of instruments, since this setting and the default value work multiplicatively. The volume gradually increases up to $HI, or decreases down to mute at $LO.", "Unlike the 'note volume' setting, mix volume is very straightforward and simply affects the resultant instrument volume after all effects are applied.", "[MULTIPLICATIVE] [$LO - $HI]"] },
-        { name: "fm slider 5", pianoName: "FM 5", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "FM Slider 5", promptDesc: ["This setting affects the strength of the fifth FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "fm slider 6", pianoName: "FM 6", maxRawVol: 15, newNoteVol: 15, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "FM Slider 6", promptDesc: ["This setting affects the strength of the sixth FM slider, just like the corresponding slider on your instrument.", "It works in a multiplicative way, so at $HI your slider will sound the same is its default value, and at $LO it will sound like it has been moved all the way to the left.", "For the full range of control with this mod, move your underlying slider all the way to the right.", "[MULTIPLICATIVE] [$LO - $HI] [%]"] },
-        { name: "decimal offset", pianoName: "Decimal Offset", maxRawVol: 99, newNoteVol: 0, forSong: false, convertRealFactor: 0, invertSliderIndicator: true, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Decimal Offset", promptDesc: ["This setting controls the decimal offset that is subtracted from the pulse width; use this for creating values like 12.5 or 6.25.", "[$LO - $HI]"] },
-        { name: "envelope speed", pianoName: "EnvelopeSpd", maxRawVol: 50, newNoteVol: 12, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Envelope Speed", promptDesc: ["This setting controls how fast all of the envelopes for the instrument play.", "At $LO, your instrument's envelopes will be frozen, and at values near there they will change very slowly. At 12, the envelopes will work as usual, performing at normal speed. This increases up to $HI, where the envelopes will change very quickly. The speeds are given below:",
-                "[0-4]: x0, x1/16, x⅛, x⅕, x¼,", "[5-9]: x⅓, x⅖, x½, x⅔, x¾,", "[10-14]: x⅘, x0.9, x1, x1.1, x1.2,", "[15-19]: x1.3, x1.4, x1.5, x1.6, x1.7,", "[20-24]: x1.8, x1.9, x2, x2.1, x2.2,", "[25-29]: x2.3, x2.4, x2.5, x2.6, x2.7,", "[30-34]: x2.8, x2.9, x3, x3.1, x3.2,", "[35-39]: x3.3, x3.4, x3.5, x3.6, x3.7,", "[40-44]: x3.8, x3.9, x4, x4.15, x4.3,", "[45-50]: x4.5, x4.8, x5, x5.5, x6, x8", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "dynamism", pianoName: "Dynamism", maxRawVol: _a.supersawDynamismMax, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Supersaw Dynamism", promptDesc: ["This setting controls the supersaw dynamism of your instrument, just like the dynamism slider.", "At $LO, your instrument will have only a single pulse contributing. Increasing this will raise the contribution of other waves which is similar to a chorus effect. The effect gets more noticeable up to the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "spread", pianoName: "Spread", maxRawVol: _a.supersawSpreadMax, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Supersaw Spread", promptDesc: ["This setting controls the supersaw spread of your instrument, just like the spread slider.", "At $LO, all the pulses in your supersaw will be at the same frequency. Increasing this value raises the frequency spread of the contributing waves, up to a dissonant spread at the max value, $HI.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "saw shape", pianoName: "Saw Shape", maxRawVol: _a.supersawShapeMax, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Supersaw Shape", promptDesc: ["This setting controls the supersaw shape of your instrument, just like the Saw↔Pulse slider.", "As the slider's name implies, this effect will give you a sawtooth wave at $LO, and a full pulse width wave at $HI. Values in between will be a blend of the two.", "[OVERWRITING] [$LO - $HI] [%]"] },
-        { name: "individual envelope speed", pianoName: "IndvEnvSpd", maxRawVol: 63, newNoteVol: 23, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: _a.maxEnvelopeCount - 1,
-            promptName: "Individual Envelope Speed", promptDesc: ["This setting controls how fast the specified envelope of the instrument will play.", "At $LO, your the envelope will be frozen, and at values near there they will change very slowly. At 23, the envelope will work as usual, performing at normal speed. This increases up to $HI, where the envelope will change very quickly. The speeds are given below:",
-                "[0-4]: x0, x0.01, x0.02, x0.03, x0.04,", "[5-9]: x0.05, x0.06, x0.07, x0.08, x0.09,", "[10-14]: x0.1, x0.2, x0.25, x0.3, x0.33,", "[15-19]: x0.4, x0.5, x0.6, x0.6667, x0.7,", "[20-24]: x0.75, x0.8, x0.9, x1, x1.25,", "[25-29]: x1.3333, x1.5, x1.6667, x1.75, x2,", "[30-34]: x2.25, x2.5, x2.75, x3, x3.5,", "[35-39]: x4, x4.5, x5, x5.5, x6,", "[40-44]: x6.5, x7, x7.5, x8, x8.5,", "[45-49]: x9, x9.5, x10, x11, x12", "[50-54]: x13, x14, x15, x16, x17", "[55-59]: x18, x19, x20, x24, x32", "[60-63]: x40, x64, x128, x256", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "song eq", pianoName: "Song EQ", maxRawVol: 10, newNoteVol: 0, forSong: true, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Song EQ Filter", promptDesc: ["This setting overwrites every instrument's eq filter. You can do this in a few separate ways, similar to the per instrument eq filter modulator.", "When the option 'morph' is selected, your modulator values will indicate a sub-filter index of your EQ filter to 'morph' to over time. For example, a change from 0 to 1 means your main filter (default) will morph to sub-filter 1 over the specified duration. You can shape the main filter and sub-filters in the large filter editor ('+' button). If your two filters' number, type, and order of filter dots all match up, the morph will happen smoothly and you'll be able to hear them changing. If they do not match up, the filters will simply jump between each other.", "Note that filters will morph based on endpoints in the pattern editor. So, if you specify a morph from sub-filter 1 to 4 but do not specifically drag in new endpoints for 2 and 3, it will morph directly between 1 and 4 without going through the others.", "If you target Dot X or Dot Y, you can finely tune the coordinates of a single dot for your filter. The number of available dots to choose is dependent on your main filter's dot count.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "reset envelope", pianoName: "ResetEnv", maxRawVol: 1, newNoteVol: 1, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: _a.maxEnvelopeCount - 1,
-            promptName: "Reset Envelope", promptDesc: ["This setting functions a lot like the reset arp modulator. Wherever a note is placed, the envelope of this instrument at the specified index will reset at the very start of that note. ", "[$LO - $HI]",] },
-        { name: "ring modulation", pianoName: "Ring Mod", maxRawVol: _a.ringModRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 7, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Ring Modulation", promptDesc: ["This setting controls the Ring Modulation effect in your instrument.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "ring mod hertz", pianoName: "Ring Mod(Hz)", maxRawVol: _a.ringModHzRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 7, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Ring Modulation (Hertz)", promptDesc: ["This setting controls the Hertz (Hz) used in the Ring Modulation effect in your instrument.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "granular", pianoName: "Granular", maxRawVol: _a.granularRange, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 8, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Granular", promptDesc: ["This setting controls the granular effect in your instrument.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "grain freq", pianoName: "Grain #", maxRawVol: _a.grainAmountsMax, newNoteVol: 8, forSong: false, convertRealFactor: 0, associatedEffect: 8, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Grain Count", promptDesc: ["This setting controls the density of grains for the granular effect on your instrument.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "grain size", pianoName: "Grain Size", maxRawVol: _a.grainSizeMax / _a.grainSizeStep, newNoteVol: _a.grainSizeMin / _a.grainSizeStep, forSong: false, convertRealFactor: 0, associatedEffect: 8, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Grain Size", promptDesc: ["This setting controls the grain size of the granular effect in your instrument.", "The number shown in the mod channel is multiplied by " + _a.grainSizeStep + " to get the actual grain size.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "grain range", pianoName: "Grain Range", maxRawVol: _a.grainRangeMax / _a.grainSizeStep, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 8, associatedMDEffect: 6, maxIndex: 0,
-            promptName: "Grain Range", promptDesc: ["This setting controls the range of values for your grain size of the granular effect in your instrument, from no variation to a lot", "The number shown in the mod channel is multiplied by " + _a.grainSizeStep + " to get the actual grain size.", "[OVERWRITING] [$LO - $HI]"] },
-        { name: "individual envelope lower bound", pianoName: "IndvEnvLow", maxRawVol: _a.perEnvelopeBoundMax * 10, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: _a.maxEnvelopeCount - 1,
-            promptName: "Individual Envelope Lower Bound", promptDesc: ["This setting controls the envelope lower bound", "At $LO, your the envelope will output an upper envelope bound to 0, and at $HI your envelope will output an upper envelope bound to 2.", "This settings will not work if your lower envelope bound is higher than your upper envelope bound",] },
-        { name: "individual envelope upper bound", pianoName: "IndvEnvUp", maxRawVol: _a.perEnvelopeBoundMax * 10, newNoteVol: 10, forSong: false, convertRealFactor: 0, associatedEffect: 12, associatedMDEffect: 6, maxIndex: _a.maxEnvelopeCount - 1,
-            promptName: "Individual Envelope Upper Bound", promptDesc: ["This setting controls the envelope upper bound", "At $LO, your the envelope will output a 0 to lower envelope bound, and at $HI your envelope will output a 2 to lower envelope bound.", "This settings will not work if your lower envelope bound is higher than your upper envelope bound",] },
     ]);
     function centerWave(wave) {
         let sum = 0.0;
@@ -2809,7 +3573,7 @@ var beepbox = (function (exports) {
         }
         toJsonObject() {
             const envelopeObject = {
-                "target": Config.instrumentAutomationTargets[this.target].name,
+                "target": Config.automationParams[this.target].name,
                 "envelope": Config.newEnvelopes[this.envelope].name,
                 "inverse": this.inverse,
                 "perEnvelopeSpeed": this.perEnvelopeSpeed,
@@ -2817,7 +3581,7 @@ var beepbox = (function (exports) {
                 "perEnvelopeUpperBound": this.perEnvelopeUpperBound,
                 "discrete": this.discrete,
             };
-            if (Config.instrumentAutomationTargets[this.target].maxCount > 1) {
+            if (Config.automationParams[this.target].maxIndex > 0) {
                 envelopeObject["index"] = this.index;
             }
             if (Config.newEnvelopes[this.envelope].name == "pitch") {
@@ -2837,9 +3601,9 @@ var beepbox = (function (exports) {
         }
         fromJsonObject(envelopeObject, format) {
             this.reset();
-            let target = Config.instrumentAutomationTargets.dictionary[envelopeObject["target"]];
+            let target = Config.automationParams.dictionary[envelopeObject["target"]];
             if (target == null)
-                target = Config.instrumentAutomationTargets.dictionary["noteVolume"];
+                target = Config.automationParams.dictionary["noteVolume"];
             this.target = target.index;
             let envelope = Config.envelopes.dictionary["none"];
             let isTremolo2 = false;
@@ -2884,7 +3648,7 @@ var beepbox = (function (exports) {
                 envelope = Config.envelopes.dictionary["none"];
             this.envelope = envelope.index;
             if (envelopeObject["index"] != undefined) {
-                this.index = clamp(0, Config.instrumentAutomationTargets[this.target].maxCount, envelopeObject["index"] | 0);
+                this.index = clamp(0, Config.automationParams[this.target].maxIndex + 1, envelopeObject["index"] | 0);
             }
             else {
                 this.index = 0;
@@ -3393,7 +4157,7 @@ var beepbox = (function (exports) {
                     this.modChannels.push([-2]);
                     this.modInstruments.push([0]);
                     this.modEffects.push([0]);
-                    this.modulators.push(Config.modulators.dictionary["none"].index);
+                    this.modulators.push(Config.automationParams.dictionary["none"].index);
                 }
             }
             this.spectrumWave = new SpectrumWave(isNoiseChannel);
@@ -3553,7 +4317,7 @@ var beepbox = (function (exports) {
                         this.modChannels.push([-2]);
                         this.modInstruments.push([0]);
                         this.modEffects.push([0]);
-                        this.modulators.push(Config.modulators.dictionary["none"].index);
+                        this.modulators.push(Config.automationParams.dictionary["none"].index);
                         this.invalidModulators[mod] = false;
                         this.modFilterTypes[mod] = 0;
                         this.modEnvelopeNumbers[mod] = 0;
@@ -3618,24 +4382,24 @@ var beepbox = (function (exports) {
             this.envelopeCount = 0;
             if (this.type == 1 || this.type == 11) {
                 if (allCarriersControlledByNoteSize && noteSizeControlsSomethingElse) {
-                    this.addEnvelope(Config.instrumentAutomationTargets.dictionary["noteVolume"].index, 0, Config.envelopes.dictionary["note size"].index, false);
+                    this.addEnvelope(Config.automationParams.dictionary["pre volume"].index, 0, Config.envelopes.dictionary["note size"].index, false);
                 }
                 else if (noCarriersControlledByNoteSize && !noteSizeControlsSomethingElse) {
-                    this.addEnvelope(Config.instrumentAutomationTargets.dictionary["none"].index, 0, Config.envelopes.dictionary["note size"].index, false);
+                    this.addEnvelope(Config.automationParams.dictionary["none"].index, 0, Config.envelopes.dictionary["note size"].index, false);
                 }
             }
             if (legacyPulseEnv.type != 0) {
-                this.addEnvelope(Config.instrumentAutomationTargets.dictionary["pulseWidth"].index, 0, legacyPulseEnv.index, false);
+                this.addEnvelope(Config.automationParams.dictionary["pulse width"].index, 0, legacyPulseEnv.index, false);
             }
             for (let i = 0; i < legacyOperatorEnvelopes.length; i++) {
                 if (i < carrierCount && allCarriersControlledByNoteSize)
                     continue;
                 if (legacyOperatorEnvelopes[i].type != 0) {
-                    this.addEnvelope(Config.instrumentAutomationTargets.dictionary["operatorAmplitude"].index, i, legacyOperatorEnvelopes[i].index, false);
+                    this.addEnvelope(Config.automationParams.dictionary["fm slider 1"].index + i, 0, legacyOperatorEnvelopes[i].index, false);
                 }
             }
             if (legacyFeedbackEnv.type != 0) {
-                this.addEnvelope(Config.instrumentAutomationTargets.dictionary["feedbackAmplitude"].index, 0, legacyFeedbackEnv.index, false);
+                this.addEnvelope(Config.automationParams.dictionary["fm feedback"].index, 0, legacyFeedbackEnv.index, false);
             }
         }
         toJsonObject() {
@@ -3907,7 +4671,7 @@ var beepbox = (function (exports) {
             else {
                 this.volume = 0;
             }
-            this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
+            this.envelopeSpeed = instrumentObject["envelopeSpeed"] != undefined ? clamp(0, Config.automationParams.dictionary["envelope speed"].maxRawVol + 1, instrumentObject["envelopeSpeed"] | 0) : 12;
             if (format == "theepbox") {
                 if (instrumentObject["effects"] != undefined) {
                     for (let i = 0; i < instrumentObject["effects"].length; i++) {
@@ -4567,7 +5331,7 @@ var beepbox = (function (exports) {
             while (this.envelopes.length <= this.envelopeCount)
                 this.envelopes[this.envelopes.length] = new EnvelopeSettings(this.isNoiseInstrument);
             const envelopeSettings = this.envelopes[this.envelopeCount];
-            envelopeSettings.target = makeEmpty ? Config.instrumentAutomationTargets.dictionary["none"].index : target;
+            envelopeSettings.target = makeEmpty ? Config.automationParams.dictionary["none"].index : target;
             envelopeSettings.index = makeEmpty ? 0 : index;
             if (!newEnvelopes) {
                 envelopeSettings.envelope = clamp(0, Config.newEnvelopes.length, Config.envelopes[envelope].type);
@@ -4588,17 +5352,14 @@ var beepbox = (function (exports) {
             this.envelopeCount++;
         }
         supportsEnvelopeTarget(target, index) {
-            const automationTarget = Config.instrumentAutomationTargets[target];
-            if (automationTarget.computeIndex == null && automationTarget.name != "none") {
+            const automationTarget = Config.automationParams[target];
+            if (index > automationTarget.maxIndex) {
                 return false;
             }
-            if (index >= automationTarget.maxCount) {
+            if (automationTarget.associatedInstruments != null && automationTarget.associatedInstruments.indexOf(this.type) == -1) {
                 return false;
             }
-            if (automationTarget.compatibleInstruments != null && automationTarget.compatibleInstruments.indexOf(this.type) == -1) {
-                return false;
-            }
-            if ((automationTarget.effect != null && !this.effectsIncludeType(automationTarget.effect)) || (automationTarget.mdeffect != null && (this.mdeffects & (1 << automationTarget.mdeffect)) == 0)) {
+            if ((automationTarget.associatedEffect != null && !this.effectsIncludeType(automationTarget.associatedEffect)) || (automationTarget.associatedMDEffect != null && (this.mdeffects & (1 << automationTarget.associatedMDEffect)) == 0)) {
                 return false;
             }
             if (automationTarget.isFilter) {
@@ -4619,7 +5380,7 @@ var beepbox = (function (exports) {
                 const target = this.envelopes[envelopeIndex].target;
                 const index = this.envelopes[envelopeIndex].index;
                 if (!this.supportsEnvelopeTarget(target, index)) {
-                    this.envelopes[envelopeIndex].target = Config.instrumentAutomationTargets.dictionary["none"].index;
+                    this.envelopes[envelopeIndex].target = Config.automationParams.dictionary["none"].index;
                     this.envelopes[envelopeIndex].index = 0;
                 }
             }
@@ -4856,7 +5617,7 @@ var beepbox = (function (exports) {
                     else {
                         note.continuesLastPattern = false;
                     }
-                    if ((format != "ultrabox" && format != "slarmoosbox") && instrument.modulators[mod] == Config.modulators.dictionary["tempo"].index) {
+                    if ((format != "ultrabox" && format != "slarmoosbox") && instrument.modulators[mod] == Config.automationParams.dictionary["tempo"].index) {
                         for (const pin of note.pins) {
                             const oldMin = 30;
                             const newMin = 1;
@@ -5073,122 +5834,122 @@ var beepbox = (function (exports) {
                 else {
                     modCount = Config.modCount - modCount - 1;
                     const instrument = this.channels[modChannel].instruments[modInstrument];
-                    let vol = Config.modulators[instrument.modulators[modCount]].newNoteVol;
+                    let vol = Config.automationParams[instrument.modulators[modCount]].newNoteVol;
                     let currentIndex = instrument.modulators[modCount];
-                    let tempoIndex = Config.modulators.dictionary["tempo"].index;
+                    let tempoIndex = Config.automationParams.dictionary["tempo"].index;
                     if (currentIndex == tempoIndex)
-                        vol = this.tempo - Config.modulators[tempoIndex].convertRealFactor;
-                    if (!Config.modulators[currentIndex].forSong && instrument.modInstruments[modCount][0] < this.channels[instrument.modChannels[modCount][0]].instruments.length) {
-                        let chorusIndex = Config.modulators.dictionary["chorus"].index;
-                        let reverbIndex = Config.modulators.dictionary["reverb"].index;
-                        let gainIndex = Config.modulators.dictionary["gain"].index;
-                        let panningIndex = Config.modulators.dictionary["pan"].index;
-                        let panDelayIndex = Config.modulators.dictionary["pan delay"].index;
-                        let distortionIndex = Config.modulators.dictionary["distortion"].index;
-                        let detuneIndex = Config.modulators.dictionary["detune"].index;
-                        let vibratoDepthIndex = Config.modulators.dictionary["vibrato depth"].index;
-                        let vibratoSpeedIndex = Config.modulators.dictionary["vibrato speed"].index;
-                        let vibratoDelayIndex = Config.modulators.dictionary["vibrato delay"].index;
-                        let arpSpeedIndex = Config.modulators.dictionary["arp speed"].index;
-                        let bitCrushIndex = Config.modulators.dictionary["bit crush"].index;
-                        let freqCrushIndex = Config.modulators.dictionary["freq crush"].index;
-                        let echoIndex = Config.modulators.dictionary["echo"].index;
-                        let echoDelayIndex = Config.modulators.dictionary["echo delay"].index;
-                        let echoPingPongIndex = Config.modulators.dictionary["echo ping pong"].index;
-                        let pitchShiftIndex = Config.modulators.dictionary["pitch shift"].index;
-                        let ringModIndex = Config.modulators.dictionary["ring modulation"].index;
-                        let ringModHertzIndex = Config.modulators.dictionary["ring mod hertz"].index;
-                        let granularIndex = Config.modulators.dictionary["granular"].index;
-                        let grainAmountIndex = Config.modulators.dictionary["grain freq"].index;
-                        let grainSizeIndex = Config.modulators.dictionary["grain size"].index;
-                        let grainRangeIndex = Config.modulators.dictionary["grain range"].index;
-                        let envSpeedIndex = Config.modulators.dictionary["envelope speed"].index;
-                        let perEnvSpeedIndex = Config.modulators.dictionary["individual envelope speed"].index;
-                        let perEnvLowerIndex = Config.modulators.dictionary["individual envelope lower bound"].index;
-                        let perEnvUpperIndex = Config.modulators.dictionary["individual envelope upper bound"].index;
+                        vol = this.tempo - Config.automationParams[tempoIndex].convertRealFactor;
+                    if (!Config.automationParams[currentIndex].forSong && instrument.modInstruments[modCount][0] < this.channels[instrument.modChannels[modCount][0]].instruments.length) {
+                        let chorusIndex = Config.automationParams.dictionary["chorus"].index;
+                        let reverbIndex = Config.automationParams.dictionary["reverb"].index;
+                        let gainIndex = Config.automationParams.dictionary["gain"].index;
+                        let panningIndex = Config.automationParams.dictionary["pan"].index;
+                        let panDelayIndex = Config.automationParams.dictionary["pan delay"].index;
+                        let distortionIndex = Config.automationParams.dictionary["distortion"].index;
+                        let detuneIndex = Config.automationParams.dictionary["detune"].index;
+                        let vibratoDepthIndex = Config.automationParams.dictionary["vibrato depth"].index;
+                        let vibratoSpeedIndex = Config.automationParams.dictionary["vibrato speed"].index;
+                        let vibratoDelayIndex = Config.automationParams.dictionary["vibrato delay"].index;
+                        let arpSpeedIndex = Config.automationParams.dictionary["arpeggio speed"].index;
+                        let bitCrushIndex = Config.automationParams.dictionary["bit crush"].index;
+                        let freqCrushIndex = Config.automationParams.dictionary["frequency crush"].index;
+                        let echoIndex = Config.automationParams.dictionary["echo"].index;
+                        let echoDelayIndex = Config.automationParams.dictionary["echo delay"].index;
+                        let echoPingPongIndex = Config.automationParams.dictionary["echo ping pong"].index;
+                        let pitchShiftIndex = Config.automationParams.dictionary["pitch shift"].index;
+                        let ringModIndex = Config.automationParams.dictionary["ring modulation"].index;
+                        let ringModHertzIndex = Config.automationParams.dictionary["ring modulation frequency"].index;
+                        let granularIndex = Config.automationParams.dictionary["granular"].index;
+                        let grainAmountIndex = Config.automationParams.dictionary["grain frequency"].index;
+                        let grainSizeIndex = Config.automationParams.dictionary["grain size"].index;
+                        let grainRangeIndex = Config.automationParams.dictionary["grain range"].index;
+                        let envSpeedIndex = Config.automationParams.dictionary["envelope speed"].index;
+                        let perEnvSpeedIndex = Config.automationParams.dictionary["individual envelope speed"].index;
+                        let perEnvLowerIndex = Config.automationParams.dictionary["individual envelope lower bound"].index;
+                        let perEnvUpperIndex = Config.automationParams.dictionary["individual envelope upper bound"].index;
                         let instrumentIndex = instrument.modInstruments[modCount][0];
                         let effectIndex = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effectCount;
                         switch (currentIndex) {
                             case chorusIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].chorus - Config.modulators[chorusIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].chorus - Config.automationParams[chorusIndex].convertRealFactor;
                                 break;
                             case reverbIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].reverb - Config.modulators[reverbIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].reverb - Config.automationParams[reverbIndex].convertRealFactor;
                                 break;
                             case gainIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].gain - Config.modulators[gainIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].gain - Config.automationParams[gainIndex].convertRealFactor;
                                 break;
                             case panningIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].pan - Config.modulators[panningIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].pan - Config.automationParams[panningIndex].convertRealFactor;
                                 break;
                             case panDelayIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].panDelay - Config.modulators[panDelayIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].panDelay - Config.automationParams[panDelayIndex].convertRealFactor;
                                 break;
                             case distortionIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].distortion - Config.modulators[distortionIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].distortion - Config.automationParams[distortionIndex].convertRealFactor;
                                 break;
                             case detuneIndex:
                                 vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].detune;
                                 break;
                             case vibratoDepthIndex:
-                                vol = Math.round(this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoDepth * 25 - Config.modulators[vibratoDepthIndex].convertRealFactor);
+                                vol = Math.round(this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoDepth * 25 - Config.automationParams[vibratoDepthIndex].convertRealFactor);
                                 break;
                             case vibratoSpeedIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoSpeed - Config.modulators[vibratoSpeedIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoSpeed - Config.automationParams[vibratoSpeedIndex].convertRealFactor;
                                 break;
                             case vibratoDelayIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoDelay - Config.modulators[vibratoDelayIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].vibratoDelay - Config.automationParams[vibratoDelayIndex].convertRealFactor;
                                 break;
                             case arpSpeedIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].arpeggioSpeed - Config.modulators[arpSpeedIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].arpeggioSpeed - Config.automationParams[arpSpeedIndex].convertRealFactor;
                                 break;
                             case bitCrushIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].bitcrusherQuantization - Config.modulators[bitCrushIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].bitcrusherQuantization - Config.automationParams[bitCrushIndex].convertRealFactor;
                                 break;
                             case freqCrushIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].bitcrusherFreq - Config.modulators[freqCrushIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].bitcrusherFreq - Config.automationParams[freqCrushIndex].convertRealFactor;
                                 break;
                             case echoIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].echoSustain - Config.modulators[echoIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].echoSustain - Config.automationParams[echoIndex].convertRealFactor;
                                 break;
                             case echoDelayIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].echoDelay - Config.modulators[echoDelayIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].echoDelay - Config.automationParams[echoDelayIndex].convertRealFactor;
                                 break;
                             case echoPingPongIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].echoPingPong - Config.modulators[echoPingPongIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].echoPingPong - Config.automationParams[echoPingPongIndex].convertRealFactor;
                                 break;
                             case pitchShiftIndex:
                                 vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].pitchShift;
                                 break;
                             case ringModIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].ringModulation - Config.modulators[ringModIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].ringModulation - Config.automationParams[ringModIndex].convertRealFactor;
                                 break;
                             case ringModHertzIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].ringModulationHz - Config.modulators[ringModHertzIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].ringModulationHz - Config.automationParams[ringModHertzIndex].convertRealFactor;
                                 break;
                             case granularIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].granular - Config.modulators[granularIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].granular - Config.automationParams[granularIndex].convertRealFactor;
                                 break;
                             case grainAmountIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].grainAmounts - Config.modulators[grainAmountIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].grainAmounts - Config.automationParams[grainAmountIndex].convertRealFactor;
                                 break;
                             case grainSizeIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].grainSize - Config.modulators[grainSizeIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].grainSize - Config.automationParams[grainSizeIndex].convertRealFactor;
                                 break;
                             case grainRangeIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].grainRange - Config.modulators[grainRangeIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].effects[effectIndex].grainRange - Config.automationParams[grainRangeIndex].convertRealFactor;
                                 break;
                             case envSpeedIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopeSpeed - Config.modulators[envSpeedIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopeSpeed - Config.automationParams[envSpeedIndex].convertRealFactor;
                                 break;
                             case perEnvSpeedIndex:
-                                vol = Config.perEnvelopeSpeedToIndices[this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeSpeed] - Config.modulators[perEnvSpeedIndex].convertRealFactor;
+                                vol = Config.perEnvelopeSpeedToIndices[this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeSpeed] - Config.automationParams[perEnvSpeedIndex].convertRealFactor;
                                 break;
                             case perEnvLowerIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeLowerBound - Config.modulators[perEnvLowerIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeLowerBound - Config.automationParams[perEnvLowerIndex].convertRealFactor;
                                 break;
                             case perEnvUpperIndex:
-                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeUpperBound - Config.modulators[perEnvUpperIndex].convertRealFactor;
+                                vol = this.channels[instrument.modChannels[modCount][0]].instruments[instrumentIndex].envelopes[instrument.modEnvelopeNumbers[modCount]].perEnvelopeUpperBound - Config.automationParams[perEnvUpperIndex].convertRealFactor;
                                 break;
                         }
                     }
@@ -5204,10 +5965,10 @@ var beepbox = (function (exports) {
                 else {
                     modCount = Config.modCount - modCount - 1;
                     let instrument = this.channels[modChannel].instruments[modInstrument];
-                    let modulator = Config.modulators[instrument.modulators[modCount]];
+                    let modulator = Config.automationParams[instrument.modulators[modCount]];
                     let cap = modulator.maxRawVol;
                     if (cap != undefined) {
-                        if (modulator.name == "post eq" || modulator.name == "pre eq" || modulator.name == "song eq") {
+                        if (modulator.name == "eq filter" || modulator.name == "pre eq" || modulator.name == "song eq filter") {
                             cap = Config.filterMorphCount - 1;
                             if (instrument.modFilterTypes[modCount] > 0 && instrument.modFilterTypes[modCount] % 2) {
                                 cap = Config.filterFreqRange;
@@ -5226,9 +5987,9 @@ var beepbox = (function (exports) {
                 if (!isMod)
                     return Config.noteSizeMax;
                 else {
-                    let cap = Config.modulators[modSetting].maxRawVol;
+                    let cap = Config.automationParams[modSetting].maxRawVol;
                     if (cap != undefined) {
-                        if (filterType != undefined && (Config.modulators[modSetting].name == "post eq" || Config.modulators[modSetting].name == "pre eq" || Config.modulators[modSetting].name == "song eq")) {
+                        if (filterType != undefined && (Config.automationParams[modSetting].name == "eq filter" || Config.automationParams[modSetting].name == "pre eq" || Config.automationParams[modSetting].name == "song eq filter")) {
                             cap = Config.filterMorphCount - 1;
                             if (filterType > 0 && filterType % 2) {
                                 cap = Config.filterFreqRange;
@@ -5442,7 +6203,7 @@ var beepbox = (function (exports) {
             buffer.push(99);
             if (this.eqFilter == null) {
                 buffer.push(base64IntToCharCode[0]);
-                console.log("Null post eq settings detected in toBase64String for song");
+                console.log("Null eq filter settings detected in toBase64String for song");
             }
             else {
                 buffer.push(base64IntToCharCode[this.eqFilter.controlPointCount]);
@@ -5543,7 +6304,7 @@ var beepbox = (function (exports) {
                             else {
                                 if (effect.eqFilter == null) {
                                     buffer.push(base64IntToCharCode[0]);
-                                    console.log("Null post eq settings detected in toBase64String for channelIndex " + channelIndex + ", instrumentIndex " + i);
+                                    console.log("Null eq filter settings detected in toBase64String for channelIndex " + channelIndex + ", instrumentIndex " + i);
                                 }
                                 else {
                                     buffer.push(base64IntToCharCode[effect.eqFilter.controlPointCount]);
@@ -5831,7 +6592,7 @@ var beepbox = (function (exports) {
                     buffer.push(base64IntToCharCode[instrument.envelopeSpeed]);
                     for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                         buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].target]);
-                        if (Config.instrumentAutomationTargets[instrument.envelopes[envelopeIndex].target].maxCount > 1) {
+                        if (Config.automationParams[instrument.envelopes[envelopeIndex].target].maxIndex > 0) {
                             buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].index]);
                         }
                         buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].envelope]);
@@ -5900,8 +6661,8 @@ var beepbox = (function (exports) {
                             const modEffects = instrument.modEffects[mod];
                             const modFilter = instrument.modFilterTypes[mod];
                             const modEnvelope = instrument.modEnvelopeNumbers[mod];
-                            let status = Config.modulators[modSetting].forSong ? 2 : 0;
-                            if (modSetting == Config.modulators.dictionary["none"].index)
+                            let status = Config.automationParams[modSetting].forSong ? 2 : 0;
+                            if (modSetting == Config.automationParams.dictionary["none"].index)
                                 status = 3;
                             bits.write(2, status);
                             if (status == 0 || status == 1) {
@@ -5913,20 +6674,20 @@ var beepbox = (function (exports) {
                                     bits.write(neededModInstrumentIndexBits, modInstruments[i]);
                             }
                             if (status != 3) {
-                                bits.write(6, modSetting);
+                                bits.write(8, modSetting);
                             }
-                            if (Config.modulators[instrument.modulators[mod]].associatedEffect < 12) {
+                            if (Config.automationParams[instrument.modulators[mod]].associatedEffect != null) {
                                 bits.write(8, modEffects.length);
                                 for (let i = 0; i < modEffects.length; i++)
                                     bits.write(8, modEffects[i]);
                             }
-                            if (Config.modulators[instrument.modulators[mod]].name == "post eq" || Config.modulators[instrument.modulators[mod]].name == "pre eq" || Config.modulators[instrument.modulators[mod]].name == "song eq") {
+                            if (Config.automationParams[instrument.modulators[mod]].name == "eq filter" || Config.automationParams[instrument.modulators[mod]].name == "pre eq" || Config.automationParams[instrument.modulators[mod]].name == "song eq filter") {
                                 bits.write(6, modFilter);
                             }
-                            if (Config.modulators[instrument.modulators[mod]].name == "individual envelope speed" ||
-                                Config.modulators[instrument.modulators[mod]].name == "reset envelope" ||
-                                Config.modulators[instrument.modulators[mod]].name == "individual envelope lower bound" ||
-                                Config.modulators[instrument.modulators[mod]].name == "individual envelope upper bound") {
+                            if (Config.automationParams[instrument.modulators[mod]].name == "individual envelope speed" ||
+                                Config.automationParams[instrument.modulators[mod]].name == "reset envelope" ||
+                                Config.automationParams[instrument.modulators[mod]].name == "individual envelope lower bound" ||
+                                Config.automationParams[instrument.modulators[mod]].name == "individual envelope upper bound") {
                                 bits.write(6, modEnvelope);
                             }
                         }
@@ -7137,9 +7898,9 @@ var beepbox = (function (exports) {
                                         instrument.mdeffects |= 1 << 2;
                                     }
                                     if (vibrato == Config.vibratos.length) {
-                                        instrument.vibratoDepth = clamp(0, Config.modulators.dictionary["vibrato depth"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 50;
-                                        instrument.vibratoSpeed = clamp(0, Config.modulators.dictionary["vibrato speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                        instrument.vibratoDelay = clamp(0, Config.modulators.dictionary["vibrato delay"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 2;
+                                        instrument.vibratoDepth = clamp(0, Config.automationParams.dictionary["vibrato depth"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 50;
+                                        instrument.vibratoSpeed = clamp(0, Config.automationParams.dictionary["vibrato speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        instrument.vibratoDelay = clamp(0, Config.automationParams.dictionary["vibrato delay"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 2;
                                         instrument.vibratoType = clamp(0, Config.vibratoTypes.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         instrument.mdeffects |= 1 << 2;
                                     }
@@ -7211,7 +7972,7 @@ var beepbox = (function (exports) {
                         {
                             if ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox)) {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
-                                instrument.arpeggioSpeed = clamp(0, Config.modulators.dictionary["arp speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                instrument.arpeggioSpeed = clamp(0, Config.automationParams.dictionary["arpeggio speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 instrument.fastTwoNoteArp = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
                             }
                         }
@@ -7526,9 +8287,9 @@ var beepbox = (function (exports) {
                                 if (effectsIncludeVibrato(instrument.mdeffects)) {
                                     instrument.vibrato = clamp(0, Config.vibratos.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                     if (instrument.vibrato == Config.vibratos.length && (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)) {
-                                        instrument.vibratoDepth = clamp(0, Config.modulators.dictionary["vibrato depth"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 25;
-                                        instrument.vibratoSpeed = clamp(0, Config.modulators.dictionary["vibrato speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                        instrument.vibratoDelay = clamp(0, Config.modulators.dictionary["vibrato delay"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        instrument.vibratoDepth = clamp(0, Config.automationParams.dictionary["vibrato depth"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 25;
+                                        instrument.vibratoSpeed = clamp(0, Config.automationParams.dictionary["vibrato speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        instrument.vibratoDelay = clamp(0, Config.automationParams.dictionary["vibrato delay"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         instrument.vibratoType = clamp(0, Config.vibratoTypes.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                     }
                                     else {
@@ -7817,17 +8578,17 @@ var beepbox = (function (exports) {
                                 const envelopeCount = clamp(0, Config.maxEnvelopeCount + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 let envelopeDiscrete = false;
                                 if ((fromJummBox && !beforeSix) || (fromUltraBox && !beforeFive) || (fromSlarmoosBox)) {
-                                    instrument.envelopeSpeed = clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                    instrument.envelopeSpeed = clamp(0, Config.automationParams.dictionary["envelope speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                     if (!fromSlarmoosBox || beforeFive) {
                                         envelopeDiscrete = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) ? true : false;
                                     }
                                 }
                                 for (let i = 0; i < envelopeCount; i++) {
-                                    const target = clamp(0, Config.instrumentAutomationTargets.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                    const target = clamp(0, Config.automationParams.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                     let index = 0;
-                                    const maxCount = Config.instrumentAutomationTargets[target].maxCount;
-                                    if (maxCount > 1) {
-                                        index = clamp(0, maxCount, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                    const maxIndex = Config.automationParams[target].maxIndex;
+                                    if (maxIndex > 0) {
+                                        index = clamp(0, maxIndex, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                     }
                                     let aa = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     if ((beforeTwo && fromGoldBox) || (fromBeepBox))
@@ -8147,57 +8908,60 @@ var beepbox = (function (exports) {
                                                     break;
                                             }
                                             if (status != 3) {
-                                                instrument.modulators[mod] = bits.read(6);
+                                                if (fromTheepBox && !beforeSeven)
+                                                    instrument.modulators[mod] = bits.read(8);
+                                                else
+                                                    instrument.modulators[mod] = bits.read(6);
                                             }
                                             if (status == 1) {
                                                 const noiseChannelIndex = instrument.modChannels[mod][0] - this.pitchChannelCount;
                                                 instrument.modChannels[mod][0] = this.channels.findIndex((ch, i) => this.getChannelIsNoise(i) && i >= this.pitchChannelCount && (i - this.pitchChannelCount) === noiseChannelIndex);
                                             }
-                                            if (fromTheepBox && !beforeSix && Config.modulators[instrument.modulators[mod]].associatedEffect < 12) {
+                                            if (fromTheepBox && !beforeSix && Config.automationParams[instrument.modulators[mod]].associatedEffect != null) {
                                                 let modEffectLength = bits.read(8);
                                                 for (let i = 0; i < modEffectLength; i++) {
                                                     instrument.modEffects[mod][i] = bits.read(8);
                                                 }
                                             }
-                                            if (!jumfive && (Config.modulators[instrument.modulators[mod]].name == "post eq" || Config.modulators[instrument.modulators[mod]].name == "pre eq" || Config.modulators[instrument.modulators[mod]].name == "song eq")) {
+                                            if (!jumfive && (Config.automationParams[instrument.modulators[mod]].name == "eq filter" || Config.automationParams[instrument.modulators[mod]].name == "pre eq" || Config.automationParams[instrument.modulators[mod]].name == "song eq filter")) {
                                                 instrument.modFilterTypes[mod] = bits.read(6);
                                             }
-                                            if (Config.modulators[instrument.modulators[mod]].name == "individual envelope speed" ||
-                                                Config.modulators[instrument.modulators[mod]].name == "reset envelope" ||
-                                                Config.modulators[instrument.modulators[mod]].name == "individual envelope lower bound" ||
-                                                Config.modulators[instrument.modulators[mod]].name == "individual envelope upper bound") {
+                                            if (Config.automationParams[instrument.modulators[mod]].name == "individual envelope speed" ||
+                                                Config.automationParams[instrument.modulators[mod]].name == "reset envelope" ||
+                                                Config.automationParams[instrument.modulators[mod]].name == "individual envelope lower bound" ||
+                                                Config.automationParams[instrument.modulators[mod]].name == "individual envelope upper bound") {
                                                 instrument.modEnvelopeNumbers[mod] = bits.read(6);
                                             }
                                             if (jumfive && instrument.modChannels[mod][0] >= 0) {
                                                 let forNoteFilter = this.channels[instrument.modChannels[mod][0]].instruments[instrument.modInstruments[mod][0]].effectsIncludeType(5);
                                                 if (instrument.modulators[mod] == 7) {
                                                     if (forNoteFilter) {
-                                                        instrument.modulators[mod] = Config.modulators.dictionary["pre eq cut"].index;
+                                                        instrument.modulators[mod] = Config.automationParams.dictionary["pre eq cut"].index;
                                                     }
                                                     else {
-                                                        instrument.modulators[mod] = Config.modulators.dictionary["post eq cut"].index;
+                                                        instrument.modulators[mod] = Config.automationParams.dictionary["eq filter cut"].index;
                                                     }
                                                     instrument.modFilterTypes[mod] = 1;
                                                 }
                                                 else if (instrument.modulators[mod] == 8) {
                                                     if (forNoteFilter) {
-                                                        instrument.modulators[mod] = Config.modulators.dictionary["pre eq peak"].index;
+                                                        instrument.modulators[mod] = Config.automationParams.dictionary["pre eq peak"].index;
                                                     }
                                                     else {
-                                                        instrument.modulators[mod] = Config.modulators.dictionary["post eq peak"].index;
+                                                        instrument.modulators[mod] = Config.automationParams.dictionary["eq filter peak"].index;
                                                     }
                                                     instrument.modFilterTypes[mod] = 2;
                                                 }
                                             }
                                             else if (jumfive) {
-                                                if (instrument.modulators[mod] == Config.modulators.dictionary["song reverb"].index) {
+                                                if (instrument.modulators[mod] == Config.automationParams.dictionary["song reverb"].index) {
                                                     songReverbChannel = channelIndex;
                                                     songReverbInstrument = instrumentIndex;
                                                     songReverbIndex = mod;
                                                 }
                                             }
-                                            if (jumfive && Config.modulators[instrument.modulators[mod]].associatedEffect != 12) {
-                                                this.channels[instrument.modChannels[mod][0]].instruments[instrument.modInstruments[mod][0]].addEffect(Config.modulators[instrument.modulators[mod]].associatedEffect);
+                                            if (jumfive && Config.automationParams[instrument.modulators[mod]].associatedEffect != null) {
+                                                this.channels[instrument.modChannels[mod][0]].instruments[instrument.modInstruments[mod][0]].addEffect(Config.automationParams[instrument.modulators[mod]].associatedEffect);
                                             }
                                         }
                                     }
@@ -8206,7 +8970,7 @@ var beepbox = (function (exports) {
                                 for (let j = 0; j < channel.instruments.length; j++) {
                                     detuneScaleNotes[j] = [];
                                     for (let i = 0; i < Config.modCount; i++) {
-                                        detuneScaleNotes[j][Config.modCount - 1 - i] = 1 + 3 * +(((beforeFive && fromJummBox) || (beforeFour && fromGoldBox)) && isModChannel && (channel.instruments[j].modulators[i] == Config.modulators.dictionary["detune"].index));
+                                        detuneScaleNotes[j][Config.modCount - 1 - i] = 1 + 3 * +(((beforeFive && fromJummBox) || (beforeFour && fromGoldBox)) && isModChannel && (channel.instruments[j].modulators[i] == Config.automationParams.dictionary["detune"].index));
                                     }
                                 }
                                 const octaveOffset = (isNoiseChannel || isModChannel) ? 0 : channel.octave * 12;
@@ -8392,7 +9156,7 @@ var beepbox = (function (exports) {
                                             }
                                             note.pitches.length = pitchCount;
                                             pitchBends.unshift(note.pitches[0]);
-                                            const noteIsForTempoMod = isModChannel && channel.instruments[newPattern.instruments[0]].modulators[Config.modCount - 1 - note.pitches[0]] === Config.modulators.dictionary["tempo"].index;
+                                            const noteIsForTempoMod = isModChannel && channel.instruments[newPattern.instruments[0]].modulators[Config.modCount - 1 - note.pitches[0]] === Config.automationParams.dictionary["tempo"].index;
                                             let tempoOffset = 0;
                                             if (shouldCorrectTempoMods && noteIsForTempoMod) {
                                                 tempoOffset = jummboxTempoMin - Config.tempoMin;
@@ -9458,7 +10222,7 @@ var beepbox = (function (exports) {
     Song._oldestSlarmoosBoxVersion = 1;
     Song._latestSlarmoosBoxVersion = 5;
     Song._oldestTheepBoxVersion = 5;
-    Song._latestTheepBoxVersion = 6;
+    Song._latestTheepBoxVersion = 7;
     Song._variant = 0x74;
 
     class ChannelState {
@@ -9928,9 +10692,9 @@ var beepbox = (function (exports) {
             const usesReverb = effect.type == 0;
             const usesEQFilter = effect.type == 5;
             if (usesGranular) {
-                this.granularMaximumGrains = Math.pow(2, effect.grainAmounts * envelopeStarts[53]);
-                if (synth.isModActive(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    this.granularMaximumGrains = Math.pow(2, synth.getModValue(Config.modulators.dictionary["grain freq"].index, channelIndex, instrumentIndex, effectIndex, false) * envelopeStarts[53]);
+                this.granularMaximumGrains = Math.pow(2, effect.grainAmounts * envelopeStarts[Config.automationParams.dictionary["grain frequency"].index]);
+                if (synth.isModActive(Config.automationParams.dictionary["grain frequency"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    this.granularMaximumGrains = Math.pow(2, synth.getModValue(Config.automationParams.dictionary["grain frequency"].index, channelIndex, instrumentIndex, effectIndex, false) * envelopeStarts[Config.automationParams.dictionary["grain frequency"].index]);
                 }
                 this.granularMaximumGrains == Math.floor(this.granularMaximumGrains);
             }
@@ -9939,25 +10703,25 @@ var beepbox = (function (exports) {
                 this.granularMix = effect.granular / Config.granularRange;
                 this.computeGrains = true;
                 let granularMixEnd = this.granularMix;
-                if (synth.isModActive(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    this.granularMix = synth.getModValue(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, false) / Config.granularRange;
-                    granularMixEnd = synth.getModValue(Config.modulators.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, true) / Config.granularRange;
+                if (synth.isModActive(Config.automationParams.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    this.granularMix = synth.getModValue(Config.automationParams.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, false) / Config.granularRange;
+                    granularMixEnd = synth.getModValue(Config.automationParams.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, true) / Config.granularRange;
                 }
-                this.granularMix *= envelopeStarts[52];
-                granularMixEnd *= envelopeEnds[52];
+                this.granularMix *= envelopeStarts[Config.automationParams.dictionary["granular"].index];
+                granularMixEnd *= envelopeEnds[Config.automationParams.dictionary["granular"].index];
                 this.granularMixDelta = (granularMixEnd - this.granularMix) / roundedSamplesPerTick;
                 for (let iterations = 0; iterations < Math.ceil(Math.random() * Math.random() * 10); iterations++) {
                     if (this.granularGrainsLength < this.granularMaximumGrains) {
                         let granularMinGrainSizeInMilliseconds = effect.grainSize;
-                        if (synth.isModActive(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex)) {
-                            granularMinGrainSizeInMilliseconds = synth.getModValue(Config.modulators.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex, false);
+                        if (synth.isModActive(Config.automationParams.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex)) {
+                            granularMinGrainSizeInMilliseconds = synth.getModValue(Config.automationParams.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex, false);
                         }
-                        granularMinGrainSizeInMilliseconds *= envelopeStarts[54];
+                        granularMinGrainSizeInMilliseconds *= envelopeStarts[Config.automationParams.dictionary["grain size"].index];
                         let grainRange = effect.grainRange;
-                        if (synth.isModActive(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex)) {
-                            grainRange = synth.getModValue(Config.modulators.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex, false);
+                        if (synth.isModActive(Config.automationParams.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex)) {
+                            grainRange = synth.getModValue(Config.automationParams.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex, false);
                         }
-                        grainRange *= envelopeStarts[55];
+                        grainRange *= envelopeStarts[Config.automationParams.dictionary["grain range"].index];
                         const granularMaxGrainSizeInMilliseconds = granularMinGrainSizeInMilliseconds + grainRange;
                         const granularGrainSizeInMilliseconds = granularMinGrainSizeInMilliseconds + (granularMaxGrainSizeInMilliseconds - granularMinGrainSizeInMilliseconds) * Math.random();
                         const granularGrainSizeInSeconds = granularGrainSizeInMilliseconds / 1000.0;
@@ -9984,12 +10748,12 @@ var beepbox = (function (exports) {
             if (usesDistortion) {
                 let useDistortionStart = effect.distortion;
                 let useDistortionEnd = effect.distortion;
-                if (synth.isModActive(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useDistortionStart = synth.getModValue(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useDistortionEnd = synth.getModValue(Config.modulators.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useDistortionStart = synth.getModValue(Config.automationParams.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useDistortionEnd = synth.getModValue(Config.automationParams.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
-                const distortionSliderStart = Math.min(1.0, envelopeStarts[43] * useDistortionStart / (Config.distortionRange - 1));
-                const distortionSliderEnd = Math.min(1.0, envelopeEnds[43] * useDistortionEnd / (Config.distortionRange - 1));
+                const distortionSliderStart = Math.min(1.0, envelopeStarts[Config.automationParams.dictionary["distortion"].index] * useDistortionStart / (Config.distortionRange - 1));
+                const distortionSliderEnd = Math.min(1.0, envelopeEnds[Config.automationParams.dictionary["distortion"].index] * useDistortionEnd / (Config.distortionRange - 1));
                 const distortionStart = Math.pow(1.0 - 0.895 * (Math.pow(20.0, distortionSliderStart) - 1.0) / 19.0, 2.0);
                 const distortionEnd = Math.pow(1.0 - 0.895 * (Math.pow(20.0, distortionSliderEnd) - 1.0) / 19.0, 2.0);
                 const distortionDriveStart = (1.0 + 2.0 * distortionSliderStart) / Config.distortionBaseVolume;
@@ -10004,18 +10768,18 @@ var beepbox = (function (exports) {
                 let useClippingInGainEnd = effect.clippingInGain;
                 let useClippingThresholdStart = effect.clippingThreshold;
                 let useClippingThresholdEnd = effect.clippingThreshold;
-                if (synth.isModActive(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useClippingInGainStart = synth.getModValue(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useClippingInGainEnd = synth.getModValue(Config.modulators.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useClippingInGainStart = synth.getModValue(Config.automationParams.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useClippingInGainEnd = synth.getModValue(Config.automationParams.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
-                if (synth.isModActive(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useClippingThresholdStart = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useClippingThresholdEnd = synth.getModValue(Config.modulators.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useClippingThresholdStart = synth.getModValue(Config.automationParams.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useClippingThresholdEnd = synth.getModValue(Config.automationParams.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
-                const clippingInGainStart = Math.pow(1 - (envelopeStarts[62] * useClippingInGainStart / Config.distortionRange), 2.0);
-                const clippingInGainEnd = Math.pow(1 - (envelopeStarts[62] * useClippingInGainEnd / Config.distortionRange), 2.0);
-                const clippingThresholdStart = Math.min(Config.gainRangeMult, envelopeStarts[63] * useClippingThresholdStart / (Config.volumeRange + 1));
-                const clippingThresholdEnd = Math.min(Config.gainRangeMult, envelopeStarts[63] * useClippingThresholdEnd / (Config.volumeRange + 1));
+                const clippingInGainStart = Math.pow(1 - (envelopeStarts[Config.automationParams.dictionary["clipping in-gain"].index] * useClippingInGainStart / Config.distortionRange), 2.0);
+                const clippingInGainEnd = Math.pow(1 - (envelopeStarts[Config.automationParams.dictionary["clipping in-gain"].index] * useClippingInGainEnd / Config.distortionRange), 2.0);
+                const clippingThresholdStart = Math.min(Config.gainRangeMult, envelopeStarts[Config.automationParams.dictionary["clipping threshold"].index] * useClippingThresholdStart / (Config.volumeRange + 1));
+                const clippingThresholdEnd = Math.min(Config.gainRangeMult, envelopeStarts[Config.automationParams.dictionary["clipping threshold"].index] * useClippingThresholdEnd / (Config.volumeRange + 1));
                 this.clippingInGain = clippingInGainStart;
                 this.clippingInGainDelta = (clippingInGainEnd - clippingInGainStart) / roundedSamplesPerTick;
                 this.clippingThreshold = clippingThresholdStart;
@@ -10023,17 +10787,17 @@ var beepbox = (function (exports) {
                 this.clippingType = effect.clippingType;
             }
             if (usesBitcrusher) {
-                let freqSettingStart = effect.bitcrusherFreq * Math.sqrt(envelopeStarts[45]);
-                let freqSettingEnd = effect.bitcrusherFreq * Math.sqrt(envelopeEnds[45]);
-                if (synth.isModActive(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    freqSettingStart = synth.getModValue(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeStarts[45]);
-                    freqSettingEnd = synth.getModValue(Config.modulators.dictionary["freq crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeEnds[45]);
+                let freqSettingStart = effect.bitcrusherFreq * Math.sqrt(envelopeStarts[Config.automationParams.dictionary["frequency crush"].index]);
+                let freqSettingEnd = effect.bitcrusherFreq * Math.sqrt(envelopeEnds[Config.automationParams.dictionary["frequency crush"].index]);
+                if (synth.isModActive(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    freqSettingStart = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeStarts[Config.automationParams.dictionary["frequency crush"].index]);
+                    freqSettingEnd = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeEnds[Config.automationParams.dictionary["frequency crush"].index]);
                 }
-                let quantizationSettingStart = effect.bitcrusherQuantization * Math.sqrt(envelopeStarts[44]);
-                let quantizationSettingEnd = effect.bitcrusherQuantization * Math.sqrt(envelopeEnds[44]);
-                if (synth.isModActive(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    quantizationSettingStart = synth.getModValue(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeStarts[44]);
-                    quantizationSettingEnd = synth.getModValue(Config.modulators.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeEnds[44]);
+                let quantizationSettingStart = effect.bitcrusherQuantization * Math.sqrt(envelopeStarts[Config.automationParams.dictionary["bit crush"].index]);
+                let quantizationSettingEnd = effect.bitcrusherQuantization * Math.sqrt(envelopeEnds[Config.automationParams.dictionary["bit crush"].index]);
+                if (synth.isModActive(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    quantizationSettingStart = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeStarts[Config.automationParams.dictionary["bit crush"].index]);
+                    quantizationSettingEnd = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeEnds[Config.automationParams.dictionary["bit crush"].index]);
                 }
                 const basePitch = Config.keys[synth.song.key].basePitch + (Config.pitchesPerOctave * synth.song.octave);
                 const freqStart = Instrument.frequencyFromPitch(basePitch + 60) * Math.pow(2.0, (Config.bitcrusherFreqRange - 1 - freqSettingStart) * Config.bitcrusherOctaveStep);
@@ -10063,14 +10827,14 @@ var beepbox = (function (exports) {
                     let endSimpleFreq = effect.eqFilterSimpleCut;
                     let endSimpleGain = effect.eqFilterSimplePeak;
                     let filterChanges = false;
-                    if (synth.isModActive(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, effectIndex)) {
-                        startSimpleFreq = synth.getModValue(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, effectIndex, false);
-                        endSimpleFreq = synth.getModValue(Config.modulators.dictionary["post eq cut"].index, channelIndex, instrumentIndex, effectIndex, true);
+                    if (synth.isModActive(Config.automationParams.dictionary["eq filter cut"].index, channelIndex, instrumentIndex, effectIndex)) {
+                        startSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, channelIndex, instrumentIndex, effectIndex, false);
+                        endSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, channelIndex, instrumentIndex, effectIndex, true);
                         filterChanges = true;
                     }
-                    if (synth.isModActive(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, effectIndex)) {
-                        startSimpleGain = synth.getModValue(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, effectIndex, false);
-                        endSimpleGain = synth.getModValue(Config.modulators.dictionary["post eq peak"].index, channelIndex, instrumentIndex, effectIndex, true);
+                    if (synth.isModActive(Config.automationParams.dictionary["eq filter peak"].index, channelIndex, instrumentIndex, effectIndex)) {
+                        startSimpleGain = synth.getModValue(Config.automationParams.dictionary["eq filter peak"].index, channelIndex, instrumentIndex, effectIndex, false);
+                        endSimpleGain = synth.getModValue(Config.automationParams.dictionary["eq filter peak"].index, channelIndex, instrumentIndex, effectIndex, true);
                         filterChanges = true;
                     }
                     let startPoint;
@@ -10130,13 +10894,13 @@ var beepbox = (function (exports) {
             }
             if (usesPanning) {
                 this.panningMode = effect.panMode;
-                const panEnvelopeStart = envelopeStarts[42] * 2.0 - 1.0;
-                const panEnvelopeEnd = envelopeEnds[42] * 2.0 - 1.0;
+                const panEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["pan"].index] * 2.0 - 1.0;
+                const panEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["pan"].index] * 2.0 - 1.0;
                 let usePanStart = effect.pan;
                 let usePanEnd = effect.pan;
-                if (synth.isModActive(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    usePanStart = synth.getModValue(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    usePanEnd = synth.getModValue(Config.modulators.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    usePanStart = synth.getModValue(Config.automationParams.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    usePanEnd = synth.getModValue(Config.automationParams.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let panStart = Math.max(-1.0, Math.min(1.0, (usePanStart - Config.panCenter) / Config.panCenter * panEnvelopeStart));
                 let panEnd = Math.max(-1.0, Math.min(1.0, (usePanEnd - Config.panCenter) / Config.panCenter * panEnvelopeEnd));
@@ -10147,9 +10911,9 @@ var beepbox = (function (exports) {
                 const maxDelaySamples = samplesPerSecond * Config.panDelaySecondsMax;
                 let usePanDelayStart = effect.panDelay;
                 let usePanDelayEnd = effect.panDelay;
-                if (synth.isModActive(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    usePanDelayStart = synth.getModValue(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    usePanDelayEnd = synth.getModValue(Config.modulators.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    usePanDelayStart = synth.getModValue(Config.automationParams.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    usePanDelayEnd = synth.getModValue(Config.automationParams.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 const delayStart = panStart * usePanDelayStart * maxDelaySamples / 10;
                 const delayEnd = panEnd * usePanDelayEnd * maxDelaySamples / 10;
@@ -10167,13 +10931,13 @@ var beepbox = (function (exports) {
                 this.panningOffsetDeltaR = (delayEndR - delayStartR) / roundedSamplesPerTick;
             }
             if (usesGain) {
-                const gainEnvelopeStart = envelopeStarts[57];
-                const gainEnvelopeEnd = envelopeEnds[57];
+                const gainEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["gain"].index];
+                const gainEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["gain"].index];
                 let useGainStart = effect.gain;
                 let useGainEnd = effect.gain;
-                if (synth.isModActive(Config.modulators.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useGainStart = synth.getModValue(Config.modulators.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useGainEnd = synth.getModValue(Config.modulators.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useGainStart = synth.getModValue(Config.automationParams.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useGainEnd = synth.getModValue(Config.automationParams.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let gainStart = Math.min(Config.gainRangeMult, gainEnvelopeStart * useGainStart / (Config.volumeRange / 2 * Config.gainRangeMult)) * Config.gainRangeMult;
                 let gainEnd = Math.min(Config.gainRangeMult, gainEnvelopeEnd * useGainEnd / (Config.volumeRange / 2 * Config.gainRangeMult)) * Config.gainRangeMult;
@@ -10181,13 +10945,13 @@ var beepbox = (function (exports) {
                 this.gainDelta = (gainEnd - gainStart) / roundedSamplesPerTick;
             }
             if (usesChorus) {
-                const chorusEnvelopeStart = envelopeStarts[46];
-                const chorusEnvelopeEnd = envelopeEnds[46];
+                const chorusEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["chorus"].index];
+                const chorusEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["chorus"].index];
                 let useChorusStart = effect.chorus;
                 let useChorusEnd = effect.chorus;
-                if (synth.isModActive(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useChorusStart = synth.getModValue(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useChorusEnd = synth.getModValue(Config.modulators.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useChorusStart = synth.getModValue(Config.automationParams.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useChorusEnd = synth.getModValue(Config.automationParams.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let chorusStart = Math.min(1.0, chorusEnvelopeStart * useChorusStart / (Config.chorusRange - 1));
                 let chorusEnd = Math.min(1.0, chorusEnvelopeEnd * useChorusEnd / (Config.chorusRange - 1));
@@ -10201,43 +10965,43 @@ var beepbox = (function (exports) {
                 this.chorusCombinedMultDelta = (chorusCombinedMultEnd - chorusCombinedMultStart) / roundedSamplesPerTick;
             }
             if (usesFlanger) {
-                const flangerEnvelopeStart = envelopeStarts[58];
-                const flangerEnvelopeEnd = envelopeEnds[58];
+                const flangerEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["flanger"].index];
+                const flangerEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["flanger"].index];
                 let useFlangerStart = effect.flanger;
                 let useFlangerEnd = effect.flanger;
-                if (synth.isModActive(Config.modulators.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useFlangerStart = synth.getModValue(Config.modulators.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useFlangerEnd = synth.getModValue(Config.modulators.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useFlangerStart = synth.getModValue(Config.automationParams.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useFlangerEnd = synth.getModValue(Config.automationParams.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let flangerStart = Math.min(1.0, flangerEnvelopeStart * useFlangerStart / (Config.flangerRange - 1));
                 let flangerEnd = Math.min(1.0, flangerEnvelopeEnd * useFlangerEnd / (Config.flangerRange - 1));
-                const flangerSpeedEnvelopeStart = envelopeStarts[59];
-                const flangerSpeedEnvelopeEnd = envelopeEnds[59];
+                const flangerSpeedEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["flanger speed"].index];
+                const flangerSpeedEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["flanger speed"].index];
                 let useFlangerSpeedStart = effect.flangerSpeed;
                 let useFlangerSpeedEnd = effect.flangerSpeed;
-                if (synth.isModActive(Config.modulators.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useFlangerSpeedStart = synth.getModValue(Config.modulators.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useFlangerSpeedEnd = synth.getModValue(Config.modulators.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useFlangerSpeedStart = synth.getModValue(Config.automationParams.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useFlangerSpeedEnd = synth.getModValue(Config.automationParams.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let flangerSpeedStart = flangerSpeedEnvelopeStart * useFlangerSpeedStart + 2;
                 let flangerSpeedEnd = flangerSpeedEnvelopeEnd * useFlangerSpeedEnd + 2;
-                const flangerDepthEnvelopeStart = envelopeStarts[60];
-                const flangerDepthEnvelopeEnd = envelopeEnds[60];
+                const flangerDepthEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["flanger depth"].index];
+                const flangerDepthEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["flanger depth"].index];
                 let useFlangerDepthStart = effect.flangerDepth;
                 let useFlangerDepthEnd = effect.flangerDepth;
-                if (synth.isModActive(Config.modulators.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useFlangerDepthStart = synth.getModValue(Config.modulators.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useFlangerDepthEnd = synth.getModValue(Config.modulators.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useFlangerDepthStart = synth.getModValue(Config.automationParams.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useFlangerDepthEnd = synth.getModValue(Config.automationParams.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let flangerDepthStart = flangerDepthEnvelopeStart * useFlangerDepthStart * 2 + 2;
                 let flangerDepthEnd = flangerDepthEnvelopeEnd * useFlangerDepthEnd * 2 + 2;
-                const flangerFeedbackEnvelopeStart = envelopeStarts[61];
-                const flangerFeedbackEnvelopeEnd = envelopeEnds[61];
+                const flangerFeedbackEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["flanger feedback"].index];
+                const flangerFeedbackEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["flanger feedback"].index];
                 let useFlangerFeedbackStart = effect.flangerFeedback;
                 let useFlangerFeedbackEnd = effect.flangerFeedback;
-                if (synth.isModActive(Config.modulators.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useFlangerFeedbackStart = synth.getModValue(Config.modulators.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useFlangerFeedbackEnd = synth.getModValue(Config.modulators.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useFlangerFeedbackStart = synth.getModValue(Config.automationParams.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useFlangerFeedbackEnd = synth.getModValue(Config.automationParams.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 let flangerFeedbackStart = flangerFeedbackEnvelopeStart * useFlangerFeedbackStart * 1.5;
                 let flangerFeedbackEnd = flangerFeedbackEnvelopeEnd * useFlangerFeedbackEnd * 1.5;
@@ -10253,19 +11017,19 @@ var beepbox = (function (exports) {
             if (usesRingModulation) {
                 let useRingModStart = effect.ringModulation;
                 let useRingModEnd = effect.ringModulation;
-                let useRingModEnvelopeStart = envelopeStarts[50];
-                let useRingModEnvelopeEnd = envelopeEnds[50];
+                let useRingModEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["ring modulation"].index];
+                let useRingModEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["ring modulation"].index];
                 let useRingModHzStart = Math.min(1.0, effect.ringModulationHz / (Config.ringModHzRange - 1));
                 let useRingModHzEnd = Math.min(1.0, effect.ringModulationHz / (Config.ringModHzRange - 1));
-                let useRingModHzEnvelopeStart = envelopeStarts[51];
-                let useRingModHzEnvelopeEnd = envelopeEnds[51];
-                if (synth.isModActive(Config.modulators.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useRingModStart = (synth.getModValue(Config.modulators.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex, false));
-                    useRingModEnd = (synth.getModValue(Config.modulators.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex, true));
+                let useRingModHzEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["ring modulation frequency"].index];
+                let useRingModHzEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["ring modulation frequency"].index];
+                if (synth.isModActive(Config.automationParams.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useRingModStart = (synth.getModValue(Config.automationParams.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex, false));
+                    useRingModEnd = (synth.getModValue(Config.automationParams.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex, true));
                 }
-                if (synth.isModActive(Config.modulators.dictionary["ring mod hertz"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useRingModHzStart = Math.min(1.0, Math.max(0.0, (synth.getModValue(Config.modulators.dictionary["ring mod hertz"].index, channelIndex, instrumentIndex, effectIndex, false)) / (Config.ringModHzRange - 1)));
-                    useRingModHzEnd = Math.min(1.0, Math.max(0.0, (synth.getModValue(Config.modulators.dictionary["ring mod hertz"].index, channelIndex, instrumentIndex, effectIndex, false)) / (Config.ringModHzRange - 1)));
+                if (synth.isModActive(Config.automationParams.dictionary["ring modulation frequency"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useRingModHzStart = Math.min(1.0, Math.max(0.0, (synth.getModValue(Config.automationParams.dictionary["ring modulation frequency"].index, channelIndex, instrumentIndex, effectIndex, false)) / (Config.ringModHzRange - 1)));
+                    useRingModHzEnd = Math.min(1.0, Math.max(0.0, (synth.getModValue(Config.automationParams.dictionary["ring modulation frequency"].index, channelIndex, instrumentIndex, effectIndex, false)) / (Config.ringModHzRange - 1)));
                 }
                 useRingModHzStart *= useRingModHzEnvelopeStart;
                 useRingModHzEnd *= useRingModHzEnvelopeEnd;
@@ -10293,26 +11057,26 @@ var beepbox = (function (exports) {
             let maxEchoMult = 0.0;
             let averageEchoDelaySeconds = 0.0;
             if (usesEcho) {
-                const echoSustainEnvelopeStart = envelopeStarts[47];
-                const echoSustainEnvelopeEnd = envelopeEnds[47];
+                const echoSustainEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["echo"].index];
+                const echoSustainEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["echo"].index];
                 let useEchoSustainStart = effect.echoSustain;
                 let useEchoSustainEnd = effect.echoSustain;
-                if (synth.isModActive(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useEchoSustainStart = Math.max(0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex, false));
-                    useEchoSustainEnd = Math.max(0.0, synth.getModValue(Config.modulators.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex, true));
+                if (synth.isModActive(Config.automationParams.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useEchoSustainStart = Math.max(0.0, synth.getModValue(Config.automationParams.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex, false));
+                    useEchoSustainEnd = Math.max(0.0, synth.getModValue(Config.automationParams.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex, true));
                 }
                 const echoMultStart = Math.min(1.0, Math.pow(echoSustainEnvelopeStart * useEchoSustainStart / Config.echoSustainRange, 1.1)) * 0.9;
                 const echoMultEnd = Math.min(1.0, Math.pow(echoSustainEnvelopeEnd * useEchoSustainEnd / Config.echoSustainRange, 1.1)) * 0.9;
                 this.echoMult = echoMultStart;
                 this.echoMultDelta = Math.max(0.0, (echoMultEnd - echoMultStart) / roundedSamplesPerTick);
                 maxEchoMult = Math.max(echoMultStart, echoMultEnd);
-                const echoDelayEnvelopeStart = envelopeStarts[56];
-                const echoDelayEnvelopeEnd = envelopeEnds[56];
+                const echoDelayEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["echo delay"].index];
+                const echoDelayEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["echo delay"].index];
                 let useEchoDelayStart = effect.echoDelay * echoDelayEnvelopeStart;
                 let useEchoDelayEnd = effect.echoDelay * echoDelayEnvelopeEnd;
-                if (synth.isModActive(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useEchoDelayStart = synth.getModValue(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex, false) * echoDelayEnvelopeStart;
-                    useEchoDelayEnd = synth.getModValue(Config.modulators.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex, true) * echoDelayEnvelopeEnd;
+                if (synth.isModActive(Config.automationParams.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useEchoDelayStart = synth.getModValue(Config.automationParams.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex, false) * echoDelayEnvelopeStart;
+                    useEchoDelayEnd = synth.getModValue(Config.automationParams.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex, true) * echoDelayEnvelopeEnd;
                 }
                 const tmpEchoDelayOffsetStart = Math.round((useEchoDelayStart + 1) * Config.echoDelayStepTicks * samplesPerTick);
                 const tmpEchoDelayOffsetEnd = Math.round((useEchoDelayEnd + 1) * Config.echoDelayStepTicks * samplesPerTick);
@@ -10326,13 +11090,13 @@ var beepbox = (function (exports) {
                 averageEchoDelaySeconds = (this.echoDelayOffsetStart + this.echoDelayOffsetEnd) * 0.5 / samplesPerSecond;
                 this.echoDelayOffsetRatio = 0.0;
                 this.echoDelayOffsetRatioDelta = 1.0 / roundedSamplesPerTick;
-                const echoPingPongEnvelopeStart = envelopeStarts[66];
-                const echoPingPongEnvelopeEnd = envelopeEnds[66];
+                const echoPingPongEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["echo ping pong"].index];
+                const echoPingPongEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["echo ping pong"].index];
                 let useEchoPingPongStart = effect.echoPingPong;
                 let useEchoPingPongEnd = effect.echoPingPong;
-                if (synth.isModActive(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useEchoPingPongStart = synth.getModValue(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex, false) * echoPingPongEnvelopeStart;
-                    useEchoPingPongEnd = synth.getModValue(Config.modulators.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex, true) * echoPingPongEnvelopeEnd;
+                if (synth.isModActive(Config.automationParams.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useEchoPingPongStart = synth.getModValue(Config.automationParams.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex, false) * echoPingPongEnvelopeStart;
+                    useEchoPingPongEnd = synth.getModValue(Config.automationParams.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex, true) * echoPingPongEnvelopeEnd;
                 }
                 const echoPingPongStart = ((useEchoPingPongStart / Config.panMax) - 0.5) * echoPingPongEnvelopeStart * 2;
                 const echoPingPongEnd = ((useEchoPingPongEnd / Config.panMax) - 0.5) * echoPingPongEnvelopeEnd * 2;
@@ -10346,33 +11110,33 @@ var beepbox = (function (exports) {
             }
             let maxReverbMult = 0.0;
             if (usesReverb) {
-                const reverbEnvelopeStart = envelopeStarts[48];
-                const reverbEnvelopeEnd = envelopeEnds[48];
-                const reverbWetDryMixEnvelopeStart = envelopeStarts[64];
-                const reverbWetDryMixEnvelopeEnd = envelopeEnds[64];
-                const reverbSendEnvelopeStart = envelopeStarts[65];
-                const reverbSendEnvelopeEnd = envelopeEnds[65];
+                const reverbEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["reverb"].index];
+                const reverbEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["reverb"].index];
+                const reverbWetDryMixEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["reverb wet/dry mix"].index];
+                const reverbWetDryMixEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["reverb wet/dry mix"].index];
+                const reverbSendEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["reverb send"].index];
+                const reverbSendEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["reverb send"].index];
                 let useReverbStart = effect.reverb;
                 let useReverbEnd = effect.reverb;
                 let useReverbWetDryMixStart = effect.reverbWetDryMix;
                 let useReverbWetDryMixEnd = effect.reverbWetDryMix;
                 let useReverbSendStart = effect.reverbSend;
                 let useReverbSendEnd = effect.reverbSend;
-                if (synth.isModActive(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useReverbStart = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useReverbEnd = synth.getModValue(Config.modulators.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useReverbStart = synth.getModValue(Config.automationParams.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useReverbEnd = synth.getModValue(Config.automationParams.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
-                if (synth.isModActive(Config.modulators.dictionary["song reverb"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useReverbStart *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, undefined, false) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
-                    useReverbEnd *= (synth.getModValue(Config.modulators.dictionary["song reverb"].index, undefined, undefined, undefined, true) - Config.modulators.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
+                if (synth.isModActive(Config.automationParams.dictionary["song reverb"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useReverbStart *= (synth.getModValue(Config.automationParams.dictionary["song reverb"].index, undefined, undefined, undefined, false) - Config.automationParams.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
+                    useReverbEnd *= (synth.getModValue(Config.automationParams.dictionary["song reverb"].index, undefined, undefined, undefined, true) - Config.automationParams.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
                 }
-                if (synth.isModActive(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useReverbWetDryMixStart = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useReverbWetDryMixEnd = synth.getModValue(Config.modulators.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useReverbWetDryMixStart = synth.getModValue(Config.automationParams.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useReverbWetDryMixEnd = synth.getModValue(Config.automationParams.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
-                if (synth.isModActive(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex)) {
-                    useReverbSendStart = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex, false);
-                    useReverbSendEnd = synth.getModValue(Config.modulators.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex, true);
+                if (synth.isModActive(Config.automationParams.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex)) {
+                    useReverbSendStart = synth.getModValue(Config.automationParams.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex, false);
+                    useReverbSendEnd = synth.getModValue(Config.automationParams.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex, true);
                 }
                 const reverbStart = Math.min(1.0, Math.pow(reverbEnvelopeStart * useReverbStart / Config.reverbRange, 0.667)) * 0.425;
                 const reverbEnd = Math.min(1.0, Math.pow(reverbEnvelopeEnd * useReverbEnd / Config.reverbRange, 0.667)) * 0.425;
@@ -10640,8 +11404,7 @@ var beepbox = (function (exports) {
             this._modifiedEnvelopeIndices = [];
             this._modifiedEnvelopeCount = 0;
             this.lowpassCutoffDecayVolumeCompensation = 1.0;
-            const length = 67;
-            for (let i = 0; i < length; i++) {
+            for (let i = 0; i < Config.automationParams.length; i++) {
                 this.envelopeStarts[i] = 1.0;
                 this.envelopeEnds[i] = 1.0;
             }
@@ -10787,13 +11550,13 @@ var beepbox = (function (exports) {
                 if (envelopeIndex == instrument.envelopeCount) {
                     if (usedNoteSize)
                         break;
-                    automationTarget = Config.instrumentAutomationTargets.dictionary["noteVolume"];
+                    automationTarget = Config.automationParams.dictionary["noteVolume"];
                     targetIndex = 0;
                     envelope = Config.newEnvelopes.dictionary["note size"];
                 }
                 else {
                     let envelopeSettings = instrument.envelopes[envelopeIndex];
-                    automationTarget = Config.instrumentAutomationTargets[envelopeSettings.target];
+                    automationTarget = Config.automationParams[envelopeSettings.target];
                     targetIndex = envelopeSettings.index;
                     envelope = Config.newEnvelopes[envelopeSettings.envelope];
                     inverse = instrument.envelopes[envelopeIndex].inverse;
@@ -10803,10 +11566,10 @@ var beepbox = (function (exports) {
                     envelopeSpeed = perEnvelopeSpeed * globalEnvelopeSpeed;
                     perEnvelopeLowerBound = instrument.envelopes[envelopeIndex].perEnvelopeLowerBound;
                     perEnvelopeUpperBound = instrument.envelopes[envelopeIndex].perEnvelopeUpperBound;
-                    if (synth.isModActive(Config.modulators.dictionary["individual envelope lower bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound != null) {
+                    if (synth.isModActive(Config.automationParams.dictionary["individual envelope lower bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound != null) {
                         perEnvelopeLowerBound = instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound;
                     }
-                    if (synth.isModActive(Config.modulators.dictionary["individual envelope upper bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound != null) {
+                    if (synth.isModActive(Config.automationParams.dictionary["individual envelope upper bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound != null) {
                         perEnvelopeUpperBound = instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound;
                     }
                     if (!(perEnvelopeLowerBound <= perEnvelopeUpperBound)) {
@@ -10836,37 +11599,35 @@ var beepbox = (function (exports) {
                         usedNoteSize = true;
                 }
                 const pitch = (envelope.type == 2) ? this.computePitchEnvelope(instrument, envelopeIndex, (this.startPinTickPitch || this.getPitchValue(instrument, tone, instrumentState, true))) : 0;
-                if (automationTarget.computeIndex != null) {
-                    const computeIndex = automationTarget.computeIndex + targetIndex;
-                    let envelopeStart = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, noteSecondsStartUnscaled, noteSecondsStart[envelopeIndex], beatTimeStart[envelopeIndex], timeSinceStart, noteSizeStart, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
-                    if (prevSlideStart) {
-                        const other = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, prevNoteSecondsStartUnscaled, prevNoteSecondsStart[envelopeIndex], beatTimeStart[envelopeIndex], timeSinceStart, prevNoteSize, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
-                        envelopeStart += (other - envelopeStart) * prevSlideRatioStart;
+                const computeIndex = automationTarget.index;
+                let envelopeStart = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, noteSecondsStartUnscaled, noteSecondsStart[envelopeIndex], beatTimeStart[envelopeIndex], timeSinceStart, noteSizeStart, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
+                if (prevSlideStart) {
+                    const other = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, prevNoteSecondsStartUnscaled, prevNoteSecondsStart[envelopeIndex], beatTimeStart[envelopeIndex], timeSinceStart, prevNoteSize, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
+                    envelopeStart += (other - envelopeStart) * prevSlideRatioStart;
+                }
+                if (nextSlideStart) {
+                    const other = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, 0.0, 0.0, beatTimeStart[envelopeIndex], timeSinceStart, nextNoteSize, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
+                    envelopeStart += (other - envelopeStart) * nextSlideRatioStart;
+                }
+                let envelopeEnd = envelopeStart;
+                if (isDiscrete == false) {
+                    envelopeEnd = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, noteSecondsEndUnscaled, noteSecondsEnd[envelopeIndex], beatTimeEnd[envelopeIndex], timeSinceStart, noteSizeEnd, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
+                    if (prevSlideEnd) {
+                        const other = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, prevNoteSecondsEndUnscaled, prevNoteSecondsEnd[envelopeIndex], beatTimeEnd[envelopeIndex], timeSinceStart, prevNoteSize, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
+                        envelopeEnd += (other - envelopeEnd) * prevSlideRatioEnd;
                     }
-                    if (nextSlideStart) {
-                        const other = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, 0.0, 0.0, beatTimeStart[envelopeIndex], timeSinceStart, nextNoteSize, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
-                        envelopeStart += (other - envelopeStart) * nextSlideRatioStart;
+                    if (nextSlideEnd) {
+                        const other = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, 0.0, 0.0, beatTimeEnd[envelopeIndex], timeSinceStart, nextNoteSize, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
+                        envelopeEnd += (other - envelopeEnd) * nextSlideRatioEnd;
                     }
-                    let envelopeEnd = envelopeStart;
-                    if (isDiscrete == false) {
-                        envelopeEnd = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, noteSecondsEndUnscaled, noteSecondsEnd[envelopeIndex], beatTimeEnd[envelopeIndex], timeSinceStart, noteSizeEnd, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
-                        if (prevSlideEnd) {
-                            const other = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, prevNoteSecondsEndUnscaled, prevNoteSecondsEnd[envelopeIndex], beatTimeEnd[envelopeIndex], timeSinceStart, prevNoteSize, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
-                            envelopeEnd += (other - envelopeEnd) * prevSlideRatioEnd;
-                        }
-                        if (nextSlideEnd) {
-                            const other = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, 0.0, 0.0, beatTimeEnd[envelopeIndex], timeSinceStart, nextNoteSize, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
-                            envelopeEnd += (other - envelopeEnd) * nextSlideRatioEnd;
-                        }
-                    }
-                    this.envelopeStarts[computeIndex] *= envelopeStart;
-                    this.envelopeEnds[computeIndex] *= envelopeEnd;
-                    this._modifiedEnvelopeIndices[this._modifiedEnvelopeCount++] = computeIndex;
-                    if (automationTarget.isFilter) {
-                        const filterSettings = (instrument.tmpNoteFilterStart != null) ? instrument.tmpNoteFilterStart : instrument.noteFilter;
-                        if (filterSettings.controlPointCount > targetIndex && filterSettings.controlPoints[targetIndex].type == 0) {
-                            lowpassCutoffDecayVolumeCompensation = Math.max(lowpassCutoffDecayVolumeCompensation, EnvelopeComputer.getLowpassCutoffDecayVolumeCompensation(envelope, perEnvelopeSpeed));
-                        }
+                }
+                this.envelopeStarts[computeIndex] *= envelopeStart;
+                this.envelopeEnds[computeIndex] *= envelopeEnd;
+                this._modifiedEnvelopeIndices[this._modifiedEnvelopeCount++] = computeIndex;
+                if (automationTarget.isFilter) {
+                    const filterSettings = (instrument.tmpNoteFilterStart != null) ? instrument.tmpNoteFilterStart : instrument.noteFilter;
+                    if (filterSettings.controlPointCount > targetIndex && filterSettings.controlPoints[targetIndex].type == 0) {
+                        lowpassCutoffDecayVolumeCompensation = Math.max(lowpassCutoffDecayVolumeCompensation, EnvelopeComputer.getLowpassCutoffDecayVolumeCompensation(envelope, perEnvelopeSpeed));
                     }
                 }
             }
@@ -11585,8 +12346,8 @@ var beepbox = (function (exports) {
                 envelopeSpeeds[i] = 0;
             }
             let useEnvelopeSpeed = Config.arpSpeedScale[instrument.envelopeSpeed];
-            if (synth.isModActive(Config.modulators.dictionary["envelope speed"].index, channelIndex, instrumentIndex)) {
-                useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.modulators.dictionary["envelope speed"].index, channelIndex, instrumentIndex, -1, false)));
+            if (synth.isModActive(Config.automationParams.dictionary["envelope speed"].index, channelIndex, instrumentIndex)) {
+                useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.automationParams.dictionary["envelope speed"].index, channelIndex, instrumentIndex, -1, false)));
                 if (Number.isInteger(useEnvelopeSpeed)) {
                     useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed];
                 }
@@ -11596,7 +12357,7 @@ var beepbox = (function (exports) {
             }
             for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                 let perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-                if (synth.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+                if (synth.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                     perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed;
                 }
                 envelopeSpeeds[envelopeIndex] = useEnvelopeSpeed * perEnvelopeSpeed;
@@ -11610,17 +12371,17 @@ var beepbox = (function (exports) {
                     this.effects[effectIndex].compute(synth, instrument, effect, this, samplesPerTick, roundedSamplesPerTick, tone, channelIndex, instrumentIndex, effectIndex, envelopeStarts, envelopeEnds);
                 }
             }
-            this.mixVolume = envelopeStarts[1] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
-            let mixVolumeEnd = envelopeEnds[1] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
-            if (synth.isModActive(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, 1)) {
-                const startVal = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, false);
-                const endVal = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, true);
+            this.mixVolume = envelopeStarts[Config.automationParams.dictionary["post volume"].index] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
+            let mixVolumeEnd = envelopeEnds[Config.automationParams.dictionary["post volume"].index] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
+            if (synth.isModActive(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1)) {
+                const startVal = synth.getModValue(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, false);
+                const endVal = synth.getModValue(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, true);
                 this.mixVolume *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
                 mixVolumeEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
             }
-            if (synth.isModActive(Config.modulators.dictionary["song volume"].index)) {
-                this.mixVolume *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, -1, false)) / 100.0;
-                mixVolumeEnd *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, -1, true)) / 100.0;
+            if (synth.isModActive(Config.automationParams.dictionary["song volume"].index)) {
+                this.mixVolume *= (synth.getModValue(Config.automationParams.dictionary["song volume"].index, undefined, undefined, -1, false)) / 100.0;
+                mixVolumeEnd *= (synth.getModValue(Config.automationParams.dictionary["song volume"].index, undefined, undefined, -1, true)) / 100.0;
             }
             this.mixVolumeDelta = (mixVolumeEnd - this.mixVolume) / roundedSamplesPerTick;
             let attenuationVolumeStart = 1.0;
@@ -12064,8 +12825,8 @@ var beepbox = (function (exports) {
                                 }
                                 for (let mod = 0; mod < Config.modCount; mod++) {
                                     if (latestPinParts[mod] != null) {
-                                        if (Config.modulators[instrument.modulators[mod]].forSong) {
-                                            const songFilterParam = instrument.modulators[mod] == Config.modulators.dictionary["song eq"].index;
+                                        if (Config.automationParams[instrument.modulators[mod]].forSong) {
+                                            const songFilterParam = instrument.modulators[mod] == Config.automationParams.dictionary["song eq filter"].index;
                                             if (latestModTimes[instrument.modulators[mod]] == null || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModTimes[instrument.modulators[mod]]) {
                                                 if (songFilterParam) {
                                                     let tgtSong = this.song;
@@ -12120,14 +12881,10 @@ var beepbox = (function (exports) {
                                                 }
                                             }
                                             for (let instrumentIndex = 0; instrumentIndex < usedInstruments.length; instrumentIndex++) {
-                                                const eqFilterParam = instrument.modulators[mod] == Config.modulators.dictionary["post eq"].index;
-                                                const noteFilterParam = instrument.modulators[mod] == Config.modulators.dictionary["pre eq"].index;
+                                                const eqFilterParam = instrument.modulators[mod] == Config.automationParams.dictionary["eq filter"].index;
                                                 let modulatorAdjust = instrument.modulators[mod];
                                                 if (eqFilterParam) {
-                                                    modulatorAdjust = Config.modulators.length + (instrument.modFilterTypes[mod] | 0);
-                                                }
-                                                else if (noteFilterParam) {
-                                                    modulatorAdjust = Config.modulators.length + 1 + (2 * Config.filterMaxPoints) + (instrument.modFilterTypes[mod] | 0);
+                                                    modulatorAdjust = Config.automationParams.length + (instrument.modFilterTypes[mod] | 0);
                                                 }
                                                 if (eqFilterParam) {
                                                     let tgtInstrument = this.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
@@ -12159,38 +12916,11 @@ var beepbox = (function (exports) {
                                                         latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                                     }
                                                 }
-                                                else if (noteFilterParam) {
-                                                    if (latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
-                                                        || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0]) {
-                                                        let tgtInstrument = this.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
-                                                        if (instrument.modFilterTypes[mod] == 0) {
-                                                            tgtInstrument.tmpNoteFilterStart = tgtInstrument.noteSubFilters[latestPinValues[mod]];
-                                                        }
-                                                        else {
-                                                            for (let i = 0; i < Config.filterMorphCount; i++) {
-                                                                if (tgtInstrument.tmpNoteFilterStart != null && tgtInstrument.tmpNoteFilterStart == tgtInstrument.noteSubFilters[i]) {
-                                                                    tgtInstrument.tmpNoteFilterStart = new FilterSettings();
-                                                                    tgtInstrument.tmpNoteFilterStart.fromJsonObject(tgtInstrument.noteSubFilters[i].toJsonObject());
-                                                                    i = Config.filterMorphCount;
-                                                                }
-                                                            }
-                                                            if (tgtInstrument.tmpNoteFilterStart != null && Math.floor((instrument.modFilterTypes[mod] - 1) / 2) < tgtInstrument.tmpNoteFilterStart.controlPointCount) {
-                                                                if (instrument.modFilterTypes[mod] % 2)
-                                                                    tgtInstrument.tmpNoteFilterStart.controlPoints[Math.floor((instrument.modFilterTypes[mod] - 1) / 2)].freq = latestPinValues[mod];
-                                                                else
-                                                                    tgtInstrument.tmpNoteFilterStart.controlPoints[Math.floor((instrument.modFilterTypes[mod] - 1) / 2)].gain = latestPinValues[mod];
-                                                            }
-                                                        }
-                                                        tgtInstrument.tmpNoteFilterEnd = tgtInstrument.tmpNoteFilterStart;
-                                                    }
-                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = [];
-                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
-                                                }
                                                 else {
                                                     for (let effectIndex = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
                                                         if (latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
                                                             || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0]) {
-                                                            if (Config.modulators[modulatorAdjust])
+                                                            if (Config.automationParams[modulatorAdjust])
                                                                 this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], modulatorAdjust, instrument.modEffects[mod][effectIndex]);
                                                         }
                                                         latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = [];
@@ -12232,26 +12962,23 @@ var beepbox = (function (exports) {
                         const tgtInstrument = tgtInstrumentList[i];
                         if (tgtInstrument == null)
                             continue;
-                        const str = Config.modulators[instrument.modulators[mod]].name;
+                        const str = Config.automationParams[instrument.modulators[mod]].name;
                         let invalidPostEQ = false;
                         for (let effectIndex = 0; effectIndex < tgtInstrument.effects.length; effectIndex++) {
                             if (tgtInstrument.effects[effectIndex].type == 5) {
-                                if ((tgtInstrument.effects[effectIndex].eqFilterType && str == "post eq") || (!tgtInstrument.effects[effectIndex].eqFilterType && (str == "post eq cut" || str == "post eq peak"))) {
+                                if ((tgtInstrument.effects[effectIndex].eqFilterType && str == "eq filter") || (!tgtInstrument.effects[effectIndex].eqFilterType && (str == "eq filter cut" || str == "eq filter peak"))) {
                                     invalidPostEQ = true;
                                 }
                             }
                         }
-                        if (!((Config.modulators[instrument.modulators[mod]].associatedEffect != 12 && !(tgtInstrument.effectsIncludeType(Config.modulators[instrument.modulators[mod]].associatedEffect))) && !(Config.modulators[instrument.modulators[mod]].associatedMDEffect != 6 && !(tgtInstrument.mdeffects & (1 << Config.modulators[instrument.modulators[mod]].associatedMDEffect)))
+                        if (!((Config.automationParams[instrument.modulators[mod]].associatedEffect != null && !(tgtInstrument.effectsIncludeType(Config.automationParams[instrument.modulators[mod]].associatedEffect))) && !(Config.automationParams[instrument.modulators[mod]].associatedMDEffect != null && !(tgtInstrument.mdeffects & (1 << Config.automationParams[instrument.modulators[mod]].associatedMDEffect)))
                             || ((tgtInstrument.type != 1 && tgtInstrument.type != 11) && (str == "fm slider 1" || str == "fm slider 2" || str == "fm slider 3" || str == "fm slider 4" || str == "fm feedback"))
                             || tgtInstrument.type != 11 && (str == "fm slider 5" || str == "fm slider 6")
                             || ((tgtInstrument.type != 6 && tgtInstrument.type != 8) && (str == "pulse width" || str == "decimal offset"))
                             || ((tgtInstrument.type != 8) && (str == "dynamism" || str == "spread" || str == "saw shape"))
-                            || (!tgtInstrument.getChord().arpeggiates && (str == "arp speed" || str == "reset arp"))
+                            || (!tgtInstrument.getChord().arpeggiates && (str == "arpeggio speed" || str == "reset arpeggio"))
                             || invalidPostEQ
-                            || (str == "post eq" && Math.floor((instrument.modFilterTypes[mod] + 1) / 2) > tgtInstrument.getLargestControlPointCount(false))
-                            || (tgtInstrument.noteFilterType && str == "pre eq")
-                            || (!tgtInstrument.noteFilterType && (str == "pre eq cut" || str == "pre eq peak"))
-                            || (str == "pre eq" && Math.floor((instrument.modFilterTypes[mod] + 1) / 2) > tgtInstrument.getLargestControlPointCount(true)))) {
+                            || (str == "eq filter" && Math.floor((instrument.modFilterTypes[mod] + 1) / 2) > tgtInstrument.getLargestControlPointCount(false)))) {
                             instrument.invalidModulators[mod] = false;
                             i = tgtInstrumentList.length;
                         }
@@ -12308,7 +13035,7 @@ var beepbox = (function (exports) {
                     if (pattern != null) {
                         let instrument = this.song.channels[channel].instruments[pattern.instruments[0]];
                         for (let mod = 0; mod < Config.modCount; mod++) {
-                            if (instrument.modulators[mod] == Config.modulators.dictionary["next bar"].index) {
+                            if (instrument.modulators[mod] == Config.automationParams.dictionary["next bar"].index) {
                                 for (const note of pattern.notes) {
                                     if (note.pitches[0] == (Config.modCount - 1 - mod)) {
                                         if (partsInBar > note.start)
@@ -12337,10 +13064,10 @@ var beepbox = (function (exports) {
                         if (pattern != null) {
                             let instrument = this.song.channels[channel].instruments[pattern.instruments[0]];
                             for (let mod = 0; mod < Config.modCount; mod++) {
-                                if (instrument.modulators[mod] == Config.modulators.dictionary["tempo"].index) {
+                                if (instrument.modulators[mod] == Config.automationParams.dictionary["tempo"].index) {
                                     hasTempoMods = true;
                                 }
-                                if (instrument.modulators[mod] == Config.modulators.dictionary["next bar"].index) {
+                                if (instrument.modulators[mod] == Config.automationParams.dictionary["next bar"].index) {
                                     hasNextBarMods = true;
                                 }
                             }
@@ -12360,7 +13087,7 @@ var beepbox = (function (exports) {
                                 let instrument = this.song.channels[channel].instruments[instrumentIdx];
                                 let partsInBar = this.findPartsInBar(bar);
                                 for (const note of pattern.notes) {
-                                    if (instrument.modulators[Config.modCount - 1 - note.pitches[0]] == Config.modulators.dictionary["tempo"].index) {
+                                    if (instrument.modulators[Config.modCount - 1 - note.pitches[0]] == Config.automationParams.dictionary["tempo"].index) {
                                         if (note.start < partsInBar && (latestTempoPin == null || note.end > latestTempoPin)) {
                                             if (note.end <= partsInBar) {
                                                 latestTempoPin = note.end;
@@ -12385,7 +13112,7 @@ var beepbox = (function (exports) {
                         }
                     }
                     if (latestTempoPin != null) {
-                        prevTempo = latestTempoValue + Config.modulators.dictionary["tempo"].convertRealFactor;
+                        prevTempo = latestTempoValue + Config.automationParams.dictionary["tempo"].convertRealFactor;
                         bar = -1;
                     }
                 }
@@ -12408,7 +13135,7 @@ var beepbox = (function (exports) {
                                 if (pattern != null) {
                                     let instrument = this.song.channels[channel].instruments[pattern.instruments[0]];
                                     for (let mod = 0; mod < Config.modCount; mod++) {
-                                        if (foundMod == false && instrument.modulators[mod] == Config.modulators.dictionary["tempo"].index
+                                        if (foundMod == false && instrument.modulators[mod] == Config.automationParams.dictionary["tempo"].index
                                             && pattern.notes.find(n => n.pitches[0] == (Config.modCount - 1 - mod))) {
                                             foundMod = true;
                                             pattern.notes.sort(function (a, b) { return (a.start == b.start) ? a.pitches[0] - b.pitches[0] : a.start - b.start; });
@@ -12419,10 +13146,10 @@ var beepbox = (function (exports) {
                                                         for (let pinIdx = 1; pinIdx < note.pins.length; pinIdx++) {
                                                             if (note.pins[pinIdx - 1].time + note.start <= partsInBar) {
                                                                 const tickLength = Config.ticksPerPart * Math.min(partsInBar - (note.start + note.pins[pinIdx - 1].time), note.pins[pinIdx].time - note.pins[pinIdx - 1].time);
-                                                                const prevPinTempo = note.pins[pinIdx - 1].size + Config.modulators.dictionary["tempo"].convertRealFactor;
-                                                                let currPinTempo = note.pins[pinIdx].size + Config.modulators.dictionary["tempo"].convertRealFactor;
+                                                                const prevPinTempo = note.pins[pinIdx - 1].size + Config.automationParams.dictionary["tempo"].convertRealFactor;
+                                                                let currPinTempo = note.pins[pinIdx].size + Config.automationParams.dictionary["tempo"].convertRealFactor;
                                                                 if (note.pins[pinIdx].time + note.start > partsInBar) {
-                                                                    currPinTempo = note.pins[pinIdx - 1].size + (note.pins[pinIdx].size - note.pins[pinIdx - 1].size) * (partsInBar - (note.start + note.pins[pinIdx - 1].time)) / (note.pins[pinIdx].time - note.pins[pinIdx - 1].time) + Config.modulators.dictionary["tempo"].convertRealFactor;
+                                                                    currPinTempo = note.pins[pinIdx - 1].size + (note.pins[pinIdx].size - note.pins[pinIdx - 1].size) * (partsInBar - (note.start + note.pins[pinIdx - 1].time)) / (note.pins[pinIdx].time - note.pins[pinIdx - 1].time) + Config.automationParams.dictionary["tempo"].convertRealFactor;
                                                                 }
                                                                 let bpmScalar = Config.partsPerBeat * Config.ticksPerPart / 60;
                                                                 if (currPinTempo != prevPinTempo) {
@@ -12513,7 +13240,6 @@ var beepbox = (function (exports) {
             this.isRecording = false;
             this.liveInputEndTime = 0.0;
             this.browserAutomaticallyClearsAudioBuffer = true;
-            this.tempDrumSetControlPoint = new FilterControlPoint();
             this.tempFrequencyResponse = new FrequencyResponse();
             this.loopBarStart = -1;
             this.loopBarEnd = -1;
@@ -12670,15 +13396,15 @@ var beepbox = (function (exports) {
             }
         }
         setModValue(volumeStart, volumeEnd, channelIndex, instrumentIndex, setting, effectIndex) {
-            let val = volumeStart + Config.modulators[setting].convertRealFactor;
-            let nextVal = volumeEnd + Config.modulators[setting].convertRealFactor;
-            if (Config.modulators[setting].forSong) {
+            let val = volumeStart + Config.automationParams[setting].convertRealFactor;
+            let nextVal = volumeEnd + Config.automationParams[setting].convertRealFactor;
+            if (Config.automationParams[setting].forSong) {
                 if (this.modValues[setting] == null || this.modValues[setting] != val || this.nextModValues[setting] != nextVal) {
                     this.modValues[setting] = val;
                     this.nextModValues[setting] = nextVal;
                 }
             }
-            else if (Config.modulators[setting].associatedEffect == 12) {
+            else if (Config.automationParams[setting].associatedEffect == 12) {
                 if (this.modInsValues[channelIndex][instrumentIndex][setting] == null)
                     this.modInsValues[channelIndex][instrumentIndex][setting] = [];
                 if (this.nextModInsValues[channelIndex][instrumentIndex][setting] == null)
@@ -12705,8 +13431,8 @@ var beepbox = (function (exports) {
             return val;
         }
         getModValue(setting, channel, instrument, effect, nextVal) {
-            const forSong = Config.modulators[setting].forSong;
-            const noEffect = Config.modulators[setting].associatedEffect == 12;
+            const forSong = Config.automationParams[setting].forSong;
+            const noEffect = Config.automationParams[setting].associatedEffect == 12;
             if (forSong) {
                 if (this.modValues[setting] != null && this.nextModValues[setting] != null) {
                     return nextVal ? this.nextModValues[setting] : this.modValues[setting];
@@ -12725,7 +13451,7 @@ var beepbox = (function (exports) {
             return -1;
         }
         isAnyModActive(channel, instrument) {
-            for (let setting = 0; setting < Config.modulators.length; setting++) {
+            for (let setting = 0; setting < Config.automationParams.length; setting++) {
                 if ((this.modValues != undefined && this.modValues[setting] != null)
                     || (this.modInsValues != undefined && this.modInsValues[channel] != undefined && this.modInsValues[channel][instrument] != undefined && this.modInsValues[channel][instrument][setting] != null && this.modInsValues[channel][instrument][setting].length > 0)) {
                     return true;
@@ -12775,8 +13501,8 @@ var beepbox = (function (exports) {
             return false;
         }
         isModActive(setting, channel, instrument, effect) {
-            const forSong = Config.modulators[setting].forSong;
-            const noEffect = Config.modulators[setting].associatedEffect == 12;
+            const forSong = Config.automationParams[setting].forSong;
+            const noEffect = Config.automationParams[setting].associatedEffect == 12;
             if (forSong) {
                 return (this.modValues != undefined && this.modValues[setting] != null);
             }
@@ -13022,9 +13748,8 @@ var beepbox = (function (exports) {
                                     const channel = song.channels[channelIndex];
                                     const instrument = channel.instruments[tone.instrumentIndex];
                                     let mod = Config.modCount - 1 - tone.pitches[0];
-                                    if ((instrument.modulators[mod] == Config.modulators.dictionary["pre eq"].index
-                                        || instrument.modulators[mod] == Config.modulators.dictionary["post eq"].index
-                                        || instrument.modulators[mod] == Config.modulators.dictionary["song eq"].index)
+                                    if ((instrument.modulators[mod] == Config.automationParams.dictionary["eq filter"].index
+                                        || instrument.modulators[mod] == Config.automationParams.dictionary["song eq filter"].index)
                                         && instrument.modFilterTypes[mod] != null && instrument.modFilterTypes[mod] > 0) {
                                         continue;
                                     }
@@ -13044,9 +13769,8 @@ var beepbox = (function (exports) {
                                     const channel = song.channels[channelIndex];
                                     const instrument = channel.instruments[tone.instrumentIndex];
                                     let mod = Config.modCount - 1 - tone.pitches[0];
-                                    if ((instrument.modulators[mod] == Config.modulators.dictionary["pre eq"].index
-                                        || instrument.modulators[mod] == Config.modulators.dictionary["post eq"].index
-                                        || instrument.modulators[mod] == Config.modulators.dictionary["song eq"].index)
+                                    if ((instrument.modulators[mod] == Config.automationParams.dictionary["eq filter"].index
+                                        || instrument.modulators[mod] == Config.automationParams.dictionary["song eq filter"].index)
                                         && instrument.modFilterTypes[mod] != null && instrument.modFilterTypes[mod] > 0) {
                                         this.playModTone(song, channelIndex, samplesPerTick, bufferIndex, runLength, tone, false, false);
                                     }
@@ -13129,8 +13853,8 @@ var beepbox = (function (exports) {
                             const partTimeEnd = partTimeTickStart + (partTimeTickEnd - partTimeTickStart) * endRatio;
                             let useVibratoSpeed = instrument.vibratoSpeed;
                             instrumentState.vibratoTime = instrumentState.nextVibratoTime;
-                            if (this.isModActive(Config.modulators.dictionary["vibrato speed"].index, channelIndex, instrumentIndex)) {
-                                useVibratoSpeed = this.getModValue(Config.modulators.dictionary["vibrato speed"].index, channelIndex, instrumentIndex);
+                            if (this.isModActive(Config.automationParams.dictionary["vibrato speed"].index, channelIndex, instrumentIndex)) {
+                                useVibratoSpeed = this.getModValue(Config.automationParams.dictionary["vibrato speed"].index, channelIndex, instrumentIndex);
                             }
                             if (useVibratoSpeed == 0) {
                                 instrumentState.vibratoTime = 0;
@@ -13281,11 +14005,11 @@ var beepbox = (function (exports) {
                                 for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                                     let useEnvelopeSpeed = instrument.envelopeSpeed;
                                     let perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-                                    if (this.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channel, instrumentIdx, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+                                    if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channel, instrumentIdx, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                                         perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed;
                                     }
-                                    if (this.isModActive(Config.modulators.dictionary["envelope speed"].index, channel, instrumentIdx, -1)) {
-                                        useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.modulators.dictionary["envelope speed"].index, channel, instrumentIdx, -1, false)));
+                                    if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, channel, instrumentIdx, -1)) {
+                                        useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, channel, instrumentIdx, -1, false)));
                                         if (Number.isInteger(useEnvelopeSpeed)) {
                                             instrumentState.envelopeTime[envelopeIndex] += Config.arpSpeedScale[useEnvelopeSpeed] * perEnvelopeSpeed;
                                         }
@@ -13302,10 +14026,10 @@ var beepbox = (function (exports) {
                                     envelopeComputer.computeEnvelopes(instrument, currentPart, instrumentState.envelopeTime, tickTimeStart, secondsPerTick, tone, envelopeSpeeds, instrumentState, this, channel, instrumentIdx);
                                 }
                                 const envelopeStarts = envelopeComputer.envelopeStarts;
-                                const arpEnvelopeStart = envelopeStarts[49];
+                                const arpEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["arpeggio speed"].index];
                                 let useArpeggioSpeed = instrument.arpeggioSpeed;
-                                if (this.isModActive(Config.modulators.dictionary["arp speed"].index, channel, instrumentIdx, -1)) {
-                                    useArpeggioSpeed = clamp(0, Config.arpSpeedScale.length, arpEnvelopeStart * this.getModValue(Config.modulators.dictionary["arp speed"].index, channel, instrumentIdx, -1, false));
+                                if (this.isModActive(Config.automationParams.dictionary["arpeggio speed"].index, channel, instrumentIdx, -1)) {
+                                    useArpeggioSpeed = clamp(0, Config.arpSpeedScale.length, arpEnvelopeStart * this.getModValue(Config.automationParams.dictionary["arpeggio speed"].index, channel, instrumentIdx, -1, false));
                                     if (Number.isInteger(useArpeggioSpeed)) {
                                         instrumentState.arpTime += Config.arpSpeedScale[useArpeggioSpeed];
                                     }
@@ -13395,11 +14119,11 @@ var beepbox = (function (exports) {
                         }
                     }
                 }
-                for (let setting = 0; setting < Config.modulators.length; setting++) {
+                for (let setting = 0; setting < Config.automationParams.length; setting++) {
                     if (this.nextModValues != null && this.nextModValues[setting] != null)
                         this.modValues[setting] = this.nextModValues[setting];
                 }
-                if (this.isModActive(Config.modulators.dictionary["tempo"].index)) {
+                if (this.isModActive(Config.automationParams.dictionary["tempo"].index)) {
                     samplesPerTick = this.getSamplesPerTick();
                     this.tickSampleCountdown = Math.min(this.tickSampleCountdown, samplesPerTick);
                 }
@@ -13417,7 +14141,7 @@ var beepbox = (function (exports) {
                     }
                 }
                 const maxInstrumentsPerChannel = this.song.getMaxInstrumentsPerChannel();
-                for (let setting = 0; setting < Config.modulators.length; setting++) {
+                for (let setting = 0; setting < Config.automationParams.length; setting++) {
                     for (let channel = 0; channel < this.song.getChannelCount(); channel++) {
                         if (this.song.channels[channel].type != ChannelType.mod) {
                             for (let instrument = 0; instrument < maxInstrumentsPerChannel; instrument++) {
@@ -14063,10 +14787,8 @@ var beepbox = (function (exports) {
             const intervalScale = isNoiseChannel ? Config.noiseInterval : 1;
             const secondsPerPart = Config.ticksPerPart * samplesPerTick / this.samplesPerSecond;
             const sampleTime = 1.0 / this.samplesPerSecond;
-            const beatsPerPart = 1.0 / Config.partsPerBeat;
             const ticksIntoBar = this.getTicksIntoBar();
             const partTimeStart = (ticksIntoBar) / Config.ticksPerPart;
-            const partTimeEnd = (ticksIntoBar + 1.0) / Config.ticksPerPart;
             const partsPerBar = Config.partsPerBeat * song.beatsPerBar;
             const currentPart = this.getCurrentPart();
             let specialIntervalMult = 1.0;
@@ -14214,36 +14936,6 @@ var beepbox = (function (exports) {
                 }
             }
             tone.isOnLastTick = toneIsOnLastTick;
-            let tmpNoteFilter = instrument.noteFilter;
-            let startPoint;
-            let endPoint;
-            if (instrument.noteFilterType) {
-                const noteFilterSettingsStart = instrument.noteFilter;
-                if (instrument.noteSubFilters[1] == null)
-                    instrument.noteSubFilters[1] = new FilterSettings();
-                const noteFilterSettingsEnd = instrument.noteSubFilters[1];
-                let startSimpleFreq = instrument.noteFilterSimpleCut;
-                let startSimpleGain = instrument.noteFilterSimplePeak;
-                let endSimpleFreq = instrument.noteFilterSimpleCut;
-                let endSimpleGain = instrument.noteFilterSimplePeak;
-                let filterChanges = false;
-                if (this.isModActive(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    startSimpleFreq = this.getModValue(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, -1, false);
-                    endSimpleFreq = this.getModValue(Config.modulators.dictionary["pre eq cut"].index, channelIndex, tone.instrumentIndex, -1, true);
-                    filterChanges = true;
-                }
-                if (this.isModActive(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    startSimpleGain = this.getModValue(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, -1, false);
-                    endSimpleGain = this.getModValue(Config.modulators.dictionary["pre eq peak"].index, channelIndex, tone.instrumentIndex, -1, true);
-                    filterChanges = true;
-                }
-                noteFilterSettingsStart.convertLegacySettingsForSynth(startSimpleFreq, startSimpleGain, !filterChanges);
-                noteFilterSettingsEnd.convertLegacySettingsForSynth(endSimpleFreq, endSimpleGain, !filterChanges);
-                startPoint = noteFilterSettingsStart.controlPoints[0];
-                endPoint = noteFilterSettingsEnd.controlPoints[0];
-                instrument.noteFilter = noteFilterSettingsStart;
-                instrument.tmpNoteFilterStart = noteFilterSettingsStart;
-            }
             const envelopeComputer = tone.envelopeComputer;
             const envelopeSpeeds = [];
             for (let i = 0; i < Config.maxEnvelopeCount; i++) {
@@ -14251,12 +14943,12 @@ var beepbox = (function (exports) {
             }
             for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                 let perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-                if (this.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channelIndex, tone.instrumentIndex, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+                if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channelIndex, tone.instrumentIndex, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                     perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed;
                 }
                 let useEnvelopeSpeed = Config.arpSpeedScale[instrument.envelopeSpeed] * perEnvelopeSpeed;
-                if (this.isModActive(Config.modulators.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.modulators.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1, false)));
+                if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1, false)));
                     if (Number.isInteger(useEnvelopeSpeed)) {
                         useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed] * perEnvelopeSpeed;
                     }
@@ -14269,7 +14961,6 @@ var beepbox = (function (exports) {
             envelopeComputer.computeEnvelopes(instrument, currentPart, instrumentState.envelopeTime, Config.ticksPerPart * partTimeStart, samplesPerTick / this.samplesPerSecond, tone, envelopeSpeeds, instrumentState, this, channelIndex, tone.instrumentIndex);
             const envelopeStarts = tone.envelopeComputer.envelopeStarts;
             const envelopeEnds = tone.envelopeComputer.envelopeEnds;
-            instrument.noteFilter = tmpNoteFilter;
             if (transition.continues && (tone.prevNote == null || tone.note == null)) {
                 instrumentState.envelopeComputer.reset();
             }
@@ -14309,29 +15000,29 @@ var beepbox = (function (exports) {
                 let pitchShift = Config.justIntonationSemitones[instrument.pitchShift] / intervalScale;
                 let pitchShiftScalarStart = 1.0;
                 let pitchShiftScalarEnd = 1.0;
-                if (this.isModActive(Config.modulators.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1)) {
+                if (this.isModActive(Config.automationParams.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1)) {
                     pitchShift = Config.justIntonationSemitones[Config.justIntonationSemitones.length - 1];
-                    pitchShiftScalarStart = (this.getModValue(Config.modulators.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1, false)) / (Config.pitchShiftCenter);
-                    pitchShiftScalarEnd = (this.getModValue(Config.modulators.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1, true)) / (Config.pitchShiftCenter);
+                    pitchShiftScalarStart = (this.getModValue(Config.automationParams.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1, false)) / (Config.pitchShiftCenter);
+                    pitchShiftScalarEnd = (this.getModValue(Config.automationParams.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1, true)) / (Config.pitchShiftCenter);
                 }
-                const envelopeStart = envelopeStarts[19];
-                const envelopeEnd = envelopeEnds[19];
+                const envelopeStart = envelopeStarts[Config.automationParams.dictionary["pitch shift"].index];
+                const envelopeEnd = envelopeEnds[Config.automationParams.dictionary["pitch shift"].index];
                 intervalStart += pitchShift * envelopeStart * pitchShiftScalarStart;
                 intervalEnd += pitchShift * envelopeEnd * pitchShiftScalarEnd;
             }
-            if (effectsIncludeDetune(instrument.mdeffects) || this.isModActive(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1)) {
-                const envelopeStart = envelopeStarts[20];
-                const envelopeEnd = envelopeEnds[20];
+            if (effectsIncludeDetune(instrument.mdeffects) || this.isModActive(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1)) {
+                const envelopeStart = envelopeStarts[Config.automationParams.dictionary["detune"].index];
+                const envelopeEnd = envelopeEnds[Config.automationParams.dictionary["detune"].index];
                 let modDetuneStart = instrument.detune;
                 let modDetuneEnd = instrument.detune;
-                if (this.isModActive(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    modDetuneStart = this.getModValue(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, false) + Config.detuneCenter;
-                    modDetuneEnd = this.getModValue(Config.modulators.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, true) + Config.detuneCenter;
+                if (this.isModActive(Config.automationParams.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    modDetuneStart = this.getModValue(Config.automationParams.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, false) + Config.detuneCenter;
+                    modDetuneEnd = this.getModValue(Config.automationParams.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, true) + Config.detuneCenter;
                 }
                 if (!Config.chipWaves[instrument.chipWave].isCustomSampled || Config.chipWaves[instrument.chipWave].isPercussion != 1) {
-                    if (this.isModActive(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        modDetuneStart += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, false);
-                        modDetuneEnd += 4 * this.getModValue(Config.modulators.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, true);
+                    if (this.isModActive(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        modDetuneStart += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, false);
+                        modDetuneEnd += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, true);
                     }
                 }
                 intervalStart += detuneToCents(modDetuneStart) * envelopeStart * Config.pitchesPerOctave / (12.0 * 100.0);
@@ -14343,7 +15034,7 @@ var beepbox = (function (exports) {
                 let vibratoAmplitudeEnd;
                 if (instrument.vibrato == Config.vibratos.length) {
                     delayTicks = instrument.vibratoDelay * 2;
-                    if (instrument.vibratoDelay == Config.modulators.dictionary["vibrato delay"].maxRawVol)
+                    if (instrument.vibratoDelay == Config.automationParams.dictionary["vibrato delay"].maxRawVol)
                         delayTicks = Number.POSITIVE_INFINITY;
                     vibratoAmplitudeStart = instrument.vibratoDepth;
                     vibratoAmplitudeEnd = vibratoAmplitudeStart;
@@ -14353,14 +15044,14 @@ var beepbox = (function (exports) {
                     vibratoAmplitudeStart = Config.vibratos[instrument.vibrato].amplitude;
                     vibratoAmplitudeEnd = vibratoAmplitudeStart;
                 }
-                if (this.isModActive(Config.modulators.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    delayTicks = this.getModValue(Config.modulators.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1, false) * 2;
-                    if (delayTicks == Config.modulators.dictionary["vibrato delay"].maxRawVol * 2)
+                if (this.isModActive(Config.automationParams.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    delayTicks = this.getModValue(Config.automationParams.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1, false) * 2;
+                    if (delayTicks == Config.automationParams.dictionary["vibrato delay"].maxRawVol * 2)
                         delayTicks = Number.POSITIVE_INFINITY;
                 }
-                if (this.isModActive(Config.modulators.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    vibratoAmplitudeStart = this.getModValue(Config.modulators.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, false) / 25;
-                    vibratoAmplitudeEnd = this.getModValue(Config.modulators.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, true) / 25;
+                if (this.isModActive(Config.automationParams.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    vibratoAmplitudeStart = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, false) / 25;
+                    vibratoAmplitudeEnd = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, true) / 25;
                 }
                 let vibratoStart;
                 if (tone.prevVibrato != null) {
@@ -14368,7 +15059,7 @@ var beepbox = (function (exports) {
                 }
                 else {
                     let vibratoLfoStart = Synth.getLFOAmplitude(instrument, secondsPerPart * instrumentState.vibratoTime);
-                    const vibratoDepthEnvelopeStart = envelopeStarts[21];
+                    const vibratoDepthEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["vibrato depth"].index];
                     vibratoStart = vibratoAmplitudeStart * vibratoLfoStart * vibratoDepthEnvelopeStart;
                     if (delayTicks > 0.0) {
                         const ticksUntilVibratoStart = delayTicks - envelopeComputer.noteTicksStart;
@@ -14376,7 +15067,7 @@ var beepbox = (function (exports) {
                     }
                 }
                 let vibratoLfoEnd = Synth.getLFOAmplitude(instrument, secondsPerPart * instrumentState.nextVibratoTime);
-                const vibratoDepthEnvelopeEnd = envelopeEnds[21];
+                const vibratoDepthEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["vibrato depth"].index];
                 if (instrument.type != 10) {
                     let vibratoEnd = vibratoAmplitudeEnd * vibratoLfoEnd * vibratoDepthEnvelopeEnd;
                     if (delayTicks > 0.0) {
@@ -14401,71 +15092,6 @@ var beepbox = (function (exports) {
                     tone.drumsetPitch += tone.note.pickMainInterval();
                 tone.drumsetPitch = Math.max(0, Math.min(Config.drumCount - 1, tone.drumsetPitch));
             }
-            let noteFilterExpression = envelopeComputer.lowpassCutoffDecayVolumeCompensation;
-            const noteAllFreqsEnvelopeStart = envelopeStarts[2];
-            const noteAllFreqsEnvelopeEnd = envelopeEnds[2];
-            if (instrument.noteFilterType) {
-                const noteFreqEnvelopeStart = envelopeStarts[22];
-                const noteFreqEnvelopeEnd = envelopeEnds[22];
-                const notePeakEnvelopeStart = envelopeStarts[30];
-                const notePeakEnvelopeEnd = envelopeEnds[30];
-                startPoint.toCoefficients(Synth.tempFilterStartCoefficients, this.samplesPerSecond, noteAllFreqsEnvelopeStart * noteFreqEnvelopeStart, notePeakEnvelopeStart);
-                endPoint.toCoefficients(Synth.tempFilterEndCoefficients, this.samplesPerSecond, noteAllFreqsEnvelopeEnd * noteFreqEnvelopeEnd, notePeakEnvelopeEnd);
-                if (tone.noteFiltersL.length < 1)
-                    tone.noteFiltersL[0] = new DynamicBiquadFilter();
-                if (tone.noteFiltersR.length < 1)
-                    tone.noteFiltersR[0] = new DynamicBiquadFilter();
-                tone.noteFiltersL[0].loadCoefficientsWithGradient(Synth.tempFilterStartCoefficients, Synth.tempFilterEndCoefficients, 1.0 / roundedSamplesPerTick, startPoint.type == 0);
-                tone.noteFiltersR[0].loadCoefficientsWithGradient(Synth.tempFilterStartCoefficients, Synth.tempFilterEndCoefficients, 1.0 / roundedSamplesPerTick, startPoint.type == 0);
-                noteFilterExpression *= startPoint.getVolumeCompensationMult();
-                tone.noteFilterCount = 1;
-            }
-            else {
-                const noteFilterSettings = (instrument.tmpNoteFilterStart != null) ? instrument.tmpNoteFilterStart : instrument.noteFilter;
-                for (let i = 0; i < noteFilterSettings.controlPointCount; i++) {
-                    const noteFreqEnvelopeStart = envelopeStarts[22 + i];
-                    const noteFreqEnvelopeEnd = envelopeEnds[22 + i];
-                    const notePeakEnvelopeStart = envelopeStarts[30 + i];
-                    const notePeakEnvelopeEnd = envelopeEnds[30 + i];
-                    let startPoint = noteFilterSettings.controlPoints[i];
-                    const endPoint = (instrument.tmpNoteFilterEnd != null && instrument.tmpNoteFilterEnd.controlPoints[i] != null) ? instrument.tmpNoteFilterEnd.controlPoints[i] : noteFilterSettings.controlPoints[i];
-                    if (startPoint.type != endPoint.type) {
-                        startPoint = endPoint;
-                    }
-                    startPoint.toCoefficients(Synth.tempFilterStartCoefficients, this.samplesPerSecond, noteAllFreqsEnvelopeStart * noteFreqEnvelopeStart, notePeakEnvelopeStart);
-                    endPoint.toCoefficients(Synth.tempFilterEndCoefficients, this.samplesPerSecond, noteAllFreqsEnvelopeEnd * noteFreqEnvelopeEnd, notePeakEnvelopeEnd);
-                    if (tone.noteFiltersL.length <= i)
-                        tone.noteFiltersL[i] = new DynamicBiquadFilter();
-                    if (tone.noteFiltersR.length <= i)
-                        tone.noteFiltersR[i] = new DynamicBiquadFilter();
-                    tone.noteFiltersL[i].loadCoefficientsWithGradient(Synth.tempFilterStartCoefficients, Synth.tempFilterEndCoefficients, 1.0 / roundedSamplesPerTick, startPoint.type == 0);
-                    tone.noteFiltersR[i].loadCoefficientsWithGradient(Synth.tempFilterStartCoefficients, Synth.tempFilterEndCoefficients, 1.0 / roundedSamplesPerTick, startPoint.type == 0);
-                    noteFilterExpression *= startPoint.getVolumeCompensationMult();
-                }
-                tone.noteFilterCount = noteFilterSettings.controlPointCount;
-            }
-            if (instrument.type == 4) {
-                const drumsetEnvelopeComputer = tone.envelopeComputer;
-                const drumsetFilterEnvelope = instrument.getDrumsetEnvelope(tone.drumsetPitch);
-                noteFilterExpression *= EnvelopeComputer.getLowpassCutoffDecayVolumeCompensation(drumsetFilterEnvelope);
-                drumsetEnvelopeComputer.computeDrumsetEnvelopes(instrument, drumsetFilterEnvelope, beatsPerPart, partTimeStart, partTimeEnd);
-                const drumsetFilterEnvelopeStart = drumsetEnvelopeComputer.drumsetFilterEnvelopeStart;
-                const drumsetFilterEnvelopeEnd = drumsetEnvelopeComputer.drumsetFilterEnvelopeEnd;
-                const point = this.tempDrumSetControlPoint;
-                point.type = 0;
-                point.gain = FilterControlPoint.getRoundedSettingValueFromLinearGain(0.50);
-                point.freq = FilterControlPoint.getRoundedSettingValueFromHz(8000.0);
-                point.toCoefficients(Synth.tempFilterStartCoefficients, this.samplesPerSecond, drumsetFilterEnvelopeStart * (1.0 + drumsetFilterEnvelopeStart), 1.0);
-                point.toCoefficients(Synth.tempFilterEndCoefficients, this.samplesPerSecond, drumsetFilterEnvelopeEnd * (1.0 + drumsetFilterEnvelopeEnd), 1.0);
-                if (tone.noteFiltersL.length == tone.noteFilterCount)
-                    tone.noteFiltersL[tone.noteFilterCount] = new DynamicBiquadFilter();
-                if (tone.noteFiltersR.length == tone.noteFilterCount)
-                    tone.noteFiltersR[tone.noteFilterCount] = new DynamicBiquadFilter();
-                tone.noteFiltersL[tone.noteFilterCount].loadCoefficientsWithGradient(Synth.tempFilterStartCoefficients, Synth.tempFilterEndCoefficients, 1.0 / roundedSamplesPerTick, true);
-                tone.noteFiltersR[tone.noteFilterCount].loadCoefficientsWithGradient(Synth.tempFilterStartCoefficients, Synth.tempFilterEndCoefficients, 1.0 / roundedSamplesPerTick, true);
-                tone.noteFilterCount++;
-            }
-            noteFilterExpression = Math.min(3.0, noteFilterExpression);
             if (instrument.type == 1 || instrument.type == 11) {
                 let sineExpressionBoost = 1.0;
                 let totalCarrierExpression = 0.0;
@@ -14489,8 +15115,8 @@ var beepbox = (function (exports) {
                     const hzOffset = Config.operatorFrequencies[instrument.operators[i].frequency].hzOffset;
                     const targetFreqStart = freqMult * baseFreqStart + hzOffset;
                     const targetFreqEnd = freqMult * baseFreqEnd + hzOffset;
-                    const freqEnvelopeStart = envelopeStarts[6 + i];
-                    const freqEnvelopeEnd = envelopeEnds[6 + i];
+                    const freqEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["fm slider 1"].index + i];
+                    const freqEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["fm slider 1"].index + i];
                     let freqStart;
                     let freqEnd;
                     if (freqEnvelopeStart != 1.0 || freqEnvelopeEnd != 1.0) {
@@ -14505,17 +15131,9 @@ var beepbox = (function (exports) {
                     tone.phaseDeltaScales[i] = Math.pow(freqEnd / freqStart, 1.0 / roundedSamplesPerTick);
                     let amplitudeStart = instrument.operators[i].amplitude;
                     let amplitudeEnd = instrument.operators[i].amplitude;
-                    if (i < 4) {
-                        if (this.isModActive(Config.modulators.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, -1)) {
-                            amplitudeStart *= this.getModValue(Config.modulators.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
-                            amplitudeEnd *= this.getModValue(Config.modulators.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
-                        }
-                    }
-                    else {
-                        if (this.isModActive(Config.modulators.dictionary["fm slider 5"].index + i - 4, channelIndex, tone.instrumentIndex, -1)) {
-                            amplitudeStart *= this.getModValue(Config.modulators.dictionary["fm slider 5"].index + i - 4, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
-                            amplitudeEnd *= this.getModValue(Config.modulators.dictionary["fm slider 5"].index + i - 4, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
-                        }
+                    if (this.isModActive(Config.automationParams.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, -1)) {
+                        amplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
+                        amplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm slider 1"].index + i, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
                     }
                     const amplitudeCurveStart = Synth.operatorAmplitudeCurve(amplitudeStart);
                     const amplitudeCurveEnd = Synth.operatorAmplitudeCurve(amplitudeEnd);
@@ -14542,11 +15160,11 @@ var beepbox = (function (exports) {
                         expressionEnd *= Config.sineWaveLength * 1.5;
                         sineExpressionBoost *= 1.0 - Math.min(1.0, instrument.operators[i].amplitude / 15);
                     }
-                    expressionStart *= envelopeStarts[12 + i];
-                    expressionEnd *= envelopeEnds[12 + i];
-                    if (this.isModActive(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        const startVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
-                        const endVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true);
+                    expressionStart *= envelopeStarts[Config.automationParams.dictionary["fm slider 1"].index + i];
+                    expressionEnd *= envelopeEnds[Config.automationParams.dictionary["fm slider 1"].index + i];
+                    if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        const startVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
+                        const endVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true);
                         expressionStart *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
                         expressionEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
                     }
@@ -14556,8 +15174,8 @@ var beepbox = (function (exports) {
                 sineExpressionBoost *= (Math.pow(2.0, (2.0 - 1.4 * instrument.feedbackAmplitude / 15.0)) - 1.0) / 3.0;
                 sineExpressionBoost *= 1.0 - Math.min(1.0, Math.max(0.0, totalCarrierExpression - 1) / 2.0);
                 sineExpressionBoost = 1.0 + sineExpressionBoost * 3.0;
-                let expressionStart = baseExpression * sineExpressionBoost * noteFilterExpression * fadeExpressionStart * chordExpressionStart * envelopeStarts[0];
-                let expressionEnd = baseExpression * sineExpressionBoost * noteFilterExpression * fadeExpressionEnd * chordExpressionEnd * envelopeEnds[0];
+                let expressionStart = baseExpression * sineExpressionBoost * fadeExpressionStart * chordExpressionStart * envelopeStarts[Config.automationParams.dictionary["pre volume"].index];
+                let expressionEnd = baseExpression * sineExpressionBoost * fadeExpressionEnd * chordExpressionEnd * envelopeEnds[Config.automationParams.dictionary["pre volume"].index];
                 if (isMono && tone.pitchCount <= instrument.monoChordTone) {
                     expressionStart = 0;
                     expressionEnd = 0;
@@ -14566,14 +15184,14 @@ var beepbox = (function (exports) {
                 tone.expressionDelta = (expressionEnd - expressionStart) / roundedSamplesPerTick;
                 let useFeedbackAmplitudeStart = instrument.feedbackAmplitude;
                 let useFeedbackAmplitudeEnd = instrument.feedbackAmplitude;
-                if (this.isModActive(Config.modulators.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    useFeedbackAmplitudeStart *= this.getModValue(Config.modulators.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
-                    useFeedbackAmplitudeEnd *= this.getModValue(Config.modulators.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
+                if (this.isModActive(Config.automationParams.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    useFeedbackAmplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
+                    useFeedbackAmplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
                 }
                 let feedbackAmplitudeStart = Config.sineWaveLength * 0.3 * useFeedbackAmplitudeStart / 15.0;
                 const feedbackAmplitudeEnd = Config.sineWaveLength * 0.3 * useFeedbackAmplitudeEnd / 15.0;
-                let feedbackStart = feedbackAmplitudeStart * envelopeStarts[18];
-                let feedbackEnd = feedbackAmplitudeEnd * envelopeEnds[18];
+                let feedbackStart = feedbackAmplitudeStart * envelopeStarts[Config.automationParams.dictionary["fm feedback"].index];
+                let feedbackEnd = feedbackAmplitudeEnd * envelopeEnds[Config.automationParams.dictionary["fm feedback"].index];
                 tone.feedbackMult = feedbackStart;
                 tone.feedbackDelta = (feedbackEnd - feedbackStart) / roundedSamplesPerTick;
             }
@@ -14607,7 +15225,7 @@ var beepbox = (function (exports) {
                 }
                 const pitchExpressionEnd = Math.pow(2.0, -(endPitch - expressionReferencePitch) / pitchDamping);
                 tone.prevPitchExpressions[0] = pitchExpressionEnd;
-                let settingsExpressionMult = baseExpression * noteFilterExpression;
+                let settingsExpressionMult = baseExpression;
                 if (instrument.type == 2) {
                     settingsExpressionMult *= Config.chipNoises[instrument.chipNoise].expression;
                 }
@@ -14618,28 +15236,28 @@ var beepbox = (function (exports) {
                     const basePulseWidth = getPulseWidthRatio(instrument.pulseWidth);
                     let pulseWidthModStart = basePulseWidth;
                     let pulseWidthModEnd = basePulseWidth;
-                    if (this.isModActive(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        pulseWidthModStart = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false)) / (Config.pulseWidthRange * 2);
-                        pulseWidthModEnd = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true)) / (Config.pulseWidthRange * 2);
+                    if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        pulseWidthModStart = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false)) / (Config.pulseWidthRange * 2);
+                        pulseWidthModEnd = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true)) / (Config.pulseWidthRange * 2);
                     }
-                    const pulseWidthStart = pulseWidthModStart * envelopeStarts[3];
-                    const pulseWidthEnd = pulseWidthModEnd * envelopeEnds[3];
+                    const pulseWidthStart = pulseWidthModStart * envelopeStarts[Config.automationParams.dictionary["pulse width"].index];
+                    const pulseWidthEnd = pulseWidthModEnd * envelopeEnds[Config.automationParams.dictionary["pulse width"].index];
                     tone.pulseWidth = pulseWidthStart;
                     tone.pulseWidthDelta = (pulseWidthEnd - pulseWidthStart) / roundedSamplesPerTick;
                     let decimalOffsetModStart = instrument.decimalOffset;
-                    if (this.isModActive(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        decimalOffsetModStart = this.getModValue(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
+                    if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
                     }
-                    const decimalOffsetStart = decimalOffsetModStart * envelopeStarts[38];
+                    const decimalOffsetStart = decimalOffsetModStart * envelopeStarts[Config.automationParams.dictionary["decimal offset"].index];
                     tone.decimalOffset = decimalOffsetStart;
                     tone.pulseWidth -= (tone.decimalOffset) / 10000;
                 }
                 if (instrument.type == 7) {
                     let useSustainStart = instrument.stringSustain;
                     let useSustainEnd = instrument.stringSustain;
-                    if (this.isModActive(Config.modulators.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        useSustainStart = this.getModValue(Config.modulators.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, false);
-                        useSustainEnd = this.getModValue(Config.modulators.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, true);
+                    if (this.isModActive(Config.automationParams.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        useSustainStart = this.getModValue(Config.automationParams.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, false);
+                        useSustainEnd = this.getModValue(Config.automationParams.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, true);
                     }
                     tone.stringSustainStart = useSustainStart;
                     tone.stringSustainEnd = useSustainEnd;
@@ -14653,8 +15271,8 @@ var beepbox = (function (exports) {
                     const unisonExpression = instrument.unisonExpression;
                     const voiceCountExpression = (instrument.type == 7) ? 1 : unisonVoices / 2.0;
                     settingsExpressionMult *= unisonExpression * voiceCountExpression;
-                    const unisonEnvelopeStart = envelopeStarts[5];
-                    const unisonEnvelopeEnd = envelopeEnds[5];
+                    const unisonEnvelopeStart = envelopeStarts[Config.automationParams.dictionary["unison"].index];
+                    const unisonEnvelopeEnd = envelopeEnds[Config.automationParams.dictionary["unison"].index];
                     const unisonStartA = Math.pow(2.0, (unisonOffset + unisonSpread) * unisonEnvelopeStart / 12.0);
                     const unisonEndA = Math.pow(2.0, (unisonOffset + unisonSpread) * unisonEnvelopeEnd / 12.0);
                     tone.phaseDeltas[0] = startFreq * sampleTime * unisonStartA;
@@ -14741,12 +15359,12 @@ var beepbox = (function (exports) {
                     const minFirstVoiceAmplitude = 1.0 / Math.sqrt(Config.supersawVoiceCount);
                     let useDynamismStart = instrument.supersawDynamism / Config.supersawDynamismMax;
                     let useDynamismEnd = instrument.supersawDynamism / Config.supersawDynamismMax;
-                    if (this.isModActive(Config.modulators.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        useDynamismStart = (this.getModValue(Config.modulators.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawDynamismMax;
-                        useDynamismEnd = (this.getModValue(Config.modulators.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawDynamismMax;
+                    if (this.isModActive(Config.automationParams.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        useDynamismStart = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawDynamismMax;
+                        useDynamismEnd = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawDynamismMax;
                     }
-                    const curvedDynamismStart = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismStart * envelopeStarts[39]), 0.2);
-                    const curvedDynamismEnd = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismEnd * envelopeEnds[39]), 0.2);
+                    const curvedDynamismStart = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismStart * envelopeStarts[Config.automationParams.dictionary["dynamism"].index]), 0.2);
+                    const curvedDynamismEnd = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismEnd * envelopeEnds[Config.automationParams.dictionary["dynamism"].index]), 0.2);
                     const firstVoiceAmplitudeStart = Math.pow(2.0, Math.log2(minFirstVoiceAmplitude) * curvedDynamismStart);
                     const firstVoiceAmplitudeEnd = Math.pow(2.0, Math.log2(minFirstVoiceAmplitude) * curvedDynamismEnd);
                     const dynamismStart = Math.sqrt((1.0 / Math.pow(firstVoiceAmplitudeStart, 2.0) - 1.0) / (Config.supersawVoiceCount - 1.0));
@@ -14798,12 +15416,12 @@ var beepbox = (function (exports) {
                     const baseSpreadSlider = instrument.supersawSpread / Config.supersawSpreadMax;
                     let useSpreadStart = baseSpreadSlider;
                     let useSpreadEnd = baseSpreadSlider;
-                    if (this.isModActive(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        useSpreadStart = (this.getModValue(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawSpreadMax;
-                        useSpreadEnd = (this.getModValue(Config.modulators.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawSpreadMax;
+                    if (this.isModActive(Config.automationParams.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        useSpreadStart = (this.getModValue(Config.automationParams.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawSpreadMax;
+                        useSpreadEnd = (this.getModValue(Config.automationParams.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawSpreadMax;
                     }
-                    const spreadSliderStart = useSpreadStart * envelopeStarts[40];
-                    const spreadSliderEnd = useSpreadEnd * envelopeEnds[40];
+                    const spreadSliderStart = useSpreadStart * envelopeStarts[Config.automationParams.dictionary["spread"].index];
+                    const spreadSliderEnd = useSpreadEnd * envelopeEnds[Config.automationParams.dictionary["spread"].index];
                     const averageSpreadSlider = (spreadSliderStart + spreadSliderEnd) * 0.5;
                     const curvedSpread = Math.pow(1.0 - Math.sqrt(Math.max(0.0, 1.0 - averageSpreadSlider)), 1.75);
                     for (let i = 0; i < Config.supersawVoiceCount; i++) {
@@ -14811,31 +15429,31 @@ var beepbox = (function (exports) {
                         tone.supersawUnisonDetunes[i] = Math.pow(2.0, curvedSpread * offset / 12.0);
                     }
                     const baseShape = instrument.supersawShape / Config.supersawShapeMax;
-                    let useShapeStart = baseShape * envelopeStarts[41];
-                    let useShapeEnd = baseShape * envelopeEnds[41];
-                    if (this.isModActive(Config.modulators.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        useShapeStart = (this.getModValue(Config.modulators.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawShapeMax;
-                        useShapeEnd = (this.getModValue(Config.modulators.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawShapeMax;
+                    let useShapeStart = baseShape * envelopeStarts[Config.automationParams.dictionary["supersaw shape"].index];
+                    let useShapeEnd = baseShape * envelopeEnds[Config.automationParams.dictionary["supersaw shape"].index];
+                    if (this.isModActive(Config.automationParams.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        useShapeStart = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawShapeMax;
+                        useShapeEnd = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawShapeMax;
                     }
-                    const shapeStart = useShapeStart * envelopeStarts[41];
-                    const shapeEnd = useShapeEnd * envelopeEnds[41];
+                    const shapeStart = useShapeStart * envelopeStarts[Config.automationParams.dictionary["supersaw shape"].index];
+                    const shapeEnd = useShapeEnd * envelopeEnds[Config.automationParams.dictionary["supersaw shape"].index];
                     tone.supersawShape = shapeStart;
                     tone.supersawShapeDelta = (shapeEnd - shapeStart) / roundedSamplesPerTick;
                     let decimalOffsetModStart = instrument.decimalOffset;
-                    if (this.isModActive(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        decimalOffsetModStart = this.getModValue(Config.modulators.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
+                    if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
                     }
-                    const decimalOffsetStart = decimalOffsetModStart * envelopeStarts[38];
+                    const decimalOffsetStart = decimalOffsetModStart * envelopeStarts[Config.automationParams.dictionary["decimal offset"].index];
                     tone.decimalOffset = decimalOffsetStart;
                     const basePulseWidth = getPulseWidthRatio(instrument.pulseWidth);
                     let pulseWidthModStart = basePulseWidth;
                     let pulseWidthModEnd = basePulseWidth;
-                    if (this.isModActive(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
-                        pulseWidthModStart = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false)) / (Config.pulseWidthRange * 2);
-                        pulseWidthModEnd = (this.getModValue(Config.modulators.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true)) / (Config.pulseWidthRange * 2);
+                    if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
+                        pulseWidthModStart = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false)) / (Config.pulseWidthRange * 2);
+                        pulseWidthModEnd = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true)) / (Config.pulseWidthRange * 2);
                     }
-                    let pulseWidthStart = pulseWidthModStart * envelopeStarts[3];
-                    let pulseWidthEnd = pulseWidthModEnd * envelopeEnds[3];
+                    let pulseWidthStart = pulseWidthModStart * envelopeStarts[Config.automationParams.dictionary["pulse width"].index];
+                    let pulseWidthEnd = pulseWidthModEnd * envelopeEnds[Config.automationParams.dictionary["pulse width"].index];
                     pulseWidthStart -= decimalOffsetStart / 10000;
                     pulseWidthEnd -= decimalOffsetStart / 10000;
                     const phaseDeltaStart = (tone.supersawPrevPhaseDelta != null) ? tone.supersawPrevPhaseDelta : startFreq * sampleTime;
@@ -14867,11 +15485,11 @@ var beepbox = (function (exports) {
                     supersawExpressionStart *= (1.0 + (pulseExpressionRatio - 1.0) * shapeStart) / Math.sqrt(1.0 + (Config.supersawVoiceCount - 1.0) * dynamismStart * dynamismStart);
                     supersawExpressionEnd *= (1.0 + (pulseExpressionRatio - 1.0) * shapeEnd) / Math.sqrt(1.0 + (Config.supersawVoiceCount - 1.0) * dynamismEnd * dynamismEnd);
                 }
-                let expressionStart = settingsExpressionMult * fadeExpressionStart * chordExpressionStart * pitchExpressionStart * envelopeStarts[0] * supersawExpressionStart;
-                let expressionEnd = settingsExpressionMult * fadeExpressionEnd * chordExpressionEnd * pitchExpressionEnd * envelopeEnds[0] * supersawExpressionEnd;
-                if (this.isModActive(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    const startVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
-                    const endVal = this.getModValue(Config.modulators.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true);
+                let expressionStart = settingsExpressionMult * fadeExpressionStart * chordExpressionStart * pitchExpressionStart * envelopeStarts[Config.automationParams.dictionary["note volume"].index] * supersawExpressionStart;
+                let expressionEnd = settingsExpressionMult * fadeExpressionEnd * chordExpressionEnd * pitchExpressionEnd * envelopeEnds[Config.automationParams.dictionary["note volume"].index] * supersawExpressionEnd;
+                if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
+                    const startVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
+                    const endVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true);
                     expressionStart *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
                     expressionEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
                 }
@@ -14888,10 +15506,10 @@ var beepbox = (function (exports) {
                         stringDecayStart = tone.prevStringDecay;
                     }
                     else {
-                        const sustainEnvelopeStart = tone.envelopeComputer.envelopeStarts[4];
+                        const sustainEnvelopeStart = tone.envelopeComputer.envelopeStarts[Config.automationParams.dictionary["sustain"].index];
                         stringDecayStart = 1.0 - Math.min(1.0, sustainEnvelopeStart * tone.stringSustainStart / (Config.stringSustainRange - 1));
                     }
-                    const sustainEnvelopeEnd = tone.envelopeComputer.envelopeEnds[4];
+                    const sustainEnvelopeEnd = tone.envelopeComputer.envelopeEnds[Config.automationParams.dictionary["sustain"].index];
                     let stringDecayEnd = 1.0 - Math.min(1.0, sustainEnvelopeEnd * tone.stringSustainEnd / (Config.stringSustainRange - 1));
                     tone.prevStringDecay = stringDecayEnd;
                     const unisonVoices = instrument.unisonVoices;
@@ -17190,7 +17808,7 @@ var beepbox = (function (exports) {
                 for (let effectIndex = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
                     synth.setModValue(tone.expression, tone.expression + tone.expressionDelta, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], setting, instrument.modEffects[mod][effectIndex]);
                     for (let i = 0; i < synth.heldMods.length; i++) {
-                        if (Config.modulators[instrument.modulators[mod]].forSong) {
+                        if (Config.automationParams[instrument.modulators[mod]].forSong) {
                             if (synth.heldMods[i].setting == setting)
                                 synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], setting, instrument.modEffects[mod][effectIndex]);
                         }
@@ -17199,10 +17817,10 @@ var beepbox = (function (exports) {
                         }
                     }
                 }
-                if (setting == Config.modulators.dictionary["reset arp"].index && synth.tick == 0 && tone.noteStartPart == synth.beat * Config.partsPerBeat + synth.part) {
+                if (setting == Config.automationParams.dictionary["reset arpeggio"].index && synth.tick == 0 && tone.noteStartPart == synth.beat * Config.partsPerBeat + synth.part) {
                     synth.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]].arpTime = 0;
                 }
-                else if (setting == Config.modulators.dictionary["reset envelope"].index && synth.tick == 0 && tone.noteStartPart == synth.beat * Config.partsPerBeat + synth.part) {
+                else if (setting == Config.automationParams.dictionary["reset envelope"].index && synth.tick == 0 && tone.noteStartPart == synth.beat * Config.partsPerBeat + synth.part) {
                     let envelopeTarget = instrument.modEnvelopeNumbers[mod];
                     const tgtInstrumentState = synth.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
@@ -17210,10 +17828,10 @@ var beepbox = (function (exports) {
                         tgtInstrumentState.envelopeTime[envelopeTarget] = 0;
                     }
                 }
-                else if (setting == Config.modulators.dictionary["next bar"].index) {
+                else if (setting == Config.automationParams.dictionary["next bar"].index) {
                     synth.wantToSkip = true;
                 }
-                else if (setting == Config.modulators.dictionary["song eq"].index) {
+                else if (setting == Config.automationParams.dictionary["song eq filter"].index) {
                     const tgtSong = synth.song;
                     let dotTarget = instrument.modFilterTypes[mod] | 0;
                     if (dotTarget == 0) {
@@ -17250,7 +17868,7 @@ var beepbox = (function (exports) {
                         }
                     }
                 }
-                else if (setting == Config.modulators.dictionary["post eq"].index) {
+                else if (setting == Config.automationParams.dictionary["eq filter"].index) {
                     const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     for (let effectIndex = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
                         const tgtEffect = tgtInstrument.effects[instrument.modEffects[mod][effectIndex]];
@@ -17292,46 +17910,7 @@ var beepbox = (function (exports) {
                         }
                     }
                 }
-                else if (setting == Config.modulators.dictionary["pre eq"].index) {
-                    const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
-                    if (!tgtInstrument.noteFilterType) {
-                        let dotTarget = instrument.modFilterTypes[mod] | 0;
-                        if (dotTarget == 0) {
-                            let pinIdx = 0;
-                            const currentPart = synth.getTicksIntoBar() / Config.ticksPerPart;
-                            while (tone.note.start + tone.note.pins[pinIdx].time <= currentPart)
-                                pinIdx++;
-                            let lerpEndRatio = ((currentPart - tone.note.start + (roundedSamplesPerTick / (synth.getSamplesPerTick() * Config.ticksPerPart)) * Config.ticksPerPart) - tone.note.pins[pinIdx - 1].time) / (tone.note.pins[pinIdx].time - tone.note.pins[pinIdx - 1].time);
-                            if (tgtInstrument.noteSubFilters[tone.note.pins[pinIdx - 1].size] != null || tgtInstrument.noteSubFilters[tone.note.pins[pinIdx].size] != null) {
-                                tgtInstrument.tmpNoteFilterEnd = FilterSettings.lerpFilters(tgtInstrument.noteSubFilters[tone.note.pins[pinIdx - 1].size], tgtInstrument.noteSubFilters[tone.note.pins[pinIdx].size], lerpEndRatio);
-                            }
-                            else {
-                                tgtInstrument.tmpNoteFilterEnd = tgtInstrument.noteFilter;
-                            }
-                        }
-                        else {
-                            for (let i = 0; i < Config.filterMorphCount; i++) {
-                                if (tgtInstrument.tmpNoteFilterEnd == tgtInstrument.noteSubFilters[i] && tgtInstrument.tmpNoteFilterEnd != null) {
-                                    tgtInstrument.tmpNoteFilterEnd = new FilterSettings();
-                                    tgtInstrument.tmpNoteFilterEnd.fromJsonObject(tgtInstrument.noteSubFilters[i].toJsonObject());
-                                }
-                            }
-                            if (tgtInstrument.tmpNoteFilterEnd == null) {
-                                tgtInstrument.tmpNoteFilterEnd = new FilterSettings();
-                                tgtInstrument.tmpNoteFilterEnd.fromJsonObject(tgtInstrument.noteFilter.toJsonObject());
-                            }
-                            if (tgtInstrument.tmpNoteFilterEnd.controlPointCount > Math.floor((dotTarget - 1) / 2)) {
-                                if (dotTarget % 2) {
-                                    tgtInstrument.tmpNoteFilterEnd.controlPoints[Math.floor((dotTarget - 1) / 2)].freq = tone.expression + tone.expressionDelta;
-                                }
-                                else {
-                                    tgtInstrument.tmpNoteFilterEnd.controlPoints[Math.floor((dotTarget - 1) / 2)].gain = tone.expression + tone.expressionDelta;
-                                }
-                            }
-                        }
-                    }
-                }
-                else if (setting == Config.modulators.dictionary["individual envelope speed"].index) {
+                else if (setting == Config.automationParams.dictionary["individual envelope speed"].index) {
                     const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     let envelopeTarget = instrument.modEnvelopeNumbers[mod];
                     let speed = tone.expression + tone.expressionDelta;
@@ -17345,7 +17924,7 @@ var beepbox = (function (exports) {
                         }
                     }
                 }
-                else if (setting == Config.modulators.dictionary["individual envelope lower bound"].index) {
+                else if (setting == Config.automationParams.dictionary["individual envelope lower bound"].index) {
                     const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     let envelopeTarget = instrument.modEnvelopeNumbers[mod];
                     let bound = tone.expression + tone.expressionDelta;
@@ -17353,7 +17932,7 @@ var beepbox = (function (exports) {
                         tgtInstrument.envelopes[envelopeTarget].tempEnvelopeLowerBound = bound / 10;
                     }
                 }
-                else if (setting == Config.modulators.dictionary["individual envelope upper bound"].index) {
+                else if (setting == Config.automationParams.dictionary["individual envelope upper bound"].index) {
                     const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                     let envelopeTarget = instrument.modEnvelopeNumbers[mod];
                     let bound = tone.expression + tone.expressionDelta;
@@ -17423,8 +18002,8 @@ var beepbox = (function (exports) {
             if (this.song == null)
                 return 0;
             let beatsPerMinute = this.song.getBeatsPerMinute();
-            if (this.isModActive(Config.modulators.dictionary["tempo"].index)) {
-                beatsPerMinute = this.getModValue(Config.modulators.dictionary["tempo"].index);
+            if (this.isModActive(Config.automationParams.dictionary["tempo"].index)) {
+                beatsPerMinute = this.getModValue(Config.automationParams.dictionary["tempo"].index);
             }
             return this.getSamplesPerTickSpecificBPM(beatsPerMinute);
         }

@@ -1,6 +1,6 @@
 // Copyright (c) John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { SustainType,  InstrumentType, EffectType, EnvelopeComputeIndex, Unison, Chord, Config, getDrumWave, drawNoiseSpectrum, performIntegralOld } from "./SynthConfig";
+import { SustainType,  InstrumentType, EffectType, Unison, Chord, Config, getDrumWave, drawNoiseSpectrum, performIntegralOld } from "./SynthConfig";
 import { scaleElementsByFactor, inverseRealFourierTransform} from "./FFT";
 import { Deque } from "./Deque";
 import { warpInfinityToNyquist } from "./filtering";
@@ -481,8 +481,8 @@ export class InstrumentState {
             envelopeSpeeds[i] = 0;
         }
         let useEnvelopeSpeed: number = Config.arpSpeedScale[instrument.envelopeSpeed];
-        if (synth.isModActive(Config.modulators.dictionary["envelope speed"].index, channelIndex, instrumentIndex)) {
-            useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.modulators.dictionary["envelope speed"].index, channelIndex, instrumentIndex, -1, false)));
+        if (synth.isModActive(Config.automationParams.dictionary["envelope speed"].index, channelIndex, instrumentIndex)) {
+            useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.automationParams.dictionary["envelope speed"].index, channelIndex, instrumentIndex, -1, false)));
             if (Number.isInteger(useEnvelopeSpeed)) {
                 useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed];
             } else {
@@ -492,7 +492,7 @@ export class InstrumentState {
         }
         for (let envelopeIndex: number = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
             let perEnvelopeSpeed: number = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-            if (synth.isModActive(Config.modulators.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+            if (synth.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                 perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed!;
             }
             envelopeSpeeds[envelopeIndex] = useEnvelopeSpeed * perEnvelopeSpeed;
@@ -509,22 +509,22 @@ export class InstrumentState {
         }
 
         //const mainInstrumentVolume: number = Synth.instrumentVolumeToVolumeMult(instrument.volume);
-        this.mixVolume = envelopeStarts[EnvelopeComputeIndex.mixVolume] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
-        let mixVolumeEnd: number = envelopeEnds[EnvelopeComputeIndex.mixVolume] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
+        this.mixVolume = envelopeStarts[Config.automationParams.dictionary["post volume"].index] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
+        let mixVolumeEnd: number = envelopeEnds[Config.automationParams.dictionary["post volume"].index] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
 
         // Check for mod-related volume delta
-        if (synth.isModActive(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, 1)) {
+        if (synth.isModActive(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1)) {
             // Linear falloff below 0, normal volume formula above 0. Seems to work best for scaling since the normal volume mult formula has a big gap from -25 to -24.
-            const startVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, false);
-            const endVal: number = synth.getModValue(Config.modulators.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, true);
+            const startVal: number = synth.getModValue(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, false);
+            const endVal: number = synth.getModValue(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, true);
             this.mixVolume *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
             mixVolumeEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
         }
 
         // Check for SONG mod-related volume delta
-        if (synth.isModActive(Config.modulators.dictionary["song volume"].index)) {
-            this.mixVolume *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, -1, false)) / 100.0;
-            mixVolumeEnd *= (synth.getModValue(Config.modulators.dictionary["song volume"].index, undefined, undefined, -1, true)) / 100.0;
+        if (synth.isModActive(Config.automationParams.dictionary["song volume"].index)) {
+            this.mixVolume *= (synth.getModValue(Config.automationParams.dictionary["song volume"].index, undefined, undefined, -1, false)) / 100.0;
+            mixVolumeEnd *= (synth.getModValue(Config.automationParams.dictionary["song volume"].index, undefined, undefined, -1, true)) / 100.0;
         }
 
         this.mixVolumeDelta = (mixVolumeEnd - this.mixVolume) / roundedSamplesPerTick;
