@@ -4,6 +4,7 @@ import { FilterType, EffectType, Config, GranularEnvelopeType, calculateRingModH
 import { DynamicBiquadFilter } from "./filtering";
 import { Instrument } from "./Instrument";
 import { InstrumentState } from "./InstrumentState";
+import { EnvelopeComputer } from "./EnvelopeComputer";
 import { Effect } from "./Effect";
 import { Synth, Tone } from "./synth";
 import { FilterSettings, FilterControlPoint } from "./Filter";
@@ -398,8 +399,9 @@ export class EffectState {
 		this.reverbShelfPrevInput3 = 0.0;
 	}
 
-	public compute(synth: Synth, instrument: Instrument, effect: Effect, instrumentState: InstrumentState, samplesPerTick: number, roundedSamplesPerTick: number, tone: Tone | null, channelIndex: number, instrumentIndex: number, effectIndex: number, envelopeStarts: number[], envelopeEnds: number[]): void {
+	public compute(synth: Synth, instrument: Instrument, effect: Effect, instrumentState: InstrumentState, samplesPerTick: number, roundedSamplesPerTick: number, tone: Tone | null, channelIndex: number, instrumentIndex: number, effectIndex: number): void {
 		const samplesPerSecond: number = synth.samplesPerSecond;
+		const envelopeComputer: EnvelopeComputer = instrument.envelopeComputer;
 
 		this.type = effect.type;
 
@@ -417,9 +419,9 @@ export class EffectState {
 		const usesEQFilter: boolean = effect.type == EffectType.eqFilter;
 
 		if (usesGranular) { //has to happen before buffer allocation
-			this.granularMaximumGrains = Math.pow(2, effect.grainAmounts * envelopeStarts[Config.automationParams.dictionary["grain frequency"].index]);
+			this.granularMaximumGrains = Math.pow(2, effect.grainAmounts * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["grain frequency"].index, 0, effectIndex, false));
 			if (synth.isModActive(Config.automationParams.dictionary["grain frequency"].index, channelIndex, instrumentIndex, effectIndex)) {
-				this.granularMaximumGrains = Math.pow(2, synth.getModValue(Config.automationParams.dictionary["grain frequency"].index, channelIndex, instrumentIndex, effectIndex, false) * envelopeStarts[Config.automationParams.dictionary["grain frequency"].index]);
+				this.granularMaximumGrains = Math.pow(2, synth.getModValue(Config.automationParams.dictionary["grain frequency"].index, channelIndex, instrumentIndex, effectIndex, false) * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["grain frequency"].index, 0, effectIndex, false));
 			}
 			this.granularMaximumGrains == Math.floor(this.granularMaximumGrains);
 		}
@@ -434,8 +436,8 @@ export class EffectState {
 				this.granularMix = synth.getModValue(Config.automationParams.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, false) / Config.granularRange;
 				granularMixEnd = synth.getModValue(Config.automationParams.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, true) / Config.granularRange;
 			}
-			this.granularMix *= envelopeStarts[Config.automationParams.dictionary["granular"].index];
-			granularMixEnd *= envelopeEnds[Config.automationParams.dictionary["granular"].index];
+			this.granularMix *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["granular"].index, 0, effectIndex, false);
+			granularMixEnd *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["granular"].index, 0, effectIndex, true);
 			this.granularMixDelta = (granularMixEnd - this.granularMix) / roundedSamplesPerTick;
 			for (let iterations: number = 0; iterations < Math.ceil(Math.random() * Math.random() * 10); iterations++) { //dirty weighting toward lower numbers
 				//create a grain
@@ -444,12 +446,12 @@ export class EffectState {
 					if (synth.isModActive(Config.automationParams.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex)) {
 						granularMinGrainSizeInMilliseconds = synth.getModValue(Config.automationParams.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex, false);
 					}
-					granularMinGrainSizeInMilliseconds *= envelopeStarts[Config.automationParams.dictionary["grain size"].index];
+					granularMinGrainSizeInMilliseconds *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["grain size"].index, 0, effectIndex, false);
 					let grainRange = effect.grainRange;
 					if (synth.isModActive(Config.automationParams.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex)) {
 						grainRange = synth.getModValue(Config.automationParams.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex, false);
 					}
-					grainRange *= envelopeStarts[Config.automationParams.dictionary["grain range"].index];
+					grainRange *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["grain range"].index, 0, effectIndex, false);
 					const granularMaxGrainSizeInMilliseconds: number = granularMinGrainSizeInMilliseconds + grainRange;
 					const granularGrainSizeInMilliseconds: number = granularMinGrainSizeInMilliseconds + (granularMaxGrainSizeInMilliseconds - granularMinGrainSizeInMilliseconds) * Math.random();
 					const granularGrainSizeInSeconds: number = granularGrainSizeInMilliseconds / 1000.0;
@@ -489,8 +491,8 @@ export class EffectState {
 				useDistortionEnd = synth.getModValue(Config.automationParams.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex, true);
 			}
 
-			const distortionSliderStart = Math.min(1.0, envelopeStarts[Config.automationParams.dictionary["distortion"].index] * useDistortionStart / (Config.distortionRange - 1));
-			const distortionSliderEnd = Math.min(1.0, envelopeEnds[Config.automationParams.dictionary["distortion"].index] * useDistortionEnd / (Config.distortionRange - 1));
+			const distortionSliderStart = Math.min(1.0, envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["distortion"].index, 0, effectIndex, false) * useDistortionStart / (Config.distortionRange - 1));
+			const distortionSliderEnd = Math.min(1.0, envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["distortion"].index, 0, effectIndex, true) * useDistortionEnd / (Config.distortionRange - 1));
 			const distortionStart: number = Math.pow(1.0 - 0.895 * (Math.pow(20.0, distortionSliderStart) - 1.0) / 19.0, 2.0); //1: 0.7, 0: 1.0
 			const distortionEnd: number = Math.pow(1.0 - 0.895 * (Math.pow(20.0, distortionSliderEnd) - 1.0) / 19.0, 2.0);
 			const distortionDriveStart: number = (1.0 + 2.0 * distortionSliderStart) / Config.distortionBaseVolume; //1.0 - 3.0
@@ -516,10 +518,10 @@ export class EffectState {
 				useClippingThresholdEnd = synth.getModValue(Config.automationParams.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex, true);
 			}
 
-			const clippingInGainStart: number = Math.pow(1 - (envelopeStarts[Config.automationParams.dictionary["clipping in-gain"].index] * useClippingInGainStart / Config.distortionRange), 2.0);
-			const clippingInGainEnd: number = Math.pow(1 - (envelopeStarts[Config.automationParams.dictionary["clipping in-gain"].index] * useClippingInGainEnd / Config.distortionRange), 2.0);
-			const clippingThresholdStart: number = Math.min(Config.gainRangeMult, envelopeStarts[Config.automationParams.dictionary["clipping threshold"].index] * useClippingThresholdStart / (Config.volumeRange + 1));
-			const clippingThresholdEnd: number = Math.min(Config.gainRangeMult, envelopeStarts[Config.automationParams.dictionary["clipping threshold"].index] * useClippingThresholdEnd / (Config.volumeRange + 1));
+			const clippingInGainStart: number = Math.pow(1 - (envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["clipping in-gain"].index, 0, effectIndex, false) * useClippingInGainStart / Config.distortionRange), 2.0);
+			const clippingInGainEnd: number = Math.pow(1 - (envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["clipping in-gain"].index, 0, effectIndex, true) * useClippingInGainEnd / Config.distortionRange), 2.0);
+			const clippingThresholdStart: number = Math.min(Config.gainRangeMult, envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["clipping threshold"].index, 0, effectIndex, false) * useClippingThresholdStart / (Config.volumeRange + 1));
+			const clippingThresholdEnd: number = Math.min(Config.gainRangeMult, envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["clipping threshold"].index, 0, effectIndex, true) * useClippingThresholdEnd / (Config.volumeRange + 1));
 
 			this.clippingInGain = clippingInGainStart;
 			this.clippingInGainDelta = (clippingInGainEnd - clippingInGainStart) / roundedSamplesPerTick;
@@ -529,22 +531,22 @@ export class EffectState {
 		}
 
 		if (usesBitcrusher) {
-			let freqSettingStart: number = effect.bitcrusherFreq * Math.sqrt(envelopeStarts[Config.automationParams.dictionary["frequency crush"].index]);
-			let freqSettingEnd: number = effect.bitcrusherFreq * Math.sqrt(envelopeEnds[Config.automationParams.dictionary["frequency crush"].index]);
+			let freqSettingStart: number = effect.bitcrusherFreq * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, false));
+			let freqSettingEnd: number = effect.bitcrusherFreq * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, true));
 
 			// Check for frequency crush mods
 			if (synth.isModActive(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex)) {
-				freqSettingStart = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeStarts[Config.automationParams.dictionary["frequency crush"].index]);
-				freqSettingEnd = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeEnds[Config.automationParams.dictionary["frequency crush"].index]);
+				freqSettingStart = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, false));
+				freqSettingEnd = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, true));
 			}
 
-			let quantizationSettingStart: number = effect.bitcrusherQuantization * Math.sqrt(envelopeStarts[Config.automationParams.dictionary["bit crush"].index]);
-			let quantizationSettingEnd: number = effect.bitcrusherQuantization * Math.sqrt(envelopeEnds[Config.automationParams.dictionary["bit crush"].index]);
+			let quantizationSettingStart: number = effect.bitcrusherQuantization * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, false));
+			let quantizationSettingEnd: number = effect.bitcrusherQuantization * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, true));
 
 			// Check for bitcrush mods
 			if (synth.isModActive(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex)) {
-				quantizationSettingStart = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeStarts[Config.automationParams.dictionary["bit crush"].index]);
-				quantizationSettingEnd = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeEnds[Config.automationParams.dictionary["bit crush"].index]);
+				quantizationSettingStart = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, false));
+				quantizationSettingEnd = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, true));
 			}
 
 			const basePitch: number = Config.keys[synth.song!.key].basePitch + (Config.pitchesPerOctave * synth.song!.octave); // TODO: What if there's a key change mid-song?
@@ -666,8 +668,8 @@ export class EffectState {
 		if (usesPanning) {
 			this.panningMode = effect.panMode;
 
-			const panEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["pan"].index] * 2.0 - 1.0;
-			const panEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["pan"].index] * 2.0 - 1.0;
+			const panEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pan"].index, 0, effectIndex, false) * 2.0 - 1.0;
+			const panEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pan"].index, 0, effectIndex, true) * 2.0 - 1.0;
 
 			let usePanStart: number = effect.pan;
 			let usePanEnd: number = effect.pan;
@@ -712,8 +714,8 @@ export class EffectState {
 		}
 
 		if (usesGain) {
-			const gainEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["gain"].index];
-			const gainEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["gain"].index];
+			const gainEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["gain"].index, 0, effectIndex, false);
+			const gainEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["gain"].index, 0, effectIndex, true);
 
 			let useGainStart: number = effect.gain;
 			let useGainEnd: number = effect.gain;
@@ -731,8 +733,8 @@ export class EffectState {
 		}
 
 		if (usesChorus) {
-			const chorusEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["chorus"].index];
-			const chorusEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["chorus"].index];
+			const chorusEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["chorus"].index, 0, effectIndex, false);
+			const chorusEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["chorus"].index, 0, effectIndex, true);
 			let useChorusStart: number = effect.chorus;
 			let useChorusEnd: number = effect.chorus;
 			// Check for chorus mods
@@ -754,8 +756,8 @@ export class EffectState {
 		}
 
 		if (usesFlanger) {
-			const flangerEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["flanger"].index];
-			const flangerEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["flanger"].index];
+			const flangerEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger"].index, 0, effectIndex, false);
+			const flangerEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger"].index, 0, effectIndex, true);
 			let useFlangerStart: number = effect.flanger;
 			let useFlangerEnd: number = effect.flanger;
 			if (synth.isModActive(Config.automationParams.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex)) {
@@ -765,8 +767,8 @@ export class EffectState {
 			let flangerStart: number = Math.min(1.0, flangerEnvelopeStart * useFlangerStart / (Config.flangerRange - 1));
 			let flangerEnd: number = Math.min(1.0, flangerEnvelopeEnd * useFlangerEnd / (Config.flangerRange - 1));
 
-			const flangerSpeedEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["flanger speed"].index];
-			const flangerSpeedEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["flanger speed"].index];
+			const flangerSpeedEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger speed"].index, 0, effectIndex, false);
+			const flangerSpeedEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger speed"].index, 0, effectIndex, true);
 			let useFlangerSpeedStart: number = effect.flangerSpeed;
 			let useFlangerSpeedEnd: number = effect.flangerSpeed;
 			if (synth.isModActive(Config.automationParams.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex)) {
@@ -776,8 +778,8 @@ export class EffectState {
 			let flangerSpeedStart: number = flangerSpeedEnvelopeStart * useFlangerSpeedStart + 2;
 			let flangerSpeedEnd: number = flangerSpeedEnvelopeEnd * useFlangerSpeedEnd + 2;
 
-			const flangerDepthEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["flanger depth"].index];
-			const flangerDepthEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["flanger depth"].index];
+			const flangerDepthEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger depth"].index, 0, effectIndex, false);
+			const flangerDepthEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger depth"].index, 0, effectIndex, true);
 			let useFlangerDepthStart: number = effect.flangerDepth;
 			let useFlangerDepthEnd: number = effect.flangerDepth;
 			if (synth.isModActive(Config.automationParams.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex)) {
@@ -787,8 +789,8 @@ export class EffectState {
 			let flangerDepthStart: number = flangerDepthEnvelopeStart * useFlangerDepthStart * 2 + 2;
 			let flangerDepthEnd: number = flangerDepthEnvelopeEnd * useFlangerDepthEnd * 2 + 2;
 
-			const flangerFeedbackEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["flanger feedback"].index];
-			const flangerFeedbackEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["flanger feedback"].index];
+			const flangerFeedbackEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger feedback"].index, 0, effectIndex, false);
+			const flangerFeedbackEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger feedback"].index, 0, effectIndex, true);
 			let useFlangerFeedbackStart: number = effect.flangerFeedback;
 			let useFlangerFeedbackEnd: number = effect.flangerFeedback;
 			if (synth.isModActive(Config.automationParams.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex)) {
@@ -812,13 +814,13 @@ export class EffectState {
 			let useRingModStart: number = effect.ringModulation;
 			let useRingModEnd: number = effect.ringModulation;
 
-			let useRingModEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["ring modulation"].index];
-			let useRingModEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["ring modulation"].index];
+			let useRingModEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["ring modulation"].index, 0, effectIndex, false);
+			let useRingModEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["ring modulation"].index, 0, effectIndex, true);
 
 			let useRingModHzStart: number = Math.min(1.0, effect.ringModulationHz / (Config.ringModHzRange - 1));
 			let useRingModHzEnd: number = Math.min(1.0, effect.ringModulationHz / (Config.ringModHzRange - 1));
-			let useRingModHzEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["ring modulation frequency"].index];
-			let useRingModHzEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["ring modulation frequency"].index];
+			let useRingModHzEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["ring modulation frequency"].index, 0, effectIndex, false);
+			let useRingModHzEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["ring modulation frequency"].index, 0, effectIndex, true);
 
 
 			if (synth.isModActive(Config.automationParams.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex)) {
@@ -862,8 +864,8 @@ export class EffectState {
 		let averageEchoDelaySeconds: number = 0.0;
 
 		if (usesEcho) {
-			const echoSustainEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["echo"].index];
-			const echoSustainEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["echo"].index];
+			const echoSustainEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["echo"].index, 0, effectIndex, false);
+			const echoSustainEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["echo"].index, 0, effectIndex, true);
 			let useEchoSustainStart: number = effect.echoSustain;
 			let useEchoSustainEnd: number = effect.echoSustain;
 			// Check for echo mods
@@ -880,8 +882,8 @@ export class EffectState {
 			// TODO: After computing a tick's settings once for multiple run lengths (which is
 			// good for audio worklet threads), compute the echo delay envelopes at tick (or
 			// part) boundaries to interpolate between two delay taps.
-			const echoDelayEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["echo delay"].index];
-			const echoDelayEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["echo delay"].index];
+			const echoDelayEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["echo delay"].index, 0, effectIndex, false);
+			const echoDelayEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["echo delay"].index, 0, effectIndex, true);
 			let useEchoDelayStart: number = effect.echoDelay * echoDelayEnvelopeStart;
 			let useEchoDelayEnd: number = effect.echoDelay * echoDelayEnvelopeEnd;
 			// let ignoreTicks: boolean = false;
@@ -906,8 +908,8 @@ export class EffectState {
 			this.echoDelayOffsetRatio = 0.0;
 			this.echoDelayOffsetRatioDelta = 1.0 / roundedSamplesPerTick;
 
-			const echoPingPongEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["echo ping pong"].index];
-			const echoPingPongEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["echo ping pong"].index];
+			const echoPingPongEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["echo ping pong"].index, 0, effectIndex, false);
+			const echoPingPongEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["echo ping pong"].index, 0, effectIndex, true);
 			let useEchoPingPongStart: number = effect.echoPingPong;
 			let useEchoPingPongEnd: number = effect.echoPingPong;
 			if (synth.isModActive(Config.automationParams.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex)) {
@@ -929,12 +931,12 @@ export class EffectState {
 		let maxReverbMult = 0.0;
 
 		if (usesReverb) {
-			const reverbEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["reverb"].index];
-			const reverbEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["reverb"].index];
-			const reverbWetDryMixEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["reverb wet/dry mix"].index];
-			const reverbWetDryMixEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["reverb wet/dry mix"].index];
-			const reverbSendEnvelopeStart: number = envelopeStarts[Config.automationParams.dictionary["reverb send"].index];
-			const reverbSendEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["reverb send"].index];
+			const reverbEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["reverb"].index, 0, effectIndex, false);
+			const reverbEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["reverb"].index, 0, effectIndex, true);
+			const reverbWetDryMixEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["reverb wet/dry mix"].index, 0, effectIndex, false);
+			const reverbWetDryMixEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["reverb wet/dry mix"].index, 0, effectIndex, true);
+			const reverbSendEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["reverb send"].index, 0, effectIndex, false);
+			const reverbSendEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["reverb send"].index, 0, effectIndex, true);
 
 			let useReverbStart: number = effect.reverb;
 			let useReverbEnd: number = effect.reverb;

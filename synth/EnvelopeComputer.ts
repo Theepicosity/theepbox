@@ -9,6 +9,20 @@ import { EnvelopeSettings } from "./Envelope";
 import { NotePin } from "./Pattern";
 import { xxHash32 } from "js-xxhash";
 
+export class EnvelopeState {
+    public target: number;
+    public index: number;
+    public effectIndex: number;
+    public startValue: number = 1.0;
+    public endValue: number = 1.0;
+
+    constructor(target: number, index: number, effectIndex: number) {
+        this.target = target;
+        this.index = index;
+        this.effectIndex = effectIndex;
+    }
+}
+
 export class EnvelopeComputer {
     // "Unscaled" values do not increase with Envelope Speed's timescale factor. Thus they are "real" seconds since the start of the note.
     // Fade envelopes notably use unscaled values instead of being tied to Envelope Speed.
@@ -48,18 +62,12 @@ export class EnvelopeComputer {
     private startPinTickDefaultPitch: number | null = null;
     private startPinTickPitch: number | null = null;
 
-    public readonly envelopeStarts: number[] = [];
-    public readonly envelopeEnds: number[] = [];
+    public readonly envelopeStates: EnvelopeState[] = [];
     private readonly _modifiedEnvelopeIndices: number[] = [];
     private _modifiedEnvelopeCount: number = 0;
     public lowpassCutoffDecayVolumeCompensation: number = 1.0;
 
     constructor() {
-        for (let i: number = 0; i < Config.automationParams.length; i++) {
-            this.envelopeStarts[i] = 1.0;
-            this.envelopeEnds[i] = 1.0;
-        }
-
         this.reset();
     }
 
@@ -85,7 +93,7 @@ export class EnvelopeComputer {
     public computeEnvelopes(instrument: Instrument, currentPart: number, tickTimeStart: number[], tickTimeStartReal: number, secondsPerTick: number, tone: Tone | null, timeScale: number[], instrumentState: InstrumentState, synth: Synth, channelIndex: number, instrumentIndex: number): void {
         const secondsPerTickUnscaled: number = secondsPerTick;
         const transition: Transition = instrument.getTransition();
-        if (tone != null && tone.atNoteStart && !transition.continues && !tone.forceContinueAtStart) {
+        if (tone != null && tone.atNoteStart && ((!(transition.isSeamless || instrument.clicklessTransition) && !forceContinueAtStart) || tone.prevNote == null)) {
             this.prevNoteSecondsEndUnscaled = this.noteSecondsEndUnscaled;
             this.prevNoteTicksEnd = this.noteTicksEnd;
             this._prevNoteSizeFinal = this._noteSizeFinal;
@@ -282,9 +290,17 @@ export class EnvelopeComputer {
                 }
             }
 
-            this.envelopeStarts[computeIndex] *= envelopeStart;
-            this.envelopeEnds[computeIndex] *= envelopeEnd;
-            this._modifiedEnvelopeIndices[this._modifiedEnvelopeCount++] = computeIndex;
+            if (!this.envelopeStates[envelopeIndex]) {
+                this.envelopeStates[envelopeIndex] = new EnvelopeState(automationTarget.index, targetIndex, 0)
+            }
+
+            this.envelopeStates[envelopeIndex].target = automationTarget.index
+            this.envelopeStates[envelopeIndex].index = targetIndex
+            this.envelopeStates[envelopeIndex].effectIndex = 0
+
+            this.envelopeStates[envelopeIndex].startValue *= envelopeStart;
+            this.envelopeStates[envelopeIndex].endValue *= envelopeEnd;
+            this._modifiedEnvelopeIndices[this._modifiedEnvelopeCount++] = envelopeIndex;
 
             if (automationTarget.isFilter) {
                 const filterSettings: FilterSettings = /*this._perNote ?*/ (instrument.tmpNoteFilterStart != null) ? instrument.tmpNoteFilterStart : instrument.noteFilter /*: instrument.eqFilter*/;
@@ -326,8 +342,8 @@ export class EnvelopeComputer {
     public clearEnvelopes(): void {
         for (let envelopeIndex: number = 0; envelopeIndex < this._modifiedEnvelopeCount; envelopeIndex++) {
             const computeIndex: number = this._modifiedEnvelopeIndices[envelopeIndex];
-            this.envelopeStarts[computeIndex] = 1.0;
-            this.envelopeEnds[computeIndex] = 1.0;
+            this.envelopeStates[computeIndex].startValue = 1.0;
+            this.envelopeStates[computeIndex].endValue = 1.0;
         }
         this._modifiedEnvelopeCount = 0;
     }
@@ -588,7 +604,6 @@ export class EnvelopeComputer {
     }
 
     public computeDrumsetEnvelopes(instrument: Instrument, drumsetFilterEnvelope: Envelope, beatsPerPart: number, partTimeStart: number, partTimeEnd: number) {
-
         const pitch = 1
 
         function computeDrumsetEnvelope(unspedTime: number, time: number, beats: number, noteSize: number):number {
@@ -625,7 +640,21 @@ export class EnvelopeComputer {
 
         this.drumsetFilterEnvelopeStart = drumsetFilterEnvelopeStart;
         this.drumsetFilterEnvelopeEnd = drumsetFilterEnvelopeEnd;
+    }
 
+    public getEnvelopeValue(target: number, index: number, effectIndex?: number | null, nextVal?: boolean): number | null {
+        for (let i: number = 0; i < this.envelopeStates.length; i++) {
+            if (this.envelopeStates[i]) {
+                if (this.envelopeStates[i].target == target && this.envelopeStates[i].index == index) {
+                    if (effectIndex) {
+                        if (this.envelopeStates[i].effectIndex == effectIndex) return nextVal ? this.envelopeStates[i].endValue : this.envelopeStates[i].startValue
+                    } else {
+                        return nextVal ? this.envelopeStates[i].endValue : this.envelopeStates[i].startValue
+                    }
+                }
+            }
+        }
+        return 1;
     }
 
 }

@@ -498,19 +498,17 @@ export class InstrumentState {
             envelopeSpeeds[envelopeIndex] = useEnvelopeSpeed * perEnvelopeSpeed;
         }
         this.envelopeComputer.computeEnvelopes(instrument, currentPart, this.envelopeTime, tickTimeStart, secondsPerTick, tone, envelopeSpeeds, this, synth, channelIndex, instrumentIndex);
-        const envelopeStarts: number[] = this.envelopeComputer.envelopeStarts;
-        const envelopeEnds: number[] = this.envelopeComputer.envelopeEnds;
 
         for (let effectIndex: number = 0; effectIndex < instrument.effects.length; effectIndex++) {
             if (this.effects[effectIndex] != null) {
                 let effect: Effect = instrument.effects[effectIndex]!
-                this.effects[effectIndex]!.compute(synth, instrument, effect, this, samplesPerTick, roundedSamplesPerTick, tone, channelIndex, instrumentIndex, effectIndex, envelopeStarts, envelopeEnds);
+                this.effects[effectIndex]!.compute(synth, instrument, effect, this, samplesPerTick, roundedSamplesPerTick, tone, channelIndex, instrumentIndex, effectIndex);
             }
         }
 
         //const mainInstrumentVolume: number = Synth.instrumentVolumeToVolumeMult(instrument.volume);
-        this.mixVolume = envelopeStarts[Config.automationParams.dictionary["post volume"].index] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
-        let mixVolumeEnd: number = envelopeEnds[Config.automationParams.dictionary["post volume"].index] * Synth.instrumentVolumeToVolumeMult(instrument.volume);
+        this.mixVolume = this.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["post volume"].index, 0, null, false) * Synth.instrumentVolumeToVolumeMult(instrument.volume);
+        let mixVolumeEnd: number = this.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["post volume"].index, 0, null, true) * Synth.instrumentVolumeToVolumeMult(instrument.volume);
 
         // Check for mod-related volume delta
         if (synth.isModActive(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1)) {

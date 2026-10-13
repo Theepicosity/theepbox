@@ -2013,9 +2013,9 @@ export class Config {
             maxIndex: 0,
             promptName: "Clipping Threshold"
         }, {
-            name: "fm slider 1",
+            name: "fm operator amplitude",
 
-            displayName: "FM 1",
+            displayName: "FM Amp.",
             maxRawVol: 15,
             newNoteVol: 15,
             forSong: false,
@@ -2026,12 +2026,12 @@ export class Config {
             associatedMDEffect: null,
             canBeEnvelope: true,
             canBeModulator: true,
-            maxIndex: 0,
-            promptName: "FM Slider 1"
+            maxIndex: 5,
+            promptName: "FM Operator Amplitude"
         }, {
-            name: "fm slider 2",
+            name: "fm operator frequency",
 
-            displayName: "FM 2",
+            displayName: "FM Freq.",
             maxRawVol: 15,
             newNoteVol: 15,
             forSong: false,
@@ -2042,72 +2042,8 @@ export class Config {
             associatedMDEffect: null,
             canBeEnvelope: true,
             canBeModulator: true,
-            maxIndex: 0,
-            promptName: "FM Slider 2"
-        }, {
-            name: "fm slider 3",
-
-            displayName: "FM 3",
-            maxRawVol: 15,
-            newNoteVol: 15,
-            forSong: false,
-            convertRealFactor: 0,
-            isFilter: false,
-            associatedInstruments: [InstrumentType.fm, InstrumentType.fm6op],
-            associatedEffect: null,
-            associatedMDEffect: null,
-            canBeEnvelope: true,
-            canBeModulator: true,
-            maxIndex: 0,
-            promptName: "FM Slider 3"
-        }, {
-            name: "fm slider 4",
-
-            displayName: "FM 4",
-            maxRawVol: 15,
-            newNoteVol: 15,
-            forSong: false,
-            convertRealFactor: 0,
-            isFilter: false,
-            associatedInstruments: [InstrumentType.fm, InstrumentType.fm6op],
-            associatedEffect: null,
-            associatedMDEffect: null,
-            canBeEnvelope: true,
-            canBeModulator: true,
-            maxIndex: 0,
-            promptName: "FM Slider 4"
-        }, {
-            name: "fm slider 5",
-
-            displayName: "FM 5",
-            maxRawVol: 15,
-            newNoteVol: 15,
-            forSong: false,
-            convertRealFactor: 0,
-            isFilter: false,
-            associatedInstruments: [InstrumentType.fm6op],
-            associatedEffect: null,
-            associatedMDEffect: null,
-            canBeEnvelope: true,
-            canBeModulator: true,
-            maxIndex: 0,
-            promptName: "FM Slider 5"
-        }, {
-            name: "fm slider 6",
-
-            displayName: "FM 6",
-            maxRawVol: 15,
-            newNoteVol: 15,
-            forSong: false,
-            convertRealFactor: 0,
-            isFilter: false,
-            associatedInstruments: [InstrumentType.fm6op],
-            associatedEffect: null,
-            associatedMDEffect: null,
-            canBeEnvelope: true,
-            canBeModulator: true,
-            maxIndex: 0,
-            promptName: "FM Slider 6"
+            maxIndex: 5,
+            promptName: "FM Operator Frequency"
         }, {
             name: "fm feedback",
 

@@ -2,6 +2,7 @@
 
 import { Config, LFOEnvelopeTypes, EnvelopeType, Envelope, AutomationParameter } from "./SynthConfig";
 import { clamp } from "./utils";
+
 export class EnvelopeSettings {
     public target: number = 0;
     public index: number = 0;

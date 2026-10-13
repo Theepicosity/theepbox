@@ -1974,14 +1974,11 @@ export class SongEditor {
                 return this.effectEditor.panSliders[index];
             case Config.automationParams.dictionary["detune"].index:
                 return this._detuneSlider;
-            case Config.automationParams.dictionary["fm slider 1"].index:
-                return this._operatorAmplitudeSliders[0];
-            case Config.automationParams.dictionary["fm slider 2"].index:
-                return this._operatorAmplitudeSliders[1];
-            case Config.automationParams.dictionary["fm slider 3"].index:
-                return this._operatorAmplitudeSliders[2];
-            case Config.automationParams.dictionary["fm slider 4"].index:
-                return this._operatorAmplitudeSliders[3];
+            case Config.automationParams.dictionary["fm operator amplitude"].index:
+                return this._operatorAmplitudeSliders[index];
+            case Config.automationParams.dictionary["fm operator frequency"].index:
+                //return this._operatorFrequencySliders[index];
+                return null;
             case Config.automationParams.dictionary["fm feedback"].index:
                 return this._feedbackAmplitudeSlider;
             case Config.automationParams.dictionary["pulse width"].index:

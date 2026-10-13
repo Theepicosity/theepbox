@@ -598,7 +598,7 @@ export class Instrument {
         for (let i: number = 0; i < legacyOperatorEnvelopes.length; i++) {
             if (i < carrierCount && allCarriersControlledByNoteSize) continue;
             if (legacyOperatorEnvelopes[i].type != EnvelopeType.none) {
-                this.addEnvelope(Config.automationParams.dictionary["fm slider 1"].index + i, 0, legacyOperatorEnvelopes[i].index, false);
+                this.addEnvelope(Config.automationParams.dictionary["fm operator amplitude"].index, i, legacyOperatorEnvelopes[i].index, false);
             }
         }
 
