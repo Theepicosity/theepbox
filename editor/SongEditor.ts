@@ -2047,10 +2047,6 @@ export class SongEditor {
                 return this.effectEditor.echoPingPongSliders[index];
             case Config.automationParams.dictionary["sustain"].index:
                 return this._stringSustainSlider;
-            case Config.automationParams.dictionary["fm slider 5"].index:
-                return this._operatorAmplitudeSliders[4];
-            case Config.automationParams.dictionary["fm slider 6"].index:
-                return this._operatorAmplitudeSliders[5];
             case Config.automationParams.dictionary["envelope speed"].index:
                 return this._envelopeSpeedSlider;
             case Config.automationParams.dictionary["dynamism"].index:

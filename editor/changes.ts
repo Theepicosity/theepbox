@@ -5821,7 +5821,6 @@ export class ChangeSetEnvelopeTarget extends Change {
         const oldIndex: number = instrument.envelopes[envelopeIndex].index;
         if (oldTarget != target || oldIndex != targetIndex) {
             instrument.envelopes[envelopeIndex].target = target;
-            console.log(instrument.envelopes[envelopeIndex].target)
             instrument.envelopes[envelopeIndex].index = targetIndex;
             instrument.preset = instrument.type;
             doc.notifier.changed();

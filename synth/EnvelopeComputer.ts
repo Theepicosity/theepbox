@@ -1,27 +1,13 @@
 // Copyright (c) John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 import { EnvelopeType, LFOEnvelopeTypes, RandomEnvelopeTypes, Config, Envelope, getArpeggioPitchIndex, FilterType, AutomationParameter, Transition } from "./SynthConfig";
-import { Synth, Tone } from "./synth";
+import { Synth, Tone, AutomationState } from "./synth";
 import { Instrument } from "./Instrument";
 import { InstrumentState } from "./InstrumentState";
 import { FilterSettings } from "./Filter";
 import { EnvelopeSettings } from "./Envelope";
 import { NotePin } from "./Pattern";
 import { xxHash32 } from "js-xxhash";
-
-export class EnvelopeState {
-    public target: number;
-    public index: number;
-    public effectIndex: number;
-    public startValue: number = 1.0;
-    public endValue: number = 1.0;
-
-    constructor(target: number, index: number, effectIndex: number) {
-        this.target = target;
-        this.index = index;
-        this.effectIndex = effectIndex;
-    }
-}
 
 export class EnvelopeComputer {
     // "Unscaled" values do not increase with Envelope Speed's timescale factor. Thus they are "real" seconds since the start of the note.
@@ -62,7 +48,7 @@ export class EnvelopeComputer {
     private startPinTickDefaultPitch: number | null = null;
     private startPinTickPitch: number | null = null;
 
-    public readonly envelopeStates: EnvelopeState[] = [];
+    public readonly envelopeStates: AutomationState[] = [];
     private readonly _modifiedEnvelopeIndices: number[] = [];
     private _modifiedEnvelopeCount: number = 0;
     public lowpassCutoffDecayVolumeCompensation: number = 1.0;
@@ -93,7 +79,7 @@ export class EnvelopeComputer {
     public computeEnvelopes(instrument: Instrument, currentPart: number, tickTimeStart: number[], tickTimeStartReal: number, secondsPerTick: number, tone: Tone | null, timeScale: number[], instrumentState: InstrumentState, synth: Synth, channelIndex: number, instrumentIndex: number): void {
         const secondsPerTickUnscaled: number = secondsPerTick;
         const transition: Transition = instrument.getTransition();
-        if (tone != null && tone.atNoteStart && ((!(transition.isSeamless || instrument.clicklessTransition) && !forceContinueAtStart) || tone.prevNote == null)) {
+        if (tone != null && tone.atNoteStart && (!(transition.isSeamless || instrument.clicklessTransition) || tone.prevNote == null)) {
             this.prevNoteSecondsEndUnscaled = this.noteSecondsEndUnscaled;
             this.prevNoteTicksEnd = this.noteTicksEnd;
             this._prevNoteSizeFinal = this._noteSizeFinal;
@@ -229,10 +215,10 @@ export class EnvelopeComputer {
 
                 perEnvelopeLowerBound = instrument.envelopes[envelopeIndex].perEnvelopeLowerBound;
                 perEnvelopeUpperBound = instrument.envelopes[envelopeIndex].perEnvelopeUpperBound;
-                if (synth.isModActive(Config.automationParams.dictionary["individual envelope lower bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound != null) { //modulation
+                if (synth.isModActive(Config.automationParams.dictionary["individual envelope lower bound"].index, envelopeIndex, channelIndex, instrumentIndex, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound != null) { //modulation
                     perEnvelopeLowerBound = instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound!;
                 }
-                if (synth.isModActive(Config.automationParams.dictionary["individual envelope upper bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound != null) { //modulation
+                if (synth.isModActive(Config.automationParams.dictionary["individual envelope upper bound"].index, envelopeIndex, channelIndex, instrumentIndex, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound != null) { //modulation
                     perEnvelopeUpperBound = instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound!;
                 }
                 if (!(perEnvelopeLowerBound <= perEnvelopeUpperBound)) { //reset bounds if incorrect
@@ -291,10 +277,10 @@ export class EnvelopeComputer {
             }
 
             if (!this.envelopeStates[envelopeIndex]) {
-                this.envelopeStates[envelopeIndex] = new EnvelopeState(automationTarget.index, targetIndex, 0)
+                this.envelopeStates[envelopeIndex] = new AutomationState(automationTarget, targetIndex, [0], [0], [0])
             }
 
-            this.envelopeStates[envelopeIndex].target = automationTarget.index
+            this.envelopeStates[envelopeIndex].target = automationTarget
             this.envelopeStates[envelopeIndex].index = targetIndex
             this.envelopeStates[envelopeIndex].effectIndex = 0
 
@@ -645,7 +631,7 @@ export class EnvelopeComputer {
     public getEnvelopeValue(target: number, index: number, effectIndex?: number | null, nextVal?: boolean): number | null {
         for (let i: number = 0; i < this.envelopeStates.length; i++) {
             if (this.envelopeStates[i]) {
-                if (this.envelopeStates[i].target == target && this.envelopeStates[i].index == index) {
+                if (this.envelopeStates[i].target == Config.automationParams[target] && this.envelopeStates[i].index == index) {
                     if (effectIndex) {
                         if (this.envelopeStates[i].effectIndex == effectIndex) return nextVal ? this.envelopeStates[i].endValue : this.envelopeStates[i].startValue
                     } else {

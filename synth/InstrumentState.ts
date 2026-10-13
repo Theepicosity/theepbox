@@ -481,8 +481,8 @@ export class InstrumentState {
             envelopeSpeeds[i] = 0;
         }
         let useEnvelopeSpeed: number = Config.arpSpeedScale[instrument.envelopeSpeed];
-        if (synth.isModActive(Config.automationParams.dictionary["envelope speed"].index, channelIndex, instrumentIndex)) {
-            useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.automationParams.dictionary["envelope speed"].index, channelIndex, instrumentIndex, -1, false)));
+        if (synth.isModActive(Config.automationParams.dictionary["envelope speed"].index, 0, channelIndex, instrumentIndex, 0)) {
+            useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.automationParams.dictionary["envelope speed"].index, 0, channelIndex, instrumentIndex, 0, false)));
             if (Number.isInteger(useEnvelopeSpeed)) {
                 useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed];
             } else {
@@ -492,7 +492,7 @@ export class InstrumentState {
         }
         for (let envelopeIndex: number = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
             let perEnvelopeSpeed: number = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-            if (synth.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+            if (synth.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, envelopeIndex, channelIndex, instrumentIndex, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                 perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed!;
             }
             envelopeSpeeds[envelopeIndex] = useEnvelopeSpeed * perEnvelopeSpeed;
@@ -511,18 +511,18 @@ export class InstrumentState {
         let mixVolumeEnd: number = this.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["post volume"].index, 0, null, true) * Synth.instrumentVolumeToVolumeMult(instrument.volume);
 
         // Check for mod-related volume delta
-        if (synth.isModActive(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1)) {
+        if (synth.isModActive(Config.automationParams.dictionary["post volume"].index, 0, channelIndex, instrumentIndex, 0)) {
             // Linear falloff below 0, normal volume formula above 0. Seems to work best for scaling since the normal volume mult formula has a big gap from -25 to -24.
-            const startVal: number = synth.getModValue(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, false);
-            const endVal: number = synth.getModValue(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, true);
+            const startVal: number = synth.getModValue(Config.automationParams.dictionary["post volume"].index, 0, channelIndex, instrumentIndex, 0, false);
+            const endVal: number = synth.getModValue(Config.automationParams.dictionary["post volume"].index, 0, channelIndex, instrumentIndex, 0, true);
             this.mixVolume *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
             mixVolumeEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
         }
 
         // Check for SONG mod-related volume delta
         if (synth.isModActive(Config.automationParams.dictionary["song volume"].index)) {
-            this.mixVolume *= (synth.getModValue(Config.automationParams.dictionary["song volume"].index, undefined, undefined, -1, false)) / 100.0;
-            mixVolumeEnd *= (synth.getModValue(Config.automationParams.dictionary["song volume"].index, undefined, undefined, -1, true)) / 100.0;
+            this.mixVolume *= (synth.getModValue(Config.automationParams.dictionary["song volume"].index, 0, 0, 0, 0, false)) / 100.0;
+            mixVolumeEnd *= (synth.getModValue(Config.automationParams.dictionary["song volume"].index, 0, 0, 0, 0, true)) / 100.0;
         }
 
         this.mixVolumeDelta = (mixVolumeEnd - this.mixVolume) / roundedSamplesPerTick;

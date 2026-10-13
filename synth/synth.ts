@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Dictionary, DictionaryArray, FilterType, EnvelopeType, ChannelType, InstrumentType, MDEffectType, EffectType, Transition, Chord, Envelope, Config, getArpeggioPitchIndex, getPulseWidthRatio, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, OperatorWave, GranularEnvelopeType } from "./SynthConfig";
+import { Dictionary, DictionaryArray, FilterType, EnvelopeType, ChannelType, InstrumentType, MDEffectType, EffectType, AutomationParameter, Transition, Chord, Envelope, Config, getArpeggioPitchIndex, getPulseWidthRatio, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, OperatorWave, GranularEnvelopeType } from "./SynthConfig";
 import { Deque } from "./Deque";
 import { Song } from "./Song";
 import { Channel } from "./Channel";
@@ -174,8 +174,25 @@ export interface HeldMod {
     holdFor: number;
 }
 
-export class Synth {
+export class AutomationState {
+    public target: AutomationParameter;
+    public index: number;
+    public channelIndices: number[];
+    public instrumentIndices: number[];
+    public effectIndices: number[];
+    public startValue: number = 1.0;
+    public endValue: number = 1.0;
 
+    constructor(target: AutomationParameter, index: number, channelIndices: number[], instrumentIndices: number[], effectIndices: number[]) {
+        this.target = target;
+        this.index = index;
+        this.channelIndices = channelIndices;
+        this.instrumentIndices = instrumentIndices;
+        this.effectIndices = effectIndices;
+    }
+}
+
+export class Synth {
     private syncSongState(): void {
         const channelCount: number = this.song!.getChannelCount();
         for (let i: number = this.channels.length; i < channelCount; i++) {
@@ -254,20 +271,12 @@ export class Synth {
             // Clear all mod values, and set up temp variables for the time a mod would be set at.
             let latestModTimes: (number | null)[] = [];
             let latestModInsTimes: (number | null)[][][][] = [];
-            this.modValues = [];
-            this.nextModValues = [];
-            this.modInsValues = [];
-            this.nextModInsValues = [];
+            this.modStates = [];
             this.heldMods = [];
             for (let channel: number = 0; channel < this.song.channels.length; channel++) {
                 if (this.song.channels[channel].type != ChannelType.mod) {
                     latestModInsTimes[channel] = [];
-                    this.modInsValues[channel] = [];
-                    this.nextModInsValues[channel] = [];
-
                     for (let instrument: number = 0; instrument < this.song.channels[channel].instruments.length; instrument++) {
-                        this.modInsValues[channel][instrument] = [];
-                        this.nextModInsValues[channel][instrument] = [];
                         latestModInsTimes[channel][instrument] = [];
                     }
                 }
@@ -351,7 +360,7 @@ export class Synth {
                                             }
                                             for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
                                                 for (let j: number = 0; j < instrument.modEffects[mod].length; j++) {
-                                                    this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modChannels[mod][i], instrument.modInstruments[mod][i], instrument.modulators[mod], instrument.modEffects[mod][j]);
+                                                    this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modulators[mod], 0, instrument.modChannels[mod][i], instrument.modInstruments[mod][i], instrument.modEffects[mod][j]);
                                                 }
                                             }
                                             latestModTimes[instrument.modulators[mod]] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
@@ -420,7 +429,7 @@ export class Synth {
                                                 for (let effectIndex: number = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
                                                     if (latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
                                                         || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0]!) {
-                                                        if (Config.automationParams[modulatorAdjust]) this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], modulatorAdjust, instrument.modEffects[mod][effectIndex]);
+                                                        if (Config.automationParams[modulatorAdjust]) this.setModValue(latestPinValues[mod], latestPinValues[mod], modulatorAdjust, 0, instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], instrument.modEffects[mod][effectIndex]);
                                                     }
                                                     latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = []
                                                     latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
@@ -538,10 +547,7 @@ export class Synth {
     public isAtStartOfTick: boolean = true;
     public isAtEndOfTick: boolean = true;
     public tickSampleCountdown: number = 0;
-    private modValues: (number | null)[] = [];
-    public modInsValues: (number | null)[][][][] = [];
-    private nextModValues: (number | null)[] = [];
-    public nextModInsValues: (number | null)[][][][] = [];
+    public modStates: AutomationState[] = [];
     private isPlayingSong: boolean = false;
     private isRecording: boolean = false;
     private liveInputEndTime: number = 0.0;
@@ -928,8 +934,7 @@ export class Synth {
         this.isPlayingSong = false;
         this.isRecording = false;
         this.preferLowerLatency = false;
-        this.modValues = [];
-        this.nextModValues = [];
+        this.modStates = [];
         this.heldMods = [];
         if (this.song != null) {
             this.song.inVolumeCap = 0.0;
@@ -938,12 +943,6 @@ export class Synth {
             this.song.outVolumeCapR = 0.0;
             this.song.tmpEqFilterStart = null;
             this.song.tmpEqFilterEnd = null;
-            for (let channelIndex: number = 0; channelIndex < this.song.getChannelCount(); channelIndex++) {
-                if (this.song.channels[channelIndex].type != ChannelType.mod) {
-                    this.modInsValues[channelIndex] = [];
-                    this.nextModInsValues[channelIndex] = [];
-                }
-            }
         }
     }
 
@@ -965,84 +964,119 @@ export class Synth {
         }
     }
 
-    public setModValue(volumeStart: number, volumeEnd: number, channelIndex: number, instrumentIndex: number, setting: number, effectIndex: number): number {
-        let val: number = volumeStart + Config.automationParams[setting].convertRealFactor;
-        let nextVal: number = volumeEnd + Config.automationParams[setting].convertRealFactor;
-        if (Config.automationParams[setting].forSong) {
-            if (this.modValues[setting] == null || this.modValues[setting] != val || this.nextModValues[setting] != nextVal) {
-                this.modValues[setting] = val;
-                this.nextModValues[setting] = nextVal;
+    public getModStateIndex(target: number, index: number, channelIndex: number, instrumentIndex: number, effectIndex: number): number | null {
+        let foundModState: number = -1;
+        for (let i: number = 0; i < this.modStates.length; i++) {
+            if (this.modStates[i]) {
+                const modState: AutomationState = this.modStates[i];
+                if (modState.target.name == Config.automationParams[target].name
+                && modState.index == index
+                && modState.channelIndices.includes(channelIndex)
+                && modState.instrumentIndices.includes(instrumentIndex)
+                && modState.effectIndices.includes(effectIndex)) {
+                    foundModState = i;
+                }
             }
-        } else if (Config.automationParams[setting].associatedEffect == EffectType.length) {
-            if (this.modInsValues[channelIndex][instrumentIndex][setting] == null) this.modInsValues[channelIndex][instrumentIndex][setting] = []
-            if (this.nextModInsValues[channelIndex][instrumentIndex][setting] == null) this.nextModInsValues[channelIndex][instrumentIndex][setting] = []
-            if (this.modInsValues[channelIndex][instrumentIndex][setting][1] == null
-            || this.modInsValues[channelIndex][instrumentIndex][setting][1] != val
-            || this.nextModInsValues[channelIndex][instrumentIndex][setting][1] != nextVal) {
-                this.modInsValues[channelIndex][instrumentIndex][setting][1] = val;
-                this.nextModInsValues[channelIndex][instrumentIndex][setting][1] = nextVal;
-            }
+        }
+        if (foundModState == -1) return null;
+        else return foundModState;
+    }
+
+    public setModValue(volumeStart: number, volumeEnd: number, target: number, index?: number, channelIndex?: number, instrumentIndex?: number, effectIndex?: number): number {
+        let val: number = volumeStart + Config.automationParams[target].convertRealFactor;
+        let nextVal: number = volumeEnd + Config.automationParams[target].convertRealFactor;
+
+        const forSong: boolean = Config.automationParams[target].forSong;
+        const noEffect: boolean = Config.automationParams[target].associatedEffect == null;
+        const noIndex: boolean = Config.automationParams[target].maxIndex == 0;
+
+        if (forSong) {
+            channelIndex = 0;
+            instrumentIndex = 0;
+            effectIndex = 0;
+        } else if (noEffect) {
+            effectIndex = 0;
+        }
+        if (noIndex) {
+            index = 0;
+        }
+
+        const useMod: number | null = this.getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex);
+
+        if (useMod != null) {
+            this.modStates[useMod].startValue = val;
+            this.modStates[useMod].endValue = nextVal;
         } else {
-            if (this.modInsValues[channelIndex][instrumentIndex][setting] == null) this.modInsValues[channelIndex][instrumentIndex][setting] = []
-            if (this.nextModInsValues[channelIndex][instrumentIndex][setting] == null) this.nextModInsValues[channelIndex][instrumentIndex][setting] = []
-            if (this.modInsValues[channelIndex][instrumentIndex][setting][effectIndex] == null
-            || this.modInsValues[channelIndex][instrumentIndex][setting][effectIndex] != val
-            || this.nextModInsValues[channelIndex][instrumentIndex][setting][effectIndex] != nextVal) {
-                this.modInsValues[channelIndex][instrumentIndex][setting][effectIndex] = val;
-                this.nextModInsValues[channelIndex][instrumentIndex][setting][effectIndex] = nextVal;
-            }
+            let modState = new AutomationState(Config.automationParams[target], index, [channelIndex], [instrumentIndex], [effectIndex])
+            modState.startValue = val;
+            modState.endValue = nextVal;
+            this.modStates.push(modState);
         }
 
         return val;
     }
 
-    public getModValue(setting: number, channel?: number | null, instrument?: number | null, effect?: number | null, nextVal?: boolean): number {
-        const forSong: boolean = Config.automationParams[setting].forSong;
-        const noEffect: boolean = Config.automationParams[setting].associatedEffect == EffectType.length;
+    public getModValue(target: number, index?: number, channelIndex?: number, instrumentIndex?: number, effectIndex?: number, nextVal?: boolean): number {
+        const forSong: boolean = Config.automationParams[target].forSong;
+        const noEffect: boolean = Config.automationParams[target].associatedEffect == null;
+        const noIndex: boolean = Config.automationParams[target].maxIndex == 0;
+        if (noIndex) index = 0;
+
+        let useMod: number = -1;
         if (forSong) {
-            if (this.modValues[setting] != null && this.nextModValues[setting] != null) {
-                return nextVal ? this.nextModValues[setting]! : this.modValues[setting]!;
-            }
-        } else if (channel != undefined && instrument != undefined && noEffect) {
-            if (this.modInsValues[channel][instrument][setting][1] != null && this.nextModInsValues[channel][instrument][setting][1] != null) {
-                return nextVal ? this.nextModInsValues[channel][instrument][setting][1]! : this.modInsValues[channel][instrument][setting][1]!;
-            }
-        } else if (channel != undefined && instrument != undefined && effect != undefined) {
-            if (this.modInsValues[channel][instrument][setting][effect] != null && this.nextModInsValues[channel][instrument][setting][effect] != null) {
-                return nextVal ? this.nextModInsValues[channel][instrument][setting][effect]! : this.modInsValues[channel][instrument][setting][effect]!;
-            }
+            useMod = this.getModStateIndex(target, index, 0, 0, 0);
+            return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
+        } else if (channelIndex != undefined && instrumentIndex != undefined && noEffect) {
+            useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, 0);
+            console.log(this.modStates[0])
+            console.log(instrumentIndex)
+            return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
+        } else if (channelIndex != undefined && instrumentIndex != undefined && effectIndex != undefined) {
+            useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex);
+            return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
         }
         return -1;
     }
 
     // Checks if any mod is active for the given channel/instrument OR if any mod is active for the song scope. Could split the logic if needed later.
-    public isAnyModActive(channel: number, instrument: number): boolean {
-        for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
-            if ((this.modValues != undefined && this.modValues[setting] != null)
-                || (this.modInsValues != undefined && this.modInsValues[channel] != undefined && this.modInsValues[channel][instrument] != undefined && this.modInsValues[channel][instrument][setting] != null && this.modInsValues[channel][instrument][setting].length > 0 )) {
-                return true;
+    public isAnyModActive(channelIndex: number, instrumentIndex: number): boolean {
+        for (let i: number = 0; i < this.modStates.length; i++) {
+            if (this.modStates[i]) {
+                const modState: AutomationState = this.modStates[i];
+                if ((modState.target.forSong == true) || (modState.channelIndices.includes(channelIndex) && modState.instrumentIndices.includes(instrumentIndex))) {
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    public unsetMod(setting: number, channel?: number, instrument?: number, effect?: number) {
-        if (this.isModActive(setting) || (channel != undefined && instrument != undefined && effect != undefined && this.isModActive(setting, channel, instrument, effect))) {
-            this.modValues[setting] = null;
-            this.nextModValues[setting] = null;
-            for (let i: number = 0; i < this.heldMods.length; i++) {
-                if (channel != undefined && instrument != undefined && effect != undefined) {
-                    if (this.heldMods[i].channelIndex == channel && this.heldMods[i].instrumentIndex == instrument && this.heldMods[i].effectIndex == effect && this.heldMods[i].setting == setting)
-                        this.heldMods.splice(i, 1);
-                } else {
-                    if (this.heldMods[i].setting == setting)
-                        this.heldMods.splice(i, 1);
-                }
-            }
-            if (channel != undefined && instrument != undefined && effect != undefined) {
-                this.modInsValues[channel][instrument][setting][effect] = null;
-                this.nextModInsValues[channel][instrument][setting][effect] = null;
-            }
+    public unsetMod(target: number, index?: number, channelIndex?: number, instrumentIndex?: number, effectIndex?: number) {
+        const forSong: boolean = Config.automationParams[target].forSong;
+        const noEffect: boolean = Config.automationParams[target].associatedEffect == EffectType.length;
+        const noIndex: boolean = Config.automationParams[target].maxIndex == 0;
+        if (noIndex) index = 0;
+
+        let useMod: number = -1;
+        if (forSong) {
+            useMod = this.getModStateIndex(target, index, 0, 0, 0);
+        } else if (noEffect) {
+            useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, 0);
+        } else {
+            useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex);
+        }
+
+        if (useMod) {
+            this.modStates.splice(useMod, 1);
+            // for (let i: number = 0; i < this.heldMods.length; i++) {
+            //     if (channel != undefined && instrument != undefined && effect != undefined) {
+            //         if (this.heldMods[i].channelIndex == channel && this.heldMods[i].instrumentIndex == instrument && this.heldMods[i].effectIndex == effect && this.heldMods[i].setting == setting)
+            //             this.heldMods.splice(i, 1);
+            //     } else {
+            //         if (this.heldMods[i].setting == setting)
+            //             this.heldMods.splice(i, 1);
+            //     }
+            // }
         }
     }
 
@@ -1063,22 +1097,27 @@ export class Synth {
                 if (instrument.effects[effectIdx] && !instrument.effects[effectIdx].eqFilterType && instrument.effects[effectIdx].tmpEqFilterEnd != null)
                     return true;
             }
-        }  
+        }
             
         return false
     }
 
-    public isModActive(setting: number, channel?: number, instrument?: number, effect?: number): boolean {
-        const forSong: boolean = Config.automationParams[setting].forSong;
-        const noEffect: boolean = Config.automationParams[setting].associatedEffect == EffectType.length;
+    public isModActive(target: number, index?: number, channelIndex?: number, instrumentIndex?: number, effectIndex?: number): boolean {
+        const forSong: boolean = Config.automationParams[target].forSong;
+        const noEffect: boolean = Config.automationParams[target].associatedEffect == null;
+        const noIndex: boolean = Config.automationParams[target].maxIndex == 0;
+        if (noIndex) index = 0;
+
+        let isActive: boolean = false;
         if (forSong) {
-            return (this.modValues != undefined && this.modValues[setting] != null);
-        } else if (channel != undefined && instrument != undefined && noEffect && this.modInsValues != undefined && this.modInsValues[channel] != null && this.modInsValues[channel][instrument] != null) {
-            return (this.modInsValues[channel][instrument][setting] != null);
-        } else if (channel != undefined && instrument != undefined && effect != undefined && this.modInsValues != undefined && this.modInsValues[channel] != null && this.modInsValues[channel][instrument] != null && this.modInsValues[channel][instrument][setting] != null) {
-            return (this.modInsValues[channel][instrument][setting][effect] != null);
+            isActive = this.getModStateIndex(target, index, 0, 0, 0) != null;
+        } else if (channelIndex != undefined && instrumentIndex != undefined && noEffect) {
+            isActive = this.getModStateIndex(target, index, channelIndex, instrumentIndex, 0) != null;
+        } else if (channelIndex != undefined && instrumentIndex != undefined && effectIndex != undefined) {
+            isActive = this.getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex) != null;
         }
-        return false;
+
+        return isActive;
     }
 
     // Force a modulator to be held at the given volumeStart for a brief duration.
@@ -1561,8 +1600,8 @@ export class Synth {
 
                         //envelopeable vibrato speed?
 
-                        if (this.isModActive(Config.automationParams.dictionary["vibrato speed"].index, channelIndex, instrumentIndex)) {
-                            useVibratoSpeed = this.getModValue(Config.automationParams.dictionary["vibrato speed"].index, channelIndex, instrumentIndex);
+                        if (this.isModActive(Config.automationParams.dictionary["vibrato speed"].index, 0, channelIndex, instrumentIndex, 0)) {
+                            useVibratoSpeed = this.getModValue(Config.automationParams.dictionary["vibrato speed"].index, 0, channelIndex, instrumentIndex, 0);
                         }
 
                         if (useVibratoSpeed == 0) {
@@ -1729,11 +1768,11 @@ export class Synth {
                             for (let envelopeIndex: number = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                                 let useEnvelopeSpeed: number = instrument.envelopeSpeed;
                                 let perEnvelopeSpeed: number = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-                                if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channel, instrumentIdx, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+                                if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, 0, channel, instrumentIdx, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                                     perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed!;
                                 }
-                                if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, channel, instrumentIdx, -1)) {
-                                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, channel, instrumentIdx, -1, false)));
+                                if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, 0, channel, instrumentIdx, 0)) {
+                                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, 0, channel, instrumentIdx, 0, false)));
                                     if (Number.isInteger(useEnvelopeSpeed)) {
                                         instrumentState.envelopeTime[envelopeIndex] += Config.arpSpeedScale[useEnvelopeSpeed] * perEnvelopeSpeed;
                                     } else {
@@ -1755,8 +1794,8 @@ export class Synth {
                             const arpEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["arpeggio speed"].index, 0, null, false); //only discrete for now
                             //const arpEnvelopeEnd: number = envelopeEnds[Config.automationParams.dictionary["arpeggio speed"].index];
                             let useArpeggioSpeed: number = instrument.arpeggioSpeed;
-                            if (this.isModActive(Config.automationParams.dictionary["arpeggio speed"].index, channel, instrumentIdx, -1)) {
-                                useArpeggioSpeed = clamp(0, Config.arpSpeedScale.length, arpEnvelopeStart * this.getModValue(Config.automationParams.dictionary["arpeggio speed"].index, channel, instrumentIdx, -1, false));
+                            if (this.isModActive(Config.automationParams.dictionary["arpeggio speed"].index, 0, channel, instrumentIdx, 0)) {
+                                useArpeggioSpeed = clamp(0, Config.arpSpeedScale.length, arpEnvelopeStart * this.getModValue(Config.automationParams.dictionary["arpeggio speed"].index, 0, channel, instrumentIdx, 0, false));
                                 if (Number.isInteger(useArpeggioSpeed)) {
                                     instrumentState.arpTime += Config.arpSpeedScale[useArpeggioSpeed];
                                 } else {
@@ -1853,9 +1892,8 @@ export class Synth {
             }
 
             // Update mod values so that next values copy to current values
-            for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
-                if (this.nextModValues != null && this.nextModValues[setting] != null)
-                    this.modValues[setting] = this.nextModValues[setting];
+            for (let i: number = 0; i < this.modStates.length; i++) {
+                this.modStates[i].startValue = this.modStates[i].endValue;
             }
 
             // Set samples per tick if song tempo mods changed it
@@ -1881,17 +1919,6 @@ export class Synth {
             }
 
             const maxInstrumentsPerChannel = this.song.getMaxInstrumentsPerChannel();
-            for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
-                for (let channel: number = 0; channel < this.song.getChannelCount(); channel++) {
-                    if (this.song.channels[channel].type != ChannelType.mod) {
-                        for (let instrument: number = 0; instrument < maxInstrumentsPerChannel; instrument++) {
-                            if (this.nextModInsValues != null && this.nextModInsValues[channel] != null && this.nextModInsValues[channel][instrument] != null && this.nextModInsValues[channel][instrument][setting] != null) {
-                                this.modInsValues[channel][instrument][setting] = this.nextModInsValues[channel][instrument][setting];
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         // Optimization: Avoid persistent reverb values in the float denormal range.
@@ -2779,12 +2806,12 @@ export class Synth {
         }
         for (let envelopeIndex: number = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
             let perEnvelopeSpeed: number = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-            if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channelIndex, tone.instrumentIndex, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+            if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, envelopeIndex, channelIndex, tone.instrumentIndex, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                 perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed!;
             }
             let useEnvelopeSpeed: number = Config.arpSpeedScale[instrument.envelopeSpeed] * perEnvelopeSpeed;
-            if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1)) {
-                useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1, false)));
+            if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, 0, channelIndex, tone.instrumentIndex, 0, false)));
                 if (Number.isInteger(useEnvelopeSpeed)) {
                     useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed] * perEnvelopeSpeed;
                 } else {
@@ -2829,10 +2856,10 @@ export class Synth {
             let pitchShift: number = Config.justIntonationSemitones[instrument.pitchShift] / intervalScale;
             let pitchShiftScalarStart: number = 1.0;
             let pitchShiftScalarEnd: number = 1.0;
-            if (this.isModActive(Config.automationParams.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1)) {
+            if (this.isModActive(Config.automationParams.dictionary["pitch shift"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
                 pitchShift = Config.justIntonationSemitones[Config.justIntonationSemitones.length - 1];
-                pitchShiftScalarStart = (this.getModValue(Config.automationParams.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1, false)) / (Config.pitchShiftCenter);
-                pitchShiftScalarEnd = (this.getModValue(Config.automationParams.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1, true)) / (Config.pitchShiftCenter);
+                pitchShiftScalarStart = (this.getModValue(Config.automationParams.dictionary["pitch shift"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / (Config.pitchShiftCenter);
+                pitchShiftScalarEnd = (this.getModValue(Config.automationParams.dictionary["pitch shift"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / (Config.pitchShiftCenter);
             }
             const envelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pitch shift"].index, 0, null, false);
             const envelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pitch shift"].index, 0, null, true);
@@ -2844,15 +2871,15 @@ export class Synth {
             const envelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["detune"].index, 0, null, true);
             let modDetuneStart: number = instrument.detune;
             let modDetuneEnd: number = instrument.detune;
-            if (this.isModActive(Config.automationParams.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1)) {
-                modDetuneStart = this.getModValue(Config.automationParams.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, false) + Config.detuneCenter;
-                modDetuneEnd = this.getModValue(Config.automationParams.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, true) + Config.detuneCenter;
+            if (this.isModActive(Config.automationParams.dictionary["detune"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                modDetuneStart = this.getModValue(Config.automationParams.dictionary["detune"].index, 0, channelIndex, tone.instrumentIndex, 0, false) + Config.detuneCenter;
+                modDetuneEnd = this.getModValue(Config.automationParams.dictionary["detune"].index, 0, channelIndex, tone.instrumentIndex, 0, true) + Config.detuneCenter;
             }
 
             if (!Config.chipWaves[instrument.chipWave].isCustomSampled || Config.chipWaves[instrument.chipWave].isPercussion != 1) {
-                if (this.isModActive(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    modDetuneStart += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, false);
-                    modDetuneEnd += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, true);
+                if (this.isModActive(Config.automationParams.dictionary["song detune"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    modDetuneStart += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
+                    modDetuneEnd += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, 0, channelIndex, tone.instrumentIndex, 0, true);
                 }
             }
             intervalStart += detuneToCents(modDetuneStart) * envelopeStart * Config.pitchesPerOctave / (12.0 * 100.0);
@@ -2877,16 +2904,16 @@ export class Synth {
                 vibratoAmplitudeEnd = vibratoAmplitudeStart;
             }
 
-            if (this.isModActive(Config.automationParams.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1)) {
-                delayTicks = this.getModValue(Config.automationParams.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1, false) * 2; // Delay was changed from parts to ticks in BB v9
+            if (this.isModActive(Config.automationParams.dictionary["vibrato delay"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                delayTicks = this.getModValue(Config.automationParams.dictionary["vibrato delay"].index, 0, channelIndex, tone.instrumentIndex, 0, false) * 2; // Delay was changed from parts to ticks in BB v9
                 if (delayTicks == Config.automationParams.dictionary["vibrato delay"].maxRawVol * 2)
                     delayTicks = Number.POSITIVE_INFINITY;
 
             }
 
-            if (this.isModActive(Config.automationParams.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1)) {
-                vibratoAmplitudeStart = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, false) / 25;
-                vibratoAmplitudeEnd = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, true) / 25;
+            if (this.isModActive(Config.automationParams.dictionary["vibrato depth"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                vibratoAmplitudeStart = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 25;
+                vibratoAmplitudeEnd = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 25;
             }
 
 
@@ -2986,9 +3013,9 @@ export class Synth {
 
                 let amplitudeStart: number = instrument.operators[i].amplitude;
                 let amplitudeEnd: number = instrument.operators[i].amplitude;
-                if (this.isModActive(Config.automationParams.dictionary["fm operator amplitude"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    amplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
-                    amplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
+                if (this.isModActive(Config.automationParams.dictionary["fm operator amplitude"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    amplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 15.0;
+                    amplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 15.0;
                 }
 
                 const amplitudeCurveStart: number = Synth.operatorAmplitudeCurve(amplitudeStart);
@@ -3030,10 +3057,10 @@ export class Synth {
                 // The fix is to apply this only to carriers, but as this is a legacy bug and it can cause some interesting sounds, it's left in.
                 // You can use the post volume modulator instead to avoid this effect.
 
-                if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
+                if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
                     // Linear falloff below 0, normal volume formula above 0. Seems to work best for scaling since the normal volume mult formula has a big gap from -25 to -24.
-                    const startVal: number = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
-                    const endVal: number = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true);
+                    const startVal: number = this.getModValue(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
+                    const endVal: number = this.getModValue(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0, true);
                     expressionStart *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
                     expressionEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
                 }
@@ -3059,9 +3086,9 @@ export class Synth {
 
             let useFeedbackAmplitudeStart: number = instrument.feedbackAmplitude;
             let useFeedbackAmplitudeEnd: number = instrument.feedbackAmplitude;
-            if (this.isModActive(Config.automationParams.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1)) {
-                useFeedbackAmplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, false) / 15.0;
-                useFeedbackAmplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, true) / 15.0;
+            if (this.isModActive(Config.automationParams.dictionary["fm feedback"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                useFeedbackAmplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 15.0;
+                useFeedbackAmplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 15.0;
             }
 
             let feedbackAmplitudeStart: number = Config.sineWaveLength * 0.3 * useFeedbackAmplitudeStart / 15.0;
@@ -3118,9 +3145,9 @@ export class Synth {
                 // Check for PWM mods to this instrument
                 let pulseWidthModStart: number = basePulseWidth;
                 let pulseWidthModEnd: number = basePulseWidth;
-                if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    pulseWidthModStart = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false)) / (Config.pulseWidthRange * 2);
-                    pulseWidthModEnd = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true)) / (Config.pulseWidthRange * 2);
+                if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    pulseWidthModStart = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / (Config.pulseWidthRange * 2);
+                    pulseWidthModEnd = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / (Config.pulseWidthRange * 2);
                 }
 
                 const pulseWidthStart: number = pulseWidthModStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pulse width"].index, 0, null, false);
@@ -3130,8 +3157,8 @@ export class Synth {
 
                 //decimal offset mods
                 let decimalOffsetModStart: number = instrument.decimalOffset;
-                if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
+                if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
                 }
 
                 const decimalOffsetStart: number = decimalOffsetModStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["decimal offset"].index, 0, null, false);
@@ -3143,9 +3170,9 @@ export class Synth {
                 // Check for sustain mods
                 let useSustainStart: number = instrument.stringSustain;
                 let useSustainEnd: number = instrument.stringSustain;
-                if (this.isModActive(Config.automationParams.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    useSustainStart = this.getModValue(Config.automationParams.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, false);
-                    useSustainEnd = this.getModValue(Config.automationParams.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, true);
+                if (this.isModActive(Config.automationParams.dictionary["sustain"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    useSustainStart = this.getModValue(Config.automationParams.dictionary["sustain"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
+                    useSustainEnd = this.getModValue(Config.automationParams.dictionary["sustain"].index, 0, channelIndex, tone.instrumentIndex, 0, true);
                 }
 
                 tone.stringSustainStart = useSustainStart;
@@ -3271,9 +3298,9 @@ export class Synth {
                 // Dynamism mods
                 let useDynamismStart: number = instrument.supersawDynamism / Config.supersawDynamismMax;
                 let useDynamismEnd: number = instrument.supersawDynamism / Config.supersawDynamismMax;
-                if (this.isModActive(Config.automationParams.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    useDynamismStart = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawDynamismMax;
-                    useDynamismEnd = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawDynamismMax;
+                if (this.isModActive(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    useDynamismStart = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawDynamismMax;
+                    useDynamismEnd = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawDynamismMax;
                 }
 
                 const curvedDynamismStart: number = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["dynamism"].index, 0, null, false)), 0.2);
@@ -3358,9 +3385,9 @@ export class Synth {
                 // Spread mods
                 let useSpreadStart: number = baseSpreadSlider;
                 let useSpreadEnd: number = baseSpreadSlider;
-                if (this.isModActive(Config.automationParams.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    useSpreadStart = (this.getModValue(Config.automationParams.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawSpreadMax;
-                    useSpreadEnd = (this.getModValue(Config.automationParams.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawSpreadMax;
+                if (this.isModActive(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    useSpreadStart = (this.getModValue(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawSpreadMax;
+                    useSpreadEnd = (this.getModValue(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawSpreadMax;
                 }
 
                 const spreadSliderStart: number = useSpreadStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["spread"].index, 0, null, false);
@@ -3378,9 +3405,9 @@ export class Synth {
                 // Saw shape mods
                 let useShapeStart: number = baseShape * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, false);
                 let useShapeEnd: number = baseShape * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, true);
-                if (this.isModActive(Config.automationParams.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    useShapeStart = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, false)) / Config.supersawShapeMax;
-                    useShapeEnd = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, true)) / Config.supersawShapeMax;
+                if (this.isModActive(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    useShapeStart = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawShapeMax;
+                    useShapeEnd = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawShapeMax;
                 }
 
                 const shapeStart: number = useShapeStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, false);
@@ -3390,8 +3417,8 @@ export class Synth {
 
                 //decimal offset mods
                 let decimalOffsetModStart: number = instrument.decimalOffset;
-                if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
+                if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
                 }
 
                 const decimalOffsetStart: number = decimalOffsetModStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["decimal offset"].index, 0, null, false);
@@ -3403,9 +3430,9 @@ export class Synth {
                 // Check for PWM mods to this instrument
                 let pulseWidthModStart: number = basePulseWidth;
                 let pulseWidthModEnd: number = basePulseWidth;
-                if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
-                    pulseWidthModStart = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false)) / (Config.pulseWidthRange * 2);
-                    pulseWidthModEnd = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true)) / (Config.pulseWidthRange * 2);
+                if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    pulseWidthModStart = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / (Config.pulseWidthRange * 2);
+                    pulseWidthModEnd = (this.getModValue(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / (Config.pulseWidthRange * 2);
                 }
 
                 let pulseWidthStart: number = pulseWidthModStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pulse width"].index, 0, null, false);
@@ -3451,10 +3478,10 @@ export class Synth {
             let expressionEnd: number = settingsExpressionMult * fadeExpressionEnd * chordExpressionEnd * pitchExpressionEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pre volume"].index, 0, null, true) * supersawExpressionEnd;
 
             // Check for mod-related volume delta
-            if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
+            if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
                 // Linear falloff below 0, normal volume formula above 0. Seems to work best for scaling since the normal volume mult formula has a big gap from -25 to -24.
-                const startVal: number = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
-                const endVal: number = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true)
+                const startVal: number = this.getModValue(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
+                const endVal: number = this.getModValue(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0, true)
                 expressionStart *= ((startVal <= 0) ? ((startVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(startVal));
                 expressionEnd *= ((endVal <= 0) ? ((endVal + Config.volumeRange / 2) / (Config.volumeRange / 2)) : Synth.instrumentVolumeToVolumeMult(endVal));
             }
@@ -6054,15 +6081,15 @@ export class Synth {
         for (let instrumentIndex: number = 0; instrumentIndex < instrument.modInstruments[mod].length; instrumentIndex++) {
 
             for (let effectIndex: number = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
-                synth.setModValue(tone.expression, tone.expression + tone.expressionDelta, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], setting, instrument.modEffects[mod][effectIndex]);
+                synth.setModValue(tone.expression, tone.expression + tone.expressionDelta, setting, 0, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], instrument.modEffects[mod][effectIndex]);
 
                 // If mods are being held (for smoother playback while recording mods), use those values instead.
                 for (let i: number = 0; i < synth.heldMods.length; i++) {
                     if (Config.automationParams[instrument.modulators[mod]].forSong) {
                         if (synth.heldMods[i].setting == setting)
-                            synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], setting, instrument.modEffects[mod][effectIndex]);
+                            synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, setting, 0, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], instrument.modEffects[mod][effectIndex]);
                     } else if (synth.heldMods[i].channelIndex == instrument.modChannels[mod][instrumentIndex] && synth.heldMods[i].instrumentIndex == instrument.modInstruments[mod][instrumentIndex] && synth.heldMods[i].setting == setting) {
-                        synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], setting, instrument.modEffects[mod][effectIndex]);
+                        synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, setting, 0, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], instrument.modEffects[mod][effectIndex]);
                     }
                 }
             }
