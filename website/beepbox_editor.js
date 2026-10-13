@@ -31089,7 +31089,7 @@ li.select2-results__option[role=group] > strong:hover {
       let setting = Config.automationParams.dictionary[text].index;
       if (instrument.modulators[mod2] != setting) {
         instrument.modulators[mod2] = setting;
-        if (Config.automationParams.dictionary[text].associatedEffect == 12 /* length */) instrument.modEffects[mod2] = [-1];
+        if (Config.automationParams.dictionary[text].associatedEffect == null) instrument.modEffects[mod2] = [-1];
         else {
           instrument.modEffects[mod2] = [0];
           for (let i = 0; i < instrument.modInstruments[mod2].length; i++) {

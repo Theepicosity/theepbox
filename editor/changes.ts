@@ -3979,7 +3979,7 @@ export class ChangeModSetting extends Change {
         if (instrument.modulators[mod] != setting) {
 
             instrument.modulators[mod] = setting;
-            if (Config.automationParams.dictionary[text].associatedEffect == EffectType.length) instrument.modEffects[mod] = [-1]
+            if (Config.automationParams.dictionary[text].associatedEffect == null) instrument.modEffects[mod] = [-1]
             else {
                 instrument.modEffects[mod] = [0];
                 for (let i: number = 0; i < instrument.modInstruments[mod].length; i++) {
