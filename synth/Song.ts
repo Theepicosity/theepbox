@@ -932,44 +932,6 @@ export class Song {
                 buffer.push(SongTagCode.volume, base64IntToCharCode[(instrument.volume + Config.volumeRange / 2) >> 6], base64IntToCharCode[(instrument.volume + Config.volumeRange / 2) & 0x3f]);
                 buffer.push(SongTagCode.preset, base64IntToCharCode[instrument.preset >> 6], base64IntToCharCode[instrument.preset & 63]);
 
-                buffer.push(SongTagCode.noteFilter);
-                buffer.push(base64IntToCharCode[+instrument.noteFilterType]);
-                if (instrument.noteFilterType) {
-                    buffer.push(base64IntToCharCode[instrument.noteFilterSimpleCut]);
-                    buffer.push(base64IntToCharCode[instrument.noteFilterSimplePeak]);
-                }
-                else {
-                    if (instrument.noteFilter == null) {
-                        // Push null filter settings
-                        buffer.push(base64IntToCharCode[0]);
-                        console.log("Null pre eq settings detected in toBase64String for channelIndex " + channelIndex + ", instrumentIndex " + i);
-                    } else {
-                        buffer.push(base64IntToCharCode[instrument.noteFilter.controlPointCount]);
-                        for (let j: number = 0; j < instrument.noteFilter.controlPointCount; j++) {
-                            const point: FilterControlPoint = instrument.noteFilter.controlPoints[j];
-                            buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)], base64IntToCharCode[point.q]);
-                        }
-                    }
-
-                    // Push subfilters as well. Skip Index 0, is a copy of the base filter.
-                    let usingSubFilterBitfield: number = 0;
-                    for (let j: number = 0; j < Config.filterMorphCount - 1; j++) {
-                        usingSubFilterBitfield |= (+(instrument.noteSubFilters[j + 1] != null) << j);
-                    }
-                    // Put subfilter usage into 2 chars (12 bits)
-                    buffer.push(base64IntToCharCode[usingSubFilterBitfield >> 6], base64IntToCharCode[usingSubFilterBitfield & 63]);
-                    // Put subfilter info in for all used subfilters
-                    for (let j: number = 0; j < Config.filterMorphCount - 1; j++) {
-                        if (usingSubFilterBitfield & (1 << j)) {
-                            buffer.push(base64IntToCharCode[instrument.noteSubFilters[j + 1]!.controlPointCount]);
-                            for (let k: number = 0; k < instrument.noteSubFilters[j + 1]!.controlPointCount; k++) {
-                                const point: FilterControlPoint = instrument.noteSubFilters[j + 1]!.controlPoints[k];
-                                buffer.push(base64IntToCharCode[point.type], base64IntToCharCode[Math.round(point.freq)], base64IntToCharCode[Math.round(point.gain)], base64IntToCharCode[point.q]);
-                            }
-                        }
-                    }
-                }
-
                 //in theepbox, effects are stored in arbitary order. this allows it to have multiple of the same effect!
 
                 buffer.push(SongTagCode.effects, base64IntToCharCode[instrument.effectCount]);
@@ -2242,62 +2204,7 @@ export class Song {
                 } else {
                     const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                     let typeCheck: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                    if (fromTheepBox) { //in mods that arent theepbox, pre eq is switched with eq filter
-                        if (typeCheck == 0) {
-                            instrument.noteFilterType = false;
-                            typeCheck = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                            const originalControlPointCount: number = typeCheck;
-                            instrument.noteFilter.controlPointCount = clamp(0, Config.filterMaxPoints + 1, originalControlPointCount);
-                            for (let i: number = instrument.noteFilter.controlPoints.length; i < instrument.noteFilter.controlPointCount; i++) {
-                                instrument.noteFilter.controlPoints[i] = new FilterControlPoint();
-                            }
-                            for (let i: number = 0; i < instrument.noteFilter.controlPointCount; i++) {
-                                const point: FilterControlPoint = instrument.noteFilter.controlPoints[i];
-                                point.type = clamp(0, FilterType.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                if (fromTheepBox) point.q = clamp(0, Config.filterQRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                else point.q = 1 / Config.filterQStep;
-                            }
-                            for (let i: number = instrument.noteFilter.controlPointCount; i < originalControlPointCount; i++) {
-                                if (fromTheepBox) charIndex += 4;
-                                else charIndex += 3;
-                            }
-
-                            // Get subfilters as well. Skip Index 0, is a copy of the base filter.
-                            instrument.noteSubFilters[0] = instrument.noteFilter;
-                            let usingSubFilterBitfield: number = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                            for (let j: number = 0; j < Config.filterMorphCount - 1; j++) {
-                                if (usingSubFilterBitfield & (1 << j)) {
-                                    // Number of control points
-                                    const originalSubfilterControlPointCount: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                    if (instrument.noteSubFilters[j + 1] == null)
-                                        instrument.noteSubFilters[j + 1] = new FilterSettings();
-                                    instrument.noteSubFilters[j + 1]!.controlPointCount = clamp(0, Config.filterMaxPoints + 1, originalSubfilterControlPointCount);
-                                    for (let i: number = instrument.noteSubFilters[j + 1]!.controlPoints.length; i < instrument.noteSubFilters[j + 1]!.controlPointCount; i++) {
-                                        instrument.noteSubFilters[j + 1]!.controlPoints[i] = new FilterControlPoint();
-                                    }
-                                    for (let i: number = 0; i < instrument.noteSubFilters[j + 1]!.controlPointCount; i++) {
-                                        const point: FilterControlPoint = instrument.noteSubFilters[j + 1]!.controlPoints[i];
-                                        point.type = clamp(0, FilterType.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                        point.freq = clamp(0, Config.filterFreqRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                        point.gain = clamp(0, Config.filterGainRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                        if (fromTheepBox) point.q = clamp(0, Config.filterQRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                        else point.q = 1 / Config.filterQStep;
-                                    }
-                                    for (let i: number = instrument.noteSubFilters[j + 1]!.controlPointCount; i < originalSubfilterControlPointCount; i++) {
-                                        if (fromTheepBox) charIndex += 4;
-                                        else charIndex += 3;
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            instrument.noteFilterType = true;
-                            instrument.noteFilterSimpleCut = clamp(0, Config.filterSimpleCutRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                            instrument.noteFilterSimplePeak = clamp(0, Config.filterSimplePeakRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                        }
-                    } else {
+                    if (!(fromTheepBox && !beforeSeven)) { // in theepbox url version 5 and 6, pre eq (note filter) is swapped with post eq (eq filter). in version 7+, pre eq no longer exists.
                         let newEffect: Effect = instrument.addEffect(EffectType.eqFilter);
                         if (fromBeepBox || typeCheck == 0) {
                             newEffect.eqFilterType = false;
