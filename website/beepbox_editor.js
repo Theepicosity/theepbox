@@ -40646,7 +40646,7 @@ You should be redirected to the song at:<br /><br />
                     const ringModWaveRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("ringModHz") }, "Wave:"), HTML.div({ class: "selectContainer" }, ringModWaveSelect));
                     const ringModRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("ringMod") }, "Ring Mod:"), ringModSlider.container);
                     const ringModHzRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.div(HTML.span({ class: "tip", onclick: () => this._openPrompt("ringModHz") }, "Hertz:"), HTML.div({ style: `color: ${ColorConfig.secondaryText}; ` }, ringModHzNum)), ringModHzSlider.container);
-                    const granularRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("granular") }, "Granular:"), granularSlider.container);
+                    const granularRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("granular") }, "Wet/Dry Mix:"), granularSlider.container);
                     const grainSizeRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("grainSize") }, "Grain Size:"), grainSizeSlider.container);
                     const grainAmountsRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("grainAmounts") }, "Grain Freq:"), grainAmountsSlider.container);
                     const grainRangeRow = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("grainRange") }, "Grain Range:"), grainRangeSlider.container);
@@ -51023,44 +51023,41 @@ You should be redirected to the song at:<br /><br />
                             let useEffect = 0;
                             let tmpCount = -1;
                             let matchingEffectCount = -1;
-                            for (let i = 0; i < instrument.modChannels[mod].length; i++) {
-                                let modChannel = this._doc.song.channels[instrument.modChannels[mod][i]];
-                                for (let j = 0; j < modChannel.instruments.length; j++) {
-                                    if (filterType == "post eq") {
-                                        for (let k = 0; k < modChannel.instruments[j].effects.length; k++) {
-                                            let effect = modChannel.instruments[j].effects[k];
-                                            if (effect.type != 5)
-                                                continue;
-                                            else {
-                                                matchingEffectCount++;
-                                                if (k == instrument.modEffects[mod][matchingEffectCount] && effect.eqFilter.controlPointCount > tmpCount) {
-                                                    tmpCount = effect.eqFilter.controlPointCount;
-                                                    useChannel = instrument.modChannels[mod][i];
-                                                    useInstrument = j;
-                                                    useEffect = k;
+                            if (!useSongEq) {
+                                for (let i = 0; i < instrument.modChannels[mod].length; i++) {
+                                    let modChannel = this._doc.song.channels[instrument.modChannels[mod][i]];
+                                    for (let j = 0; j < modChannel.instruments.length; j++) {
+                                        if (filterType == "post eq") {
+                                            for (let k = 0; k < modChannel.instruments[j].effects.length; k++) {
+                                                let effect = modChannel.instruments[j].effects[k];
+                                                if (effect.type != 5)
+                                                    continue;
+                                                else {
+                                                    matchingEffectCount++;
+                                                    if (k == instrument.modEffects[mod][matchingEffectCount] && effect.eqFilter.controlPointCount > tmpCount) {
+                                                        tmpCount = effect.eqFilter.controlPointCount;
+                                                        useChannel = instrument.modChannels[mod][i];
+                                                        useInstrument = j;
+                                                        useEffect = k;
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
-                                    else {
-                                        if (modChannel.instruments[j].noteFilter.controlPointCount > tmpCount) {
-                                            tmpCount = modChannel.instruments[j].noteFilter.controlPointCount;
-                                            useChannel = instrument.modChannels[mod][i];
-                                            useInstrument = j;
-                                            useEffect = 0;
+                                        else {
+                                            if (modChannel.instruments[j].noteFilter.controlPointCount > tmpCount) {
+                                                tmpCount = modChannel.instruments[j].noteFilter.controlPointCount;
+                                                useChannel = instrument.modChannels[mod][i];
+                                                useInstrument = j;
+                                                useEffect = 0;
+                                            }
                                         }
                                     }
                                 }
                             }
-                            let modChannel = this._doc.song.channels[useChannel];
-                            console.log(useChannel);
-                            let dotCount = (filterType == "post eq")
-                                ? modChannel.instruments[useInstrument].getLargestControlPointCount(false, useEffect)
-                                : modChannel.instruments[useInstrument].getLargestControlPointCount(true);
-                            let effect = modChannel.instruments[useInstrument].effects[useEffect];
-                            const isSimple = useSongEq ? false : (filterType == "pre eq" ? modChannel.instruments[useInstrument].noteFilterType : effect.eqFilterType);
-                            if (isSimple)
-                                dotCount = 0;
+                            let dotCount = 0;
+                            let isSimple = false;
+                            if (!useSongEq)
+                                isSimple = (filterType == "pre eq" ? this._doc.song.channels[useChannel].instruments[useInstrument].noteFilterType : this._doc.song.channels[useChannel].instruments[useInstrument].effects[useEffect].eqFilterType);
                             if (useSongEq) {
                                 dotCount = this._doc.song.eqFilter.controlPointCount;
                                 if (this._modFilterBoxes[mod].children.length != 1 + dotCount * 2) {
@@ -51076,6 +51073,11 @@ You should be redirected to the song at:<br /><br />
                                 }
                             }
                             else if (isSimple || this._modFilterBoxes[mod].children.length != 1 + dotCount * 2) {
+                                if (!isSimple) {
+                                    dotCount = (filterType == "post eq")
+                                        ? this._doc.song.channels[useChannel].instruments[useInstrument].getLargestControlPointCount(false, useEffect)
+                                        : this._doc.song.channels[useChannel].instruments[useInstrument].getLargestControlPointCount(true);
+                                }
                                 while (this._modFilterBoxes[mod].firstChild)
                                     this._modFilterBoxes[mod].remove(0);
                                 const dotList = [];
