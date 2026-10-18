@@ -233,6 +233,7 @@ export class Synth {
                     instrumentState.vibratoTime = 0;
                     instrumentState.nextVibratoTime = 0;
                     for (let envelopeIndex: number = 0; envelopeIndex < Config.maxEnvelopeCount + 1; envelopeIndex++) instrumentState.envelopeTime[envelopeIndex] = 0;
+                    instrumentState.resetAllEffects()
                     instrumentState.arpTime = 0;
                     instrumentState.updateWaves(instrument, this.samplesPerSecond);
                     instrumentState.allocateNecessaryBuffers(this, instrument, samplesPerTick);

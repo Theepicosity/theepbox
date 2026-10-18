@@ -19301,16 +19301,8 @@ li.select2-results__option[role=group] > strong:hover {
         computeEnvelopes(instrument, currentPart, tickTimeStart, tickTimeStartReal, secondsPerTick, tone, timeScale, instrumentState, synth, channelIndex, instrumentIndex) {
             const secondsPerTickUnscaled = secondsPerTick;
             const transition = instrument.getTransition();
-            if (tone != null && tone.atNoteStart && !transition.continues && !tone.forceContinueAtStart) {
-                this.prevNoteSecondsEndUnscaled = this.noteSecondsEndUnscaled;
-                this.prevNoteTicksEnd = this.noteTicksEnd;
-                this._prevNoteSizeFinal = this._noteSizeFinal;
-                this.noteSecondsEndUnscaled = 0.0;
-                this.noteTicksEnd = 0.0;
-                for (let envelopeIndex = 0; envelopeIndex < Config.maxEnvelopeCount + 1; envelopeIndex++) {
-                    this.prevNoteSecondsEnd[envelopeIndex] = this.noteSecondsEnd[envelopeIndex];
-                    this.noteSecondsEnd[envelopeIndex] = 0.0;
-                }
+            if (tone != null && tone.atNoteStart && (!(transition.isSeamless || instrument.clicklessTransition || tone.forceContinueAtStart) || tone.prevNote == null)) {
+                this.reset();
             }
             if (tone != null) {
                 if (tone.note != null) {
@@ -20625,6 +20617,7 @@ li.select2-results__option[role=group] > strong:hover {
                         instrumentState.nextVibratoTime = 0;
                         for (let envelopeIndex = 0; envelopeIndex < Config.maxEnvelopeCount + 1; envelopeIndex++)
                             instrumentState.envelopeTime[envelopeIndex] = 0;
+                        instrumentState.resetAllEffects();
                         instrumentState.arpTime = 0;
                         instrumentState.updateWaves(instrument, this.samplesPerSecond);
                         instrumentState.allocateNecessaryBuffers(this, instrument, samplesPerTick);
