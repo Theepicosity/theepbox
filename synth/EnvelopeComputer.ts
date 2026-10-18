@@ -87,16 +87,8 @@ export class EnvelopeComputer {
     public computeEnvelopes(instrument: Instrument, currentPart: number, tickTimeStart: number[], tickTimeStartReal: number, secondsPerTick: number, tone: Tone | null, timeScale: number[], instrumentState: InstrumentState, synth: Synth, channelIndex: number, instrumentIndex: number): void {
         const secondsPerTickUnscaled: number = secondsPerTick;
         const transition: Transition = instrument.getTransition();
-        if (tone != null && tone.atNoteStart && !transition.continues && !tone.forceContinueAtStart) {
-            this.prevNoteSecondsEndUnscaled = this.noteSecondsEndUnscaled;
-            this.prevNoteTicksEnd = this.noteTicksEnd;
-            this._prevNoteSizeFinal = this._noteSizeFinal;
-            this.noteSecondsEndUnscaled = 0.0;
-            this.noteTicksEnd = 0.0;
-            for (let envelopeIndex: number = 0; envelopeIndex < Config.maxEnvelopeCount + 1; envelopeIndex++) {
-                this.prevNoteSecondsEnd[envelopeIndex] = this.noteSecondsEnd[envelopeIndex];
-                this.noteSecondsEnd[envelopeIndex] = 0.0;
-            }
+        if (tone != null && tone.atNoteStart && (!(transition.isSeamless || instrument.clicklessTransition || tone.forceContinueAtStart) || tone.prevNote == null)) {
+            this.reset();
         }
         if (tone != null) {
             if (tone.note != null) {
