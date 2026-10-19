@@ -10668,7 +10668,7 @@ var beepbox = (function (exports) {
         computeEnvelopes(instrument, currentPart, tickTimeStart, tickTimeStartReal, secondsPerTick, tone, timeScale, instrumentState, synth, channelIndex, instrumentIndex) {
             const secondsPerTickUnscaled = secondsPerTick;
             const transition = instrument.getTransition();
-            if (tone != null && tone.atNoteStart && (!(transition.isSeamless || instrument.clicklessTransition || tone.forceContinueAtStart) || tone.prevNote == null)) {
+            if (tone != null && tone.atNoteStart && (!((transition.isSeamless && transition.continues) || instrument.clicklessTransition || tone.forceContinueAtStart) || tone.prevNote == null)) {
                 this.reset();
             }
             if (tone != null) {
@@ -13479,6 +13479,7 @@ var beepbox = (function (exports) {
                     const instrument = channel.instruments[instrumentIndex];
                     if (instrument.getChord().singleTone) {
                         let tone;
+                        const atNoteStart = (toneList.count() <= toneCount) || this.liveInputStarted;
                         if (toneList.count() <= toneCount) {
                             tone = this.newTone();
                             toneList.pushBack(tone);
@@ -13499,7 +13500,7 @@ var beepbox = (function (exports) {
                         tone.chordSize = 1;
                         tone.instrumentIndex = instrumentIndex;
                         tone.note = tone.prevNote = tone.nextNote = null;
-                        tone.atNoteStart = this.liveInputStarted;
+                        tone.atNoteStart = atNoteStart;
                         tone.forceContinueAtStart = false;
                         tone.forceContinueAtEnd = false;
                         this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -13507,6 +13508,7 @@ var beepbox = (function (exports) {
                     else {
                         this.moveTonesIntoOrderedTempMatchedList(toneList, pitches);
                         for (let i = 0; i < pitches.length; i++) {
+                            let atNoteStart = this.liveInputStarted;
                             let tone;
                             if (this.tempMatchedPitchTones[toneCount] != null) {
                                 tone = this.tempMatchedPitchTones[toneCount];
@@ -13514,11 +13516,13 @@ var beepbox = (function (exports) {
                                 if (tone.pitchCount != 1 || tone.pitches[0] != pitches[i]) {
                                     this.releaseTone(instrumentState, tone);
                                     tone = this.newTone();
+                                    atNoteStart = true;
                                 }
                                 toneList.pushBack(tone);
                             }
                             else {
                                 tone = this.newTone();
+                                atNoteStart = true;
                                 toneList.pushBack(tone);
                             }
                             toneCount++;
@@ -13527,7 +13531,7 @@ var beepbox = (function (exports) {
                             tone.chordSize = pitches.length;
                             tone.instrumentIndex = instrumentIndex;
                             tone.note = tone.prevNote = tone.nextNote = null;
-                            tone.atNoteStart = this.liveInputStarted;
+                            tone.atNoteStart = atNoteStart;
                             tone.forceContinueAtStart = false;
                             tone.forceContinueAtEnd = false;
                             this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -13537,6 +13541,7 @@ var beepbox = (function (exports) {
                 if (this.liveBassInputDuration > 0 && (channelIndex == this.liveBassInputChannel) && bassPitches.length > 0 && this.liveBassInputInstruments.indexOf(instrumentIndex) != -1) {
                     const instrument = channel.instruments[instrumentIndex];
                     if (instrument.getChord().singleTone) {
+                        const atNoteStart = (toneList.count() <= toneCount) || this.liveBassInputStarted;
                         let tone;
                         if (toneList.count() <= toneCount) {
                             tone = this.newTone();
@@ -13558,7 +13563,7 @@ var beepbox = (function (exports) {
                         tone.chordSize = 1;
                         tone.instrumentIndex = instrumentIndex;
                         tone.note = tone.prevNote = tone.nextNote = null;
-                        tone.atNoteStart = this.liveBassInputStarted;
+                        tone.atNoteStart = atNoteStart;
                         tone.forceContinueAtStart = false;
                         tone.forceContinueAtEnd = false;
                         this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -13566,6 +13571,7 @@ var beepbox = (function (exports) {
                     else {
                         this.moveTonesIntoOrderedTempMatchedList(toneList, bassPitches);
                         for (let i = 0; i < bassPitches.length; i++) {
+                            let atNoteStart = this.liveBassInputStarted;
                             let tone;
                             if (this.tempMatchedPitchTones[toneCount] != null) {
                                 tone = this.tempMatchedPitchTones[toneCount];
@@ -13573,11 +13579,13 @@ var beepbox = (function (exports) {
                                 if (tone.pitchCount != 1 || tone.pitches[0] != bassPitches[i]) {
                                     this.releaseTone(instrumentState, tone);
                                     tone = this.newTone();
+                                    atNoteStart = true;
                                 }
                                 toneList.pushBack(tone);
                             }
                             else {
                                 tone = this.newTone();
+                                atNoteStart = true;
                                 toneList.pushBack(tone);
                             }
                             toneCount++;
@@ -13586,7 +13594,7 @@ var beepbox = (function (exports) {
                             tone.chordSize = bassPitches.length;
                             tone.instrumentIndex = instrumentIndex;
                             tone.note = tone.prevNote = tone.nextNote = null;
-                            tone.atNoteStart = this.liveBassInputStarted;
+                            tone.atNoteStart = atNoteStart;
                             tone.forceContinueAtStart = false;
                             tone.forceContinueAtEnd = false;
                             this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);

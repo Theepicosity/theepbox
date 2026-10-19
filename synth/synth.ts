@@ -2012,6 +2012,8 @@ export class Synth {
 
                 if (instrument.getChord().singleTone) {
                     let tone: Tone;
+                    const atNoteStart: boolean = (toneList.count() <= toneCount) || this.liveInputStarted;
+
                     if (toneList.count() <= toneCount) {
                         tone = this.newTone();
                         toneList.pushBack(tone);
@@ -2031,7 +2033,7 @@ export class Synth {
                     tone.chordSize = 1;
                     tone.instrumentIndex = instrumentIndex;
                     tone.note = tone.prevNote = tone.nextNote = null;
-                    tone.atNoteStart = this.liveInputStarted;
+                    tone.atNoteStart = atNoteStart;
                     tone.forceContinueAtStart = false;
                     tone.forceContinueAtEnd = false;
                     this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -2042,6 +2044,7 @@ export class Synth {
 
                     for (let i: number = 0; i < pitches.length; i++) {
                         //const strumOffsetParts: number = i * instrument.getChord().strumParts;
+                        let atNoteStart: boolean = this.liveInputStarted;
 
                         let tone: Tone;
                         if (this.tempMatchedPitchTones[toneCount] != null) {
@@ -2050,10 +2053,12 @@ export class Synth {
                             if (tone.pitchCount != 1 || tone.pitches[0] != pitches[i]) {
                                 this.releaseTone(instrumentState, tone);
                                 tone = this.newTone();
+                                atNoteStart = true;
                             }
                             toneList.pushBack(tone);
                         } else {
                             tone = this.newTone();
+                            atNoteStart = true;
                             toneList.pushBack(tone);
                         }
                         toneCount++;
@@ -2063,7 +2068,7 @@ export class Synth {
                         tone.chordSize = pitches.length;
                         tone.instrumentIndex = instrumentIndex;
                         tone.note = tone.prevNote = tone.nextNote = null;
-                        tone.atNoteStart = this.liveInputStarted;
+                        tone.atNoteStart = atNoteStart;
                         tone.forceContinueAtStart = false;
                         tone.forceContinueAtEnd = false;
                         this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -2075,6 +2080,7 @@ export class Synth {
                 const instrument: Instrument = channel.instruments[instrumentIndex];
 
                 if (instrument.getChord().singleTone) {
+                    const atNoteStart: boolean = (toneList.count() <= toneCount) || this.liveBassInputStarted;
                     let tone: Tone;
                     if (toneList.count() <= toneCount) {
                         tone = this.newTone();
@@ -2095,7 +2101,7 @@ export class Synth {
                     tone.chordSize = 1;
                     tone.instrumentIndex = instrumentIndex;
                     tone.note = tone.prevNote = tone.nextNote = null;
-                    tone.atNoteStart = this.liveBassInputStarted;
+                    tone.atNoteStart = atNoteStart;
                     tone.forceContinueAtStart = false;
                     tone.forceContinueAtEnd = false;
                     this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -2106,6 +2112,7 @@ export class Synth {
 
                     for (let i: number = 0; i < bassPitches.length; i++) {
                         //const strumOffsetParts: number = i * instrument.getChord().strumParts;
+                        let atNoteStart: boolean = this.liveBassInputStarted;
 
                         let tone: Tone;
                         if (this.tempMatchedPitchTones[toneCount] != null) {
@@ -2114,10 +2121,12 @@ export class Synth {
                             if (tone.pitchCount != 1 || tone.pitches[0] != bassPitches[i]) {
                                 this.releaseTone(instrumentState, tone);
                                 tone = this.newTone();
+                                atNoteStart = true;
                             }
                             toneList.pushBack(tone);
                         } else {
                             tone = this.newTone();
+                            atNoteStart = true;
                             toneList.pushBack(tone);
                         }
                         toneCount++;
@@ -2127,7 +2136,7 @@ export class Synth {
                         tone.chordSize = bassPitches.length;
                         tone.instrumentIndex = instrumentIndex;
                         tone.note = tone.prevNote = tone.nextNote = null;
-                        tone.atNoteStart = this.liveBassInputStarted;
+                        tone.atNoteStart = atNoteStart;
                         tone.forceContinueAtStart = false;
                         tone.forceContinueAtEnd = false;
                         this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
