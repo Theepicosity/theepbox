@@ -2012,6 +2012,8 @@ export class Synth {
 
                 if (instrument.getChord().singleTone) {
                     let tone: Tone;
+                    const atNoteStart: boolean = (toneList.count() <= toneCount) || this.liveInputStarted;
+
                     if (toneList.count() <= toneCount) {
                         tone = this.newTone();
                         toneList.pushBack(tone);
@@ -2031,7 +2033,7 @@ export class Synth {
                     tone.chordSize = 1;
                     tone.instrumentIndex = instrumentIndex;
                     tone.note = tone.prevNote = tone.nextNote = null;
-                    tone.atNoteStart = this.liveInputStarted;
+                    tone.atNoteStart = atNoteStart;
                     tone.forceContinueAtStart = false;
                     tone.forceContinueAtEnd = false;
                     this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -2042,6 +2044,7 @@ export class Synth {
 
                     for (let i: number = 0; i < pitches.length; i++) {
                         //const strumOffsetParts: number = i * instrument.getChord().strumParts;
+                        let atNoteStart: boolean = this.liveInputStarted;
 
                         let tone: Tone;
                         if (this.tempMatchedPitchTones[toneCount] != null) {
@@ -2050,10 +2053,12 @@ export class Synth {
                             if (tone.pitchCount != 1 || tone.pitches[0] != pitches[i]) {
                                 this.releaseTone(instrumentState, tone);
                                 tone = this.newTone();
+                                atNoteStart = true;
                             }
                             toneList.pushBack(tone);
                         } else {
                             tone = this.newTone();
+                            atNoteStart = true;
                             toneList.pushBack(tone);
                         }
                         toneCount++;
@@ -2063,7 +2068,7 @@ export class Synth {
                         tone.chordSize = pitches.length;
                         tone.instrumentIndex = instrumentIndex;
                         tone.note = tone.prevNote = tone.nextNote = null;
-                        tone.atNoteStart = this.liveInputStarted;
+                        tone.atNoteStart = atNoteStart;
                         tone.forceContinueAtStart = false;
                         tone.forceContinueAtEnd = false;
                         this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -2075,6 +2080,7 @@ export class Synth {
                 const instrument: Instrument = channel.instruments[instrumentIndex];
 
                 if (instrument.getChord().singleTone) {
+                    const atNoteStart: boolean = (toneList.count() <= toneCount) || this.liveBassInputStarted;
                     let tone: Tone;
                     if (toneList.count() <= toneCount) {
                         tone = this.newTone();
@@ -2095,7 +2101,7 @@ export class Synth {
                     tone.chordSize = 1;
                     tone.instrumentIndex = instrumentIndex;
                     tone.note = tone.prevNote = tone.nextNote = null;
-                    tone.atNoteStart = this.liveBassInputStarted;
+                    tone.atNoteStart = atNoteStart;
                     tone.forceContinueAtStart = false;
                     tone.forceContinueAtEnd = false;
                     this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -2106,6 +2112,7 @@ export class Synth {
 
                     for (let i: number = 0; i < bassPitches.length; i++) {
                         //const strumOffsetParts: number = i * instrument.getChord().strumParts;
+                        let atNoteStart: boolean = this.liveBassInputStarted;
 
                         let tone: Tone;
                         if (this.tempMatchedPitchTones[toneCount] != null) {
@@ -2114,10 +2121,12 @@ export class Synth {
                             if (tone.pitchCount != 1 || tone.pitches[0] != bassPitches[i]) {
                                 this.releaseTone(instrumentState, tone);
                                 tone = this.newTone();
+                                atNoteStart = true;
                             }
                             toneList.pushBack(tone);
                         } else {
                             tone = this.newTone();
+                            atNoteStart = true;
                             toneList.pushBack(tone);
                         }
                         toneCount++;
@@ -2127,7 +2136,7 @@ export class Synth {
                         tone.chordSize = bassPitches.length;
                         tone.instrumentIndex = instrumentIndex;
                         tone.note = tone.prevNote = tone.nextNote = null;
-                        tone.atNoteStart = this.liveBassInputStarted;
+                        tone.atNoteStart = atNoteStart;
                         tone.forceContinueAtStart = false;
                         tone.forceContinueAtEnd = false;
                         this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -3109,7 +3118,6 @@ export class Synth {
                 arpeggioInterval = tone.pitches[getArpeggioPitchIndex(tone.pitchCount, instrument.fastTwoNoteArp, arpeggio)] - tone.pitches[0];
             }
 
-
             const carrierCount: number = (instrument.type == InstrumentType.fm6op ? instrument.customAlgorithm.carrierCount : Config.algorithms[instrument.algorithm].carrierCount);
             for (let i: number = 0; i < (instrument.type == InstrumentType.fm6op ? 6 : Config.operatorCount); i++) {
 
@@ -3165,12 +3173,7 @@ export class Synth {
 
                 if (i < carrierCount) {
                     // carrier
-                    let pitchExpressionStart: number;
-                    if (tone.prevPitchExpressions[i] != null) {
-                        pitchExpressionStart = tone.prevPitchExpressions[i]!;
-                    } else {
-                        pitchExpressionStart = Math.pow(2.0, -(pitchStart - expressionReferencePitch) / pitchDamping);
-                    }
+                    const pitchExpressionStart = Math.pow(2.0, -(pitchStart - expressionReferencePitch) / pitchDamping);
                     const pitchExpressionEnd: number = Math.pow(2.0, -(pitchEnd - expressionReferencePitch) / pitchDamping);
                     tone.prevPitchExpressions[i] = pitchExpressionEnd;
                     expressionStart *= pitchExpressionStart;
@@ -3217,8 +3220,6 @@ export class Synth {
             }
             tone.expression = expressionStart;
             tone.expressionDelta = (expressionEnd - expressionStart) / roundedSamplesPerTick;
-            
-
 
             let useFeedbackAmplitudeStart: number = instrument.feedbackAmplitude;
             let useFeedbackAmplitudeEnd: number = instrument.feedbackAmplitude;
@@ -3258,13 +3259,7 @@ export class Synth {
 
             const startPitch: number = basePitch + (pitch + intervalStart) * intervalScale;
             const endPitch: number = basePitch + (pitch + intervalEnd) * intervalScale;
-            let pitchExpressionStart: number;
-            // TODO: use the second element of prevPitchExpressions for the unison voice, compute a separate expression delta for it.
-            if (tone.prevPitchExpressions[0] != null) {
-                pitchExpressionStart = tone.prevPitchExpressions[0]!;
-            } else {
-                pitchExpressionStart = Math.pow(2.0, -(startPitch - expressionReferencePitch) / pitchDamping);
-            }
+            const pitchExpressionStart = Math.pow(2.0, -(startPitch - expressionReferencePitch) / pitchDamping);
             const pitchExpressionEnd: number = Math.pow(2.0, -(endPitch - expressionReferencePitch) / pitchDamping);
             tone.prevPitchExpressions[0] = pitchExpressionEnd;
             let settingsExpressionMult: number = baseExpression * noteFilterExpression;
@@ -3629,7 +3624,6 @@ export class Synth {
 
             tone.expression = expressionStart;
             tone.expressionDelta = (expressionEnd - expressionStart) / roundedSamplesPerTick;
-
 
             if (instrument.type == InstrumentType.pickedString) {
                 let stringDecayStart: number;
@@ -6037,7 +6031,7 @@ export class Synth {
 			noiseSampleB += (waveSampleB - noiseSampleB) * pitchRelativefilterB;
 
 			const inputSample: number = noiseSampleA + noiseSampleB * unisonSign;
-			const sample: number = applyFilters(inputSample, initialFilterInput1, initialFilterInput2, filterCount, filters);
+            const sample: number = applyFilters(inputSample, initialFilterInput1, initialFilterInput2, filterCount, filters);
 			initialFilterInput2 = initialFilterInput1;
 			initialFilterInput1 = inputSample;
 
