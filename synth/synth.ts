@@ -982,7 +982,7 @@ export class Synth {
         else return foundModState;
     }
 
-    public setModValue(volumeStart: number, volumeEnd: number, target: number, index?: number, channelIndex?: number, instrumentIndex?: number, effectIndex?: number): number {
+    public setModValue(volumeStart: number, volumeEnd: number, target: number, index: number = 0, channelIndex: number = 0, instrumentIndex: number = 0, effectIndex: number = 0): number {
         let val: number = volumeStart + Config.automationParams[target].convertRealFactor;
         let nextVal: number = volumeEnd + Config.automationParams[target].convertRealFactor;
 
@@ -1016,27 +1016,33 @@ export class Synth {
         return val;
     }
 
-    public getModValue(target: number, index?: number, channelIndex?: number, instrumentIndex?: number, effectIndex?: number, nextVal?: boolean): number {
+    public getModValue(target: number, index: number = 0, channelIndex: number = 0, instrumentIndex: number = 0, effectIndex: number = 0, nextVal: boolean = false): number {
         const forSong: boolean = Config.automationParams[target].forSong;
         const noEffect: boolean = Config.automationParams[target].associatedEffect == null;
         const noIndex: boolean = Config.automationParams[target].maxIndex == 0;
         if (noIndex) index = 0;
 
-        let useMod: number = -1;
+        let useMod: number | null = null;
         if (forSong) {
             useMod = this.getModStateIndex(target, index, 0, 0, 0);
-            return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
         } else if (channelIndex != undefined && instrumentIndex != undefined && noEffect) {
             useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, 0);
-            console.log(this.modStates[0])
-            console.log(instrumentIndex)
-            return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
         } else if (channelIndex != undefined && instrumentIndex != undefined && effectIndex != undefined) {
             useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex);
-            return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
         }
-        return -1;
+        if (useMod == null) return 0;
+        else return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
     }
+
+    // i realized this is kindof useless since mod and envelope are calculated very different for a lot of the effects...
+    // public getAutomationValue(target: number, index: number, channelIndex: number, instrumentIndex: number, effectIndex: number, nextVal?: boolean): number {
+    //     let value: number = 1;
+    //     if (this.isModActive(target, index, channelIndex, instrumentIndex, effectIndex)) {
+    //         value = this.getModValue(target, index, channelIndex, instrumentIndex, effectIndex, nextVal);
+    //     }
+    //     value *= this.channels[channelIndex].instruments[instrumentIndex].envelopeComputer.getEnvelopeValue(target, index, effectIndex, nextVal)
+    //     return value;
+    // }
 
     // Checks if any mod is active for the given channel/instrument OR if any mod is active for the song scope. Could split the logic if needed later.
     public isAnyModActive(channelIndex: number, instrumentIndex: number): boolean {
@@ -1051,13 +1057,13 @@ export class Synth {
         return false;
     }
 
-    public unsetMod(target: number, index?: number, channelIndex?: number, instrumentIndex?: number, effectIndex?: number) {
+    public unsetMod(target: number, index: number = 0, channelIndex: number = 0, instrumentIndex: number = 0, effectIndex: number = 0) {
         const forSong: boolean = Config.automationParams[target].forSong;
         const noEffect: boolean = Config.automationParams[target].associatedEffect == EffectType.length;
         const noIndex: boolean = Config.automationParams[target].maxIndex == 0;
         if (noIndex) index = 0;
 
-        let useMod: number = -1;
+        let useMod: number | null = -1;
         if (forSong) {
             useMod = this.getModStateIndex(target, index, 0, 0, 0);
         } else if (noEffect) {
@@ -1106,7 +1112,7 @@ export class Synth {
         const forSong: boolean = Config.automationParams[target].forSong;
         const noEffect: boolean = Config.automationParams[target].associatedEffect == null;
         const noIndex: boolean = Config.automationParams[target].maxIndex == 0;
-        if (noIndex) index = 0;
+        if (noIndex || index == undefined) index = 0;
 
         let isActive: boolean = false;
         if (forSong) {
@@ -1917,8 +1923,6 @@ export class Synth {
                     }
                 }
             }
-
-            const maxInstrumentsPerChannel = this.song.getMaxInstrumentsPerChannel();
         }
 
         // Optimization: Avoid persistent reverb values in the float denormal range.
@@ -2031,7 +2035,7 @@ export class Synth {
 
                     for (let i: number = 0; i < pitches.length; i++) {
                         //const strumOffsetParts: number = i * instrument.getChord().strumParts;
-                        let atNoteStart: boolean = false;
+                        let atNoteStart: boolean = this.liveInputStarted;
 
                         let tone: Tone;
                         if (this.tempMatchedPitchTones[toneCount] != null) {
@@ -2099,7 +2103,7 @@ export class Synth {
 
                     for (let i: number = 0; i < bassPitches.length; i++) {
                         //const strumOffsetParts: number = i * instrument.getChord().strumParts;
-                        let atNoteStart: boolean = false;
+                        let atNoteStart: boolean = this.liveBassInputStarted;
 
                         let tone: Tone;
                         if (this.tempMatchedPitchTones[toneCount] != null) {
@@ -2123,7 +2127,7 @@ export class Synth {
                         tone.chordSize = bassPitches.length;
                         tone.instrumentIndex = instrumentIndex;
                         tone.note = tone.prevNote = tone.nextNote = null;
-                        tone.atNoteStart = this.liveBassInputStarted;
+                        tone.atNoteStart = atNoteStart;
                         tone.forceContinueAtStart = false;
                         tone.forceContinueAtEnd = false;
                         this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -3500,10 +3504,10 @@ export class Synth {
                 if (tone.prevStringDecay != null) {
                     stringDecayStart = tone.prevStringDecay;
                 } else {
-                    const sustainEnvelopeStart: number = tone.envelopeComputer.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["sustain"].index, 0, null, false);
+                    const sustainEnvelopeStart: number = tone.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["sustain"].index, 0, null, false);
                     stringDecayStart = 1.0 - Math.min(1.0, sustainEnvelopeStart * tone.stringSustainStart / (Config.stringSustainRange - 1));
                 }
-                const sustainEnvelopeEnd: number = tone.envelopeComputer.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["sustain"].index, 0, null, true);
+                const sustainEnvelopeEnd: number = tone.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["sustain"].index, 0, null, true);
                 let stringDecayEnd: number = 1.0 - Math.min(1.0, sustainEnvelopeEnd * tone.stringSustainEnd / (Config.stringSustainRange - 1));
                 tone.prevStringDecay = stringDecayEnd;
 

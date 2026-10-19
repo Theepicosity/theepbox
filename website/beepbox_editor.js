@@ -1586,7 +1586,7 @@ var beepbox = (() => {
         maxRawVol: _Config.volumeRange,
         newNoteVol: Math.ceil(_Config.volumeRange / 2),
         forSong: false,
-        convertRealFactor: 0,
+        convertRealFactor: -Math.ceil(_Config.volumeRange / 2),
         isFilter: false,
         associatedInstruments: null,
         associatedEffect: null,
@@ -1602,7 +1602,7 @@ var beepbox = (() => {
         maxRawVol: _Config.volumeRange / 2 * _Config.gainRangeMult,
         newNoteVol: Math.ceil(_Config.volumeRange / 2 * _Config.gainRangeMult / 2),
         forSong: false,
-        convertRealFactor: 0,
+        convertRealFactor: -Math.ceil(_Config.volumeRange / 2 * _Config.gainRangeMult / 2),
         isFilter: false,
         associatedInstruments: null,
         associatedEffect: 9 /* gain */,
@@ -2146,7 +2146,7 @@ var beepbox = (() => {
         maxRawVol: _Config.volumeRange,
         newNoteVol: Math.ceil(_Config.volumeRange / 2),
         forSong: false,
-        convertRealFactor: 0,
+        convertRealFactor: -Math.ceil(_Config.volumeRange / 2),
         isFilter: false,
         associatedInstruments: null,
         associatedEffect: null,
@@ -19003,7 +19003,7 @@ li.select2-results__option[role=group] > strong:hover {
     }
     compute(synth, instrument, effect, instrumentState, samplesPerTick, roundedSamplesPerTick, tone, channelIndex, instrumentIndex, effectIndex) {
       const samplesPerSecond = synth.samplesPerSecond;
-      const envelopeComputer = instrument.envelopeComputer;
+      const envelopeComputer = instrumentState.envelopeComputer;
       this.type = effect.type;
       const usesGranular = effect.type == 8 /* granular */;
       const usesRingModulation = effect.type == 7 /* ringModulation */;
@@ -19019,8 +19019,8 @@ li.select2-results__option[role=group] > strong:hover {
       const usesEQFilter = effect.type == 5 /* eqFilter */;
       if (usesGranular) {
         this.granularMaximumGrains = Math.pow(2, effect.grainAmounts * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["grain frequency"].index, 0, effectIndex, false));
-        if (synth.isModActive(Config.automationParams.dictionary["grain frequency"].index, channelIndex, instrumentIndex, effectIndex)) {
-          this.granularMaximumGrains = Math.pow(2, synth.getModValue(Config.automationParams.dictionary["grain frequency"].index, channelIndex, instrumentIndex, effectIndex, false) * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["grain frequency"].index, 0, effectIndex, false));
+        if (synth.isModActive(Config.automationParams.dictionary["grain frequency"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          this.granularMaximumGrains = Math.pow(2, synth.getModValue(Config.automationParams.dictionary["grain frequency"].index, 0, channelIndex, instrumentIndex, effectIndex, false) * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["grain frequency"].index, 0, effectIndex, false));
         }
         this.granularMaximumGrains == Math.floor(this.granularMaximumGrains);
       }
@@ -19029,9 +19029,9 @@ li.select2-results__option[role=group] > strong:hover {
         this.granularMix = effect.granular / Config.granularRange;
         this.computeGrains = true;
         let granularMixEnd = this.granularMix;
-        if (synth.isModActive(Config.automationParams.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex)) {
-          this.granularMix = synth.getModValue(Config.automationParams.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, false) / Config.granularRange;
-          granularMixEnd = synth.getModValue(Config.automationParams.dictionary["granular"].index, channelIndex, instrumentIndex, effectIndex, true) / Config.granularRange;
+        if (synth.isModActive(Config.automationParams.dictionary["granular"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          this.granularMix = synth.getModValue(Config.automationParams.dictionary["granular"].index, 0, channelIndex, instrumentIndex, effectIndex, false) / Config.granularRange;
+          granularMixEnd = synth.getModValue(Config.automationParams.dictionary["granular"].index, 0, channelIndex, instrumentIndex, effectIndex, true) / Config.granularRange;
         }
         this.granularMix *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["granular"].index, 0, effectIndex, false);
         granularMixEnd *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["granular"].index, 0, effectIndex, true);
@@ -19039,13 +19039,13 @@ li.select2-results__option[role=group] > strong:hover {
         for (let iterations = 0; iterations < Math.ceil(Math.random() * Math.random() * 10); iterations++) {
           if (this.granularGrainsLength < this.granularMaximumGrains) {
             let granularMinGrainSizeInMilliseconds = effect.grainSize;
-            if (synth.isModActive(Config.automationParams.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex)) {
-              granularMinGrainSizeInMilliseconds = synth.getModValue(Config.automationParams.dictionary["grain size"].index, channelIndex, instrumentIndex, effectIndex, false);
+            if (synth.isModActive(Config.automationParams.dictionary["grain size"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+              granularMinGrainSizeInMilliseconds = synth.getModValue(Config.automationParams.dictionary["grain size"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
             }
             granularMinGrainSizeInMilliseconds *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["grain size"].index, 0, effectIndex, false);
             let grainRange = effect.grainRange;
-            if (synth.isModActive(Config.automationParams.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex)) {
-              grainRange = synth.getModValue(Config.automationParams.dictionary["grain range"].index, channelIndex, instrumentIndex, effectIndex, false);
+            if (synth.isModActive(Config.automationParams.dictionary["grain range"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+              grainRange = synth.getModValue(Config.automationParams.dictionary["grain range"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
             }
             grainRange *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["grain range"].index, 0, effectIndex, false);
             const granularMaxGrainSizeInMilliseconds = granularMinGrainSizeInMilliseconds + grainRange;
@@ -19073,9 +19073,9 @@ li.select2-results__option[role=group] > strong:hover {
       if (usesDistortion) {
         let useDistortionStart = effect.distortion;
         let useDistortionEnd = effect.distortion;
-        if (synth.isModActive(Config.automationParams.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useDistortionStart = synth.getModValue(Config.automationParams.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useDistortionEnd = synth.getModValue(Config.automationParams.dictionary["distortion"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["distortion"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useDistortionStart = synth.getModValue(Config.automationParams.dictionary["distortion"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useDistortionEnd = synth.getModValue(Config.automationParams.dictionary["distortion"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         const distortionSliderStart = Math.min(1, envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["distortion"].index, 0, effectIndex, false) * useDistortionStart / (Config.distortionRange - 1));
         const distortionSliderEnd = Math.min(1, envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["distortion"].index, 0, effectIndex, true) * useDistortionEnd / (Config.distortionRange - 1));
@@ -19093,13 +19093,13 @@ li.select2-results__option[role=group] > strong:hover {
         let useClippingInGainEnd = effect.clippingInGain;
         let useClippingThresholdStart = effect.clippingThreshold;
         let useClippingThresholdEnd = effect.clippingThreshold;
-        if (synth.isModActive(Config.automationParams.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useClippingInGainStart = synth.getModValue(Config.automationParams.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useClippingInGainEnd = synth.getModValue(Config.automationParams.dictionary["clipping in-gain"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["clipping in-gain"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useClippingInGainStart = synth.getModValue(Config.automationParams.dictionary["clipping in-gain"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useClippingInGainEnd = synth.getModValue(Config.automationParams.dictionary["clipping in-gain"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
-        if (synth.isModActive(Config.automationParams.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useClippingThresholdStart = synth.getModValue(Config.automationParams.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useClippingThresholdEnd = synth.getModValue(Config.automationParams.dictionary["clipping threshold"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["clipping threshold"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useClippingThresholdStart = synth.getModValue(Config.automationParams.dictionary["clipping threshold"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useClippingThresholdEnd = synth.getModValue(Config.automationParams.dictionary["clipping threshold"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         const clippingInGainStart = Math.pow(1 - envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["clipping in-gain"].index, 0, effectIndex, false) * useClippingInGainStart / Config.distortionRange, 2);
         const clippingInGainEnd = Math.pow(1 - envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["clipping in-gain"].index, 0, effectIndex, true) * useClippingInGainEnd / Config.distortionRange, 2);
@@ -19114,15 +19114,15 @@ li.select2-results__option[role=group] > strong:hover {
       if (usesBitcrusher) {
         let freqSettingStart = effect.bitcrusherFreq * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, false));
         let freqSettingEnd = effect.bitcrusherFreq * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, true));
-        if (synth.isModActive(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex)) {
-          freqSettingStart = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, false));
+        if (synth.isModActive(Config.automationParams.dictionary["frequency crush"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          freqSettingStart = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, 0, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, false));
           freqSettingEnd = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, true));
         }
         let quantizationSettingStart = effect.bitcrusherQuantization * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, false));
         let quantizationSettingEnd = effect.bitcrusherQuantization * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, true));
-        if (synth.isModActive(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex)) {
-          quantizationSettingStart = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, false));
-          quantizationSettingEnd = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, true));
+        if (synth.isModActive(Config.automationParams.dictionary["bit crush"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          quantizationSettingStart = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, 0, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, false));
+          quantizationSettingEnd = synth.getModValue(Config.automationParams.dictionary["bit crush"].index, 0, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, true));
         }
         const basePitch = Config.keys[synth.song.key].basePitch + Config.pitchesPerOctave * synth.song.octave;
         const freqStart = Instrument.frequencyFromPitch(basePitch + 60) * Math.pow(2, (Config.bitcrusherFreqRange - 1 - freqSettingStart) * Config.bitcrusherOctaveStep);
@@ -19152,14 +19152,14 @@ li.select2-results__option[role=group] > strong:hover {
           let endSimpleFreq = effect.eqFilterSimpleCut;
           let endSimpleGain = effect.eqFilterSimplePeak;
           let filterChanges = false;
-          if (synth.isModActive(Config.automationParams.dictionary["eq filter cut"].index, channelIndex, instrumentIndex, effectIndex)) {
-            startSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, channelIndex, instrumentIndex, effectIndex, false);
-            endSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, channelIndex, instrumentIndex, effectIndex, true);
+          if (synth.isModActive(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+            startSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+            endSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
             filterChanges = true;
           }
-          if (synth.isModActive(Config.automationParams.dictionary["eq filter peak"].index, channelIndex, instrumentIndex, effectIndex)) {
-            startSimpleGain = synth.getModValue(Config.automationParams.dictionary["eq filter peak"].index, channelIndex, instrumentIndex, effectIndex, false);
-            endSimpleGain = synth.getModValue(Config.automationParams.dictionary["eq filter peak"].index, channelIndex, instrumentIndex, effectIndex, true);
+          if (synth.isModActive(Config.automationParams.dictionary["eq filter peak"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+            startSimpleGain = synth.getModValue(Config.automationParams.dictionary["eq filter peak"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+            endSimpleGain = synth.getModValue(Config.automationParams.dictionary["eq filter peak"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
             filterChanges = true;
           }
           let startPoint;
@@ -19229,9 +19229,9 @@ li.select2-results__option[role=group] > strong:hover {
         const panEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pan"].index, 0, effectIndex, true) * 2 - 1;
         let usePanStart = effect.pan;
         let usePanEnd = effect.pan;
-        if (synth.isModActive(Config.automationParams.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex)) {
-          usePanStart = synth.getModValue(Config.automationParams.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex, false);
-          usePanEnd = synth.getModValue(Config.automationParams.dictionary["pan"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["pan"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          usePanStart = synth.getModValue(Config.automationParams.dictionary["pan"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          usePanEnd = synth.getModValue(Config.automationParams.dictionary["pan"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         let panStart = Math.max(-1, Math.min(1, (usePanStart - Config.panCenter) / Config.panCenter * panEnvelopeStart));
         let panEnd = Math.max(-1, Math.min(1, (usePanEnd - Config.panCenter) / Config.panCenter * panEnvelopeEnd));
@@ -19242,9 +19242,9 @@ li.select2-results__option[role=group] > strong:hover {
         const maxDelaySamples = samplesPerSecond * Config.panDelaySecondsMax;
         let usePanDelayStart = effect.panDelay;
         let usePanDelayEnd = effect.panDelay;
-        if (synth.isModActive(Config.automationParams.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex)) {
-          usePanDelayStart = synth.getModValue(Config.automationParams.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex, false);
-          usePanDelayEnd = synth.getModValue(Config.automationParams.dictionary["pan delay"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["pan delay"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          usePanDelayStart = synth.getModValue(Config.automationParams.dictionary["pan delay"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          usePanDelayEnd = synth.getModValue(Config.automationParams.dictionary["pan delay"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         const delayStart = panStart * usePanDelayStart * maxDelaySamples / 10;
         const delayEnd = panEnd * usePanDelayEnd * maxDelaySamples / 10;
@@ -19266,9 +19266,9 @@ li.select2-results__option[role=group] > strong:hover {
         const gainEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["gain"].index, 0, effectIndex, true);
         let useGainStart = effect.gain;
         let useGainEnd = effect.gain;
-        if (synth.isModActive(Config.automationParams.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useGainStart = synth.getModValue(Config.automationParams.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useGainEnd = synth.getModValue(Config.automationParams.dictionary["gain"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["gain"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useGainStart = synth.getModValue(Config.automationParams.dictionary["gain"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useGainEnd = synth.getModValue(Config.automationParams.dictionary["gain"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         let gainStart = Math.min(Config.gainRangeMult, gainEnvelopeStart * useGainStart / (Config.volumeRange / 2 * Config.gainRangeMult)) * Config.gainRangeMult;
         let gainEnd = Math.min(Config.gainRangeMult, gainEnvelopeEnd * useGainEnd / (Config.volumeRange / 2 * Config.gainRangeMult)) * Config.gainRangeMult;
@@ -19280,9 +19280,9 @@ li.select2-results__option[role=group] > strong:hover {
         const chorusEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["chorus"].index, 0, effectIndex, true);
         let useChorusStart = effect.chorus;
         let useChorusEnd = effect.chorus;
-        if (synth.isModActive(Config.automationParams.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useChorusStart = synth.getModValue(Config.automationParams.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useChorusEnd = synth.getModValue(Config.automationParams.dictionary["chorus"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["chorus"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useChorusStart = synth.getModValue(Config.automationParams.dictionary["chorus"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useChorusEnd = synth.getModValue(Config.automationParams.dictionary["chorus"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         let chorusStart = Math.min(1, chorusEnvelopeStart * useChorusStart / (Config.chorusRange - 1));
         let chorusEnd = Math.min(1, chorusEnvelopeEnd * useChorusEnd / (Config.chorusRange - 1));
@@ -19300,9 +19300,9 @@ li.select2-results__option[role=group] > strong:hover {
         const flangerEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger"].index, 0, effectIndex, true);
         let useFlangerStart = effect.flanger;
         let useFlangerEnd = effect.flanger;
-        if (synth.isModActive(Config.automationParams.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useFlangerStart = synth.getModValue(Config.automationParams.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useFlangerEnd = synth.getModValue(Config.automationParams.dictionary["flanger"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["flanger"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useFlangerStart = synth.getModValue(Config.automationParams.dictionary["flanger"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useFlangerEnd = synth.getModValue(Config.automationParams.dictionary["flanger"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         let flangerStart = Math.min(1, flangerEnvelopeStart * useFlangerStart / (Config.flangerRange - 1));
         let flangerEnd = Math.min(1, flangerEnvelopeEnd * useFlangerEnd / (Config.flangerRange - 1));
@@ -19310,9 +19310,9 @@ li.select2-results__option[role=group] > strong:hover {
         const flangerSpeedEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger speed"].index, 0, effectIndex, true);
         let useFlangerSpeedStart = effect.flangerSpeed;
         let useFlangerSpeedEnd = effect.flangerSpeed;
-        if (synth.isModActive(Config.automationParams.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useFlangerSpeedStart = synth.getModValue(Config.automationParams.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useFlangerSpeedEnd = synth.getModValue(Config.automationParams.dictionary["flanger speed"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["flanger speed"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useFlangerSpeedStart = synth.getModValue(Config.automationParams.dictionary["flanger speed"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useFlangerSpeedEnd = synth.getModValue(Config.automationParams.dictionary["flanger speed"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         let flangerSpeedStart = flangerSpeedEnvelopeStart * useFlangerSpeedStart + 2;
         let flangerSpeedEnd = flangerSpeedEnvelopeEnd * useFlangerSpeedEnd + 2;
@@ -19320,9 +19320,9 @@ li.select2-results__option[role=group] > strong:hover {
         const flangerDepthEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger depth"].index, 0, effectIndex, true);
         let useFlangerDepthStart = effect.flangerDepth;
         let useFlangerDepthEnd = effect.flangerDepth;
-        if (synth.isModActive(Config.automationParams.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useFlangerDepthStart = synth.getModValue(Config.automationParams.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useFlangerDepthEnd = synth.getModValue(Config.automationParams.dictionary["flanger depth"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["flanger depth"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useFlangerDepthStart = synth.getModValue(Config.automationParams.dictionary["flanger depth"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useFlangerDepthEnd = synth.getModValue(Config.automationParams.dictionary["flanger depth"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         let flangerDepthStart = flangerDepthEnvelopeStart * useFlangerDepthStart * 2 + 2;
         let flangerDepthEnd = flangerDepthEnvelopeEnd * useFlangerDepthEnd * 2 + 2;
@@ -19330,9 +19330,9 @@ li.select2-results__option[role=group] > strong:hover {
         const flangerFeedbackEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["flanger feedback"].index, 0, effectIndex, true);
         let useFlangerFeedbackStart = effect.flangerFeedback;
         let useFlangerFeedbackEnd = effect.flangerFeedback;
-        if (synth.isModActive(Config.automationParams.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useFlangerFeedbackStart = synth.getModValue(Config.automationParams.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useFlangerFeedbackEnd = synth.getModValue(Config.automationParams.dictionary["flanger feedback"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["flanger feedback"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useFlangerFeedbackStart = synth.getModValue(Config.automationParams.dictionary["flanger feedback"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useFlangerFeedbackEnd = synth.getModValue(Config.automationParams.dictionary["flanger feedback"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         let flangerFeedbackStart = flangerFeedbackEnvelopeStart * useFlangerFeedbackStart * 1.5;
         let flangerFeedbackEnd = flangerFeedbackEnvelopeEnd * useFlangerFeedbackEnd * 1.5;
@@ -19354,13 +19354,13 @@ li.select2-results__option[role=group] > strong:hover {
         let useRingModHzEnd = Math.min(1, effect.ringModulationHz / (Config.ringModHzRange - 1));
         let useRingModHzEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["ring modulation frequency"].index, 0, effectIndex, false);
         let useRingModHzEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["ring modulation frequency"].index, 0, effectIndex, true);
-        if (synth.isModActive(Config.automationParams.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useRingModStart = synth.getModValue(Config.automationParams.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useRingModEnd = synth.getModValue(Config.automationParams.dictionary["ring modulation"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["ring modulation"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useRingModStart = synth.getModValue(Config.automationParams.dictionary["ring modulation"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useRingModEnd = synth.getModValue(Config.automationParams.dictionary["ring modulation"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
-        if (synth.isModActive(Config.automationParams.dictionary["ring modulation frequency"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useRingModHzStart = Math.min(1, Math.max(0, synth.getModValue(Config.automationParams.dictionary["ring modulation frequency"].index, channelIndex, instrumentIndex, effectIndex, false) / (Config.ringModHzRange - 1)));
-          useRingModHzEnd = Math.min(1, Math.max(0, synth.getModValue(Config.automationParams.dictionary["ring modulation frequency"].index, channelIndex, instrumentIndex, effectIndex, false) / (Config.ringModHzRange - 1)));
+        if (synth.isModActive(Config.automationParams.dictionary["ring modulation frequency"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useRingModHzStart = Math.min(1, Math.max(0, synth.getModValue(Config.automationParams.dictionary["ring modulation frequency"].index, 0, channelIndex, instrumentIndex, effectIndex, false) / (Config.ringModHzRange - 1)));
+          useRingModHzEnd = Math.min(1, Math.max(0, synth.getModValue(Config.automationParams.dictionary["ring modulation frequency"].index, 0, channelIndex, instrumentIndex, effectIndex, false) / (Config.ringModHzRange - 1)));
         }
         useRingModHzStart *= useRingModHzEnvelopeStart;
         useRingModHzEnd *= useRingModHzEnvelopeEnd;
@@ -19390,9 +19390,9 @@ li.select2-results__option[role=group] > strong:hover {
         const echoSustainEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["echo"].index, 0, effectIndex, true);
         let useEchoSustainStart = effect.echoSustain;
         let useEchoSustainEnd = effect.echoSustain;
-        if (synth.isModActive(Config.automationParams.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useEchoSustainStart = Math.max(0, synth.getModValue(Config.automationParams.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex, false));
-          useEchoSustainEnd = Math.max(0, synth.getModValue(Config.automationParams.dictionary["echo"].index, channelIndex, instrumentIndex, effectIndex, true));
+        if (synth.isModActive(Config.automationParams.dictionary["echo"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useEchoSustainStart = Math.max(0, synth.getModValue(Config.automationParams.dictionary["echo"].index, 0, channelIndex, instrumentIndex, effectIndex, false));
+          useEchoSustainEnd = Math.max(0, synth.getModValue(Config.automationParams.dictionary["echo"].index, 0, channelIndex, instrumentIndex, effectIndex, true));
         }
         const echoMultStart = Math.min(1, Math.pow(echoSustainEnvelopeStart * useEchoSustainStart / Config.echoSustainRange, 1.1)) * 0.9;
         const echoMultEnd = Math.min(1, Math.pow(echoSustainEnvelopeEnd * useEchoSustainEnd / Config.echoSustainRange, 1.1)) * 0.9;
@@ -19403,9 +19403,9 @@ li.select2-results__option[role=group] > strong:hover {
         const echoDelayEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["echo delay"].index, 0, effectIndex, true);
         let useEchoDelayStart = effect.echoDelay * echoDelayEnvelopeStart;
         let useEchoDelayEnd = effect.echoDelay * echoDelayEnvelopeEnd;
-        if (synth.isModActive(Config.automationParams.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useEchoDelayStart = synth.getModValue(Config.automationParams.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex, false) * echoDelayEnvelopeStart;
-          useEchoDelayEnd = synth.getModValue(Config.automationParams.dictionary["echo delay"].index, channelIndex, instrumentIndex, effectIndex, true) * echoDelayEnvelopeEnd;
+        if (synth.isModActive(Config.automationParams.dictionary["echo delay"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useEchoDelayStart = synth.getModValue(Config.automationParams.dictionary["echo delay"].index, 0, channelIndex, instrumentIndex, effectIndex, false) * echoDelayEnvelopeStart;
+          useEchoDelayEnd = synth.getModValue(Config.automationParams.dictionary["echo delay"].index, 0, channelIndex, instrumentIndex, effectIndex, true) * echoDelayEnvelopeEnd;
         }
         const tmpEchoDelayOffsetStart = (
           /*ignoreTicks ? (useEchoDelayStart + 1) * Config.echoDelayStepTicks * samplesPerTick : */
@@ -19428,9 +19428,9 @@ li.select2-results__option[role=group] > strong:hover {
         const echoPingPongEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["echo ping pong"].index, 0, effectIndex, true);
         let useEchoPingPongStart = effect.echoPingPong;
         let useEchoPingPongEnd = effect.echoPingPong;
-        if (synth.isModActive(Config.automationParams.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useEchoPingPongStart = synth.getModValue(Config.automationParams.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex, false) * echoPingPongEnvelopeStart;
-          useEchoPingPongEnd = synth.getModValue(Config.automationParams.dictionary["echo ping pong"].index, channelIndex, instrumentIndex, effectIndex, true) * echoPingPongEnvelopeEnd;
+        if (synth.isModActive(Config.automationParams.dictionary["echo ping pong"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useEchoPingPongStart = synth.getModValue(Config.automationParams.dictionary["echo ping pong"].index, 0, channelIndex, instrumentIndex, effectIndex, false) * echoPingPongEnvelopeStart;
+          useEchoPingPongEnd = synth.getModValue(Config.automationParams.dictionary["echo ping pong"].index, 0, channelIndex, instrumentIndex, effectIndex, true) * echoPingPongEnvelopeEnd;
         }
         const echoPingPongStart = (useEchoPingPongStart / Config.panMax - 0.5) * echoPingPongEnvelopeStart * 2;
         const echoPingPongEnd = (useEchoPingPongEnd / Config.panMax - 0.5) * echoPingPongEnvelopeEnd * 2;
@@ -19456,21 +19456,21 @@ li.select2-results__option[role=group] > strong:hover {
         let useReverbWetDryMixEnd = effect.reverbWetDryMix;
         let useReverbSendStart = effect.reverbSend;
         let useReverbSendEnd = effect.reverbSend;
-        if (synth.isModActive(Config.automationParams.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useReverbStart = synth.getModValue(Config.automationParams.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useReverbEnd = synth.getModValue(Config.automationParams.dictionary["reverb"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["reverb"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useReverbStart = synth.getModValue(Config.automationParams.dictionary["reverb"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useReverbEnd = synth.getModValue(Config.automationParams.dictionary["reverb"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
-        if (synth.isModActive(Config.automationParams.dictionary["song reverb"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useReverbStart *= (synth.getModValue(Config.automationParams.dictionary["song reverb"].index, void 0, void 0, void 0, false) - Config.automationParams.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
-          useReverbEnd *= (synth.getModValue(Config.automationParams.dictionary["song reverb"].index, void 0, void 0, void 0, true) - Config.automationParams.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
+        if (synth.isModActive(Config.automationParams.dictionary["song reverb"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useReverbStart *= (synth.getModValue(Config.automationParams.dictionary["song reverb"].index, 0, 0, 0, 0, false) - Config.automationParams.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
+          useReverbEnd *= (synth.getModValue(Config.automationParams.dictionary["song reverb"].index, 0, 0, 0, 0, true) - Config.automationParams.dictionary["song reverb"].convertRealFactor) / Config.reverbRange;
         }
-        if (synth.isModActive(Config.automationParams.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useReverbWetDryMixStart = synth.getModValue(Config.automationParams.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useReverbWetDryMixEnd = synth.getModValue(Config.automationParams.dictionary["reverb wet/dry"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["reverb wet/dry"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useReverbWetDryMixStart = synth.getModValue(Config.automationParams.dictionary["reverb wet/dry"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useReverbWetDryMixEnd = synth.getModValue(Config.automationParams.dictionary["reverb wet/dry"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
-        if (synth.isModActive(Config.automationParams.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex)) {
-          useReverbSendStart = synth.getModValue(Config.automationParams.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex, false);
-          useReverbSendEnd = synth.getModValue(Config.automationParams.dictionary["reverb send"].index, channelIndex, instrumentIndex, effectIndex, true);
+        if (synth.isModActive(Config.automationParams.dictionary["reverb send"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
+          useReverbSendStart = synth.getModValue(Config.automationParams.dictionary["reverb send"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
+          useReverbSendEnd = synth.getModValue(Config.automationParams.dictionary["reverb send"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
         }
         const reverbStart = Math.min(1, Math.pow(reverbEnvelopeStart * useReverbStart / Config.reverbRange, 0.667)) * 0.425;
         const reverbEnd = Math.min(1, Math.pow(reverbEnvelopeEnd * useReverbEnd / Config.reverbRange, 0.667)) * 0.425;
@@ -19590,21 +19590,6 @@ li.select2-results__option[role=group] > strong:hover {
   __name(xxHash32, "xxHash32");
 
   // synth/EnvelopeComputer.ts
-  var EnvelopeState = class {
-    static {
-      __name(this, "EnvelopeState");
-    }
-    target;
-    index;
-    effectIndex;
-    startValue = 1;
-    endValue = 1;
-    constructor(target, index, effectIndex) {
-      this.target = target;
-      this.index = index;
-      this.effectIndex = effectIndex;
-    }
-  };
   var EnvelopeComputer = class _EnvelopeComputer {
     static {
       __name(this, "EnvelopeComputer");
@@ -19671,7 +19656,7 @@ li.select2-results__option[role=group] > strong:hover {
     computeEnvelopes(instrument, currentPart, tickTimeStart, tickTimeStartReal, secondsPerTick, tone, timeScale, instrumentState, synth, channelIndex, instrumentIndex) {
       const secondsPerTickUnscaled = secondsPerTick;
       const transition = instrument.getTransition();
-      if (tone != null && tone.atNoteStart && (!(transition.isSeamless || instrument.clicklessTransition) && !forceContinueAtStart || tone.prevNote == null)) {
+      if (tone != null && tone.atNoteStart && (!(transition.isSeamless || instrument.clicklessTransition) || tone.prevNote == null)) {
         this.prevNoteSecondsEndUnscaled = this.noteSecondsEndUnscaled;
         this.prevNoteTicksEnd = this.noteTicksEnd;
         this._prevNoteSizeFinal = this._noteSizeFinal;
@@ -19801,10 +19786,10 @@ li.select2-results__option[role=group] > strong:hover {
           envelopeSpeed = perEnvelopeSpeed * globalEnvelopeSpeed;
           perEnvelopeLowerBound = instrument.envelopes[envelopeIndex].perEnvelopeLowerBound;
           perEnvelopeUpperBound = instrument.envelopes[envelopeIndex].perEnvelopeUpperBound;
-          if (synth.isModActive(Config.automationParams.dictionary["individual envelope lower bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound != null) {
+          if (synth.isModActive(Config.automationParams.dictionary["individual envelope lower bound"].index, envelopeIndex, channelIndex, instrumentIndex, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound != null) {
             perEnvelopeLowerBound = instrument.envelopes[envelopeIndex].tempEnvelopeLowerBound;
           }
-          if (synth.isModActive(Config.automationParams.dictionary["individual envelope upper bound"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound != null) {
+          if (synth.isModActive(Config.automationParams.dictionary["individual envelope upper bound"].index, envelopeIndex, channelIndex, instrumentIndex, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound != null) {
             perEnvelopeUpperBound = instrument.envelopes[envelopeIndex].tempEnvelopeUpperBound;
           }
           if (!(perEnvelopeLowerBound <= perEnvelopeUpperBound)) {
@@ -19854,9 +19839,9 @@ li.select2-results__option[role=group] > strong:hover {
           }
         }
         if (!this.envelopeStates[envelopeIndex]) {
-          this.envelopeStates[envelopeIndex] = new EnvelopeState(automationTarget.index, targetIndex, 0);
+          this.envelopeStates[envelopeIndex] = new AutomationState(automationTarget, targetIndex, [0], [0], [0]);
         }
-        this.envelopeStates[envelopeIndex].target = automationTarget.index;
+        this.envelopeStates[envelopeIndex].target = automationTarget;
         this.envelopeStates[envelopeIndex].index = targetIndex;
         this.envelopeStates[envelopeIndex].effectIndex = 0;
         this.envelopeStates[envelopeIndex].startValue *= envelopeStart;
@@ -20183,7 +20168,7 @@ li.select2-results__option[role=group] > strong:hover {
     getEnvelopeValue(target, index, effectIndex, nextVal) {
       for (let i = 0; i < this.envelopeStates.length; i++) {
         if (this.envelopeStates[i]) {
-          if (this.envelopeStates[i].target == target && this.envelopeStates[i].index == index) {
+          if (this.envelopeStates[i].target == Config.automationParams[target] && this.envelopeStates[i].index == index) {
             if (effectIndex) {
               if (this.envelopeStates[i].effectIndex == effectIndex) return nextVal ? this.envelopeStates[i].endValue : this.envelopeStates[i].startValue;
             } else {
@@ -20606,8 +20591,8 @@ li.select2-results__option[role=group] > strong:hover {
         envelopeSpeeds[i] = 0;
       }
       let useEnvelopeSpeed = Config.arpSpeedScale[instrument.envelopeSpeed];
-      if (synth.isModActive(Config.automationParams.dictionary["envelope speed"].index, channelIndex, instrumentIndex)) {
-        useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.automationParams.dictionary["envelope speed"].index, channelIndex, instrumentIndex, -1, false)));
+      if (synth.isModActive(Config.automationParams.dictionary["envelope speed"].index, 0, channelIndex, instrumentIndex, 0)) {
+        useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, synth.getModValue(Config.automationParams.dictionary["envelope speed"].index, 0, channelIndex, instrumentIndex, 0, false)));
         if (Number.isInteger(useEnvelopeSpeed)) {
           useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed];
         } else {
@@ -20616,7 +20601,7 @@ li.select2-results__option[role=group] > strong:hover {
       }
       for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
         let perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-        if (synth.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channelIndex, instrumentIndex) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+        if (synth.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, envelopeIndex, channelIndex, instrumentIndex, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
           perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed;
         }
         envelopeSpeeds[envelopeIndex] = useEnvelopeSpeed * perEnvelopeSpeed;
@@ -20630,15 +20615,15 @@ li.select2-results__option[role=group] > strong:hover {
       }
       this.mixVolume = this.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["post volume"].index, 0, null, false) * Synth.instrumentVolumeToVolumeMult(instrument.volume);
       let mixVolumeEnd = this.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["post volume"].index, 0, null, true) * Synth.instrumentVolumeToVolumeMult(instrument.volume);
-      if (synth.isModActive(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1)) {
-        const startVal = synth.getModValue(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, false);
-        const endVal = synth.getModValue(Config.automationParams.dictionary["post volume"].index, channelIndex, instrumentIndex, 1, true);
+      if (synth.isModActive(Config.automationParams.dictionary["post volume"].index, 0, channelIndex, instrumentIndex, 0)) {
+        const startVal = synth.getModValue(Config.automationParams.dictionary["post volume"].index, 0, channelIndex, instrumentIndex, 0, false);
+        const endVal = synth.getModValue(Config.automationParams.dictionary["post volume"].index, 0, channelIndex, instrumentIndex, 0, true);
         this.mixVolume *= startVal <= 0 ? (startVal + Config.volumeRange / 2) / (Config.volumeRange / 2) : Synth.instrumentVolumeToVolumeMult(startVal);
         mixVolumeEnd *= endVal <= 0 ? (endVal + Config.volumeRange / 2) / (Config.volumeRange / 2) : Synth.instrumentVolumeToVolumeMult(endVal);
       }
       if (synth.isModActive(Config.automationParams.dictionary["song volume"].index)) {
-        this.mixVolume *= synth.getModValue(Config.automationParams.dictionary["song volume"].index, void 0, void 0, -1, false) / 100;
-        mixVolumeEnd *= synth.getModValue(Config.automationParams.dictionary["song volume"].index, void 0, void 0, -1, true) / 100;
+        this.mixVolume *= synth.getModValue(Config.automationParams.dictionary["song volume"].index, 0, 0, 0, 0, false) / 100;
+        mixVolumeEnd *= synth.getModValue(Config.automationParams.dictionary["song volume"].index, 0, 0, 0, 0, true) / 100;
       }
       this.mixVolumeDelta = (mixVolumeEnd - this.mixVolume) / roundedSamplesPerTick;
       let attenuationVolumeStart = 1;
@@ -20957,6 +20942,25 @@ li.select2-results__option[role=group] > strong:hover {
       this.drumsetPitch = null;
     }
   };
+  var AutomationState = class {
+    static {
+      __name(this, "AutomationState");
+    }
+    target;
+    index;
+    channelIndices;
+    instrumentIndices;
+    effectIndices;
+    startValue = 1;
+    endValue = 1;
+    constructor(target, index, channelIndices, instrumentIndices, effectIndices) {
+      this.target = target;
+      this.index = index;
+      this.channelIndices = channelIndices;
+      this.instrumentIndices = instrumentIndices;
+      this.effectIndices = effectIndices;
+    }
+  };
   var Synth = class _Synth {
     static {
       __name(this, "Synth");
@@ -21029,19 +21033,12 @@ li.select2-results__option[role=group] > strong:hover {
       if (this.song != null && this.song.modChannelCount > 0) {
         let latestModTimes = [];
         let latestModInsTimes = [];
-        this.modValues = [];
-        this.nextModValues = [];
-        this.modInsValues = [];
-        this.nextModInsValues = [];
+        this.modStates = [];
         this.heldMods = [];
         for (let channel = 0; channel < this.song.channels.length; channel++) {
           if (this.song.channels[channel].type != 2 /* mod */) {
             latestModInsTimes[channel] = [];
-            this.modInsValues[channel] = [];
-            this.nextModInsValues[channel] = [];
             for (let instrument = 0; instrument < this.song.channels[channel].instruments.length; instrument++) {
-              this.modInsValues[channel][instrument] = [];
-              this.nextModInsValues[channel][instrument] = [];
               latestModInsTimes[channel][instrument] = [];
             }
           }
@@ -21109,7 +21106,7 @@ li.select2-results__option[role=group] > strong:hover {
                         }
                         for (let i = 0; i < instrument.modChannels[mod2].length; i++) {
                           for (let j = 0; j < instrument.modEffects[mod2].length; j++) {
-                            this.setModValue(latestPinValues[mod2], latestPinValues[mod2], instrument.modChannels[mod2][i], instrument.modInstruments[mod2][i], instrument.modulators[mod2], instrument.modEffects[mod2][j]);
+                            this.setModValue(latestPinValues[mod2], latestPinValues[mod2], instrument.modulators[mod2], 0, instrument.modChannels[mod2][i], instrument.modInstruments[mod2][i], instrument.modEffects[mod2][j]);
                           }
                         }
                         latestModTimes[instrument.modulators[mod2]] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod2];
@@ -21170,7 +21167,7 @@ li.select2-results__option[role=group] > strong:hover {
                         } else {
                           for (let effectIndex = 0; effectIndex < instrument.modEffects[mod2].length; effectIndex++) {
                             if (latestModInsTimes[instrument.modChannels[mod2][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod2] > latestModInsTimes[instrument.modChannels[mod2][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0]) {
-                              if (Config.automationParams[modulatorAdjust]) this.setModValue(latestPinValues[mod2], latestPinValues[mod2], instrument.modChannels[mod2][instrumentIndex], usedInstruments[instrumentIndex], modulatorAdjust, instrument.modEffects[mod2][effectIndex]);
+                              if (Config.automationParams[modulatorAdjust]) this.setModValue(latestPinValues[mod2], latestPinValues[mod2], modulatorAdjust, 0, instrument.modChannels[mod2][instrumentIndex], usedInstruments[instrumentIndex], instrument.modEffects[mod2][effectIndex]);
                             }
                             latestModInsTimes[instrument.modChannels[mod2][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = [];
                             latestModInsTimes[instrument.modChannels[mod2][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod2];
@@ -21273,10 +21270,7 @@ li.select2-results__option[role=group] > strong:hover {
     isAtStartOfTick = true;
     isAtEndOfTick = true;
     tickSampleCountdown = 0;
-    modValues = [];
-    modInsValues = [];
-    nextModValues = [];
-    nextModInsValues = [];
+    modStates = [];
     isPlayingSong = false;
     isRecording = false;
     liveInputEndTime = 0;
@@ -21585,8 +21579,7 @@ li.select2-results__option[role=group] > strong:hover {
       this.isPlayingSong = false;
       this.isRecording = false;
       this.preferLowerLatency = false;
-      this.modValues = [];
-      this.nextModValues = [];
+      this.modStates = [];
       this.heldMods = [];
       if (this.song != null) {
         this.song.inVolumeCap = 0;
@@ -21595,12 +21588,6 @@ li.select2-results__option[role=group] > strong:hover {
         this.song.outVolumeCapR = 0;
         this.song.tmpEqFilterStart = null;
         this.song.tmpEqFilterEnd = null;
-        for (let channelIndex = 0; channelIndex < this.song.getChannelCount(); channelIndex++) {
-          if (this.song.channels[channelIndex].type != 2 /* mod */) {
-            this.modInsValues[channelIndex] = [];
-            this.nextModInsValues[channelIndex] = [];
-          }
-        }
       }
     }
     startRecording() {
@@ -21619,75 +21606,103 @@ li.select2-results__option[role=group] > strong:hover {
         }
       }
     }
-    setModValue(volumeStart, volumeEnd, channelIndex, instrumentIndex, setting, effectIndex) {
-      let val = volumeStart + Config.automationParams[setting].convertRealFactor;
-      let nextVal = volumeEnd + Config.automationParams[setting].convertRealFactor;
-      if (Config.automationParams[setting].forSong) {
-        if (this.modValues[setting] == null || this.modValues[setting] != val || this.nextModValues[setting] != nextVal) {
-          this.modValues[setting] = val;
-          this.nextModValues[setting] = nextVal;
+    getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex) {
+      let foundModState = -1;
+      for (let i = 0; i < this.modStates.length; i++) {
+        if (this.modStates[i]) {
+          const modState = this.modStates[i];
+          if (modState.target.name == Config.automationParams[target].name && modState.index == index && modState.channelIndices.includes(channelIndex) && modState.instrumentIndices.includes(instrumentIndex) && modState.effectIndices.includes(effectIndex)) {
+            foundModState = i;
+          }
         }
-      } else if (Config.automationParams[setting].associatedEffect == 12 /* length */) {
-        if (this.modInsValues[channelIndex][instrumentIndex][setting] == null) this.modInsValues[channelIndex][instrumentIndex][setting] = [];
-        if (this.nextModInsValues[channelIndex][instrumentIndex][setting] == null) this.nextModInsValues[channelIndex][instrumentIndex][setting] = [];
-        if (this.modInsValues[channelIndex][instrumentIndex][setting][1] == null || this.modInsValues[channelIndex][instrumentIndex][setting][1] != val || this.nextModInsValues[channelIndex][instrumentIndex][setting][1] != nextVal) {
-          this.modInsValues[channelIndex][instrumentIndex][setting][1] = val;
-          this.nextModInsValues[channelIndex][instrumentIndex][setting][1] = nextVal;
-        }
+      }
+      if (foundModState == -1) return null;
+      else return foundModState;
+    }
+    setModValue(volumeStart, volumeEnd, target, index, channelIndex, instrumentIndex, effectIndex) {
+      let val = volumeStart + Config.automationParams[target].convertRealFactor;
+      let nextVal = volumeEnd + Config.automationParams[target].convertRealFactor;
+      const forSong = Config.automationParams[target].forSong;
+      const noEffect = Config.automationParams[target].associatedEffect == null;
+      const noIndex = Config.automationParams[target].maxIndex == 0;
+      if (forSong) {
+        channelIndex = 0;
+        instrumentIndex = 0;
+        effectIndex = 0;
+      } else if (noEffect) {
+        effectIndex = 0;
+      }
+      if (noIndex) {
+        index = 0;
+      }
+      const useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex);
+      if (useMod != null) {
+        this.modStates[useMod].startValue = val;
+        this.modStates[useMod].endValue = nextVal;
       } else {
-        if (this.modInsValues[channelIndex][instrumentIndex][setting] == null) this.modInsValues[channelIndex][instrumentIndex][setting] = [];
-        if (this.nextModInsValues[channelIndex][instrumentIndex][setting] == null) this.nextModInsValues[channelIndex][instrumentIndex][setting] = [];
-        if (this.modInsValues[channelIndex][instrumentIndex][setting][effectIndex] == null || this.modInsValues[channelIndex][instrumentIndex][setting][effectIndex] != val || this.nextModInsValues[channelIndex][instrumentIndex][setting][effectIndex] != nextVal) {
-          this.modInsValues[channelIndex][instrumentIndex][setting][effectIndex] = val;
-          this.nextModInsValues[channelIndex][instrumentIndex][setting][effectIndex] = nextVal;
-        }
+        let modState = new AutomationState(Config.automationParams[target], index, [channelIndex], [instrumentIndex], [effectIndex]);
+        modState.startValue = val;
+        modState.endValue = nextVal;
+        this.modStates.push(modState);
       }
       return val;
     }
-    getModValue(setting, channel, instrument, effect, nextVal) {
-      const forSong = Config.automationParams[setting].forSong;
-      const noEffect = Config.automationParams[setting].associatedEffect == 12 /* length */;
+    getModValue(target, index, channelIndex, instrumentIndex, effectIndex, nextVal) {
+      const forSong = Config.automationParams[target].forSong;
+      const noEffect = Config.automationParams[target].associatedEffect == null;
+      const noIndex = Config.automationParams[target].maxIndex == 0;
+      if (noIndex) index = 0;
+      let useMod = -1;
       if (forSong) {
-        if (this.modValues[setting] != null && this.nextModValues[setting] != null) {
-          return nextVal ? this.nextModValues[setting] : this.modValues[setting];
-        }
-      } else if (channel != void 0 && instrument != void 0 && noEffect) {
-        if (this.modInsValues[channel][instrument][setting][1] != null && this.nextModInsValues[channel][instrument][setting][1] != null) {
-          return nextVal ? this.nextModInsValues[channel][instrument][setting][1] : this.modInsValues[channel][instrument][setting][1];
-        }
-      } else if (channel != void 0 && instrument != void 0 && effect != void 0) {
-        if (this.modInsValues[channel][instrument][setting][effect] != null && this.nextModInsValues[channel][instrument][setting][effect] != null) {
-          return nextVal ? this.nextModInsValues[channel][instrument][setting][effect] : this.modInsValues[channel][instrument][setting][effect];
-        }
+        useMod = this.getModStateIndex(target, index, 0, 0, 0);
+        return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
+      } else if (channelIndex != void 0 && instrumentIndex != void 0 && noEffect) {
+        useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, 0);
+        console.log(this.modStates[0]);
+        console.log(instrumentIndex);
+        return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
+      } else if (channelIndex != void 0 && instrumentIndex != void 0 && effectIndex != void 0) {
+        useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex);
+        return nextVal ? this.modStates[useMod].endValue : this.modStates[useMod].startValue;
       }
       return -1;
     }
+    // i realized this is kindof useless since mod and envelope are calculated very different for a lot of the effects...
+    // public getAutomationValue(target: number, index: number, channelIndex: number, instrumentIndex: number, effectIndex: number, nextVal?: boolean): number {
+    //     let value: number = 1;
+    //     if (this.isModActive(target, index, channelIndex, instrumentIndex, effectIndex)) {
+    //         value = this.getModValue(target, index, channelIndex, instrumentIndex, effectIndex, nextVal);
+    //     }
+    //     value *= this.channels[channelIndex].instruments[instrumentIndex].envelopeComputer.getEnvelopeValue(target, index, effectIndex, nextVal)
+    //     return value;
+    // }
     // Checks if any mod is active for the given channel/instrument OR if any mod is active for the song scope. Could split the logic if needed later.
-    isAnyModActive(channel, instrument) {
-      for (let setting = 0; setting < Config.automationParams.length; setting++) {
-        if (this.modValues != void 0 && this.modValues[setting] != null || this.modInsValues != void 0 && this.modInsValues[channel] != void 0 && this.modInsValues[channel][instrument] != void 0 && this.modInsValues[channel][instrument][setting] != null && this.modInsValues[channel][instrument][setting].length > 0) {
-          return true;
+    isAnyModActive(channelIndex, instrumentIndex) {
+      for (let i = 0; i < this.modStates.length; i++) {
+        if (this.modStates[i]) {
+          const modState = this.modStates[i];
+          if (modState.target.forSong == true || modState.channelIndices.includes(channelIndex) && modState.instrumentIndices.includes(instrumentIndex)) {
+            return true;
+          }
         }
       }
       return false;
     }
-    unsetMod(setting, channel, instrument, effect) {
-      if (this.isModActive(setting) || channel != void 0 && instrument != void 0 && effect != void 0 && this.isModActive(setting, channel, instrument, effect)) {
-        this.modValues[setting] = null;
-        this.nextModValues[setting] = null;
-        for (let i = 0; i < this.heldMods.length; i++) {
-          if (channel != void 0 && instrument != void 0 && effect != void 0) {
-            if (this.heldMods[i].channelIndex == channel && this.heldMods[i].instrumentIndex == instrument && this.heldMods[i].effectIndex == effect && this.heldMods[i].setting == setting)
-              this.heldMods.splice(i, 1);
-          } else {
-            if (this.heldMods[i].setting == setting)
-              this.heldMods.splice(i, 1);
-          }
-        }
-        if (channel != void 0 && instrument != void 0 && effect != void 0) {
-          this.modInsValues[channel][instrument][setting][effect] = null;
-          this.nextModInsValues[channel][instrument][setting][effect] = null;
-        }
+    unsetMod(target, index, channelIndex, instrumentIndex, effectIndex) {
+      const forSong = Config.automationParams[target].forSong;
+      const noEffect = Config.automationParams[target].associatedEffect == 12 /* length */;
+      const noIndex = Config.automationParams[target].maxIndex == 0;
+      if (noIndex || index == void 0) index = 0;
+      let useMod = -1;
+      if (forSong) {
+        useMod = this.getModStateIndex(target, index, 0, 0, 0);
+      } else if (noEffect) {
+        useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, 0);
+      } else {
+        useMod = this.getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex);
+      }
+      if (useMod) {
+        this.modStates.splice(useMod, 1);
       }
     }
     isFilterModActive(forNoteFilter, channelIdx, instrumentIdx, effectIdx, forSong) {
@@ -21708,17 +21723,20 @@ li.select2-results__option[role=group] > strong:hover {
       }
       return false;
     }
-    isModActive(setting, channel, instrument, effect) {
-      const forSong = Config.automationParams[setting].forSong;
-      const noEffect = Config.automationParams[setting].associatedEffect == 12 /* length */;
+    isModActive(target, index, channelIndex, instrumentIndex, effectIndex) {
+      const forSong = Config.automationParams[target].forSong;
+      const noEffect = Config.automationParams[target].associatedEffect == null;
+      const noIndex = Config.automationParams[target].maxIndex == 0;
+      if (noIndex || index == void 0) index = 0;
+      let isActive = false;
       if (forSong) {
-        return this.modValues != void 0 && this.modValues[setting] != null;
-      } else if (channel != void 0 && instrument != void 0 && noEffect && this.modInsValues != void 0 && this.modInsValues[channel] != null && this.modInsValues[channel][instrument] != null) {
-        return this.modInsValues[channel][instrument][setting] != null;
-      } else if (channel != void 0 && instrument != void 0 && effect != void 0 && this.modInsValues != void 0 && this.modInsValues[channel] != null && this.modInsValues[channel][instrument] != null && this.modInsValues[channel][instrument][setting] != null) {
-        return this.modInsValues[channel][instrument][setting][effect] != null;
+        isActive = this.getModStateIndex(target, index, 0, 0, 0) != null;
+      } else if (channelIndex != void 0 && instrumentIndex != void 0 && noEffect) {
+        isActive = this.getModStateIndex(target, index, channelIndex, instrumentIndex, 0) != null;
+      } else if (channelIndex != void 0 && instrumentIndex != void 0 && effectIndex != void 0) {
+        isActive = this.getModStateIndex(target, index, channelIndex, instrumentIndex, effectIndex) != null;
       }
-      return false;
+      return isActive;
     }
     // Force a modulator to be held at the given volumeStart for a brief duration.
     forceHoldMods(volumeStart, channelIndex, instrumentIndex, effectIndex, setting) {
@@ -22095,8 +22113,8 @@ li.select2-results__option[role=group] > strong:hover {
               const partTimeEnd = partTimeTickStart + (partTimeTickEnd - partTimeTickStart) * endRatio;
               let useVibratoSpeed = instrument.vibratoSpeed;
               instrumentState.vibratoTime = instrumentState.nextVibratoTime;
-              if (this.isModActive(Config.automationParams.dictionary["vibrato speed"].index, channelIndex, instrumentIndex)) {
-                useVibratoSpeed = this.getModValue(Config.automationParams.dictionary["vibrato speed"].index, channelIndex, instrumentIndex);
+              if (this.isModActive(Config.automationParams.dictionary["vibrato speed"].index, 0, channelIndex, instrumentIndex, 0)) {
+                useVibratoSpeed = this.getModValue(Config.automationParams.dictionary["vibrato speed"].index, 0, channelIndex, instrumentIndex, 0);
               }
               if (useVibratoSpeed == 0) {
                 instrumentState.vibratoTime = 0;
@@ -22238,11 +22256,11 @@ li.select2-results__option[role=group] > strong:hover {
                 for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                   let useEnvelopeSpeed = instrument.envelopeSpeed;
                   let perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-                  if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channel, instrumentIdx, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+                  if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, 0, channel, instrumentIdx, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
                     perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed;
                   }
-                  if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, channel, instrumentIdx, -1)) {
-                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, channel, instrumentIdx, -1, false)));
+                  if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, 0, channel, instrumentIdx, 0)) {
+                    useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, 0, channel, instrumentIdx, 0, false)));
                     if (Number.isInteger(useEnvelopeSpeed)) {
                       instrumentState.envelopeTime[envelopeIndex] += Config.arpSpeedScale[useEnvelopeSpeed] * perEnvelopeSpeed;
                     } else {
@@ -22258,8 +22276,8 @@ li.select2-results__option[role=group] > strong:hover {
                 }
                 const arpEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["arpeggio speed"].index, 0, null, false);
                 let useArpeggioSpeed = instrument.arpeggioSpeed;
-                if (this.isModActive(Config.automationParams.dictionary["arpeggio speed"].index, channel, instrumentIdx, -1)) {
-                  useArpeggioSpeed = clamp(0, Config.arpSpeedScale.length, arpEnvelopeStart * this.getModValue(Config.automationParams.dictionary["arpeggio speed"].index, channel, instrumentIdx, -1, false));
+                if (this.isModActive(Config.automationParams.dictionary["arpeggio speed"].index, 0, channel, instrumentIdx, 0)) {
+                  useArpeggioSpeed = clamp(0, Config.arpSpeedScale.length, arpEnvelopeStart * this.getModValue(Config.automationParams.dictionary["arpeggio speed"].index, 0, channel, instrumentIdx, 0, false));
                   if (Number.isInteger(useArpeggioSpeed)) {
                     instrumentState.arpTime += Config.arpSpeedScale[useArpeggioSpeed];
                   } else {
@@ -22341,9 +22359,8 @@ li.select2-results__option[role=group] > strong:hover {
             }
           }
         }
-        for (let setting = 0; setting < Config.automationParams.length; setting++) {
-          if (this.nextModValues != null && this.nextModValues[setting] != null)
-            this.modValues[setting] = this.nextModValues[setting];
+        for (let i = 0; i < this.modStates.length; i++) {
+          this.modStates[i].startValue = this.modStates[i].endValue;
         }
         if (this.isModActive(Config.automationParams.dictionary["tempo"].index)) {
           samplesPerTick = this.getSamplesPerTick();
@@ -22358,18 +22375,6 @@ li.select2-results__option[role=group] > strong:hover {
               instrumentState.arpTime = instrumentState.arpTime % (2520 * Config.ticksPerArpeggio);
               for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
                 instrumentState.envelopeTime[envelopeIndex] = instrumentState.envelopeTime[envelopeIndex] % (Config.partsPerBeat * Config.ticksPerPart * this.song.beatsPerBar);
-              }
-            }
-          }
-        }
-        const maxInstrumentsPerChannel = this.song.getMaxInstrumentsPerChannel();
-        for (let setting = 0; setting < Config.automationParams.length; setting++) {
-          for (let channel = 0; channel < this.song.getChannelCount(); channel++) {
-            if (this.song.channels[channel].type != 2 /* mod */) {
-              for (let instrument = 0; instrument < maxInstrumentsPerChannel; instrument++) {
-                if (this.nextModInsValues != null && this.nextModInsValues[channel] != null && this.nextModInsValues[channel][instrument] != null && this.nextModInsValues[channel][instrument][setting] != null) {
-                  this.modInsValues[channel][instrument][setting] = this.nextModInsValues[channel][instrument][setting];
-                }
               }
             }
           }
@@ -22534,7 +22539,7 @@ li.select2-results__option[role=group] > strong:hover {
               tone.chordSize = bassPitches.length;
               tone.instrumentIndex = instrumentIndex;
               tone.note = tone.prevNote = tone.nextNote = null;
-              tone.atNoteStart = this.liveBassInputStarted;
+              tone.atNoteStart = atNoteStart;
               tone.forceContinueAtStart = false;
               tone.forceContinueAtEnd = false;
               this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
@@ -22652,7 +22657,7 @@ li.select2-results__option[role=group] > strong:hover {
           if (notes[mod2] != null) {
             let prevNoteForThisInstrument = prevNotes[mod2];
             let nextNoteForThisInstrument = nextNotes[mod2];
-            let forceContinueAtStart2 = false;
+            let forceContinueAtStart = false;
             let forceContinueAtEnd = false;
             const atNoteStart = Config.ticksPerPart * notes[mod2].start == currentTick && this.isAtStartOfTick;
             let tone;
@@ -22687,7 +22692,7 @@ li.select2-results__option[role=group] > strong:hover {
             tone.nextNotePitchIndex = 0;
             tone.atNoteStart = atNoteStart;
             tone.passedEndOfNote = false;
-            tone.forceContinueAtStart = forceContinueAtStart2;
+            tone.forceContinueAtStart = forceContinueAtStart;
             tone.forceContinueAtEnd = forceContinueAtEnd;
           }
         }
@@ -22745,7 +22750,7 @@ li.select2-results__option[role=group] > strong:hover {
             const partsPerBar = Config.partsPerBeat * song.beatsPerBar;
             const transition = instrument.getTransition();
             const chord = instrument.getChord();
-            let forceContinueAtStart2 = false;
+            let forceContinueAtStart = false;
             let forceContinueAtEnd = false;
             let tonesInPrevNote = 0;
             let tonesInNextNote = 0;
@@ -22759,7 +22764,7 @@ li.select2-results__option[role=group] > strong:hover {
                   if (chordOfCompatibleInstrument != null) {
                     prevNoteForThisInstrument = lastNote;
                     tonesInPrevNote = chordOfCompatibleInstrument.singleTone ? 1 : prevNoteForThisInstrument.pitches.length;
-                    forceContinueAtStart2 = patternForcesContinueAtStart;
+                    forceContinueAtStart = patternForcesContinueAtStart;
                   }
                 }
               }
@@ -22789,7 +22794,7 @@ li.select2-results__option[role=group] > strong:hover {
               if (toneList.count() <= toneCount) {
                 tone = this.newTone();
                 toneList.pushBack(tone);
-              } else if (atNoteStart && (!(transition.isSeamless || instrument.clicklessTransition) && !forceContinueAtStart2 || prevNoteForThisInstrument == null)) {
+              } else if (atNoteStart && (!(transition.isSeamless || instrument.clicklessTransition) && !forceContinueAtStart || prevNoteForThisInstrument == null)) {
                 const oldTone = toneList.get(toneCount);
                 if (oldTone.isOnLastTick) {
                   this.freeTone(oldTone);
@@ -22817,12 +22822,12 @@ li.select2-results__option[role=group] > strong:hover {
               tone.nextNotePitchIndex = 0;
               tone.atNoteStart = atNoteStart;
               tone.passedEndOfNote = false;
-              tone.forceContinueAtStart = forceContinueAtStart2;
+              tone.forceContinueAtStart = forceContinueAtStart;
               tone.forceContinueAtEnd = forceContinueAtEnd;
               this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
             } else {
               const transition2 = instrument.getTransition();
-              if ((transition2.isSeamless && !transition2.slides && chord.strumParts == 0 || forceContinueAtStart2) && Config.ticksPerPart * note.start == currentTick && prevNoteForThisInstrument != null) {
+              if ((transition2.isSeamless && !transition2.slides && chord.strumParts == 0 || forceContinueAtStart) && Config.ticksPerPart * note.start == currentTick && prevNoteForThisInstrument != null) {
                 this.moveTonesIntoOrderedTempMatchedList(toneList, note.pitches);
               }
               let strumOffsetParts = 0;
@@ -22833,7 +22838,7 @@ li.select2-results__option[role=group] > strong:hover {
                 let noteStartPart = noteForThisTone.start + strumOffsetParts;
                 let passedEndOfNote = false;
                 if (noteStartPart > currentPart) {
-                  if (toneList.count() > i && (transition2.isSeamless || forceContinueAtStart2) && prevNoteForThisTone != null) {
+                  if (toneList.count() > i && (transition2.isSeamless || forceContinueAtStart) && prevNoteForThisTone != null) {
                     nextNoteForThisTone = noteForThisTone;
                     noteForThisTone = prevNoteForThisTone;
                     prevNoteForThisTone = null;
@@ -22844,10 +22849,10 @@ li.select2-results__option[role=group] > strong:hover {
                   }
                 }
                 let noteEndPart = noteForThisTone.end;
-                if ((transition2.isSeamless || forceContinueAtStart2) && nextNoteForThisTone != null) {
+                if ((transition2.isSeamless || forceContinueAtStart) && nextNoteForThisTone != null) {
                   noteEndPart = Math.min(Config.partsPerBeat * this.song.beatsPerBar, noteEndPart + strumOffsetParts);
                 }
-                if (!transition2.continues && !forceContinueAtStart2 || prevNoteForThisTone == null) {
+                if (!transition2.continues && !forceContinueAtStart || prevNoteForThisTone == null) {
                   strumOffsetParts += chord.strumParts;
                 }
                 const atNoteStart = Config.ticksPerPart * noteStartPart == currentTick;
@@ -22859,7 +22864,7 @@ li.select2-results__option[role=group] > strong:hover {
                 } else if (toneList.count() <= toneCount) {
                   tone = this.newTone();
                   toneList.pushBack(tone);
-                } else if (atNoteStart && (!transition2.isSeamless && !forceContinueAtStart2 || prevNoteForThisTone == null)) {
+                } else if (atNoteStart && (!transition2.isSeamless && !forceContinueAtStart || prevNoteForThisTone == null)) {
                   const oldTone = toneList.get(toneCount);
                   if (oldTone.isOnLastTick) {
                     this.freeTone(oldTone);
@@ -22885,7 +22890,7 @@ li.select2-results__option[role=group] > strong:hover {
                 tone.nextNotePitchIndex = i;
                 tone.atNoteStart = atNoteStart;
                 tone.passedEndOfNote = passedEndOfNote;
-                tone.forceContinueAtStart = forceContinueAtStart2 && prevNoteForThisTone != null;
+                tone.forceContinueAtStart = forceContinueAtStart && prevNoteForThisTone != null;
                 tone.forceContinueAtEnd = forceContinueAtEnd && nextNoteForThisTone != null;
                 this.computeTone(song, channelIndex, samplesPerTick, tone, false, false);
               }
@@ -23112,12 +23117,12 @@ li.select2-results__option[role=group] > strong:hover {
       }
       for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
         let perEnvelopeSpeed = instrument.envelopes[envelopeIndex].perEnvelopeSpeed;
-        if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, channelIndex, tone.instrumentIndex, -1) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
+        if (this.isModActive(Config.automationParams.dictionary["individual envelope speed"].index, envelopeIndex, channelIndex, tone.instrumentIndex, 0) && instrument.envelopes[envelopeIndex].tempEnvelopeSpeed != null) {
           perEnvelopeSpeed = instrument.envelopes[envelopeIndex].tempEnvelopeSpeed;
         }
         let useEnvelopeSpeed = Config.arpSpeedScale[instrument.envelopeSpeed] * perEnvelopeSpeed;
-        if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1)) {
-          useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, channelIndex, tone.instrumentIndex, -1, false)));
+        if (this.isModActive(Config.automationParams.dictionary["envelope speed"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+          useEnvelopeSpeed = Math.max(0, Math.min(Config.arpSpeedScale.length - 1, this.getModValue(Config.automationParams.dictionary["envelope speed"].index, 0, channelIndex, tone.instrumentIndex, 0, false)));
           if (Number.isInteger(useEnvelopeSpeed)) {
             useEnvelopeSpeed = Config.arpSpeedScale[useEnvelopeSpeed] * perEnvelopeSpeed;
           } else {
@@ -23158,10 +23163,10 @@ li.select2-results__option[role=group] > strong:hover {
         let pitchShift = Config.justIntonationSemitones[instrument.pitchShift] / intervalScale;
         let pitchShiftScalarStart = 1;
         let pitchShiftScalarEnd = 1;
-        if (this.isModActive(Config.automationParams.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1)) {
+        if (this.isModActive(Config.automationParams.dictionary["pitch shift"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
           pitchShift = Config.justIntonationSemitones[Config.justIntonationSemitones.length - 1];
-          pitchShiftScalarStart = this.getModValue(Config.automationParams.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1, false) / Config.pitchShiftCenter;
-          pitchShiftScalarEnd = this.getModValue(Config.automationParams.dictionary["pitch shift"].index, channelIndex, tone.instrumentIndex, 1, true) / Config.pitchShiftCenter;
+          pitchShiftScalarStart = this.getModValue(Config.automationParams.dictionary["pitch shift"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / Config.pitchShiftCenter;
+          pitchShiftScalarEnd = this.getModValue(Config.automationParams.dictionary["pitch shift"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / Config.pitchShiftCenter;
         }
         const envelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pitch shift"].index, 0, null, false);
         const envelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pitch shift"].index, 0, null, true);
@@ -23173,14 +23178,14 @@ li.select2-results__option[role=group] > strong:hover {
         const envelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["detune"].index, 0, null, true);
         let modDetuneStart = instrument.detune;
         let modDetuneEnd = instrument.detune;
-        if (this.isModActive(Config.automationParams.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1)) {
-          modDetuneStart = this.getModValue(Config.automationParams.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, false) + Config.detuneCenter;
-          modDetuneEnd = this.getModValue(Config.automationParams.dictionary["detune"].index, channelIndex, tone.instrumentIndex, -1, true) + Config.detuneCenter;
+        if (this.isModActive(Config.automationParams.dictionary["detune"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+          modDetuneStart = this.getModValue(Config.automationParams.dictionary["detune"].index, 0, channelIndex, tone.instrumentIndex, 0, false) + Config.detuneCenter;
+          modDetuneEnd = this.getModValue(Config.automationParams.dictionary["detune"].index, 0, channelIndex, tone.instrumentIndex, 0, true) + Config.detuneCenter;
         }
         if (!Config.chipWaves[instrument.chipWave].isCustomSampled || Config.chipWaves[instrument.chipWave].isPercussion != 1) {
-          if (this.isModActive(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1)) {
-            modDetuneStart += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, false);
-            modDetuneEnd += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, channelIndex, tone.instrumentIndex, -1, true);
+          if (this.isModActive(Config.automationParams.dictionary["song detune"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            modDetuneStart += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
+            modDetuneEnd += 4 * this.getModValue(Config.automationParams.dictionary["song detune"].index, 0, channelIndex, tone.instrumentIndex, 0, true);
           }
         }
         intervalStart += detuneToCents(modDetuneStart) * envelopeStart * Config.pitchesPerOctave / (12 * 100);
@@ -23201,14 +23206,14 @@ li.select2-results__option[role=group] > strong:hover {
           vibratoAmplitudeStart = Config.vibratos[instrument.vibrato].amplitude;
           vibratoAmplitudeEnd = vibratoAmplitudeStart;
         }
-        if (this.isModActive(Config.automationParams.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1)) {
-          delayTicks = this.getModValue(Config.automationParams.dictionary["vibrato delay"].index, channelIndex, tone.instrumentIndex, -1, false) * 2;
+        if (this.isModActive(Config.automationParams.dictionary["vibrato delay"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+          delayTicks = this.getModValue(Config.automationParams.dictionary["vibrato delay"].index, 0, channelIndex, tone.instrumentIndex, 0, false) * 2;
           if (delayTicks == Config.automationParams.dictionary["vibrato delay"].maxRawVol * 2)
             delayTicks = Number.POSITIVE_INFINITY;
         }
-        if (this.isModActive(Config.automationParams.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1)) {
-          vibratoAmplitudeStart = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, false) / 25;
-          vibratoAmplitudeEnd = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, channelIndex, tone.instrumentIndex, -1, true) / 25;
+        if (this.isModActive(Config.automationParams.dictionary["vibrato depth"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+          vibratoAmplitudeStart = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 25;
+          vibratoAmplitudeEnd = this.getModValue(Config.automationParams.dictionary["vibrato depth"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 25;
         }
         let vibratoStart;
         if (tone.prevVibrato != null) {
@@ -23285,9 +23290,9 @@ li.select2-results__option[role=group] > strong:hover {
           tone.phaseDeltaScales[i] = Math.pow(freqEnd / freqStart, 1 / roundedSamplesPerTick);
           let amplitudeStart = instrument.operators[i].amplitude;
           let amplitudeEnd = instrument.operators[i].amplitude;
-          if (this.isModActive(Config.automationParams.dictionary["fm operator amplitude"].index, channelIndex, tone.instrumentIndex, -1)) {
-            amplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, channelIndex, tone.instrumentIndex, -1, false) / 15;
-            amplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, channelIndex, tone.instrumentIndex, -1, true) / 15;
+          if (this.isModActive(Config.automationParams.dictionary["fm operator amplitude"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            amplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 15;
+            amplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 15;
           }
           const amplitudeCurveStart = _Synth.operatorAmplitudeCurve(amplitudeStart);
           const amplitudeCurveEnd = _Synth.operatorAmplitudeCurve(amplitudeEnd);
@@ -23314,9 +23319,9 @@ li.select2-results__option[role=group] > strong:hover {
           }
           expressionStart2 *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["fm operator amplitude"].index, i, null, false);
           expressionEnd2 *= envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["fm operator amplitude"].index, i, null, true);
-          if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
-            const startVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
-            const endVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true);
+          if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            const startVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
+            const endVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0, true);
             expressionStart2 *= startVal <= 0 ? (startVal + Config.volumeRange / 2) / (Config.volumeRange / 2) : _Synth.instrumentVolumeToVolumeMult(startVal);
             expressionEnd2 *= endVal <= 0 ? (endVal + Config.volumeRange / 2) / (Config.volumeRange / 2) : _Synth.instrumentVolumeToVolumeMult(endVal);
           }
@@ -23336,9 +23341,9 @@ li.select2-results__option[role=group] > strong:hover {
         tone.expressionDelta = (expressionEnd - expressionStart) / roundedSamplesPerTick;
         let useFeedbackAmplitudeStart = instrument.feedbackAmplitude;
         let useFeedbackAmplitudeEnd = instrument.feedbackAmplitude;
-        if (this.isModActive(Config.automationParams.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1)) {
-          useFeedbackAmplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, false) / 15;
-          useFeedbackAmplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, channelIndex, tone.instrumentIndex, -1, true) / 15;
+        if (this.isModActive(Config.automationParams.dictionary["fm feedback"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+          useFeedbackAmplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 15;
+          useFeedbackAmplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm feedback"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 15;
         }
         let feedbackAmplitudeStart = Config.sineWaveLength * 0.3 * useFeedbackAmplitudeStart / 15;
         const feedbackAmplitudeEnd = Config.sineWaveLength * 0.3 * useFeedbackAmplitudeEnd / 15;
@@ -23384,17 +23389,17 @@ li.select2-results__option[role=group] > strong:hover {
           const basePulseWidth = getPulseWidthRatio(instrument.pulseWidth);
           let pulseWidthModStart = basePulseWidth;
           let pulseWidthModEnd = basePulseWidth;
-          if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
-            pulseWidthModStart = this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false) / (Config.pulseWidthRange * 2);
-            pulseWidthModEnd = this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true) / (Config.pulseWidthRange * 2);
+          if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            pulseWidthModStart = this.getModValue(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / (Config.pulseWidthRange * 2);
+            pulseWidthModEnd = this.getModValue(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / (Config.pulseWidthRange * 2);
           }
           const pulseWidthStart = pulseWidthModStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pulse width"].index, 0, null, false);
           const pulseWidthEnd = pulseWidthModEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pulse width"].index, 0, null, true);
           tone.pulseWidth = pulseWidthStart;
           tone.pulseWidthDelta = (pulseWidthEnd - pulseWidthStart) / roundedSamplesPerTick;
           let decimalOffsetModStart = instrument.decimalOffset;
-          if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
-            decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
+          if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
           }
           const decimalOffsetStart = decimalOffsetModStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["decimal offset"].index, 0, null, false);
           tone.decimalOffset = decimalOffsetStart;
@@ -23403,9 +23408,9 @@ li.select2-results__option[role=group] > strong:hover {
         if (instrument.type == 7 /* pickedString */) {
           let useSustainStart = instrument.stringSustain;
           let useSustainEnd = instrument.stringSustain;
-          if (this.isModActive(Config.automationParams.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1)) {
-            useSustainStart = this.getModValue(Config.automationParams.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, false);
-            useSustainEnd = this.getModValue(Config.automationParams.dictionary["sustain"].index, channelIndex, tone.instrumentIndex, -1, true);
+          if (this.isModActive(Config.automationParams.dictionary["sustain"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            useSustainStart = this.getModValue(Config.automationParams.dictionary["sustain"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
+            useSustainEnd = this.getModValue(Config.automationParams.dictionary["sustain"].index, 0, channelIndex, tone.instrumentIndex, 0, true);
           }
           tone.stringSustainStart = useSustainStart;
           tone.stringSustainEnd = useSustainEnd;
@@ -23501,9 +23506,9 @@ li.select2-results__option[role=group] > strong:hover {
           const minFirstVoiceAmplitude = 1 / Math.sqrt(Config.supersawVoiceCount);
           let useDynamismStart = instrument.supersawDynamism / Config.supersawDynamismMax;
           let useDynamismEnd = instrument.supersawDynamism / Config.supersawDynamismMax;
-          if (this.isModActive(Config.automationParams.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1)) {
-            useDynamismStart = this.getModValue(Config.automationParams.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, false) / Config.supersawDynamismMax;
-            useDynamismEnd = this.getModValue(Config.automationParams.dictionary["dynamism"].index, channelIndex, tone.instrumentIndex, -1, true) / Config.supersawDynamismMax;
+          if (this.isModActive(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            useDynamismStart = this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / Config.supersawDynamismMax;
+            useDynamismEnd = this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / Config.supersawDynamismMax;
           }
           const curvedDynamismStart = 1 - Math.pow(Math.max(0, 1 - useDynamismStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["dynamism"].index, 0, null, false)), 0.2);
           const curvedDynamismEnd = 1 - Math.pow(Math.max(0, 1 - useDynamismEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["dynamism"].index, 0, null, true)), 0.2);
@@ -23558,9 +23563,9 @@ li.select2-results__option[role=group] > strong:hover {
           const baseSpreadSlider = instrument.supersawSpread / Config.supersawSpreadMax;
           let useSpreadStart = baseSpreadSlider;
           let useSpreadEnd = baseSpreadSlider;
-          if (this.isModActive(Config.automationParams.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1)) {
-            useSpreadStart = this.getModValue(Config.automationParams.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, false) / Config.supersawSpreadMax;
-            useSpreadEnd = this.getModValue(Config.automationParams.dictionary["spread"].index, channelIndex, tone.instrumentIndex, -1, true) / Config.supersawSpreadMax;
+          if (this.isModActive(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            useSpreadStart = this.getModValue(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / Config.supersawSpreadMax;
+            useSpreadEnd = this.getModValue(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / Config.supersawSpreadMax;
           }
           const spreadSliderStart = useSpreadStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["spread"].index, 0, null, false);
           const spreadSliderEnd = useSpreadEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["spread"].index, 0, null, true);
@@ -23573,26 +23578,26 @@ li.select2-results__option[role=group] > strong:hover {
           const baseShape = instrument.supersawShape / Config.supersawShapeMax;
           let useShapeStart = baseShape * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, false);
           let useShapeEnd = baseShape * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, true);
-          if (this.isModActive(Config.automationParams.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1)) {
-            useShapeStart = this.getModValue(Config.automationParams.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, false) / Config.supersawShapeMax;
-            useShapeEnd = this.getModValue(Config.automationParams.dictionary["saw shape"].index, channelIndex, tone.instrumentIndex, -1, true) / Config.supersawShapeMax;
+          if (this.isModActive(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            useShapeStart = this.getModValue(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / Config.supersawShapeMax;
+            useShapeEnd = this.getModValue(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / Config.supersawShapeMax;
           }
           const shapeStart = useShapeStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, false);
           const shapeEnd = useShapeEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, true);
           tone.supersawShape = shapeStart;
           tone.supersawShapeDelta = (shapeEnd - shapeStart) / roundedSamplesPerTick;
           let decimalOffsetModStart = instrument.decimalOffset;
-          if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1)) {
-            decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, channelIndex, tone.instrumentIndex, -1, false);
+          if (this.isModActive(Config.automationParams.dictionary["decimal offset"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            decimalOffsetModStart = this.getModValue(Config.automationParams.dictionary["decimal offset"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
           }
           const decimalOffsetStart = decimalOffsetModStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["decimal offset"].index, 0, null, false);
           tone.decimalOffset = decimalOffsetStart;
           const basePulseWidth = getPulseWidthRatio(instrument.pulseWidth);
           let pulseWidthModStart = basePulseWidth;
           let pulseWidthModEnd = basePulseWidth;
-          if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1)) {
-            pulseWidthModStart = this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, false) / (Config.pulseWidthRange * 2);
-            pulseWidthModEnd = this.getModValue(Config.automationParams.dictionary["pulse width"].index, channelIndex, tone.instrumentIndex, -1, true) / (Config.pulseWidthRange * 2);
+          if (this.isModActive(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            pulseWidthModStart = this.getModValue(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / (Config.pulseWidthRange * 2);
+            pulseWidthModEnd = this.getModValue(Config.automationParams.dictionary["pulse width"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / (Config.pulseWidthRange * 2);
           }
           let pulseWidthStart = pulseWidthModStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pulse width"].index, 0, null, false);
           let pulseWidthEnd = pulseWidthModEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pulse width"].index, 0, null, true);
@@ -23628,9 +23633,9 @@ li.select2-results__option[role=group] > strong:hover {
         }
         let expressionStart = settingsExpressionMult * fadeExpressionStart * chordExpressionStart * pitchExpressionStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pre volume"].index, 0, null, false) * supersawExpressionStart;
         let expressionEnd = settingsExpressionMult * fadeExpressionEnd * chordExpressionEnd * pitchExpressionEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["pre volume"].index, 0, null, true) * supersawExpressionEnd;
-        if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1)) {
-          const startVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, false);
-          const endVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, channelIndex, tone.instrumentIndex, -1, true);
+        if (this.isModActive(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+          const startVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0, false);
+          const endVal = this.getModValue(Config.automationParams.dictionary["pre volume"].index, 0, channelIndex, tone.instrumentIndex, 0, true);
           expressionStart *= startVal <= 0 ? (startVal + Config.volumeRange / 2) / (Config.volumeRange / 2) : _Synth.instrumentVolumeToVolumeMult(startVal);
           expressionEnd *= endVal <= 0 ? (endVal + Config.volumeRange / 2) / (Config.volumeRange / 2) : _Synth.instrumentVolumeToVolumeMult(endVal);
         }
@@ -23646,10 +23651,10 @@ li.select2-results__option[role=group] > strong:hover {
           if (tone.prevStringDecay != null) {
             stringDecayStart = tone.prevStringDecay;
           } else {
-            const sustainEnvelopeStart = tone.envelopeComputer.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["sustain"].index, 0, null, false);
+            const sustainEnvelopeStart = tone.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["sustain"].index, 0, null, false);
             stringDecayStart = 1 - Math.min(1, sustainEnvelopeStart * tone.stringSustainStart / (Config.stringSustainRange - 1));
           }
-          const sustainEnvelopeEnd = tone.envelopeComputer.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["sustain"].index, 0, null, true);
+          const sustainEnvelopeEnd = tone.envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["sustain"].index, 0, null, true);
           let stringDecayEnd = 1 - Math.min(1, sustainEnvelopeEnd * tone.stringSustainEnd / (Config.stringSustainRange - 1));
           tone.prevStringDecay = stringDecayEnd;
           const unisonVoices = instrument.unisonVoices;
@@ -25909,13 +25914,13 @@ li.select2-results__option[role=group] > strong:hover {
       let setting = instrument.modulators[mod2];
       for (let instrumentIndex = 0; instrumentIndex < instrument.modInstruments[mod2].length; instrumentIndex++) {
         for (let effectIndex = 0; effectIndex < instrument.modEffects[mod2].length; effectIndex++) {
-          synth.setModValue(tone.expression, tone.expression + tone.expressionDelta, instrument.modChannels[mod2][instrumentIndex], instrument.modInstruments[mod2][instrumentIndex], setting, instrument.modEffects[mod2][effectIndex]);
+          synth.setModValue(tone.expression, tone.expression + tone.expressionDelta, setting, 0, instrument.modChannels[mod2][instrumentIndex], instrument.modInstruments[mod2][instrumentIndex], instrument.modEffects[mod2][effectIndex]);
           for (let i = 0; i < synth.heldMods.length; i++) {
             if (Config.automationParams[instrument.modulators[mod2]].forSong) {
               if (synth.heldMods[i].setting == setting)
-                synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, instrument.modChannels[mod2][instrumentIndex], instrument.modInstruments[mod2][instrumentIndex], setting, instrument.modEffects[mod2][effectIndex]);
+                synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, setting, 0, instrument.modChannels[mod2][instrumentIndex], instrument.modInstruments[mod2][instrumentIndex], instrument.modEffects[mod2][effectIndex]);
             } else if (synth.heldMods[i].channelIndex == instrument.modChannels[mod2][instrumentIndex] && synth.heldMods[i].instrumentIndex == instrument.modInstruments[mod2][instrumentIndex] && synth.heldMods[i].setting == setting) {
-              synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, instrument.modChannels[mod2][instrumentIndex], instrument.modInstruments[mod2][instrumentIndex], setting, instrument.modEffects[mod2][effectIndex]);
+              synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, setting, 0, instrument.modChannels[mod2][instrumentIndex], instrument.modInstruments[mod2][instrumentIndex], instrument.modEffects[mod2][effectIndex]);
             }
           }
         }
@@ -32897,7 +32902,6 @@ li.select2-results__option[role=group] > strong:hover {
       const oldIndex = instrument.envelopes[envelopeIndex].index;
       if (oldTarget != target || oldIndex != targetIndex) {
         instrument.envelopes[envelopeIndex].target = target;
-        console.log(instrument.envelopes[envelopeIndex].target);
         instrument.envelopes[envelopeIndex].index = targetIndex;
         instrument.preset = instrument.type;
         doc.notifier.changed();
@@ -53820,10 +53824,6 @@ You should be redirected to the song at:<br /><br />
           return this.effectEditor.echoPingPongSliders[index];
         case Config.automationParams.dictionary["sustain"].index:
           return this._stringSustainSlider;
-        case Config.automationParams.dictionary["fm slider 5"].index:
-          return this._operatorAmplitudeSliders[4];
-        case Config.automationParams.dictionary["fm slider 6"].index:
-          return this._operatorAmplitudeSliders[5];
         case Config.automationParams.dictionary["envelope speed"].index:
           return this._envelopeSpeedSlider;
         case Config.automationParams.dictionary["dynamism"].index:

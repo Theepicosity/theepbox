@@ -79,16 +79,8 @@ export class EnvelopeComputer {
     public computeEnvelopes(instrument: Instrument, currentPart: number, tickTimeStart: number[], tickTimeStartReal: number, secondsPerTick: number, tone: Tone | null, timeScale: number[], instrumentState: InstrumentState, synth: Synth, channelIndex: number, instrumentIndex: number): void {
         const secondsPerTickUnscaled: number = secondsPerTick;
         const transition: Transition = instrument.getTransition();
-        if (tone != null && tone.atNoteStart && (!(transition.isSeamless || instrument.clicklessTransition) || tone.prevNote == null)) {
-            this.prevNoteSecondsEndUnscaled = this.noteSecondsEndUnscaled;
-            this.prevNoteTicksEnd = this.noteTicksEnd;
-            this._prevNoteSizeFinal = this._noteSizeFinal;
-            this.noteSecondsEndUnscaled = 0.0;
-            this.noteTicksEnd = 0.0;
-            for (let envelopeIndex: number = 0; envelopeIndex < Config.maxEnvelopeCount + 1; envelopeIndex++) {
-                this.prevNoteSecondsEnd[envelopeIndex] = this.noteSecondsEnd[envelopeIndex];
-                this.noteSecondsEnd[envelopeIndex] = 0.0;
-            }
+        if (tone != null && tone.atNoteStart && (!((transition.isSeamless && transition.continues) || instrument.clicklessTransition || tone.forceContinueAtStart) || tone.prevNote == null)) {
+            this.reset();
         }
         if (tone != null) {
             if (tone.note != null) {
@@ -253,7 +245,6 @@ export class EnvelopeComputer {
             const pitch: number = (envelope.type == EnvelopeType.pitch) ? this.computePitchEnvelope(instrument, envelopeIndex, (this.startPinTickPitch || this.getPitchValue(instrument, tone, instrumentState, true))) : 0;
 
             //calculate envelope values
-            const computeIndex: number = automationTarget.index;
             let envelopeStart: number = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, noteSecondsStartUnscaled, noteSecondsStart[envelopeIndex], beatTimeStart[envelopeIndex], timeSinceStart, noteSizeStart, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
             if (prevSlideStart) {
                 const other: number = EnvelopeComputer.computeEnvelope(envelope, envelopeSpeed, globalEnvelopeSpeed, prevNoteSecondsStartUnscaled, prevNoteSecondsStart[envelopeIndex], beatTimeStart[envelopeIndex], timeSinceStart, prevNoteSize, pitch, inverse, perEnvelopeLowerBound, perEnvelopeUpperBound, false, steps, seed, waveform, defaultPitch, startPinTickAbsolute);
@@ -280,9 +271,9 @@ export class EnvelopeComputer {
                 this.envelopeStates[envelopeIndex] = new AutomationState(automationTarget, targetIndex, [0], [0], [0])
             }
 
-            this.envelopeStates[envelopeIndex].target = automationTarget
-            this.envelopeStates[envelopeIndex].index = targetIndex
-            this.envelopeStates[envelopeIndex].effectIndex = 0
+            this.envelopeStates[envelopeIndex].target = automationTarget;
+            this.envelopeStates[envelopeIndex].index = targetIndex;
+            //this.envelopeStates[envelopeIndex].effectIndices = [0];
 
             this.envelopeStates[envelopeIndex].startValue *= envelopeStart;
             this.envelopeStates[envelopeIndex].endValue *= envelopeEnd;
@@ -628,12 +619,12 @@ export class EnvelopeComputer {
         this.drumsetFilterEnvelopeEnd = drumsetFilterEnvelopeEnd;
     }
 
-    public getEnvelopeValue(target: number, index: number, effectIndex?: number | null, nextVal?: boolean): number | null {
+    public getEnvelopeValue(target: number, index: number, effectIndex: number | null, nextVal?: boolean): number {
         for (let i: number = 0; i < this.envelopeStates.length; i++) {
             if (this.envelopeStates[i]) {
                 if (this.envelopeStates[i].target == Config.automationParams[target] && this.envelopeStates[i].index == index) {
                     if (effectIndex) {
-                        if (this.envelopeStates[i].effectIndex == effectIndex) return nextVal ? this.envelopeStates[i].endValue : this.envelopeStates[i].startValue
+                        if (this.envelopeStates[i].effectIndices.includes(effectIndex)) return nextVal ? this.envelopeStates[i].endValue : this.envelopeStates[i].startValue
                     } else {
                         return nextVal ? this.envelopeStates[i].endValue : this.envelopeStates[i].startValue
                     }
@@ -642,5 +633,4 @@ export class EnvelopeComputer {
         }
         return 1;
     }
-
 }

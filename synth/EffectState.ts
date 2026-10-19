@@ -537,7 +537,7 @@ export class EffectState {
 			// Check for frequency crush mods
 			if (synth.isModActive(Config.automationParams.dictionary["frequency crush"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
 				freqSettingStart = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, 0, channelIndex, instrumentIndex, effectIndex, false) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, false));
-				freqSettingEnd = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, true));
+				freqSettingEnd = synth.getModValue(Config.automationParams.dictionary["frequency crush"].index, 0, channelIndex, instrumentIndex, effectIndex, true) * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["frequency crush"].index, 0, effectIndex, true));
 			}
 
 			let quantizationSettingStart: number = effect.bitcrusherQuantization * Math.sqrt(envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["bit crush"].index, 0, effectIndex, false));
