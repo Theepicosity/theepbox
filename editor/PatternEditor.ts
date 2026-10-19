@@ -342,7 +342,7 @@ export class PatternEditor {
                     this._modDragNote = this._cursor.curNote;
                     this._modDragPin = this._cursor.curNote.pins[pinIdx];
                     this._modDragLowerBound = Config.automationParams[setting].convertRealFactor;
-                    this._modDragUpperBound = Config.automationParams[setting].convertRealFactor + this._doc.song.getVolumeCapForSetting(true, setting, this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modFilterTypes[mod]);
+                    this._modDragUpperBound = Config.automationParams[setting].convertRealFactor + Config.automationParams[setting].maxRawVol;
                     this._modDragSetting = setting;
 
                     this.modDragValueLabel.style.setProperty("left", "" + this._modDragValueLabelLeft + "px");
@@ -480,7 +480,7 @@ export class PatternEditor {
                     this._copiedPins = this._copiedPinChannels[this._doc.channel];
                     this._cursor.pins = this._copiedPins;
                 } else {
-                    const cap: number = this._doc.song.getVolumeCap(false);
+                    const cap: number = Config.noteSizeMax;
                     this._cursor.pins = [makeNotePin(0, 0, cap), makeNotePin(0, maxDivision, cap)];
                 }
             } else {
@@ -508,7 +508,7 @@ export class PatternEditor {
                 }
 
                 // Scale volume of copied pin to cap for this row
-                let maxHeight: number = this._doc.song.getVolumeCap(this._doc.song.getChannelIsMod(this._doc.channel), this._doc.channel, this._doc.getCurrentInstrument(this._barOffset), this._cursor.pitch);
+                let maxHeight: number = this._doc.song.getChannelIsMod(this._doc.channel) ? Config.automationParams[this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[Config.modCount - this._cursor.pitch - 1]].maxRawVol : Config.noteSizeMax;
                 let maxFoundHeight: number = 0;
                 for (const pin of this._cursor.pins) {
                     if (pin.size > maxFoundHeight) {
@@ -613,7 +613,7 @@ export class PatternEditor {
 
     public resetCopiedPins = (): void => {
         const maxDivision: number = this._getMaxDivision();
-        let cap: number = this._doc.song.getVolumeCap(false);
+        let cap: number = Config.noteSizeMax;
         this._copiedPinChannels.length = this._doc.song.getChannelCount();
         this._stashCursorPinVols.length = this._doc.song.getChannelCount();
         for (let i: number = 0; i < this._doc.song.getChannelCount(); i++) {
@@ -759,13 +759,13 @@ export class PatternEditor {
                                 || instrument.modInstruments[mod][channelIndex] >= thisRef._doc.song.channels[thisRef._doc.channel].instruments.length) {
                                 // If it's an eq/note filter target, one additional step is performed to see if it matches the right modFilterType.
                                 if (modFilterIndex != undefined && (applyToMod == Config.automationParams.dictionary["eq filter"].index || applyToMod == Config.automationParams.dictionary["pre eq"].index)) {
-                                    if (instrument.modFilterTypes[mod] == modFilterIndex)
+                                    if (instrument.modIndices[mod] == modFilterIndex)
                                         return [instrumentIndex, mod];
                                 } else if (modEnvIndex != undefined && applyToMod == Config.automationParams.dictionary["individual envelope speed"].index ||
                                     applyToMod == Config.automationParams.dictionary["individual envelope lower bound"].index ||
                                     applyToMod == Config.automationParams.dictionary["individual envelope upper bound"].index
                                 ) {
-                                    if (instrument.modEnvelopeNumbers[mod] == modEnvIndex)
+                                    if (instrument.modIndices[mod] == modEnvIndex)
                                         return [instrumentIndex, mod];
                                 } else
                                     return [instrumentIndex, mod];
@@ -776,7 +776,7 @@ export class PatternEditor {
                     if (instrument.modulators[mod] == applyToMod && Config.automationParams[instrument.modulators[mod]].forSong && (instrument.modChannels[mod][0] == -1)) {
                         // check song eq filter?
                         if (modFilterIndex != undefined && (applyToMod == Config.automationParams.dictionary["song eq filter"].index)) {
-                            if (instrument.modFilterTypes[mod] == modFilterIndex)
+                            if (instrument.modIndices[mod] == modFilterIndex)
                                 return [instrumentIndex, mod];
                         }
                         else
@@ -934,7 +934,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(postMoveData.freq);
             if (toApply) applyValues.push(postMoveData.gain);
 
-            // ModFilterTypes indices, one each for X/Y.
+            // modIndices indices, one each for X/Y.
             applyToFilterTargets.push(1 + useChange.pointIndex * 2);
             applyToFilterTargets.push(1 + useChange.pointIndex * 2 + 1);
 
@@ -1242,7 +1242,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(postMoveData.freq);
             if (toApply) applyValues.push(postMoveData.gain);
 
-            // ModFilterTypes indices, one each for X/Y.
+            // uh oh mod recording is totally broken,,
             applyToFilterTargets.push(1 + useChange.pointIndex * 2);
             applyToFilterTargets.push(1 + useChange.pointIndex * 2 + 1);
 
@@ -1580,7 +1580,7 @@ export class PatternEditor {
                                     instrument.modulators[mod] = applyToMods[applyIndex];
                                     if (Config.automationParams[applyToMods[applyIndex]].forSong) {
                                         if (applyToFilterTargets.length > applyIndex) {
-                                            instrument.modFilterTypes[mod] = applyToFilterTargets[applyIndex];
+                                            instrument.modIndices[mod] = applyToFilterTargets[applyIndex];
                                         }
                                         instrument.modChannels[mod][0] = -1; // Song
                                     } else {
@@ -1589,11 +1589,11 @@ export class PatternEditor {
 
                                         // Filter dot. Add appropriate filter target settings (dot# X and dot# Y mod).
                                         if (applyToFilterTargets.length > applyIndex) {
-                                            instrument.modFilterTypes[mod] = applyToFilterTargets[applyIndex];
+                                            instrument.modIndices[mod] = applyToFilterTargets[applyIndex];
                                         }
                                         //or add appropriate envelope settings
                                         else if (applyToEnvelopeTargets.length > applyIndex)
-                                            instrument.modEnvelopeNumbers[mod] = applyToEnvelopeTargets[applyIndex];
+                                            instrument.modIndices[mod] = applyToEnvelopeTargets[applyIndex];
                                     }
 
                                     usedPatterns.push(pattern!);
@@ -2146,7 +2146,7 @@ export class PatternEditor {
                             if (pattern.notes[i].start >= end) break;
                         }
                         const theNote: Note = new Note(this._cursor.pitch, start, end,
-                            this._doc.song.getNewNoteVolume(this._doc.song.getChannelIsMod(this._doc.channel), this._doc.channel, this._doc.getCurrentInstrument(this._barOffset), this._cursor.pitch),
+                            (this._doc.song.getChannelIsMod(this._doc.channel) ? Config.automationParams[this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[Config.modCount - this._cursor.pitch - 1]].newNoteVol : Config.noteSizeMax),
                             this._doc.song.getChannelIsNoise(this._doc.channel));
                         theNote.continuesLastPattern = continuesLastPattern;
                         sequence.append(new ChangeNoteAdded(this._doc, pattern, theNote, i));
@@ -2226,7 +2226,7 @@ export class PatternEditor {
                     let nextPin: NotePin = this._cursor.curNote.pins[0];
                     let bendSize: number = 0;
                     let bendInterval: number = 0;
-                    let cap: number = this._doc.song.getVolumeCap(this._doc.song.getChannelIsMod(this._doc.channel), this._doc.channel, this._doc.getCurrentInstrument(this._barOffset), this._cursor.pitch);
+                    let cap: number = this._doc.song.getChannelIsMod(this._doc.channel) ? Config.automationParams[this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[Config.modCount - this._cursor.pitch - 1]].maxRawVol : Config.noteSizeMax;
 
                     // Dragging gets a bit faster after difference in drag counts is >8.
                     let dragFactorSlow: number = 25.0 / Math.pow(cap, 0.4);
@@ -2455,7 +2455,7 @@ export class PatternEditor {
                 const radius: number = (this._pitchHeight - this._pitchBorder) / 2;
                 const width: number = 80;
                 const height: number = 60;
-                const cap: number = this._doc.song.getVolumeCap(this._doc.song.getChannelIsMod(this._doc.channel), this._doc.channel, this._doc.getCurrentInstrument(this._barOffset), this._cursor.pitch);
+                const cap: number =  this._doc.song.getChannelIsMod(this._doc.channel) ? Config.automationParams[this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[Config.modCount - this._cursor.pitch - 1]].maxRawVol : Config.noteSizeMax;
                 //this._drawNote(this._svgPreview, this._cursor.pitch, this._cursor.start, this._cursor.pins, this._pitchHeight / 2 + 1, true, this._octaveOffset);
 
                 let pathString: string = "";
@@ -2552,7 +2552,7 @@ export class PatternEditor {
                 // Force max height of mod channels to conform to settings.
                 for (const note of this._pattern.notes) {
                     let pitch = note.pitches[0]; // No pitch bend possible in mod channels.
-                    let maxHeight: number = this._doc.song.getVolumeCap(true, this._doc.channel, this._doc.getCurrentInstrument(this._barOffset), pitch);
+                    let maxHeight: number = Config.automationParams[this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[Config.modCount - pitch - 1]].maxRawVol
                     let maxFoundHeight: number = 0;
                     for (const pin of note.pins) {
                         if (pin.size > maxFoundHeight) {
@@ -2824,7 +2824,7 @@ export class PatternEditor {
 
         let nextPin: NotePin = pins[0];
 
-        const cap: number = this._doc.song.getVolumeCap(this._doc.song.getChannelIsMod(this._doc.channel), this._doc.channel, this._doc.getCurrentInstrument(this._barOffset), pitch);
+        const cap: number = this._doc.song.getChannelIsMod(this._doc.channel) ? Config.automationParams[this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[Config.modCount - pitch - 1]].maxRawVol : Config.noteSizeMax;
 
         let pathString: string = "M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " " + prettyNumber(this._pitchToPixelHeight(pitch - offset) + radius * (showSize ? nextPin.size / cap : 1.0)) + " ";
 

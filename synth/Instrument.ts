@@ -278,8 +278,7 @@ export class Instrument {
     public modInstruments: number[][] = [];
     public modEffects: number[][] = [];
     public modulators: number[] = [];
-    public modFilterTypes: number[] = [];
-    public modEnvelopeNumbers: number[] = [];
+    public modIndices: number[] = [];
     public invalidModulators: boolean[] = [];
 
     //Literally just for pitch envelopes.
@@ -300,9 +299,8 @@ export class Instrument {
         //
         // in theepbox, the channel and instrument is given as a list because many channel-instrument pairs can be enabled at once :3
         //
-        // modFilterTypes[mod] gives some info about the filter type: 0 is morph, 1+ is index in the dot selection array (dot 1 x, dot 1 y, dot 2 x...)
-        //   0  filter morph
-        //   1+ filter dot target, starting from dot 1 x and then dot 1 y, then repeating x, y for all dots in order. Note: odd values are always "x" targets, even are "y".
+        // modIndices[mod] is the index of the target. this can mean different things depending on the setting
+        // it replaces both modFilterTypes[mod] and modEnvelopeNumber[mod], plus allows targeting of specific FM operators.
 
         if (isModChannel) {
             for (let mod: number = 0; mod < Config.modCount; mod++) {
@@ -489,8 +487,7 @@ export class Instrument {
                     this.modEffects.push([0]);
                     this.modulators.push(Config.automationParams.dictionary["none"].index);
                     this.invalidModulators[mod] = false;
-                    this.modFilterTypes[mod] = 0;
-                    this.modEnvelopeNumbers[mod] = 0;
+                    this.modIndices[mod] = 0;
                 }
                 break;
             case InstrumentType.supersaw:
@@ -834,15 +831,13 @@ export class Instrument {
             instrumentObject["modInstruments"] = [];
             instrumentObject["modEffects"] = [];
             instrumentObject["modSettings"] = [];
-            instrumentObject["modFilterTypes"] = [];
-            instrumentObject["modEnvelopeNumbers"] = [];
+            instrumentObject["modIndices"] = [];
             for (let mod: number = 0; mod < Config.modCount; mod++) {
                 instrumentObject["modChannels"][mod] = this.modChannels[mod];
                 instrumentObject["modInstruments"][mod] = this.modInstruments[mod];
                 instrumentObject["modEffects"][mod] = this.modEffects[mod];
                 instrumentObject["modSettings"][mod] = this.modulators[mod];
-                instrumentObject["modFilterTypes"][mod] = this.modFilterTypes[mod];
-                instrumentObject["modEnvelopeNumbers"][mod] = this.modEnvelopeNumbers[mod];
+                instrumentObject["modIndices"][mod] = this.modIndices[mod];
             }
         } else {
             throw new Error("Unrecognized instrument type");
@@ -1340,9 +1335,11 @@ export class Instrument {
                     this.modulators[mod] = instrumentObject["modSettings"][mod];
                     // Due to an oversight, this isn't included in JSONs prior to JB 2.6.
                     if (instrumentObject["modFilterTypes"] != undefined)
-                        this.modFilterTypes[mod] = instrumentObject["modFilterTypes"][mod];
+                        this.modIndices[mod] = instrumentObject["modFilterTypes"][mod];
                     if (instrumentObject["modEnvelopeNumbers"] != undefined)
-                        this.modEnvelopeNumbers[mod] = instrumentObject["modEnvelopeNumbers"][mod];
+                        this.modIndices[mod] = instrumentObject["modEnvelopeNumbers"][mod];
+                    if (instrumentObject["modIndices"] != undefined)
+                        this.modIndices[mod] = instrumentObject["modIndices"][mod];
                     if (instrumentObject["modEffects"] != undefined)
                         this.modEffects[mod] = instrumentObject["modEffects"][mod];
                 }

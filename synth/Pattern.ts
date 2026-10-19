@@ -104,7 +104,7 @@ export class Pattern {
             // Only one ins per pattern is enforced in mod channels.
             let instrument: Instrument = channel.instruments[this.instruments[0]];
             let mod: number = Math.max(0, Config.modCount - note.pitches[0] - 1);
-            let volumeCap: number = song.getVolumeCapForSetting(isModChannel, instrument.modulators[mod], instrument.modFilterTypes[mod]);
+            let volumeCap: number = isModChannel ? Config.automationParams[instrument.modulators[mod]].maxRawVol : Config.noteSizeMax;
             const pointArray: Object[] = [];
             for (const pin of note.pins) {
                 let useVol: number = isModChannel ? Math.round(pin.size) : Math.round(pin.size * 100 / volumeCap);
@@ -189,7 +189,7 @@ export class Pattern {
                     const time: number = Math.round((+pointObject["tick"]) * Config.partsPerBeat / importedPartsPerBeat);
 
                     // Only one instrument per pattern allowed in mod channels.
-                    let volumeCap: number = song.getVolumeCapForSetting(isModChannel, instrument.modulators[mod], instrument.modFilterTypes[mod]);
+                    let volumeCap: number = isModChannel ? Config.automationParams[instrument.modulators[mod]].maxRawVol : Config.noteSizeMax;
 
                     // The strange volume formula used for notes is not needed for mods. Some rounding errors were possible.
                     // A "forMod" signifier was added to new JSON export to detect when the higher precision export was used in a file.

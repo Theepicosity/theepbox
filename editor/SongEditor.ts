@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 //import {Layout} from "./Layout";
-import { sampleLoadEvents, SampleLoadedEvent, ChannelType, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, DropdownID } from "../synth/SynthConfig";
+import { sampleLoadEvents, SampleLoadedEvent, ChannelType, InstrumentType, EffectType, MDEffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, DropdownID } from "../synth/SynthConfig";
 import { BarScrollBar } from "./BarScrollBar";
 import { BeatsPerBarPrompt } from "./BeatsPerBarPrompt";
 import { Change, ChangeGroup } from "./Change";
@@ -999,12 +999,10 @@ export class SongEditor {
     private readonly _modChannelBoxes: HTMLSelectElement[];
     private readonly _modSetRows: HTMLElement[];
     private readonly _modSetBoxes: HTMLSelectElement[];
-    private readonly _modFilterRows: HTMLElement[];
-    private readonly _modFilterBoxes: HTMLSelectElement[];
     private readonly _modEffectRows: HTMLElement[];
     private readonly _modEffectBoxes: HTMLSelectElement[];
-    private readonly _modEnvelopeRows: HTMLElement[];
-    private readonly _modEnvelopeBoxes: HTMLSelectElement[];
+    private readonly _modIndexRows: HTMLElement[];
+    private readonly _modIndexBoxes: HTMLSelectElement[];
     private readonly _modTargetIndicators: SVGElement[];
 
     private readonly _feedback6OpTypeSelect: HTMLSelectElement = buildOptions(select(), Config.feedbacks6Op.map(feedback => feedback.name));
@@ -1371,9 +1369,9 @@ export class SongEditor {
     private readonly _operatorDropdownGroups: HTMLDivElement[] = [];
     readonly _drumsetSpectrumEditors: SpectrumEditor[] = [];
     private readonly _drumsetEnvelopeSelects: HTMLSelectElement[] = [];
-    private _showModSliders: boolean[][] = [];
-    private _newShowModSliders: boolean[][] = [];
-    private _modSliderValues: number[][] = [];
+    private _showModSliders: boolean[][][] = [];
+    private _newShowModSliders: boolean[][][] = [];
+    private _modSliderValues: number[][][] = [];
     private _hasActiveModSliders: boolean = false;
 
     private _openVibratoDropdown: boolean = false;
@@ -1423,13 +1421,13 @@ export class SongEditor {
 
         this._unisonSelect.appendChild(option({ hidden: true, value: Config.unisons.length }, "custom"));
 
-        this._showModSliders = new Array<boolean[]>(Config.automationParams.length);
-        this._modSliderValues = new Array<number[]>(Config.automationParams.length);
+        this._showModSliders = new Array<boolean[][]>(Config.automationParams.length);
+        this._modSliderValues = new Array<number[][]>(Config.automationParams.length);
         //set default values
         for (let i = 0; i < Config.automationParams.length; i++) {
-            this._newShowModSliders[i] = [];
-            this._showModSliders[i] = [];
-            this._modSliderValues[i] = [];
+            this._newShowModSliders[i] = [ [] ];
+            this._showModSliders[i] = [ [] ];
+            this._modSliderValues[i] = [ [] ];
         }
 
         this._phaseModGroup.appendChild(div({ class: "selectRow", style: `color: ${ColorConfig.secondaryText}; height: 1em; margin-top: 0.5em;` },
@@ -1507,12 +1505,10 @@ export class SongEditor {
         this._modChannelBoxes = [];
         this._modSetRows = [];
         this._modSetBoxes = [];
-        this._modFilterRows = [];
-        this._modFilterBoxes = [];
         this._modEffectRows = [];
         this._modEffectBoxes = [];
-        this._modEnvelopeRows = [];
-        this._modEnvelopeBoxes = [];
+        this._modIndexRows = [];
+        this._modIndexBoxes = [];
         this._modTargetIndicators = [];
         for (let mod: number = 0; mod < Config.modCount; mod++) {
 
@@ -1524,13 +1520,11 @@ export class SongEditor {
             );
 
             let modSetBox: HTMLSelectElement = select();
-            let modFilterBox: HTMLSelectElement = select();
             let modEffectBox: HTMLSelectElement = select();
-            let modEnvelopeBox: HTMLSelectElement = select();
+            let modIndexBox: HTMLSelectElement = select();
             let modSetRow: HTMLDivElement = div({ class: "selectRow", id: "modSettingText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modSet") }, "Setting: "), span({ class: "tip", style: "font-size:x-small;", onclick: () => this._openPrompt("modSetInfo" + mod) }, "?"), div({ class: "selectContainer" }, modSetBox));
-            let modFilterRow: HTMLDivElement = div({ class: "selectRow", id: "modFilterText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modFilter") }, "Target: "), div({ class: "selectContainer" }, modFilterBox));
             let modEffectRow: HTMLDivElement = div({ class: "selectRow", id: "modEffectText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modEffect") }, "Effect: "), div({ class: "selectContainer" }, modEffectBox));
-            let modEnvelopeRow: HTMLDivElement = div({ class: "selectRow", id: "modEnvelopeText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modEnvelope") }, "Envelope: "), div({ class: "selectContainer" }, modEnvelopeBox));
+            let modIndexRow: HTMLDivElement = div({ class: "selectRow", id: "modIndexText" + mod, style: "margin-bottom: 0.9em; color: currentColor;" }, span({ class: "tip", onclick: () => this._openPrompt("modIndex") }, "Index: "), div({ class: "selectContainer" }, modIndexBox));
 
 
             // @jummbus: I could template this up above and simply create from the template, especially since I also reuse it in song settings, but unsure how to do that with imperative-html :P
@@ -1545,20 +1539,17 @@ export class SongEditor {
             this._modChannelBoxes.push(modChannelBox);
             this._modSetRows.push(modSetRow);
             this._modSetBoxes.push(modSetBox);
-            this._modFilterRows.push(modFilterRow);
-            this._modFilterBoxes.push(modFilterBox);
             this._modEffectRows.push(modEffectRow);
             this._modEffectBoxes.push(modEffectBox);
-            this._modEnvelopeRows.push(modEnvelopeRow);
-            this._modEnvelopeBoxes.push(modEnvelopeBox);
+            this._modIndexRows.push(modIndexRow);
+            this._modIndexBoxes.push(modIndexBox);
             this._modTargetIndicators.push(modTarget);
 
             this._modulatorGroup.appendChild(div({ style: "margin: 3px 0; font-weight: bold; margin-bottom: 0.7em; text-align: center; color: " + ColorConfig.secondaryText + "; background: " + ColorConfig.uiWidgetBackground + ";", id: "modHeader" + mod}, ["Modulator " + (mod + 1), modTarget]));
             this._modulatorGroup.appendChild(modNameRow);
             this._modulatorGroup.appendChild(modSetRow);
             this._modulatorGroup.appendChild(modEffectRow);
-            this._modulatorGroup.appendChild(modFilterRow);
-            this._modulatorGroup.appendChild(modEnvelopeRow);
+            this._modulatorGroup.appendChild(modIndexRow);
 
         }
 
@@ -1653,9 +1644,8 @@ export class SongEditor {
         for (let mod: number = 0; mod < Config.modCount; mod++) {
             this._modChannelBoxes[mod].addEventListener("change", function () { thisRef._whenSetModChannel(mod); });
             this._modSetBoxes[mod].addEventListener("change", function () { thisRef._whenSetModSetting(mod); });
-            this._modFilterBoxes[mod].addEventListener("change", function () { thisRef._whenSetModFilter(mod); });
             this._modEffectBoxes[mod].addEventListener("change", function () { thisRef._whenSetModEffect(mod); })
-            this._modEnvelopeBoxes[mod].addEventListener("change", function () { thisRef._whenSetModEnvelope(mod); })
+            this._modIndexBoxes[mod].addEventListener("change", function () { thisRef._whenSetModIndex(mod); })
             this._modTargetIndicators[mod].addEventListener("click", function () { thisRef._whenClickModTarget(mod); });
         }
 
@@ -1840,16 +1830,17 @@ export class SongEditor {
             this._songEqFilterEditor.render();
 
             for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
-                const maxIndex = Math.max(Config.automationParams[setting].maxIndex, instrument.effects.length)
-                for (let index: number = 0; index <= maxIndex; index++) {
-                    if (this._showModSliders[setting][index] == true) {
-                        this._showModSliders[setting][index] = false;
-                        this._newShowModSliders[setting][index] = false;
-                        let slider: Slider | null = this.getSliderForModSetting(setting, index);
-                        
-                        if (slider != null) {
-                            slider.container.classList.remove("modSlider");
+                for (let effectIndex: number = 0; effectIndex < instrument.effects.length; effectIndex++) {
+                    for (let index: number = 0; index <= Config.automationParams[setting].maxIndex; index++) {
+                        if (this._showModSliders[setting][effectIndex] == undefined) this._showModSliders[setting][effectIndex] = [];
+                        if (this._showModSliders[setting][effectIndex][index] == true) {
+                            this._showModSliders[setting][effectIndex][index] = false;
+                            this._newShowModSliders[setting][effectIndex][index] = false;
+                            let slider: Slider | null = this.getSliderForModSetting(setting, effectIndex, index);
 
+                            if (slider != null) {
+                                slider.container.classList.remove("modSlider");
+                            }
                         }
                     }
                 }
@@ -1861,40 +1852,16 @@ export class SongEditor {
             // Check and update mod values on sliders
             if (anyModActive) {
 
-                function updateModSlider(editor: SongEditor, slider: Slider, setting: number, channel: number, instrumentIndex: number, index: number): boolean {
-                    if (editor._doc.synth.isModActive(setting, channel, instrumentIndex, index)) {
-                        if (Config.automationParams[setting].maxIndex > 0) {
-                            //detect that the mod actually does need updating for the specific index
-                            const envelope = editor._doc.synth.song!.channels[channel].instruments[instrumentIndex].envelopes[index];
-                            switch (setting) {
-                                case Config.automationParams.dictionary["individual envelope speed"].index: {
-                                    if (envelope.tempEnvelopeSpeed == null) {
-                                        return false;
-                                    }
-                                    break;
-                                }
-                                case Config.automationParams.dictionary["individual envelope lower bound"].index: {
-                                    if (envelope.tempEnvelopeLowerBound == null) {
-                                        return false;
-                                    }
-                                    break;
-                                }
-                                case Config.automationParams.dictionary["individual envelope upper bound"].index: {
-                                    if (envelope.tempEnvelopeUpperBound == null) {
-                                        return false;
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        let currentVal: number = (editor._doc.synth.getModValue(setting, 0, channel, instrumentIndex, 0, false) - Config.automationParams[setting].convertRealFactor) / Config.automationParams[setting].maxRawVol;
+                function updateModSlider(editor: SongEditor, slider: Slider, setting: number, channel: number, instrumentIndex: number, index: number, effectIndex: number): boolean {
+                    if (editor._doc.synth.isModActive(setting, index, channel, instrumentIndex, 0)) {
+                        let currentVal: number = (editor._doc.synth.getModValue(setting, index, channel, instrumentIndex, effectIndex, false) - Config.automationParams[setting].convertRealFactor) / Config.automationParams[setting].maxRawVol;
 
                         if (Config.automationParams[setting].invertSliderIndicator == true) {
                             currentVal = 1 - currentVal;
                         }
 
-                        if (currentVal != editor._modSliderValues[setting][index] || !Object.hasOwn(slider.container.style, '--mod-position')) {
-                            editor._modSliderValues[setting][index] = currentVal;
+                        if (currentVal != editor._modSliderValues[setting][effectIndex][index] || !Object.hasOwn(slider.container.style, '--mod-position')) {
+                            editor._modSliderValues[setting][effectIndex][index] = currentVal;
                             slider.container.style.setProperty("--mod-position", (currentVal * 96.0 + 2.0) + "%");
                         }
                         return true;
@@ -1904,16 +1871,20 @@ export class SongEditor {
 
                 // Set mod sliders to present values
                 for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
-                    const maxIndex = Math.max(Config.automationParams[setting].maxIndex, instrument.effects.length)
-                    for (let index: number = 0; index <= maxIndex; index++) {
-                        // Set to last value
-                        this._newShowModSliders[setting][index] = Boolean(this._showModSliders[setting][index]);
-
-                        // Check for newer value
-                        let slider: Slider | null = this.getSliderForModSetting(setting, index);
-
-                        if (slider != null) {
-                            this._newShowModSliders[setting][index] = updateModSlider(this, slider, setting, this._doc.channel, instrumentIndex, index);
+                    const maxIndex = Config.automationParams[setting].maxIndex
+                    if (Config.automationParams[setting].associatedEffect != null) {
+                        for (let effectIndex: number = 0; effectIndex < instrument.effects.length; effectIndex++) {
+                            for (let index: number = 0; index <= maxIndex; index++) {
+                                this._newShowModSliders[setting][effectIndex][index] = Boolean(this._showModSliders[setting][effectIndex][index]); // Set to last value
+                                let slider: Slider | null = this.getSliderForModSetting(setting, effectIndex, index); // Check for newer value
+                                if (slider != null) this._newShowModSliders[setting][effectIndex][index] = updateModSlider(this, slider, setting, this._doc.channel, instrumentIndex, index, effectIndex);
+                            }
+                        }
+                    } else {
+                        for (let index: number = 0; index <= maxIndex; index++) {
+                            this._newShowModSliders[setting][0][index] = Boolean(this._showModSliders[setting][0][index]); // Set to last value
+                            let slider: Slider | null = this.getSliderForModSetting(setting, 0, index); // Check for newer value
+                            if (slider != null) this._newShowModSliders[setting][0][index] = updateModSlider(this, slider, setting, this._doc.channel, instrumentIndex, index, 0);
                         }
                     }
                 }
@@ -1922,8 +1893,10 @@ export class SongEditor {
             else if (this._hasActiveModSliders) {
                 // Zero out show-mod-slider settings (since none are active) to kill active mod slider flag
                 for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
-                    for (let index: number = 0; index <= Config.automationParams[setting].maxIndex; index++) {
-                        this._newShowModSliders[setting][index] = false;
+                    for (let effectIndex: number = 0; effectIndex < (Config.automationParams[setting].associatedEffect != null ? instrument.effects.length : 1); effectIndex++) {
+                        for (let index: number = 0; index <= Config.automationParams[setting].maxIndex; index++) {
+                            this._newShowModSliders[setting][effectIndex][index] = false;
+                        }
                     }
                 }
             }
@@ -1935,25 +1908,26 @@ export class SongEditor {
 
                 for (let setting: number = 0; setting < Config.automationParams.length; setting++) {
                     const maxIndex = Math.max(Config.automationParams[setting].maxIndex, instrument.effects.length)
-                    for (let index: number = 0; index <= maxIndex; index++) {
-                        if (this._newShowModSliders[setting][index] != this._showModSliders[setting][index]) {
-                            this._showModSliders[setting][index] = this._newShowModSliders[setting][index];
-                            let slider: Slider | null = this.getSliderForModSetting(setting, index);
+                    for (let effectIndex: number = 0; effectIndex < (Config.automationParams[setting].associatedEffect != null ? instrument.effects.length : 1); effectIndex++) {
+                        for (let index: number = 0; index <= maxIndex; index++) {
+                            if (this._newShowModSliders[setting][effectIndex][index] != this._showModSliders[setting][effectIndex][index]) {
+                                this._showModSliders[setting][effectIndex][index] = this._newShowModSliders[setting][effectIndex][index];
+                                let slider: Slider | null = this.getSliderForModSetting(setting, index);
 
-                            if (slider != null) {
+                                if (slider != null) {
 
-                                if (this._showModSliders[setting][index] == true) {
-                                    slider.container.classList.add("modSlider");
+                                    if (this._showModSliders[setting][effectIndex][index] == true) {
+                                        slider.container.classList.add("modSlider");
+                                    }
+                                    else {
+                                        slider.container.classList.remove("modSlider");
+                                    }
+
                                 }
-                                else {
-                                    slider.container.classList.remove("modSlider");
-                                }
-
                             }
-                        }
 
-                        if (this._newShowModSliders[setting][index] == true)
-                            anySliderActive = true;
+                            if (this._newShowModSliders[setting][effectIndex][index] == true) anySliderActive = true;
+                        }
                     }
                 }
 
@@ -1965,13 +1939,12 @@ export class SongEditor {
 
     }
 
-    public getSliderForModSetting(setting: number, index?: number): Slider | null {
-        index = index == undefined ? 1 : index;
+    public getSliderForModSetting(setting: number, effectIndex: number = 0, index: number = 0): Slider | null {
         switch (setting) {
             case Config.automationParams.dictionary["gain"].index:
-                return this.effectEditor.gainSliders[index];
+                return this.effectEditor.gainSliders[effectIndex];
             case Config.automationParams.dictionary["pan"].index:
-                return this.effectEditor.panSliders[index];
+                return this.effectEditor.panSliders[effectIndex];
             case Config.automationParams.dictionary["detune"].index:
                 return this._detuneSlider;
             case Config.automationParams.dictionary["fm operator amplitude"].index:
@@ -1986,17 +1959,17 @@ export class SongEditor {
             case Config.automationParams.dictionary["decimal offset"].index:
                 return this._decimalOffsetSlider;
             case Config.automationParams.dictionary["reverb"].index:
-                return this.effectEditor.reverbSliders[index];
+                return this.effectEditor.reverbSliders[effectIndex];
             case Config.automationParams.dictionary["reverb wet/dry"].index:
-                return this.effectEditor.reverbWetDryMixSliders[index];
+                return this.effectEditor.reverbWetDryMixSliders[effectIndex];
             case Config.automationParams.dictionary["reverb send"].index:
-                return this.effectEditor.reverbSendSliders[index];
+                return this.effectEditor.reverbSendSliders[effectIndex];
             case Config.automationParams.dictionary["distortion"].index:
-                return this.effectEditor.distortionSliders[index];
+                return this.effectEditor.distortionSliders[effectIndex];
             case Config.automationParams.dictionary["clipping in-gain"].index:
-                return this.effectEditor.clippingInGainSliders[index];
+                return this.effectEditor.clippingInGainSliders[effectIndex];
             case Config.automationParams.dictionary["clipping threshold"].index:
-                return this.effectEditor.clippingThresholdSliders[index];
+                return this.effectEditor.clippingThresholdSliders[effectIndex];
             case Config.automationParams.dictionary["pre volume"].index:
                 // So, this should technically not affect this slider, but it will look better as legacy songs used this mod as 'volume'.
                 // In the case that mix volume is used as well, they'd fight for the display, so just don't use this.
@@ -2014,37 +1987,37 @@ export class SongEditor {
             case Config.automationParams.dictionary["arpeggio speed"].index:
                 return this._arpeggioSpeedSlider;
             case Config.automationParams.dictionary["pan delay"].index:
-                return this.effectEditor.panDelaySliders[index];
+                return this.effectEditor.panDelaySliders[effectIndex];
             case Config.automationParams.dictionary["tempo"].index:
                 return this._tempoSlider;
             case Config.automationParams.dictionary["song volume"].index:
                 return this._volumeSlider;
             case Config.automationParams.dictionary["eq filter cut"].index:
-                return this.effectEditor.eqFilterSimpleCutSliders[index];
+                return this.effectEditor.eqFilterSimpleCutSliders[effectIndex];
             case Config.automationParams.dictionary["eq filter peak"].index:
-                return this.effectEditor.eqFilterSimplePeakSliders[index];
+                return this.effectEditor.eqFilterSimplePeakSliders[effectIndex];
             case Config.automationParams.dictionary["bit crush"].index:
-                return this.effectEditor.bitcrusherQuantizationSliders[index];
+                return this.effectEditor.bitcrusherQuantizationSliders[effectIndex];
             case Config.automationParams.dictionary["frequency crush"].index:
-                return this.effectEditor.bitcrusherFreqSliders[index];
+                return this.effectEditor.bitcrusherFreqSliders[effectIndex];
             case Config.automationParams.dictionary["pitch shift"].index:
                 return this._pitchShiftSlider;
             case Config.automationParams.dictionary["flanger"].index:
-                return this.effectEditor.flangerSliders[index];
+                return this.effectEditor.flangerSliders[effectIndex];
             case Config.automationParams.dictionary["flanger speed"].index:
-                return this.effectEditor.flangerSpeedSliders[index];
+                return this.effectEditor.flangerSpeedSliders[effectIndex];
             case Config.automationParams.dictionary["flanger depth"].index:
-                return this.effectEditor.flangerDepthSliders[index];
+                return this.effectEditor.flangerDepthSliders[effectIndex];
             case Config.automationParams.dictionary["flanger feedback"].index:
-                return this.effectEditor.flangerFeedbackSliders[index];
+                return this.effectEditor.flangerFeedbackSliders[effectIndex];
             case Config.automationParams.dictionary["chorus"].index:
-                return this.effectEditor.chorusSliders[index];
+                return this.effectEditor.chorusSliders[effectIndex];
             case Config.automationParams.dictionary["echo"].index:
-                return this.effectEditor.echoSustainSliders[index];
+                return this.effectEditor.echoSustainSliders[effectIndex];
             case Config.automationParams.dictionary["echo delay"].index:
-                return this.effectEditor.echoDelaySliders[index];
+                return this.effectEditor.echoDelaySliders[effectIndex];
             case Config.automationParams.dictionary["echo ping pong"].index:
-                return this.effectEditor.echoPingPongSliders[index];
+                return this.effectEditor.echoPingPongSliders[effectIndex];
             case Config.automationParams.dictionary["sustain"].index:
                 return this._stringSustainSlider;
             case Config.automationParams.dictionary["envelope speed"].index:
@@ -2062,17 +2035,17 @@ export class SongEditor {
             case Config.automationParams.dictionary["individual envelope upper bound"].index:
                 return this.envelopeEditor.perEnvelopeUpperBoundSliders[index];
             case Config.automationParams.dictionary["ring modulation"].index:
-                return this.effectEditor.ringModSliders[index]
+                return this.effectEditor.ringModSliders[effectIndex]
             case Config.automationParams.dictionary["ring modulation frequency"].index:
-                return this.effectEditor.ringModHzSliders[index]
+                return this.effectEditor.ringModHzSliders[effectIndex]
             case Config.automationParams.dictionary["granular"].index:
-                return this.effectEditor.granularSliders[index];
+                return this.effectEditor.granularSliders[effectIndex];
             case Config.automationParams.dictionary["grain frequency"].index:
-                return this.effectEditor.grainAmountsSliders[index];
+                return this.effectEditor.grainAmountsSliders[effectIndex];
             case Config.automationParams.dictionary["grain size"].index:
-                return this.effectEditor.grainSizeSliders[index];
+                return this.effectEditor.grainSizeSliders[effectIndex];
             case Config.automationParams.dictionary["grain range"].index:
-                return this.effectEditor.grainRangeSliders[index];
+                return this.effectEditor.grainRangeSliders[effectIndex];
             default:
                 return null;
         }
@@ -2913,352 +2886,39 @@ export class SongEditor {
                     const settingList: string[] = [];
                     const unusedSettingList: string[] = [];
 
-                    // Make sure these names match the names declared for modulators in SynthConfig.ts.
-
-                    settingList.push("none");
-
-                    // Populate mod setting options for the song scope.
-                    if (instrument.modChannels[mod][0] == -1) {
-                        settingList.push("song volume");
-                        settingList.push("tempo");
-                        settingList.push("song reverb");
-                        settingList.push("next bar");
-                        settingList.push("song detune");
-                        settingList.push("song eq filter");
-                    }
-                    // Populate mod setting options for instrument scope.
-                    else {
-
-                        settingList.push("pre volume");
-                        settingList.push("post volume");
-
-                        // Build a list of target instrument indices, types and other info. It will be a single type for a single instrument, but with "all" and "active" it could be more.
-                        // All or active are included together. Active allows any to be set, just in case the user fiddles with which are active later.
-                        let tgtInstrumentTypes: InstrumentType[] = [];
-                        let anyInstrumentAdvancedEQ: boolean = false,
-                            anyInstrumentSimpleEQ: boolean = false,
-                            anyInstrumentAdvancedNote: boolean = false,
-                            anyInstrumentSimpleNote: boolean = false,
-                            anyInstrumentArps: boolean = false,
-                            anyInstrumentPitchShifts: boolean = false,
-                            anyInstrumentDetunes: boolean = false,
-                            anyInstrumentVibratos: boolean = false,
-                            anyInstrumentEQFilters: boolean = false,
-                            anyInstrumentDistorts: boolean = false,
-                            anyInstrumentClips: boolean = false,
-                            anyInstrumentBitcrushes: boolean = false,
-                            anyInstrumentGain: boolean = false,
-                            anyInstrumentPans: boolean = false,
-                            anyInstrumentFlanger: boolean = false,
-                            anyInstrumentChorus: boolean = false,
-                            anyInstrumentEchoes: boolean = false,
-                            anyInstrumentReverbs: boolean = false,
-                            anyInstrumentRingMods: boolean = false,
-                            anyInstrumentGranulars: boolean = false,
-                            anyInstrumentHasEnvelopes: boolean = false;
-                        let allInstrumentPitchShifts: boolean = true,
-                            allInstrumentEQFilters: boolean = true,
-                            allInstrumentDetunes: boolean = true,
-                            allInstrumentVibratos: boolean = true,
-                            allInstrumentDistorts: boolean = true,
-                            allInstrumentClips: boolean = true,
-                            allInstrumentBitcrushes: boolean = true,
-                            allInstrumentGain: boolean = true,
-                            allInstrumentPans: boolean = true,
-                            allInstrumentFlanger: boolean = false,
-                            allInstrumentChorus: boolean = true,
-                            allInstrumentEchoes: boolean = true,
-                            allInstrumentReverbs: boolean = true,
-                            allInstrumentRingMods: boolean = true,
-                            allInstrumentGranulars: boolean = true;
-
-                        for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
-                            let channel: Channel = this._doc.song.channels[instrument.modChannels[mod][i]];
-                            let instrumentIndex: number = instrument.modInstruments[mod][i];
-
-                            if (!tgtInstrumentTypes.includes(channel.instruments[instrumentIndex].type))
-                                tgtInstrumentTypes.push(channel.instruments[instrumentIndex].type);
-                            if (instrument.noteFilterType)
-                                anyInstrumentSimpleNote = true;
-                            else
-                                anyInstrumentAdvancedNote = true;
-                            if (effectsIncludeChord(channel.instruments[instrumentIndex].mdeffects) && channel.instruments[instrumentIndex].getChord().arpeggiates) {
-                                anyInstrumentArps = true;
-                            }
-                            if (effectsIncludePitchShift(channel.instruments[instrumentIndex].mdeffects)) {
-                                anyInstrumentPitchShifts = true;
+                    for (let channelIndex: number = 0; channelIndex < instrument.modChannels[mod].length; channelIndex++) {
+                        let channel: Channel = this._doc.song.channels[instrument.modChannels[mod][channelIndex]];
+                        let instrumentIndex: number = instrument.modInstruments[mod][channelIndex];
+                        for (let i: number = 0; i < Config.automationParams.length; i++) {
+                            const str: string = Config.automationParams[i].name;
+                            let invalidPostEQ: boolean = false;
+                            if (instrument.modChannels[mod][channelIndex] == -1) {
+                                if (Config.automationParams[i].forSong
+                                && !((Config.automationParams[i].isFilter || str == "song eq filter morph") && this._doc.song.eqFilter.controlPointCount == 0)) {
+                                    settingList.push(Config.automationParams[i].name);
+                                }
                             } else {
-                                allInstrumentPitchShifts = false;
-                            }
-                            if (effectsIncludeDetune(channel.instruments[instrumentIndex].mdeffects)) {
-                                anyInstrumentDetunes = true;
-                            }
-                            else {
-                                allInstrumentDetunes = false;
-                            }
-                            if (effectsIncludeVibrato(channel.instruments[instrumentIndex].mdeffects)) {
-                                anyInstrumentVibratos = true;
-                            }
-                            else {
-                                allInstrumentVibratos = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.eqFilter)) {
-                                anyInstrumentEQFilters = true;
-                                for (let j: number = 0; j < channel.instruments[instrumentIndex].effects.length; j++) {
-                                    let effect: Effect = channel.instruments[instrumentIndex].effects[j] as Effect;
-                                    if (effect.eqFilterType)
-                                        anyInstrumentSimpleEQ = true;
-                                    else
-                                        anyInstrumentAdvancedEQ = true;
+                                for (let effectIndex: number = 0; effectIndex < channel.instruments[instrumentIndex].effects.length; effectIndex++) {
+                                    if (channel.instruments[instrumentIndex].effects[effectIndex].type == EffectType.eqFilter) {
+                                        if ((channel.instruments[instrumentIndex].effects[effectIndex].eqFilterType && (Config.automationParams[i].isFilter || str == "eq filter morph")) || (!channel.instruments[instrumentIndex].effects[effectIndex].eqFilterType && (str == "eq filter cut" || str == "eq filter peak"))) {
+                                            invalidPostEQ = true;
+                                        }
+                                    }
+                                }
+                                if ((((channel.instruments[instrumentIndex].effectsIncludeType(Config.automationParams[i].associatedEffect as EffectType) || Config.automationParams[i].associatedEffect == null)
+                                && ((channel.instruments[instrumentIndex].mdeffects & (1 << (Config.automationParams[i].associatedMDEffect as MDEffectType))) != 0 || Config.automationParams[i].associatedMDEffect == null)
+                                && (Config.automationParams[i].associatedInstruments == null ? true : Config.automationParams[i].associatedInstruments!.includes(channel.instruments[instrumentIndex].type))
+                                && (Config.automationParams[i].forSong == (instrument.modChannels[mod][0] == -1))
+                                && (!Config.automationParams[i].isEnvelope || channel.instruments[instrumentIndex].envelopeCount > 0)
+                                && (!invalidPostEQ)
+                                && !((Config.automationParams[i].isFilter || str == "eq filter morph") && (instrument.modIndices[mod] + 1 > channel.instruments[instrumentIndex].getLargestControlPointCount(false)))
+                                && (Config.automationParams[i].canBeModulator))
+                                || str == "none")
+                                && !settingList.includes(str)) {
+                                    settingList.push(str);
                                 }
                             }
-                            else {
-                                allInstrumentEQFilters = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.distortion)) {
-                                anyInstrumentDistorts = true;
-                            }
-                            else {
-                                allInstrumentDistorts = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.clipping)) {
-                                anyInstrumentClips = true;
-                            }
-                            else {
-                                allInstrumentClips = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.bitcrusher)) {
-                                anyInstrumentBitcrushes = true;
-                            }
-                            else {
-                                allInstrumentBitcrushes = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.panning)) {
-                                anyInstrumentPans = true;
-                            }
-                            else {
-                                allInstrumentPans = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.gain)) {
-                                anyInstrumentGain = true;
-                            }
-                            else {
-                                allInstrumentGain = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.flanger)) {
-                                anyInstrumentFlanger = true;
-                            }
-                            else {
-                                allInstrumentFlanger = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.chorus)) {
-                                anyInstrumentChorus = true;
-                            }
-                            else {
-                                allInstrumentChorus = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.echo)) {
-                                anyInstrumentEchoes = true;
-                            }
-                            else {
-                                allInstrumentEchoes = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.reverb)) {
-                                anyInstrumentReverbs = true;
-                            }
-                            else {
-                                allInstrumentReverbs = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.ringModulation)) {
-                                anyInstrumentRingMods = true;
-                            }
-                            else {
-                                allInstrumentRingMods = false;
-                            }
-                            if (channel.instruments[instrumentIndex].effectsIncludeType(EffectType.granular)) {
-                                anyInstrumentGranulars = true;
-                            }
-                            else {
-                                allInstrumentGranulars = false;
-                            }
-                            if (channel.instruments[instrumentIndex].envelopes.length > 0) {
-                                anyInstrumentHasEnvelopes = true;
-                            }
                         }
-                        if (tgtInstrumentTypes.includes(InstrumentType.fm)) {
-                            settingList.push("fm slider 1");
-                            settingList.push("fm slider 2");
-                            settingList.push("fm slider 3");
-                            settingList.push("fm slider 4");
-                            settingList.push("fm feedback");
-                        }
-                        if (tgtInstrumentTypes.includes(InstrumentType.fm6op)) {
-                            settingList.push("fm slider 1");
-                            settingList.push("fm slider 2");
-                            settingList.push("fm slider 3");
-                            settingList.push("fm slider 4");
-                            settingList.push("fm slider 5");
-                            settingList.push("fm slider 6");
-                            settingList.push("fm feedback");
-                        }
-                        if (tgtInstrumentTypes.includes(InstrumentType.pwm) || tgtInstrumentTypes.includes(InstrumentType.supersaw)) {
-                            settingList.push("pulse width");
-                            settingList.push("decimal offset");
-                        }
-                        if (tgtInstrumentTypes.includes(InstrumentType.supersaw)) {
-                            settingList.push("dynamism");
-                            settingList.push("spread");
-                            settingList.push("saw shape");
-                        }
-                        if (tgtInstrumentTypes.includes(InstrumentType.pickedString)) {
-                            settingList.push("sustain");
-                        }
-                        if (anyInstrumentArps) {
-                            settingList.push("arpeggio speed");
-                            settingList.push("reset arpeggio");
-                        }
-                        if (anyInstrumentPitchShifts) {
-                            settingList.push("pitch shift");
-                        }
-                        if (!allInstrumentPitchShifts) {
-                            unusedSettingList.push("+ pitch shift");
-                        }
-                        if (anyInstrumentDetunes) {
-                            settingList.push("detune");
-                        }
-                        if (!allInstrumentDetunes) {
-                            unusedSettingList.push("+ detune");
-                        }
-                        if (anyInstrumentVibratos) {
-                            settingList.push("vibrato depth");
-                            settingList.push("vibrato speed");
-                            settingList.push("vibrato delay");
-                        }
-                        if (!allInstrumentVibratos) {
-                            unusedSettingList.push("+ vibrato depth");
-                            unusedSettingList.push("+ vibrato speed");
-                            unusedSettingList.push("+ vibrato delay");
-                        }
-                        if (anyInstrumentAdvancedNote) {
-                            settingList.push("pre eq");
-                        }
-                        if (anyInstrumentSimpleNote) {
-                            settingList.push("pre eq cut");
-                            settingList.push("pre eq peak");
-                        }
-                        if (anyInstrumentEQFilters) {
-                            if (anyInstrumentAdvancedEQ) {
-                                settingList.push("eq filter");
-                            }
-                            if (anyInstrumentSimpleEQ) {
-                                settingList.push("eq filter cut");
-                                settingList.push("eq filter peak");
-                            }
-                        }
-                        if (!allInstrumentEQFilters) unusedSettingList.push("+ eq filter");
-                        if (anyInstrumentDistorts) {
-                            settingList.push("distortion");
-                        }
-                        if (!allInstrumentDistorts) {
-                            unusedSettingList.push("+ distortion");
-                        }
-                        if (anyInstrumentClips) {
-                            settingList.push("clipping in-gain");
-                            settingList.push("clipping threshold");
-                        }
-                        if (!allInstrumentClips) {
-                            unusedSettingList.push("+ clipping in-gain");
-                            unusedSettingList.push("+ clipping threshold");
-                        }
-                        if (anyInstrumentBitcrushes) {
-                            settingList.push("bit crush");
-                            settingList.push("frequency crush");
-                        }
-                        if (!allInstrumentBitcrushes) {
-                            unusedSettingList.push("+ bit crush");
-                            unusedSettingList.push("+ frequency crush");
-                        }
-                        if (anyInstrumentGain) {
-                            settingList.push("gain");
-                        }
-                        if (!allInstrumentGain) {
-                            unusedSettingList.push("+ gain");
-                        }
-                        if (anyInstrumentPans) {
-                            settingList.push("pan");
-                            settingList.push("pan delay");
-                        }
-                        if (!allInstrumentPans) {
-                            unusedSettingList.push("+ pan");
-                            unusedSettingList.push("+ pan delay");
-                        }
-                        if (anyInstrumentFlanger) {
-                            settingList.push("flanger");
-                            settingList.push("flanger speed");
-                            settingList.push("flanger depth");
-                            settingList.push("flanger feedback");
-                        }
-                        if (!allInstrumentFlanger) {
-                            unusedSettingList.push("+ flanger");
-                            unusedSettingList.push("+ flanger speed");
-                            unusedSettingList.push("+ flanger depth");
-                            unusedSettingList.push("+ flanger feedback");
-                        }
-                        if (anyInstrumentChorus) {
-                            settingList.push("chorus");
-                        }
-                        if (!allInstrumentChorus) {
-                            unusedSettingList.push("+ chorus");
-                        }
-                        if (anyInstrumentEchoes) {
-                            settingList.push("echo");
-                            settingList.push("echo delay");
-                            settingList.push("echo ping pong");
-                        }
-                        if (!allInstrumentEchoes) {
-                            unusedSettingList.push("+ echo");
-                            unusedSettingList.push("+ echo delay");
-                            unusedSettingList.push("+ echo ping pong");
-                        }
-                        if (anyInstrumentReverbs) {
-                            settingList.push("reverb");
-                            settingList.push("reverb wet/dry");
-                            settingList.push("reverb send");
-                        }
-                        if (!allInstrumentReverbs) {
-                            unusedSettingList.push("+ reverb");
-                            unusedSettingList.push("+ reverb wet/dry");
-                            unusedSettingList.push("+ reverb send");
-                        }
-                        if (anyInstrumentRingMods) {
-                            settingList.push("ring modulation");
-                            settingList.push("ring modulation frequency");
-                        }
-                        if (!allInstrumentRingMods) {
-                            unusedSettingList.push("+ ring modulation");
-                            unusedSettingList.push("+ ring modulation frequency");
-                        }
-                        if (anyInstrumentGranulars) {
-                            settingList.push("granular");
-                            settingList.push("grain frequency");
-                            settingList.push("grain size");
-                            settingList.push("grain range");
-                        }
-                        if (!allInstrumentGranulars) {
-                            unusedSettingList.push("+ granular");
-                            unusedSettingList.push("+ grain frequency");
-                            unusedSettingList.push("+ grain size");
-                            unusedSettingList.push("+ grain range");
-                        }
-
-                        if (anyInstrumentHasEnvelopes) {
-                            settingList.push("envelope speed");
-                            settingList.push("individual envelope speed");
-                            settingList.push("individual envelope lower bound");
-                            settingList.push("individual envelope upper bound");
-                            settingList.push("reset envelope");
-                        }
-
                     }
 
                     buildOptions(this._modSetBoxes[mod], settingList);
@@ -3328,7 +2988,6 @@ export class SongEditor {
                     this._modTargetIndicators[mod].classList.add("modTarget");
                 }
 
-                let modName: string = Config.automationParams[instrument.modulators[mod]].name;
                 let usesEffect: boolean = Config.automationParams[instrument.modulators[mod]].associatedEffect != null
 
                 if (usesEffect) {
@@ -3389,7 +3048,6 @@ export class SongEditor {
                         let useName: string = "effect " + (+instrument.modEffects[mod] + 1);
                         this._modEffectBoxes[mod].insertBefore(option({ value: useName, style: "color: red;" }, useName), this._modEffectBoxes[mod].children[0]);
                         this._modEffectBoxes[mod].selectedIndex = 0;
-
                     }
                     else {
                         this._modEffectBoxes[mod].classList.remove("invalidSetting");
@@ -3403,153 +3061,134 @@ export class SongEditor {
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
                 }
 
-                let filterType: string = Config.automationParams[instrument.modulators[mod]].name;
-                let useSongEq: boolean = filterType == "song eq filter";
-                if (useSongEq) filterType = "pre eq";
-                if (filterType == "eq filter" || filterType == "pre eq") {
-                    $("#modFilterText" + mod).get(0)!.style.display = "";
-                    $("#modEnvelopeText" + mod).get(0)!.style.display = "none";
+                const usesIndices: boolean = Config.automationParams[instrument.modulators[mod]].maxIndex > 0;
+
+                if (usesIndices) {
+                    $("#modIndexText" + mod).get(0)!.style.display = "";
                     $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
                     $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
 
-                    let useChannel: number = instrument.modChannels[mod][0];
-                    let useInstrument: number = instrument.modInstruments[mod][0];
-                    let useEffect: number = 0;
-                    let tmpCount: number = -1;
-                    let matchingEffectCount: number = -1;
+                    if (Config.automationParams[instrument.modulators[mod]].isFilter) {
+                        const useSongEq = Config.automationParams[instrument.modulators[mod]].forSong
+                        let useChannel: number = instrument.modChannels[mod][0];
+                        let useInstrument: number = instrument.modInstruments[mod][0];
+                        let useEffect: number = 0;
+                        let tmpCount: number = -1;
+                        let matchingEffectCount: number = -1;
 
-                    for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
-                        let modChannel: Channel = this._doc.song.channels[instrument.modChannels[mod][i]];
-                        for (let j: number = 0; j < modChannel.instruments.length; j++) {
-                            if (filterType == "eq filter") {
-                                for (let k: number = 0; k < modChannel.instruments[j].effects.length; k++) {
-                                    let effect: Effect = modChannel.instruments[j].effects[k];
-                                    if (effect.type != EffectType.eqFilter) continue;
-                                    else {
-                                        matchingEffectCount++;
-                                        if (k == instrument.modEffects[mod][matchingEffectCount] && effect.eqFilter.controlPointCount > tmpCount) {
-                                            tmpCount = effect.eqFilter.controlPointCount;
-                                            useChannel = instrument.modChannels[mod][i];
-                                            useInstrument = j;
-                                            useEffect = k;
+                        if (!useSongEq) {
+                            for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
+                                let modChannel: Channel = this._doc.song.channels[instrument.modChannels[mod][i]];
+                                for (let j: number = 0; j < modChannel.instruments.length; j++) {
+                                    if (!useSongEq) {
+                                        for (let k: number = 0; k < modChannel.instruments[j].effects.length; k++) {
+                                            let effect: Effect = modChannel.instruments[j].effects[k];
+                                            if (effect.type != EffectType.eqFilter) continue;
+                                            else {
+                                                matchingEffectCount++;
+                                                if (k == instrument.modEffects[mod][matchingEffectCount] && effect.eqFilter.controlPointCount > tmpCount) {
+                                                    tmpCount = effect.eqFilter.controlPointCount;
+                                                    useChannel = instrument.modChannels[mod][i];
+                                                    useInstrument = j;
+                                                    useEffect = k;
+                                                }
+                                            }
                                         }
                                     }
                                 }
-                            } else {
-                                if (modChannel.instruments[j].noteFilter.controlPointCount > tmpCount) {
-                                    tmpCount = modChannel.instruments[j].noteFilter.controlPointCount;
-                                    useChannel = instrument.modChannels[mod][i];
-                                    useInstrument = j;
-                                    useEffect = 0;
-                                }
                             }
                         }
-                    }
 
-                    let modChannel: Channel = this._doc.song.channels[useChannel];
-                    console.log(useChannel)
+                        let modChannel: Channel = this._doc.song.channels[useChannel];
+                        const isSimple: boolean = useSongEq ? false : modChannel.instruments[useInstrument].effects[useEffect].eqFilterType;
 
-                    let dotCount: number = (filterType == "eq filter")
-                        ? modChannel.instruments[useInstrument].getLargestControlPointCount(false, useEffect)
-                        : modChannel.instruments[useInstrument].getLargestControlPointCount(true);
+                        let dotCount: number = 0;
 
-                    let effect: Effect = modChannel.instruments[useInstrument].effects[useEffect];
+                        if (!isSimple) {
+                            if (useSongEq) dotCount = this._doc.song.eqFilter.controlPointCount;
+                            else dotCount = modChannel.instruments[useInstrument].getLargestControlPointCount(false, useEffect);
+                        }
 
-                    const isSimple: boolean = useSongEq ? false : (filterType == "pre eq" ? modChannel.instruments[useInstrument].noteFilterType : effect.eqFilterType);
-                    if (isSimple)
-                        dotCount = 0;
-                    if (useSongEq) {
-                        dotCount = this._doc.song.eqFilter.controlPointCount;
-                        if(this._modFilterBoxes[mod].children.length != 1 + dotCount * 2) {
-                            while (this._modFilterBoxes[mod].firstChild) this._modFilterBoxes[mod].remove(0);
+                        if (this._modIndexBoxes[mod].children.length != dotCount) {
+                            while (this._modIndexBoxes[mod].firstChild) this._modIndexBoxes[mod].remove(0);
                             const dotList: string[] = [];
-                            dotList.push("morph");
                             for (let i: number = 0; i < dotCount; i++) {
-                                dotList.push("dot " + (i + 1) + " x");
-                                dotList.push("dot " + (i + 1) + " y");
+                                dotList.push(i + 1 + "");
                             }
-                            buildOptions(this._modFilterBoxes[mod], dotList);
+                            buildOptions(this._modIndexBoxes[mod], dotList);
                         }
-                    } else if (isSimple || this._modFilterBoxes[mod].children.length != 1 + dotCount * 2) {
-                        while (this._modFilterBoxes[mod].firstChild) this._modFilterBoxes[mod].remove(0);
-                        const dotList: string[] = [];
-                        if (!isSimple)
-                            dotList.push("morph");
-                        for (let i: number = 0; i < dotCount; i++) {
-                            dotList.push("dot " + (i + 1) + " x");
-                            dotList.push("dot " + (i + 1) + " y");
+                    } else if (Config.automationParams[instrument.modulators[mod]].isEnvelope) {
+                        let envCount: number = -1;
+                        for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
+                            let modInstrument: Instrument = this._doc.song.channels[instrument.modChannels[mod][i]].instruments[instrument.modInstruments[mod][i]];
+                            if (modInstrument.envelopeCount > envCount) {
+                                envCount = modInstrument.envelopeCount;
+                            }
                         }
-                        buildOptions(this._modFilterBoxes[mod], dotList);
+
+                        // Build options for modulator envelopes (make sure it has the right number of envelopes).
+                        while (this._modIndexBoxes[mod].firstChild) this._modIndexBoxes[mod].remove(0);
+                        const envelopeList: string[] = [];
+                        for (let i: number = 0; i < envCount; i++) {
+                            envelopeList.push(i + 1 + "");
+                        }
+                        buildOptions(this._modIndexBoxes[mod], envelopeList);
+
+                        if (instrument.modIndices[mod] >= this._modIndexBoxes[mod].length) {
+                            this._modIndexBoxes[mod].classList.add("invalidSetting");
+                            instrument.invalidModulators[mod] = true;
+                            let useName: string = instrument.modIndices[mod] + "";
+                            this._modIndexBoxes[mod].insertBefore(option({ value: useName, style: "color: red;" }, useName), this._modIndexBoxes[mod].children[0]);
+                            this._modIndexBoxes[mod].selectedIndex = 0;
+
+                        }
+                        else {
+                            this._modIndexBoxes[mod].classList.remove("invalidSetting");
+                            instrument.invalidModulators[mod] = false;
+                            this._modIndexBoxes[mod].selectedIndex = instrument.modIndices[mod];
+                        }
+                    } else if (Config.automationParams[instrument.modulators[mod]].associatedInstruments!.includes(InstrumentType.fm)) {
+                        // a very specific case to remove the extra targets if using 4-op fm
+                        let opCount: number = 4;
+                        for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
+                            let modInstrument: Instrument = this._doc.song.channels[instrument.modChannels[mod][i]].instruments[instrument.modInstruments[mod][i]];
+                            if (modInstrument.type == InstrumentType.fm6op) {
+                                opCount = 6;
+                                break;
+                            }
+                        }
+
+                        while (this._modIndexBoxes[mod].firstChild) this._modIndexBoxes[mod].remove(0);
+                        const indexList: string[] = [];
+                        for (let i: number = 0; i < opCount; i++) {
+                            indexList.push(i + 1 + "");
+                        }
+                        buildOptions(this._modIndexBoxes[mod], indexList);
+                    } else {
+                        // General target options
+                        while (this._modIndexBoxes[mod].firstChild) this._modIndexBoxes[mod].remove(0);
+                        const indexList: string[] = [];
+                        for (let i: number = 0; i <= Config.automationParams[instrument.modulators[mod]].maxIndex; i++) {
+                            indexList.push(i + 1 + "");
+                        }
+                        buildOptions(this._modIndexBoxes[mod], indexList);
                     }
 
-                    if (isSimple || instrument.modFilterTypes[mod] >= this._modFilterBoxes[mod].length) {
-                        this._modFilterBoxes[mod].classList.add("invalidSetting");
+                    if (instrument.modIndices[mod] >= this._modIndexBoxes[mod].length) {
+                        this._modIndexBoxes[mod].classList.add("invalidSetting");
                         instrument.invalidModulators[mod] = true;
-                        let useName: string = ((instrument.modFilterTypes[mod] - 1) % 2 == 1) ?
-                            "dot " + (Math.floor((instrument.modFilterTypes[mod] - 1) / 2) + 1) + " y"
-                            : "dot " + (Math.floor((instrument.modFilterTypes[mod] - 1) / 2) + 1) + " x";
-                        if (instrument.modFilterTypes[mod] == 0)
-                            useName = "morph";
-                        this._modFilterBoxes[mod].insertBefore(option({ value: useName, style: "color: red;" }, useName), this._modFilterBoxes[mod].children[0]);
-                        this._modFilterBoxes[mod].selectedIndex = 0;
+                        let useName: string = instrument.modIndices[mod] + "";
+                        this._modIndexBoxes[mod].insertBefore(option({ value: useName, style: "color: red;" }, useName), this._modIndexBoxes[mod].children[0]);
+                        this._modIndexBoxes[mod].selectedIndex = 0;
 
-                    }
-                    else {
-                        this._modFilterBoxes[mod].classList.remove("invalidSetting");
+                    } else {
+                        this._modIndexBoxes[mod].classList.remove("invalidSetting");
                         instrument.invalidModulators[mod] = false;
-                        this._modFilterBoxes[mod].selectedIndex = instrument.modFilterTypes[mod];
-                        }
+                        this._modIndexBoxes[mod].selectedIndex = instrument.modIndices[mod];
+                    }
                 } else {
-                    $("#modFilterText" + mod).get(0)!.style.display = "none";
+                    $("#modIndexText" + mod).get(0)!.style.display = "none";
                     $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
-                }
-                instrument.invalidModulators[mod]
-
-                if (modName == "individual envelope speed" || modName == "reset envelope" || modName == "individual envelope lower bound" || modName == "individual envelope upper bound") {
-                    $("#modEnvelopeText" + mod).get(0)!.style.display = "";
-                    $("#modFilterText" + mod).get(0)!.style.display = "none";
-                    $("#modSettingText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
-                    $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", "2px");
-
-                    let envCount: number = -1;
-                    for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
-                        let modChannel: Channel = this._doc.song.channels[Math.max(0, instrument.modChannels[mod][i])];
-                        // Use greatest envelope count among all instruments if setting is 'all' or 'active'. If it won't have an effect on one, no worry.
-                        for (let j: number = 0; j < modChannel.instruments.length; j++) {
-                            if (modChannel.instruments[j].envelopeCount > envCount) {
-                                envCount = modChannel.instruments[j].envelopeCount;
-                            }
-                        }
-                    }
-
-                    // Build options for modulator envelopes (make sure it has the right number of envelopes).
-                    while (this._modEnvelopeBoxes[mod].firstChild) this._modEnvelopeBoxes[mod].remove(0);
-                    const envelopeList: string[] = [];
-                    for (let i: number = 0; i < envCount; i++) {
-                        envelopeList.push("envelope " + (i + 1));
-                    }
-                    buildOptions(this._modEnvelopeBoxes[mod], envelopeList);
-
-                    if (instrument.modEnvelopeNumbers[mod] >= this._modEnvelopeBoxes[mod].length) {
-                        this._modEnvelopeBoxes[mod].classList.add("invalidSetting");
-                        instrument.invalidModulators[mod] = true;
-                        let useName: string = "envelope " + (instrument.modEnvelopeNumbers[mod]);
-                        this._modEnvelopeBoxes[mod].insertBefore(option({ value: useName, style: "color: red;" }, useName), this._modEnvelopeBoxes[mod].children[0]);
-                        this._modEnvelopeBoxes[mod].selectedIndex = 0;
-
-                    }
-                    else {
-                        this._modEnvelopeBoxes[mod].classList.remove("invalidSetting");
-                        instrument.invalidModulators[mod] = false;
-                        this._modEnvelopeBoxes[mod].selectedIndex = instrument.modEnvelopeNumbers[mod];
-                    }
-
-                } else {
-                    $("#modEnvelopeText" + mod).get(0)!.style.display = "none";
-                    if (!(filterType == "eq filter" || filterType == "pre eq")) {
-                        $("#modEffectText" + mod).get(0)!.style.setProperty("margin-bottom", extraMargin);
-                    }
-
                 }
             }
 
@@ -5444,12 +5083,8 @@ export class SongEditor {
         this._doc.selection.setModEffect(mod, this._modEffectBoxes[mod].selectedIndex);
     }
 
-    private _whenSetModFilter = (mod: number): void => {
-        this._doc.selection.setModFilter(mod, this._modFilterBoxes[mod].selectedIndex);
-    }
-
-    private _whenSetModEnvelope = (mod: number): void => {
-        this._doc.selection.setModEnvelope(mod, this._modEnvelopeBoxes[mod].selectedIndex);
+    private _whenSetModIndex = (mod: number): void => {
+        this._doc.selection.setModIndex(mod, this._modIndexBoxes[mod].selectedIndex);
     }
 
     private _whenSetChipWave = (): void => {

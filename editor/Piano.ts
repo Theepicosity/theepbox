@@ -506,18 +506,6 @@ export class Piano {
                         useSecondColor = ColorConfig.modLabelSecondaryText;
                         usingMod = false;
                     }
-                    else if (modulator == Config.automationParams.dictionary["eq filter"].index || modulator == Config.automationParams.dictionary["song eq filter"].index) {
-                        var text = " Morph";
-                        var filterVal = instrument.modFilterTypes[Config.modCount - j - 1];
-                        if (filterVal > 0 && (filterVal % 2)) {
-                            text = " Dot" + Math.ceil(filterVal / 2) + "X";
-                        }
-                        else if (filterVal > 0) {
-                            text = " Dot" + Math.ceil(filterVal / 2) + "Y";
-                        }
-
-                        secondRow += text;
-                    } 
                 }
 
                 const firstLabel: SVGTextElement = this._modFirstLabels[j];

@@ -4045,7 +4045,7 @@ export class ChangeModEffect extends Change {
         if (instrument.modEffects[mod].indexOf(validEffects[effect]) == -1) instrument.modEffects[mod].push(validEffects[effect]);
         else if (instrument.modEffects[mod].length > 1) instrument.modEffects[mod].splice(instrument.modEffects[mod].indexOf(validEffects[effect]), 1);
 
-        let cap: number = doc.song.getVolumeCapForSetting(true, instrument.modulators[mod], instrument.modEnvelopeNumbers[mod]);
+        let cap: number = Config.automationParams[instrument.modulators[mod]].maxRawVol;
 
         for (let i: number = 0; i < doc.song.patternsPerChannel; i++) {
             const pattern: Pattern = doc.song.channels[doc.channel].patterns[i];
@@ -4067,53 +4067,18 @@ export class ChangeModEffect extends Change {
     }
 }
 
-export class ChangeModFilter extends Change {
+export class ChangeModIndex extends Change {
     constructor(doc: SongDocument, mod: number, type: number) {
         super();
 
         let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
 
-        if (instrument.modFilterTypes[mod] != type) {
+        if (instrument.modIndices[mod] != type) {
 
-            instrument.modFilterTypes[mod] = type;
-
-            // Go through each pattern where this instrument is set, and clean up any notes that are out of bounds
-            let cap: number = doc.song.getVolumeCapForSetting(true, instrument.modulators[mod], instrument.modFilterTypes[mod]);
-
-            for (let i: number = 0; i < doc.song.patternsPerChannel; i++) {
-                const pattern: Pattern = doc.song.channels[doc.channel].patterns[i];
-                if (pattern.instruments[0] == doc.getCurrentInstrument()) {
-                    for (let j: number = 0; j < pattern.notes.length; j++) {
-                        const note: Note = pattern.notes[j];
-                        if (note.pitches[0] == Config.modCount - mod - 1) {
-                            for (let k: number = 0; k < note.pins.length; k++) {
-                                const pin: NotePin = note.pins[k];
-                                if (pin.size > cap)
-                                    pin.size = cap;
-                            }
-                        }
-                    }
-                }
-            }
-
-            doc.notifier.changed();
-            this._didSomething();
-        }
-    }
-}
-
-export class ChangeModEnvelope extends Change {
-    constructor(doc: SongDocument, mod: number, envelope: number) {
-        super();
-
-        let instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
-
-        if (instrument.modEnvelopeNumbers[mod] != envelope) {
-
-            instrument.modEnvelopeNumbers[mod] = envelope;
+            instrument.modIndices[mod] = type;
 
             // Go through each pattern where this instrument is set, and clean up any notes that are out of bounds
-            let cap: number = doc.song.getVolumeCapForSetting(true, instrument.modulators[mod], instrument.modEnvelopeNumbers[mod]);
+            let cap: number = Config.automationParams[instrument.modulators[mod]].maxRawVol;
 
             for (let i: number = 0; i < doc.song.patternsPerChannel; i++) {
                 const pattern: Pattern = doc.song.channels[doc.channel].patterns[i];

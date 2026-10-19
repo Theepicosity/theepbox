@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Dictionary, DictionaryArray, FilterType, EnvelopeType, ChannelType, InstrumentType, MDEffectType, EffectType, AutomationParameter, Transition, Chord, Envelope, Config, getArpeggioPitchIndex, getPulseWidthRatio, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, OperatorWave, GranularEnvelopeType } from "./SynthConfig";
+import { Dictionary, DictionaryArray, FilterType, EnvelopeType, ChannelType, InstrumentType, EffectType, MDEffectType, AutomationParameter, Transition, Chord, Envelope, Config, getArpeggioPitchIndex, getPulseWidthRatio, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, OperatorWave, GranularEnvelopeType } from "./SynthConfig";
 import { Deque } from "./Deque";
 import { Song } from "./Song";
 import { Channel } from "./Channel";
@@ -335,104 +335,86 @@ export class Synth {
                             for (let mod: number = 0; mod < Config.modCount; mod++) {
                                 if (latestPinParts[mod] != null) {
                                     if (Config.automationParams[instrument.modulators[mod]].forSong) {
-                                        const songFilterParam: boolean = instrument.modulators[mod] == Config.automationParams.dictionary["song eq filter"].index;
                                         if (latestModTimes[instrument.modulators[mod]] == null || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > (latestModTimes[instrument.modulators[mod]] as number)) {
-                                            if (songFilterParam) {
+                                            if (Config.automationParams[instrument.modulators[mod]].isFilter) {
                                                 let tgtSong: Song = this.song
-                                                if (instrument.modFilterTypes[mod] == 0) {
-                                                    tgtSong.tmpEqFilterStart = tgtSong.eqSubFilters[latestPinValues[mod]];
-                                                } else {
-                                                    for (let i: number = 0; i < Config.filterMorphCount; i++) {
-                                                        if (tgtSong.tmpEqFilterStart != null && tgtSong.tmpEqFilterStart == tgtSong.eqSubFilters[i]) {
-                                                            tgtSong.tmpEqFilterStart = new FilterSettings();
-                                                            tgtSong.tmpEqFilterStart.fromJsonObject(tgtSong.eqSubFilters[i]!.toJsonObject());
-                                                            i = Config.filterMorphCount;
-                                                        }
-                                                    }
-                                                    if (tgtSong.tmpEqFilterStart != null && Math.floor((instrument.modFilterTypes[mod] - 1) / 2) < tgtSong.tmpEqFilterStart.controlPointCount) {
-                                                        if (instrument.modFilterTypes[mod] % 2)
-                                                            tgtSong.tmpEqFilterStart.controlPoints[Math.floor((instrument.modFilterTypes[mod] - 1) / 2)].freq = latestPinValues[mod];
-                                                        else
-                                                            tgtSong.tmpEqFilterStart.controlPoints[Math.floor((instrument.modFilterTypes[mod] - 1) / 2)].gain = latestPinValues[mod];
+                                                for (let i: number = 0; i < Config.filterMorphCount; i++) {
+                                                    if (tgtSong.tmpEqFilterStart != null && tgtSong.tmpEqFilterStart == tgtSong.eqSubFilters[i]) {
+                                                        tgtSong.tmpEqFilterStart = new FilterSettings();
+                                                        tgtSong.tmpEqFilterStart.fromJsonObject(tgtSong.eqSubFilters[i]!.toJsonObject());
+                                                        i = Config.filterMorphCount;
                                                     }
                                                 }
+                                                if (tgtSong.tmpEqFilterStart != null && tgtSong.tmpEqFilterStart.controlPointCount > instrument.modIndices[mod]) {
+                                                    if (Config.automationParams[instrument.modulators[mod]].name == "song eq filter dot x")
+                                                        tgtSong.tmpEqFilterStart.controlPoints[instrument.modIndices[mod]].freq = latestPinValues[mod];
+                                                    else if (Config.automationParams[instrument.modulators[mod]].name == "song eq filter dot y")
+                                                        tgtSong.tmpEqFilterStart.controlPoints[instrument.modIndices[mod]].gain = latestPinValues[mod];
+                                                    else if (Config.automationParams[instrument.modulators[mod]].name == "song eq filter dot q")
+                                                        tgtSong.tmpEqFilterStart.controlPoints[instrument.modIndices[mod]].q = latestPinValues[mod];
+                                                }
+                                                tgtSong.tmpEqFilterEnd = tgtSong.tmpEqFilterStart;
+                                            } else if (Config.automationParams[instrument.modulators[mod]].name == "song eq filter morph") {
+                                                let tgtSong: Song = this.song
+                                                tgtSong.tmpEqFilterStart = tgtSong.eqSubFilters[latestPinValues[mod]];
                                                 tgtSong.tmpEqFilterEnd = tgtSong.tmpEqFilterStart;
                                             }
                                             for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
                                                 for (let j: number = 0; j < instrument.modEffects[mod].length; j++) {
-                                                    this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modulators[mod], 0, instrument.modChannels[mod][i], instrument.modInstruments[mod][i], instrument.modEffects[mod][j]);
+                                                    this.setModValue(latestPinValues[mod], latestPinValues[mod], instrument.modulators[mod], instrument.modIndices[mod], instrument.modChannels[mod][i], instrument.modInstruments[mod][i], instrument.modEffects[mod][j]);
                                                 }
                                             }
                                             latestModTimes[instrument.modulators[mod]] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                         }
                                     } else {
-                                        // Generate list of used channels + instruments
-                                        let usedChannels: number[] = [];
-                                        let usedInstruments: number[] = [];
-                                        // All
-                                        if (instrument.modInstruments[mod][0] == this.song.channels[instrument.modChannels[mod][0]].instruments.length) {
-                                            for (let i: number = 0; i < this.song.channels[instrument.modChannels[mod][0]].instruments.length; i++) {
-                                                usedChannels.push(instrument.modChannels[mod][0]);
-                                                usedInstruments.push(i);
-                                            }
-                                        } // Active
-                                        else if (instrument.modInstruments[mod][0] > this.song.channels[instrument.modChannels[mod][0]].instruments.length) {
-                                            const tgtPattern: Pattern | null = this.song.getPattern(instrument.modChannels[mod][0], currentBar);
-                                            if (tgtPattern != null) {
-                                                usedChannels.push(instrument.modChannels[mod][0]);
-                                                usedInstruments = tgtPattern.instruments;
-                                            }
-                                        } else {
-                                            for (let i: number = 0; i < instrument.modChannels[mod].length; i++) {
-                                                usedChannels.push(instrument.modChannels[mod][i]);
-                                                usedInstruments.push(instrument.modInstruments[mod][i]);
-                                            }
-                                        }
-                                        for (let instrumentIndex: number = 0; instrumentIndex < usedInstruments.length; instrumentIndex++) {
+                                        for (let instrumentIndex: number = 0; instrumentIndex < instrument.modInstruments[mod].length; instrumentIndex++) {
                                             // Iterate through all used instruments by this modulator
                                             // Special indices for mod filter targets, since they control multiple things.
-                                            const eqFilterParam: boolean = instrument.modulators[mod] == Config.automationParams.dictionary["eq filter"].index;
-                                            let modulatorAdjust: number = instrument.modulators[mod];
-                                            if (eqFilterParam) {
-                                                modulatorAdjust = Config.automationParams.length + (instrument.modFilterTypes[mod] | 0);
-                                            }
+                                            let setting: number = instrument.modulators[mod];
+                                            const targetChannelIndex: number = instrument.modChannels[mod][instrumentIndex];
+                                            const targetInstrumentIndex: number = instrument.modInstruments[mod][instrumentIndex];
+                                            let tgtInstrument: Instrument = this.song.channels[targetChannelIndex].instruments[targetInstrumentIndex];
 
-                                            if (eqFilterParam) {
-                                                let tgtInstrument: Instrument = this.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[usedInstruments[instrumentIndex]];
-                                                for (let effectIndex: number = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
-                                                    let tgtEffect: Effect = tgtInstrument.effects[effectIndex];
-                                                    if (tgtEffect && (latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
-                                                        || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex]!)) {
-                                                        if (instrument.modFilterTypes[mod] == 0) {
-                                                            tgtEffect.tmpEqFilterStart = tgtEffect.eqSubFilters[latestPinValues[mod]];
-                                                        } else {
-                                                            for (let i: number = 0; i < Config.filterMorphCount; i++) {
-                                                                if (tgtEffect.tmpEqFilterStart != null && tgtEffect.tmpEqFilterStart == tgtEffect.eqSubFilters[i]) {
-                                                                    tgtEffect.tmpEqFilterStart = new FilterSettings();
-                                                                    tgtEffect.tmpEqFilterStart.fromJsonObject(tgtEffect.eqSubFilters[i]!.toJsonObject());
-                                                                    i = Config.filterMorphCount;
-                                                                }
-                                                            }
-                                                            if (tgtEffect.tmpEqFilterStart != null && Math.floor((instrument.modFilterTypes[mod] - 1) / 2) < tgtEffect.tmpEqFilterStart.controlPointCount) {
-                                                                if (instrument.modFilterTypes[mod] % 2)
-                                                                    tgtEffect.tmpEqFilterStart.controlPoints[Math.floor((instrument.modFilterTypes[mod] - 1) / 2)].freq = latestPinValues[mod];
-                                                                else
-                                                                    tgtEffect.tmpEqFilterStart.controlPoints[Math.floor((instrument.modFilterTypes[mod] - 1) / 2)].gain = latestPinValues[mod];
+                                            if (Config.automationParams[instrument.modulators[mod]].isFilter) {
+                                                for (let targetEffectIndex: number = 0; targetEffectIndex < instrument.modEffects[mod].length; targetEffectIndex++) {
+                                                    let targetEffect: Effect = tgtInstrument.effects[targetEffectIndex];
+                                                    if (targetEffect &&
+                                                        (latestModInsTimes[targetChannelIndex][targetInstrumentIndex][setting] == null
+                                                        || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[targetChannelIndex][targetInstrumentIndex][setting][targetEffectIndex]!)
+                                                    ) {
+                                                        for (let i: number = 0; i < Config.filterMorphCount; i++) {
+                                                            if (targetEffect.tmpEqFilterStart != null && targetEffect.tmpEqFilterStart == targetEffect.eqSubFilters[i]) {
+                                                                targetEffect.tmpEqFilterStart = new FilterSettings();
+                                                                targetEffect.tmpEqFilterStart.fromJsonObject(targetEffect.eqSubFilters[i]!.toJsonObject());
+                                                                i = Config.filterMorphCount;
                                                             }
                                                         }
-                                                        tgtEffect.tmpEqFilterEnd = tgtEffect.tmpEqFilterStart;
+                                                        if (targetEffect.tmpEqFilterStart != null && targetEffect.tmpEqFilterStart.controlPointCount > instrument.modIndices[mod]) {
+                                                            if (Config.automationParams[instrument.modulators[mod]].name == "eq filter dot x")
+                                                                targetEffect.tmpEqFilterStart.controlPoints[instrument.modIndices[mod]].freq = latestPinValues[mod];
+                                                            else if (Config.automationParams[instrument.modulators[mod]].name == "eq filter dot y")
+                                                                targetEffect.tmpEqFilterStart.controlPoints[instrument.modIndices[mod]].gain = latestPinValues[mod];
+                                                            else if (Config.automationParams[instrument.modulators[mod]].name == "eq filter dot q")
+                                                                targetEffect.tmpEqFilterStart.controlPoints[instrument.modIndices[mod]].q = latestPinValues[mod];
                                                         }
-                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = []
-                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
+                                                        targetEffect.tmpEqFilterEnd = targetEffect.tmpEqFilterStart;
+                                                    }
+                                                    latestModInsTimes[instrument.modChannels[mod][targetChannelIndex]][targetInstrumentIndex][setting] = []
+                                                    latestModInsTimes[instrument.modChannels[mod][targetChannelIndex]][targetInstrumentIndex][setting][targetEffectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                                 }
                                             } else {
-                                                for (let effectIndex: number = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
-                                                    if (latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] == null
-                                                        || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][0]!) {
-                                                        if (Config.automationParams[modulatorAdjust]) this.setModValue(latestPinValues[mod], latestPinValues[mod], modulatorAdjust, 0, instrument.modChannels[mod][instrumentIndex], usedInstruments[instrumentIndex], instrument.modEffects[mod][effectIndex]);
+                                                for (let targetEffectIndex: number = 0; targetEffectIndex < instrument.modEffects[mod].length; targetEffectIndex++) {
+                                                    let targetEffect: Effect = tgtInstrument.effects[targetEffectIndex];
+                                                    if (Config.automationParams[instrument.modulators[mod]].name == "eq filter morph") {
+                                                        targetEffect.tmpEqFilterStart = targetEffect.eqSubFilters[latestPinValues[mod]];
+                                                        targetEffect.tmpEqFilterEnd = targetEffect.tmpEqFilterStart;
                                                     }
-                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust] = []
-                                                    latestModInsTimes[instrument.modChannels[mod][instrumentIndex]][usedInstruments[instrumentIndex]][modulatorAdjust][effectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
+                                                    if (latestModInsTimes[instrument.modChannels[mod][targetChannelIndex]][targetInstrumentIndex][setting] == null
+                                                        || currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod] > latestModInsTimes[instrument.modChannels[mod][targetChannelIndex]][targetInstrumentIndex][setting][0]!) {
+                                                        if (Config.automationParams[setting]) this.setModValue(latestPinValues[mod], latestPinValues[mod], setting, instrument.modIndices[mod], instrument.modChannels[mod][targetChannelIndex], targetInstrumentIndex, instrument.modEffects[mod][targetEffectIndex]);
+                                                    }
+                                                    latestModInsTimes[instrument.modChannels[mod][targetChannelIndex]][targetInstrumentIndex][setting] = []
+                                                    latestModInsTimes[instrument.modChannels[mod][targetChannelIndex]][targetInstrumentIndex][setting][targetEffectIndex] = currentBar * Config.partsPerBeat * this.song.beatsPerBar + latestPinParts[mod];
                                                 }
                                             }
                                         }
@@ -476,23 +458,23 @@ export class Synth {
                     let invalidPostEQ: boolean = false;
                     for (let effectIndex: number = 0; effectIndex < tgtInstrument.effects.length; effectIndex++) {
                         if (tgtInstrument.effects[effectIndex].type == EffectType.eqFilter) {
-                            if ((tgtInstrument.effects[effectIndex].eqFilterType && str == "eq filter") || (!tgtInstrument.effects[effectIndex].eqFilterType && (str == "eq filter cut" || str == "eq filter peak"))) {
+                            if ((tgtInstrument.effects[effectIndex].eqFilterType && (Config.automationParams[instrument.modulators[mod]].isFilter || str == "eq filter morph")) || (!tgtInstrument.effects[effectIndex].eqFilterType && (str == "eq filter cut" || str == "eq filter peak"))) {
                                 invalidPostEQ = true;
                             }
                         }
                     }
                     // Check effects
-                    if (!((Config.automationParams[instrument.modulators[mod]].associatedEffect != null && !(tgtInstrument.effectsIncludeType(Config.automationParams[instrument.modulators[mod]].associatedEffect as EffectType))) && !(Config.automationParams[instrument.modulators[mod]].associatedMDEffect != null && !(tgtInstrument.mdeffects & (1 << (Config.automationParams[instrument.modulators[mod]].associatedMDEffect as MDEffectType))))
-                        // Instrument type specific
-                        || ((tgtInstrument.type != InstrumentType.fm && tgtInstrument.type != InstrumentType.fm6op) && (str == "fm operator amplitude" || str == "fm operator frequency" || str == "fm feedback"))
-                        || tgtInstrument.type != InstrumentType.fm6op && (str == "fm slider 5" || str == "fm slider 6")
-                        || ((tgtInstrument.type != InstrumentType.pwm && tgtInstrument.type != InstrumentType.supersaw) && (str == "pulse width" || str == "decimal offset"))
-                        || ((tgtInstrument.type != InstrumentType.supersaw) && (str == "dynamism" || str == "spread" || str == "saw shape"))
+                    if (
+                        !(Config.automationParams[instrument.modulators[mod]].associatedEffect != null && !tgtInstrument.effectsIncludeType(Config.automationParams[instrument.modulators[mod]].associatedEffect as EffectType))
+                        && !(Config.automationParams[instrument.modulators[mod]].associatedMDEffect != null && !(tgtInstrument.mdeffects & (1 << (Config.automationParams[instrument.modulators[mod]].associatedMDEffect as MDEffectType))))
+                        && !(Config.automationParams[instrument.modulators[mod]].associatedInstruments != null && !Config.automationParams[instrument.modulators[mod]].associatedInstruments!.includes(tgtInstrument.type))
                         // Arp check
-                        || (!tgtInstrument.getChord().arpeggiates && (str == "arpeggio speed" || str == "reset arpeggio"))
+                        && !(!tgtInstrument.getChord().arpeggiates && (str == "arpeggio speed" || str == "reset arpeggio"))
+                        // 6 op FM check
+                        && !(tgtInstrument.type == InstrumentType.fm && Config.automationParams[instrument.modulators[mod]].associatedInstruments != null && Config.automationParams[instrument.modulators[mod]].associatedInstruments!.includes(tgtInstrument.type) && instrument.modIndices[mod] >= 4)
                         // EQ Filter check
-                        || invalidPostEQ
-                        || (str == "eq filter" && Math.floor((instrument.modFilterTypes[mod] + 1) / 2) > tgtInstrument.getLargestControlPointCount(false)))) {
+                        && !invalidPostEQ
+                        && !(Config.automationParams[instrument.modulators[mod]].isFilter && (instrument.modIndices[mod] + 1 > tgtInstrument.getLargestControlPointCount(false)))) {
 
                         instrument.invalidModulators[mod] = false;
                         i = tgtInstrumentList.length;
@@ -1108,11 +1090,11 @@ export class Synth {
         return false
     }
 
-    public isModActive(target: number, index?: number, channelIndex?: number, instrumentIndex?: number, effectIndex?: number): boolean {
+    public isModActive(target: number, index: number = 0, channelIndex: number = 0, instrumentIndex: number = 0, effectIndex: number = 0): boolean {
         const forSong: boolean = Config.automationParams[target].forSong;
         const noEffect: boolean = Config.automationParams[target].associatedEffect == null;
         const noIndex: boolean = Config.automationParams[target].maxIndex == 0;
-        if (noIndex || index == undefined) index = 0;
+        if (noIndex) index = 0;
 
         let isActive: boolean = false;
         if (forSong) {
@@ -1472,12 +1454,9 @@ export class Synth {
                                 const instrument: Instrument = channel.instruments[tone.instrumentIndex];
                                 let mod: number = Config.modCount - 1 - tone.pitches[0];
 
-                                if ((instrument.modulators[mod] == Config.automationParams.dictionary["eq filter"].index
-                                    || instrument.modulators[mod] == Config.automationParams.dictionary["song eq filter"].index)
-                                    && instrument.modFilterTypes[mod] != null && instrument.modFilterTypes[mod] > 0) {
-                                    continue;
+                                if (!Config.automationParams[instrument.modulators[mod]].isFilter) {
+                                    this.playModTone(song, channelIndex, samplesPerTick, bufferIndex, runLength, tone, false, false);
                                 }
-                                this.playModTone(song, channelIndex, samplesPerTick, bufferIndex, runLength, tone, false, false);
                             }
                         }
                     }
@@ -1498,10 +1477,7 @@ export class Synth {
                                 const instrument: Instrument = channel.instruments[tone.instrumentIndex];
                                 let mod: number = Config.modCount - 1 - tone.pitches[0];
 
-                                if ((instrument.modulators[mod] == Config.automationParams.dictionary["eq filter"].index
-                                    || instrument.modulators[mod] == Config.automationParams.dictionary["song eq filter"].index)
-                                    && instrument.modFilterTypes[mod] != null && instrument.modFilterTypes[mod] > 0) {
-
+                                if (Config.automationParams[instrument.modulators[mod]].isFilter) {
                                     this.playModTone(song, channelIndex, samplesPerTick, bufferIndex, runLength, tone, false, false);
                                 }
 
@@ -2987,22 +2963,32 @@ export class Synth {
 
             const carrierCount: number = (instrument.type == InstrumentType.fm6op ? instrument.customAlgorithm.carrierCount : Config.algorithms[instrument.algorithm].carrierCount);
             for (let i: number = 0; i < (instrument.type == InstrumentType.fm6op ? 6 : Config.operatorCount); i++) {
-
                 const associatedCarrierIndex: number = (instrument.type == InstrumentType.fm6op ? instrument.customAlgorithm.associatedCarrier[i] - 1 : Config.algorithms[instrument.algorithm].associatedCarrier[i] - 1);
                 const pitch: number = tone.pitches[arpeggiates ? 0 : isMono ? instrument.monoChordTone : ((i < tone.pitchCount) ? i : ((associatedCarrierIndex < tone.pitchCount) ? associatedCarrierIndex : 0))];
-                const freqMult = Config.operatorFrequencies[instrument.operators[i].frequency].mult;
                 const interval = Config.operatorCarrierInterval[associatedCarrierIndex] + arpeggioInterval;
                 const pitchStart: number = basePitch + (pitch + intervalStart) * intervalScale + interval;
                 const pitchEnd: number = basePitch + (pitch + intervalEnd) * intervalScale + interval;
                 const baseFreqStart: number = Instrument.frequencyFromPitch(pitchStart);
                 const baseFreqEnd: number = Instrument.frequencyFromPitch(pitchEnd);
                 const hzOffset: number = Config.operatorFrequencies[instrument.operators[i].frequency].hzOffset;
-                const targetFreqStart: number = freqMult * baseFreqStart + hzOffset;
-                const targetFreqEnd: number = freqMult * baseFreqEnd + hzOffset;
 
+                let freqMultStart = Config.operatorFrequencies[instrument.operators[i].frequency].mult;
+                let freqMultEnd = Config.operatorFrequencies[instrument.operators[i].frequency].mult;
+                if (this.isModActive(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0)) {
+                    let modFreqStart: number = clamp(0, Config.automationParams.dictionary["fm operator frequency"].maxRawVol, this.getModValue(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0, false));
+                    let modFreqEnd: number = clamp(0, Config.automationParams.dictionary["fm operator frequency"].maxRawVol, this.getModValue(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0, true));
 
-                const freqEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["fm operator frequency"].index, i, null, false)
-                const freqEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["fm operator frequency"].index, i, null, false)
+                    console.log(modFreqEnd)
+                    if (Number.isInteger(modFreqStart)) freqMultStart = Config.operatorFrequencies[modFreqStart].mult;
+                    else freqMultStart = (1 - (modFreqStart % 1)) * Config.operatorFrequencies[Math.floor(modFreqStart)].mult + (modFreqStart % 1) * Config.operatorFrequencies[Math.ceil(modFreqStart)].mult;
+                    if (Number.isInteger(modFreqEnd)) freqMultEnd = Config.operatorFrequencies[modFreqEnd].mult;
+                    else freqMultEnd = (1 - (modFreqEnd % 1)) * Config.operatorFrequencies[Math.floor(modFreqEnd)].mult + (modFreqEnd % 1) * Config.operatorFrequencies[Math.ceil(modFreqEnd)].mult;
+                }
+                const targetFreqStart: number = freqMultStart * baseFreqStart + hzOffset;
+                const targetFreqEnd: number = freqMultEnd * baseFreqEnd + hzOffset;
+
+                let freqEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["fm operator frequency"].index, i, null, false)
+                let freqEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["fm operator frequency"].index, i, null, false)
                 let freqStart: number;
                 let freqEnd: number;
                 if (freqEnvelopeStart != 1.0 || freqEnvelopeEnd != 1.0) {
@@ -3017,9 +3003,9 @@ export class Synth {
 
                 let amplitudeStart: number = instrument.operators[i].amplitude;
                 let amplitudeEnd: number = instrument.operators[i].amplitude;
-                if (this.isModActive(Config.automationParams.dictionary["fm operator amplitude"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
-                    amplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 15.0;
-                    amplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 15.0;
+                if (this.isModActive(Config.automationParams.dictionary["fm operator amplitude"].index, i, channelIndex, tone.instrumentIndex, 0)) {
+                    amplitudeStart *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, i, channelIndex, tone.instrumentIndex, 0, false) / 15.0;
+                    amplitudeEnd *= this.getModValue(Config.automationParams.dictionary["fm operator amplitude"].index, i, channelIndex, tone.instrumentIndex, 0, true) / 15.0;
                 }
 
                 const amplitudeCurveStart: number = Synth.operatorAmplitudeCurve(amplitudeStart);
@@ -6085,15 +6071,15 @@ export class Synth {
         for (let instrumentIndex: number = 0; instrumentIndex < instrument.modInstruments[mod].length; instrumentIndex++) {
 
             for (let effectIndex: number = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
-                synth.setModValue(tone.expression, tone.expression + tone.expressionDelta, setting, 0, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], instrument.modEffects[mod][effectIndex]);
+                synth.setModValue(tone.expression, tone.expression + tone.expressionDelta, setting, instrument.modIndices[mod], instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], instrument.modEffects[mod][effectIndex]);
 
                 // If mods are being held (for smoother playback while recording mods), use those values instead.
                 for (let i: number = 0; i < synth.heldMods.length; i++) {
                     if (Config.automationParams[instrument.modulators[mod]].forSong) {
                         if (synth.heldMods[i].setting == setting)
-                            synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, setting, 0, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], instrument.modEffects[mod][effectIndex]);
+                            synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, setting, instrument.modIndices[mod], instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], instrument.modEffects[mod][effectIndex]);
                     } else if (synth.heldMods[i].channelIndex == instrument.modChannels[mod][instrumentIndex] && synth.heldMods[i].instrumentIndex == instrument.modInstruments[mod][instrumentIndex] && synth.heldMods[i].setting == setting) {
-                        synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, setting, 0, instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], instrument.modEffects[mod][effectIndex]);
+                        synth.setModValue(synth.heldMods[i].volume, synth.heldMods[i].volume, setting, instrument.modIndices[mod], instrument.modChannels[mod][instrumentIndex], instrument.modInstruments[mod][instrumentIndex], instrument.modEffects[mod][effectIndex]);
                     }
                 }
             }
@@ -6104,7 +6090,7 @@ export class Synth {
             }
             // Reset envelope, but only at the start of the note
             else if (setting == Config.automationParams.dictionary["reset envelope"].index && synth.tick == 0 && tone.noteStartPart == synth.beat * Config.partsPerBeat + synth.part) {
-                let envelopeTarget = instrument.modEnvelopeNumbers[mod];
+                let envelopeTarget = instrument.modIndices[mod];
                 const tgtInstrumentState: InstrumentState = synth.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                 const tgtInstrument: Instrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
 
@@ -6117,105 +6103,110 @@ export class Synth {
                 synth.wantToSkip = true;
             }
             // do song eq filter filter first
-            else if (setting == Config.automationParams.dictionary["song eq filter"].index) {
+            else if (setting == Config.automationParams.dictionary["song eq filter morph"].index) {
                 const tgtSong = synth.song
 
-                let dotTarget = instrument.modFilterTypes[mod] | 0;
+                // Morph. Figure out the target filter's X/Y coords for this point. If no point exists with this index, or point types don't match, do lerp-out for this point and lerp-in of a new point
+                let pinIdx: number = 0;
+                const currentPart: number = synth.getTicksIntoBar() / Config.ticksPerPart;
+                while (tone.note!.start + tone.note!.pins[pinIdx].time <= currentPart) pinIdx++;
+                // 0 to 1 based on distance to next morph
+                //let lerpStartRatio: number = (currentPart - tone.note!.pins[pinIdx - 1].time) / (tone.note!.pins[pinIdx].time - tone.note!.pins[pinIdx - 1].time);
+                let lerpEndRatio: number = ((currentPart - tone.note!.start + (roundedSamplesPerTick / (synth.getSamplesPerTick() * Config.ticksPerPart)) * Config.ticksPerPart) - tone.note!.pins[pinIdx - 1].time) / (tone.note!.pins[pinIdx].time - tone.note!.pins[pinIdx - 1].time);
 
-                if (dotTarget == 0) { // Morph. Figure out the target filter's X/Y coords for this point. If no point exists with this index, or point types don't match, do lerp-out for this point and lerp-in of a new point
+                // Compute the new settings to go to.
+                if (tgtSong.eqSubFilters[tone.note!.pins[pinIdx - 1].size] != null || tgtSong.eqSubFilters[tone.note!.pins[pinIdx].size] != null) {
+                    tgtSong.tmpEqFilterEnd = FilterSettings.lerpFilters(tgtSong.eqSubFilters[tone.note!.pins[pinIdx - 1].size]!, tgtSong.eqSubFilters[tone.note!.pins[pinIdx].size]!, lerpEndRatio);
+                } else {
+                    // No mutation will occur to the filter object so we can safely return it without copying
+                    tgtSong.tmpEqFilterEnd = tgtSong.eqFilter;
+                }
+            }
+            else if (Config.automationParams[setting].isFilter && Config.automationParams[setting].forSong) {
+                const tgtSong = synth.song
+                let dotTarget = instrument.modIndices[mod] | 0;
 
-                    let pinIdx: number = 0;
-                    const currentPart: number = synth.getTicksIntoBar() / Config.ticksPerPart;
-                    while (tone.note!.start + tone.note!.pins[pinIdx].time <= currentPart) pinIdx++;
-                    // 0 to 1 based on distance to next morph
-                    //let lerpStartRatio: number = (currentPart - tone.note!.pins[pinIdx - 1].time) / (tone.note!.pins[pinIdx].time - tone.note!.pins[pinIdx - 1].time);
-                    let lerpEndRatio: number = ((currentPart - tone.note!.start + (roundedSamplesPerTick / (synth.getSamplesPerTick() * Config.ticksPerPart)) * Config.ticksPerPart) - tone.note!.pins[pinIdx - 1].time) / (tone.note!.pins[pinIdx].time - tone.note!.pins[pinIdx - 1].time);
-
-                    // Compute the new settings to go to.
-                    if (tgtSong.eqSubFilters[tone.note!.pins[pinIdx - 1].size] != null || tgtSong.eqSubFilters[tone.note!.pins[pinIdx].size] != null) {
-                        tgtSong.tmpEqFilterEnd = FilterSettings.lerpFilters(tgtSong.eqSubFilters[tone.note!.pins[pinIdx - 1].size]!, tgtSong.eqSubFilters[tone.note!.pins[pinIdx].size]!, lerpEndRatio);
-                    } else {
-                        // No mutation will occur to the filter object so we can safely return it without copying
-                        tgtSong.tmpEqFilterEnd = tgtSong.eqFilter;
-                    }
-
-                } // Target (1 is dot 1 X, 2 is dot 1 Y, etc.)
-                else {
-                    // Since we are directly manipulating the filter, make sure it is a new one and not an actual one of the instrument's filters
-                    for (let i: number = 0; i < Config.filterMorphCount; i++) {
-                        if (tgtSong.tmpEqFilterEnd == tgtSong.eqSubFilters[i] && tgtSong.tmpEqFilterEnd != null) {
-                            tgtSong.tmpEqFilterEnd = new FilterSettings();
-                            tgtSong.tmpEqFilterEnd.fromJsonObject(tgtSong.eqSubFilters[i]!.toJsonObject());
-                        }
-                    }
-                    if (tgtSong.tmpEqFilterEnd == null) {
+                // Since we are directly manipulating the filter, make sure it is a new one and not an actual one of the instrument's filters
+                for (let i: number = 0; i < Config.filterMorphCount; i++) {
+                    if (tgtSong.tmpEqFilterEnd == tgtSong.eqSubFilters[i] && tgtSong.tmpEqFilterEnd != null) {
                         tgtSong.tmpEqFilterEnd = new FilterSettings();
-                        tgtSong.tmpEqFilterEnd.fromJsonObject(tgtSong.eqFilter.toJsonObject());
+                        tgtSong.tmpEqFilterEnd.fromJsonObject(tgtSong.eqSubFilters[i]!.toJsonObject());
                     }
+                }
+                if (tgtSong.tmpEqFilterEnd == null) {
+                    tgtSong.tmpEqFilterEnd = new FilterSettings();
+                    tgtSong.tmpEqFilterEnd.fromJsonObject(tgtSong.eqFilter.toJsonObject());
+                }
 
-                    if (tgtSong.tmpEqFilterEnd.controlPointCount > Math.floor((dotTarget - 1) / 2)) {
-                        if (dotTarget % 2) { // X
-                            tgtSong.tmpEqFilterEnd.controlPoints[Math.floor((dotTarget - 1) / 2)].freq = tone.expression + tone.expressionDelta;
-                        } else { // Y
-                            tgtSong.tmpEqFilterEnd.controlPoints[Math.floor((dotTarget - 1) / 2)].gain = tone.expression + tone.expressionDelta;
-                        }
+                if (tgtSong.tmpEqFilterEnd.controlPointCount > dotTarget) {
+                    if (setting == Config.automationParams.dictionary["song eq filter dot x"].index) {
+                        tgtSong.tmpEqFilterEnd.controlPoints[dotTarget].freq = tone.expression + tone.expressionDelta;
+                    } else if (setting == Config.automationParams.dictionary["song eq filter dot y"].index) {
+                        tgtSong.tmpEqFilterEnd.controlPoints[dotTarget].gain = tone.expression + tone.expressionDelta;
+                    } else if (setting == Config.automationParams.dictionary["song eq filter dot q"].index) {
+                        tgtSong.tmpEqFilterEnd.controlPoints[dotTarget].q = tone.expression + tone.expressionDelta;
                     }
                 }
             }
             // Extra info for eq filter target needs to be set as well
-            else if (setting == Config.automationParams.dictionary["eq filter"].index) {
+            else if (setting == Config.automationParams.dictionary["eq filter morph"].index) {
+                const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
+                for (let effectIndex: number = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
+                    const tgtEffect = tgtInstrument.effects[instrument.modEffects[mod][effectIndex]] as Effect;
+
+                    if (tgtEffect && !tgtEffect.eqFilterType) {
+                        // Morph. Figure out the target filter's X/Y coords for this point. If no point exists with this index, or point types don't match, do lerp-out for this point and lerp-in of a new point
+                        let pinIdx: number = 0;
+                        const currentPart: number = synth.getTicksIntoBar() / Config.ticksPerPart;
+                        while (tone.note!.start + tone.note!.pins[pinIdx].time <= currentPart) pinIdx++;
+                        // 0 to 1 based on distance to next morph
+                        //let lerpStartRatio: number = (currentPart - tone.note!.pins[pinIdx - 1].time) / (tone.note!.pins[pinIdx].time - tone.note!.pins[pinIdx - 1].time);
+                        let lerpEndRatio: number = ((currentPart - tone.note!.start + (roundedSamplesPerTick / (synth.getSamplesPerTick() * Config.ticksPerPart)) * Config.ticksPerPart) - tone.note!.pins[pinIdx - 1].time) / (tone.note!.pins[pinIdx].time - tone.note!.pins[pinIdx - 1].time);
+
+                        // Compute the new settings to go to.
+                        if (tgtEffect.eqSubFilters[tone.note!.pins[pinIdx - 1].size] != null || tgtEffect.eqSubFilters[tone.note!.pins[pinIdx].size] != null) {
+                            tgtEffect.tmpEqFilterEnd = FilterSettings.lerpFilters(tgtEffect.eqSubFilters[tone.note!.pins[pinIdx - 1].size]!, tgtEffect.eqSubFilters[tone.note!.pins[pinIdx].size]!, lerpEndRatio);
+                        } else {
+                            // No mutation will occur to the filter object so we can safely return it without copying
+                            tgtEffect.tmpEqFilterEnd = tgtEffect.eqFilter;
+                        }
+                    }
+                }
+            }
+            else if (Config.automationParams[setting].isFilter && !Config.automationParams[setting].forSong) {
                 const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
                 for (let effectIndex: number = 0; effectIndex < instrument.modEffects[mod].length; effectIndex++) {
                     const tgtEffect = tgtInstrument.effects[instrument.modEffects[mod][effectIndex]] as Effect;
 
                     if (tgtEffect && !tgtEffect.eqFilterType) {
 
-                        let dotTarget = instrument.modFilterTypes[mod] | 0;
-
-                        if (dotTarget == 0) { // Morph. Figure out the target filter's X/Y coords for this point. If no point exists with this index, or point types don't match, do lerp-out for this point and lerp-in of a new point
-
-                            let pinIdx: number = 0;
-                            const currentPart: number = synth.getTicksIntoBar() / Config.ticksPerPart;
-                            while (tone.note!.start + tone.note!.pins[pinIdx].time <= currentPart) pinIdx++;
-                            // 0 to 1 based on distance to next morph
-                            //let lerpStartRatio: number = (currentPart - tone.note!.pins[pinIdx - 1].time) / (tone.note!.pins[pinIdx].time - tone.note!.pins[pinIdx - 1].time);
-                            let lerpEndRatio: number = ((currentPart - tone.note!.start + (roundedSamplesPerTick / (synth.getSamplesPerTick() * Config.ticksPerPart)) * Config.ticksPerPart) - tone.note!.pins[pinIdx - 1].time) / (tone.note!.pins[pinIdx].time - tone.note!.pins[pinIdx - 1].time);
-
-                            // Compute the new settings to go to.
-                            if (tgtEffect.eqSubFilters[tone.note!.pins[pinIdx - 1].size] != null || tgtEffect.eqSubFilters[tone.note!.pins[pinIdx].size] != null) {
-                                tgtEffect.tmpEqFilterEnd = FilterSettings.lerpFilters(tgtEffect.eqSubFilters[tone.note!.pins[pinIdx - 1].size]!, tgtEffect.eqSubFilters[tone.note!.pins[pinIdx].size]!, lerpEndRatio);
-                            } else {
-                                // No mutation will occur to the filter object so we can safely return it without copying
-                                tgtEffect.tmpEqFilterEnd = tgtEffect.eqFilter;
-                            }
-
-                        } // Target (1 is dot 1 X, 2 is dot 1 Y, etc.)
-                        else {
-                            // Since we are directly manipulating the filter, make sure it is a new one and not an actual one of the instrument's filters
-                            for (let i: number = 0; i < Config.filterMorphCount; i++) {
-                                if (tgtEffect.tmpEqFilterEnd == tgtEffect.eqSubFilters[i] && tgtEffect.tmpEqFilterEnd != null) {
-                                    tgtEffect.tmpEqFilterEnd = new FilterSettings();
-                                    tgtEffect.tmpEqFilterEnd.fromJsonObject(tgtEffect.eqSubFilters[i]!.toJsonObject());
-                                }
-                            }
-                            if (tgtEffect.tmpEqFilterEnd == null) {
+                        let dotTarget = instrument.modIndices[mod] | 0;
+                        // Since we are directly manipulating the filter, make sure it is a new one and not an actual one of the instrument's filters
+                        for (let i: number = 0; i < Config.filterMorphCount; i++) {
+                            if (tgtEffect.tmpEqFilterEnd == tgtEffect.eqSubFilters[i] && tgtEffect.tmpEqFilterEnd != null) {
                                 tgtEffect.tmpEqFilterEnd = new FilterSettings();
-                                tgtEffect.tmpEqFilterEnd.fromJsonObject(tgtEffect.eqFilter.toJsonObject());
+                                tgtEffect.tmpEqFilterEnd.fromJsonObject(tgtEffect.eqSubFilters[i]!.toJsonObject());
                             }
+                        }
+                        if (tgtEffect.tmpEqFilterEnd == null) {
+                            tgtEffect.tmpEqFilterEnd = new FilterSettings();
+                            tgtEffect.tmpEqFilterEnd.fromJsonObject(tgtEffect.eqFilter.toJsonObject());
+                        }
 
-                            if (tgtEffect.tmpEqFilterEnd.controlPointCount > Math.floor((dotTarget - 1) / 2)) {
-                                if (dotTarget % 2) { // X
-                                    tgtEffect.tmpEqFilterEnd.controlPoints[Math.floor((dotTarget - 1) / 2)].freq = tone.expression + tone.expressionDelta;
-                                } else { // Y
-                                    tgtEffect.tmpEqFilterEnd.controlPoints[Math.floor((dotTarget - 1) / 2)].gain = tone.expression + tone.expressionDelta;
-                                }
+                        if (tgtEffect.tmpEqFilterEnd.controlPointCount > dotTarget) {
+                            if (setting == Config.automationParams.dictionary["eq filter dot x"].index) {
+                                tgtEffect.tmpEqFilterEnd.controlPoints[dotTarget].freq = tone.expression + tone.expressionDelta;
+                            } else if (setting == Config.automationParams.dictionary["eq filter dot y"].index) {
+                                tgtEffect.tmpEqFilterEnd.controlPoints[dotTarget].gain = tone.expression + tone.expressionDelta;
+                            } else if (setting == Config.automationParams.dictionary["eq filter dot q"].index) {
+                                tgtEffect.tmpEqFilterEnd.controlPoints[dotTarget].q = tone.expression + tone.expressionDelta;
                             }
                         }
                     }
                 }
             } else if (setting == Config.automationParams.dictionary["individual envelope speed"].index) {
                 const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
-                let envelopeTarget = instrument.modEnvelopeNumbers[mod];
+                let envelopeTarget = instrument.modIndices[mod];
 
                 let speed: number = tone.expression + tone.expressionDelta;
                 if (tgtInstrument.envelopeCount > envelopeTarget) {
@@ -6229,7 +6220,7 @@ export class Synth {
                 }
             } else if (setting == Config.automationParams.dictionary["individual envelope lower bound"].index) {
                 const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
-                let envelopeTarget = instrument.modEnvelopeNumbers[mod];
+                let envelopeTarget = instrument.modIndices[mod];
 
                 let bound: number = tone.expression + tone.expressionDelta;
                 if (tgtInstrument.envelopeCount > envelopeTarget) {
@@ -6237,7 +6228,7 @@ export class Synth {
                 }
             } else if (setting == Config.automationParams.dictionary["individual envelope upper bound"].index) {
                 const tgtInstrument = synth.song.channels[instrument.modChannels[mod][instrumentIndex]].instruments[instrument.modInstruments[mod][instrumentIndex]];
-                let envelopeTarget = instrument.modEnvelopeNumbers[mod];
+                let envelopeTarget = instrument.modIndices[mod];
 
                 let bound: number = tone.expression + tone.expressionDelta;
                 if (tgtInstrument.envelopeCount > envelopeTarget) {
