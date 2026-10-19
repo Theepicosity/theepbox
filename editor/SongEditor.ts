@@ -1887,7 +1887,7 @@ export class SongEditor {
                                 }
                             }
                         }
-                        let currentVal: number = (editor._doc.synth.getModValue(setting, channel, instrumentIndex, index, false) - Config.automationParams[setting].convertRealFactor) / Config.automationParams[setting].maxRawVol;
+                        let currentVal: number = (editor._doc.synth.getModValue(setting, 0, channel, instrumentIndex, 0, false) - Config.automationParams[setting].convertRealFactor) / Config.automationParams[setting].maxRawVol;
 
                         if (Config.automationParams[setting].invertSliderIndicator == true) {
                             currentVal = 1 - currentVal;
