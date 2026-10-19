@@ -21205,13 +21205,7 @@ var beepbox = (function (exports) {
                     let expressionStart = amplitudeMultStart;
                     let expressionEnd = amplitudeMultEnd;
                     if (i < carrierCount) {
-                        let pitchExpressionStart;
-                        if (tone.prevPitchExpressions[i] != null) {
-                            pitchExpressionStart = tone.prevPitchExpressions[i];
-                        }
-                        else {
-                            pitchExpressionStart = Math.pow(2.0, -(pitchStart - expressionReferencePitch) / pitchDamping);
-                        }
+                        const pitchExpressionStart = Math.pow(2.0, -(pitchStart - expressionReferencePitch) / pitchDamping);
                         const pitchExpressionEnd = Math.pow(2.0, -(pitchEnd - expressionReferencePitch) / pitchDamping);
                         tone.prevPitchExpressions[i] = pitchExpressionEnd;
                         expressionStart *= pitchExpressionStart;
@@ -21279,13 +21273,7 @@ var beepbox = (function (exports) {
                 }
                 const startPitch = basePitch + (pitch + intervalStart) * intervalScale;
                 const endPitch = basePitch + (pitch + intervalEnd) * intervalScale;
-                let pitchExpressionStart;
-                if (tone.prevPitchExpressions[0] != null) {
-                    pitchExpressionStart = tone.prevPitchExpressions[0];
-                }
-                else {
-                    pitchExpressionStart = Math.pow(2.0, -(startPitch - expressionReferencePitch) / pitchDamping);
-                }
+                const pitchExpressionStart = Math.pow(2.0, -(startPitch - expressionReferencePitch) / pitchDamping);
                 const pitchExpressionEnd = Math.pow(2.0, -(endPitch - expressionReferencePitch) / pitchDamping);
                 tone.prevPitchExpressions[0] = pitchExpressionEnd;
                 let settingsExpressionMult = baseExpression * noteFilterExpression;

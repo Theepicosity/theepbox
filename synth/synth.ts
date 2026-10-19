@@ -3109,7 +3109,6 @@ export class Synth {
                 arpeggioInterval = tone.pitches[getArpeggioPitchIndex(tone.pitchCount, instrument.fastTwoNoteArp, arpeggio)] - tone.pitches[0];
             }
 
-
             const carrierCount: number = (instrument.type == InstrumentType.fm6op ? instrument.customAlgorithm.carrierCount : Config.algorithms[instrument.algorithm].carrierCount);
             for (let i: number = 0; i < (instrument.type == InstrumentType.fm6op ? 6 : Config.operatorCount); i++) {
 
@@ -3165,12 +3164,7 @@ export class Synth {
 
                 if (i < carrierCount) {
                     // carrier
-                    let pitchExpressionStart: number;
-                    if (tone.prevPitchExpressions[i] != null) {
-                        pitchExpressionStart = tone.prevPitchExpressions[i]!;
-                    } else {
-                        pitchExpressionStart = Math.pow(2.0, -(pitchStart - expressionReferencePitch) / pitchDamping);
-                    }
+                    const pitchExpressionStart = Math.pow(2.0, -(pitchStart - expressionReferencePitch) / pitchDamping);
                     const pitchExpressionEnd: number = Math.pow(2.0, -(pitchEnd - expressionReferencePitch) / pitchDamping);
                     tone.prevPitchExpressions[i] = pitchExpressionEnd;
                     expressionStart *= pitchExpressionStart;
@@ -3217,8 +3211,6 @@ export class Synth {
             }
             tone.expression = expressionStart;
             tone.expressionDelta = (expressionEnd - expressionStart) / roundedSamplesPerTick;
-            
-
 
             let useFeedbackAmplitudeStart: number = instrument.feedbackAmplitude;
             let useFeedbackAmplitudeEnd: number = instrument.feedbackAmplitude;
@@ -3258,13 +3250,7 @@ export class Synth {
 
             const startPitch: number = basePitch + (pitch + intervalStart) * intervalScale;
             const endPitch: number = basePitch + (pitch + intervalEnd) * intervalScale;
-            let pitchExpressionStart: number;
-            // TODO: use the second element of prevPitchExpressions for the unison voice, compute a separate expression delta for it.
-            if (tone.prevPitchExpressions[0] != null) {
-                pitchExpressionStart = tone.prevPitchExpressions[0]!;
-            } else {
-                pitchExpressionStart = Math.pow(2.0, -(startPitch - expressionReferencePitch) / pitchDamping);
-            }
+            const pitchExpressionStart = Math.pow(2.0, -(startPitch - expressionReferencePitch) / pitchDamping);
             const pitchExpressionEnd: number = Math.pow(2.0, -(endPitch - expressionReferencePitch) / pitchDamping);
             tone.prevPitchExpressions[0] = pitchExpressionEnd;
             let settingsExpressionMult: number = baseExpression * noteFilterExpression;
@@ -3629,7 +3615,6 @@ export class Synth {
 
             tone.expression = expressionStart;
             tone.expressionDelta = (expressionEnd - expressionStart) / roundedSamplesPerTick;
-
 
             if (instrument.type == InstrumentType.pickedString) {
                 let stringDecayStart: number;
@@ -6037,7 +6022,7 @@ export class Synth {
 			noiseSampleB += (waveSampleB - noiseSampleB) * pitchRelativefilterB;
 
 			const inputSample: number = noiseSampleA + noiseSampleB * unisonSign;
-			const sample: number = applyFilters(inputSample, initialFilterInput1, initialFilterInput2, filterCount, filters);
+            const sample: number = applyFilters(inputSample, initialFilterInput1, initialFilterInput2, filterCount, filters);
 			initialFilterInput2 = initialFilterInput1;
 			initialFilterInput1 = inputSample;
 
