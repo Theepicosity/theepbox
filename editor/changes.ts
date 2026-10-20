@@ -2745,7 +2745,7 @@ export class ChangeSupersawDynamism extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.supersawDynamism = newValue;
-        doc.synth.unsetMod(Config.automationParams.dictionary["dynamism"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["supersaw dynamism"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2754,7 +2754,7 @@ export class ChangeSupersawSpread extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.supersawSpread = newValue;
-        doc.synth.unsetMod(Config.automationParams.dictionary["spread"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["supersaw spread"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }
@@ -2763,7 +2763,7 @@ export class ChangeSupersawShape extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);
         this._instrument.supersawShape = newValue;
-        doc.synth.unsetMod(Config.automationParams.dictionary["saw shape"].index, doc.channel, doc.getCurrentInstrument());
+        doc.synth.unsetMod(Config.automationParams.dictionary["supersaw shape"].index, doc.channel, doc.getCurrentInstrument());
         doc.notifier.changed();
         if (oldValue != newValue) this._didSomething();
     }

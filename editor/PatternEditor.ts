@@ -1386,7 +1386,7 @@ export class PatternEditor {
             }
         }
         else if (change instanceof ChangeSupersawDynamism) {
-            var modulator = Config.automationParams.dictionary["dynamism"];
+            var modulator = Config.automationParams.dictionary["supersaw dynamism"];
             applyToMods.push(modulator.index);
             if (toApply) applyValues.push(instrument.supersawDynamism - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
@@ -1396,7 +1396,7 @@ export class PatternEditor {
             }
         }
         else if (change instanceof ChangeSupersawSpread) {
-            var modulator = Config.automationParams.dictionary["spread"];
+            var modulator = Config.automationParams.dictionary["supersaw spread"];
             applyToMods.push(modulator.index);
             if (toApply) applyValues.push(instrument.supersawSpread - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
@@ -1406,7 +1406,7 @@ export class PatternEditor {
             }
         }
         else if (change instanceof ChangeSupersawShape) {
-            var modulator = Config.automationParams.dictionary["saw shape"];
+            var modulator = Config.automationParams.dictionary["supersaw shape"];
             applyToMods.push(modulator.index);
             if (toApply) applyValues.push(instrument.supersawShape - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.

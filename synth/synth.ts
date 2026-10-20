@@ -2978,7 +2978,6 @@ export class Synth {
                     let modFreqStart: number = clamp(0, Config.automationParams.dictionary["fm operator frequency"].maxRawVol, this.getModValue(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0, false));
                     let modFreqEnd: number = clamp(0, Config.automationParams.dictionary["fm operator frequency"].maxRawVol, this.getModValue(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0, true));
 
-                    console.log(modFreqEnd)
                     if (Number.isInteger(modFreqStart)) freqMultStart = Config.operatorFrequencies[modFreqStart].mult;
                     else freqMultStart = (1 - (modFreqStart % 1)) * Config.operatorFrequencies[Math.floor(modFreqStart)].mult + (modFreqStart % 1) * Config.operatorFrequencies[Math.ceil(modFreqStart)].mult;
                     if (Number.isInteger(modFreqEnd)) freqMultEnd = Config.operatorFrequencies[modFreqEnd].mult;
@@ -3181,8 +3180,12 @@ export class Synth {
                 const unisonExpression: number = instrument.unisonExpression;
                 const voiceCountExpression: number = (instrument.type == InstrumentType.pickedString) ? 1 : unisonVoices / 2.0;
                 settingsExpressionMult *= unisonExpression * voiceCountExpression;
-                const unisonEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, null, false);
-                const unisonEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, null, true);
+                let unisonEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, 0, false);
+                let unisonEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, 0, true);
+                if (this.isModActive(Config.automationParams.dictionary["unison"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    unisonEnvelopeStart *= this.getModValue(Config.automationParams.dictionary["unison"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 12.0;
+                    unisonEnvelopeEnd *= this.getModValue(Config.automationParams.dictionary["unison"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 12.0;
+                }
                 const unisonStartA: number = Math.pow(2.0, (unisonOffset + unisonSpread) * unisonEnvelopeStart / 12.0);
                 const unisonEndA: number = Math.pow(2.0, (unisonOffset + unisonSpread) * unisonEnvelopeEnd / 12.0);
                 tone.phaseDeltas[0] = startFreq * sampleTime * unisonStartA;
@@ -3288,9 +3291,9 @@ export class Synth {
                 // Dynamism mods
                 let useDynamismStart: number = instrument.supersawDynamism / Config.supersawDynamismMax;
                 let useDynamismEnd: number = instrument.supersawDynamism / Config.supersawDynamismMax;
-                if (this.isModActive(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
-                    useDynamismStart = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawDynamismMax;
-                    useDynamismEnd = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawDynamismMax;
+                if (this.isModActive(Config.automationParams.dictionary["supersaw dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    useDynamismStart = (this.getModValue(Config.automationParams.dictionary["supersaw dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawDynamismMax;
+                    useDynamismEnd = (this.getModValue(Config.automationParams.dictionary["supersaw dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawDynamismMax;
                 }
 
                 const curvedDynamismStart: number = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["dynamism"].index, 0, null, false)), 0.2);

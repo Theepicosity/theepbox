@@ -2610,7 +2610,7 @@ export class Config {
             maxIndex: 0,
             promptName: "Decimal Offset"
         }, {
-            name: "dynamism",
+            name: "supersaw dynamism",
 
             displayName: "Dynamism",
             maxRawVol: Config.supersawDynamismMax,
@@ -2851,8 +2851,8 @@ export class Config {
             name: "unison",
 
             displayName: "Unison",
-            maxRawVol: 10,
-            newNoteVol: 0,
+            maxRawVol: 12,
+            newNoteVol: 6,
             forSong: false,
             convertRealFactor: 0,
             isFilter: false,

@@ -2030,11 +2030,11 @@ export class SongEditor {
                 return this._stringSustainSlider;
             case Config.automationParams.dictionary["envelope speed"].index:
                 return this._envelopeSpeedSlider;
-            case Config.automationParams.dictionary["dynamism"].index:
+            case Config.automationParams.dictionary["supersaw dynamism"].index:
                 return this._supersawDynamismSlider;
-            case Config.automationParams.dictionary["spread"].index:
+            case Config.automationParams.dictionary["supersaw spread"].index:
                 return this._supersawSpreadSlider;
-            case Config.automationParams.dictionary["saw shape"].index:
+            case Config.automationParams.dictionary["supersaw shape"].index:
                 return this._supersawShapeSlider;
             case Config.automationParams.dictionary["individual envelope speed"].index:
                 return this.envelopeEditor.perEnvelopeSpeedSliders[index];
@@ -2733,11 +2733,16 @@ export class SongEditor {
             this._vibratoSpeedDisplay.textContent = "x" + instrument.vibratoSpeed / 10;
             this._arpeggioSpeedSlider.input.title = "x" + prettyNumber(Config.arpSpeedScale[instrument.arpeggioSpeed]);
             this._arpeggioSpeedDisplay.textContent = "x" + prettyNumber(Config.arpSpeedScale[instrument.arpeggioSpeed]);
-            this._noteFilterSimpleCutSlider.updateValue(instrument.noteFilterSimpleCut);
-            this._noteFilterSimplePeakSlider.updateValue(instrument.noteFilterSimplePeak);
             this._envelopeSpeedSlider.updateValue(instrument.envelopeSpeed);
             this._envelopeSpeedSlider.input.title = "x" + prettyNumber(Config.arpSpeedScale[instrument.envelopeSpeed]);
             this._envelopeSpeedDisplay.textContent = "x" + prettyNumber(Config.arpSpeedScale[instrument.envelopeSpeed]);
+            setSelectedValue(this._chordSelect, instrument.chord);
+            setSelectedValue(this._unisonSelect, instrument.unison);
+            this._unisonSignInputBox.value = instrument.unisonSign + "";
+            this._unisonSpreadInputBox.value = instrument.unisonSpread + "";
+            this._unisonVoicesInputBox.value = instrument.unisonVoices + "";
+            this._unisonExpressionInputBox.value = instrument.unisonExpression + "";
+            this._unisonOffsetInputBox.value = instrument.unisonOffset + "";
 
 
             if (instrument.type == InstrumentType.customChipWave) {

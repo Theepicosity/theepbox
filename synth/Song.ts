@@ -2803,6 +2803,12 @@ export class Song {
 
                             instrument.unisonSign = unisonSign / 1000;
                             if (unisonSignNegative == 0) instrument.unisonSign *= -1;
+                        } else {
+                            instrument.unisonVoices = Config.unisons[instrument.unison].voices;
+                            instrument.unisonSpread = Config.unisons[instrument.unison].spread;
+                            instrument.unisonOffset = Config.unisons[instrument.unison].offset;
+                            instrument.unisonExpression = Config.unisons[instrument.unison].expression;
+                            instrument.unisonSign = Config.unisons[instrument.unison].sign;
                         }
                     }
                 }

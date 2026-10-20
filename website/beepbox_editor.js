@@ -2335,7 +2335,7 @@ var beepbox = (() => {
         promptName: "Decimal Offset"
       },
       {
-        name: "dynamism",
+        name: "supersaw dynamism",
         displayName: "Dynamism",
         maxRawVol: _Config.supersawDynamismMax,
         newNoteVol: 0,
@@ -2575,8 +2575,8 @@ var beepbox = (() => {
       {
         name: "unison",
         displayName: "Unison",
-        maxRawVol: 10,
-        newNoteVol: 0,
+        maxRawVol: 12,
+        newNoteVol: 6,
         forSong: false,
         convertRealFactor: 0,
         isFilter: false,
@@ -16707,6 +16707,12 @@ li.select2-results__option[role=group] > strong:hover {
                   if (unisonExpressionNegative == 0) instrument.unisonExpression *= -1;
                   instrument.unisonSign = unisonSign / 1e3;
                   if (unisonSignNegative == 0) instrument.unisonSign *= -1;
+                } else {
+                  instrument.unisonVoices = Config.unisons[instrument.unison].voices;
+                  instrument.unisonSpread = Config.unisons[instrument.unison].spread;
+                  instrument.unisonOffset = Config.unisons[instrument.unison].offset;
+                  instrument.unisonExpression = Config.unisons[instrument.unison].expression;
+                  instrument.unisonSign = Config.unisons[instrument.unison].sign;
                 }
               }
             }
@@ -23167,7 +23173,6 @@ li.select2-results__option[role=group] > strong:hover {
           if (this.isModActive(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0)) {
             let modFreqStart = clamp(0, Config.automationParams.dictionary["fm operator frequency"].maxRawVol, this.getModValue(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0, false));
             let modFreqEnd = clamp(0, Config.automationParams.dictionary["fm operator frequency"].maxRawVol, this.getModValue(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0, true));
-            console.log(modFreqEnd);
             if (Number.isInteger(modFreqStart)) freqMultStart = Config.operatorFrequencies[modFreqStart].mult;
             else freqMultStart = (1 - modFreqStart % 1) * Config.operatorFrequencies[Math.floor(modFreqStart)].mult + modFreqStart % 1 * Config.operatorFrequencies[Math.ceil(modFreqStart)].mult;
             if (Number.isInteger(modFreqEnd)) freqMultEnd = Config.operatorFrequencies[modFreqEnd].mult;
@@ -23324,8 +23329,12 @@ li.select2-results__option[role=group] > strong:hover {
           const unisonExpression = instrument.unisonExpression;
           const voiceCountExpression = instrument.type == 7 /* pickedString */ ? 1 : unisonVoices / 2;
           settingsExpressionMult *= unisonExpression * voiceCountExpression;
-          const unisonEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, null, false);
-          const unisonEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, null, true);
+          let unisonEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, 0, false);
+          let unisonEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, 0, true);
+          if (this.isModActive(Config.automationParams.dictionary["unison"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            unisonEnvelopeStart *= this.getModValue(Config.automationParams.dictionary["unison"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 12;
+            unisonEnvelopeEnd *= this.getModValue(Config.automationParams.dictionary["unison"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 12;
+          }
           const unisonStartA = Math.pow(2, (unisonOffset + unisonSpread) * unisonEnvelopeStart / 12);
           const unisonEndA = Math.pow(2, (unisonOffset + unisonSpread) * unisonEnvelopeEnd / 12);
           tone.phaseDeltas[0] = startFreq * sampleTime * unisonStartA;
@@ -23406,9 +23415,9 @@ li.select2-results__option[role=group] > strong:hover {
           const minFirstVoiceAmplitude = 1 / Math.sqrt(Config.supersawVoiceCount);
           let useDynamismStart = instrument.supersawDynamism / Config.supersawDynamismMax;
           let useDynamismEnd = instrument.supersawDynamism / Config.supersawDynamismMax;
-          if (this.isModActive(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
-            useDynamismStart = this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / Config.supersawDynamismMax;
-            useDynamismEnd = this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / Config.supersawDynamismMax;
+          if (this.isModActive(Config.automationParams.dictionary["supersaw dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+            useDynamismStart = this.getModValue(Config.automationParams.dictionary["supersaw dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / Config.supersawDynamismMax;
+            useDynamismEnd = this.getModValue(Config.automationParams.dictionary["supersaw dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / Config.supersawDynamismMax;
           }
           const curvedDynamismStart = 1 - Math.pow(Math.max(0, 1 - useDynamismStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["dynamism"].index, 0, null, false)), 0.2);
           const curvedDynamismEnd = 1 - Math.pow(Math.max(0, 1 - useDynamismEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["dynamism"].index, 0, null, true)), 0.2);
@@ -29753,7 +29762,7 @@ li.select2-results__option[role=group] > strong:hover {
     constructor(doc, oldValue, newValue) {
       super(doc);
       this._instrument.supersawDynamism = newValue;
-      doc.synth.unsetMod(Config.automationParams.dictionary["dynamism"].index, doc.channel, doc.getCurrentInstrument());
+      doc.synth.unsetMod(Config.automationParams.dictionary["supersaw dynamism"].index, doc.channel, doc.getCurrentInstrument());
       doc.notifier.changed();
       if (oldValue != newValue) this._didSomething();
     }
@@ -29765,7 +29774,7 @@ li.select2-results__option[role=group] > strong:hover {
     constructor(doc, oldValue, newValue) {
       super(doc);
       this._instrument.supersawSpread = newValue;
-      doc.synth.unsetMod(Config.automationParams.dictionary["spread"].index, doc.channel, doc.getCurrentInstrument());
+      doc.synth.unsetMod(Config.automationParams.dictionary["supersaw spread"].index, doc.channel, doc.getCurrentInstrument());
       doc.notifier.changed();
       if (oldValue != newValue) this._didSomething();
     }
@@ -29777,7 +29786,7 @@ li.select2-results__option[role=group] > strong:hover {
     constructor(doc, oldValue, newValue) {
       super(doc);
       this._instrument.supersawShape = newValue;
-      doc.synth.unsetMod(Config.automationParams.dictionary["saw shape"].index, doc.channel, doc.getCurrentInstrument());
+      doc.synth.unsetMod(Config.automationParams.dictionary["supersaw shape"].index, doc.channel, doc.getCurrentInstrument());
       doc.notifier.changed();
       if (oldValue != newValue) this._didSomething();
     }
@@ -45125,7 +45134,7 @@ You should be redirected to the song at:<br /><br />
           instrument.envelopeSpeed = slider.getValueBeforeProspectiveChange();
         }
       } else if (change instanceof ChangeSupersawDynamism) {
-        var modulator = Config.automationParams.dictionary["dynamism"];
+        var modulator = Config.automationParams.dictionary["supersaw dynamism"];
         applyToMods.push(modulator.index);
         if (toApply) applyValues.push(instrument.supersawDynamism - modulator.convertRealFactor);
         slider = songEditor.getSliderForModSetting(modulator.index);
@@ -45133,7 +45142,7 @@ You should be redirected to the song at:<br /><br />
           instrument.supersawDynamism = slider.getValueBeforeProspectiveChange();
         }
       } else if (change instanceof ChangeSupersawSpread) {
-        var modulator = Config.automationParams.dictionary["spread"];
+        var modulator = Config.automationParams.dictionary["supersaw spread"];
         applyToMods.push(modulator.index);
         if (toApply) applyValues.push(instrument.supersawSpread - modulator.convertRealFactor);
         slider = songEditor.getSliderForModSetting(modulator.index);
@@ -45141,7 +45150,7 @@ You should be redirected to the song at:<br /><br />
           instrument.supersawSpread = slider.getValueBeforeProspectiveChange();
         }
       } else if (change instanceof ChangeSupersawShape) {
-        var modulator = Config.automationParams.dictionary["saw shape"];
+        var modulator = Config.automationParams.dictionary["supersaw shape"];
         applyToMods.push(modulator.index);
         if (toApply) applyValues.push(instrument.supersawShape - modulator.convertRealFactor);
         slider = songEditor.getSliderForModSetting(modulator.index);
@@ -53665,11 +53674,11 @@ You should be redirected to the song at:<br /><br />
           return this._stringSustainSlider;
         case Config.automationParams.dictionary["envelope speed"].index:
           return this._envelopeSpeedSlider;
-        case Config.automationParams.dictionary["dynamism"].index:
+        case Config.automationParams.dictionary["supersaw dynamism"].index:
           return this._supersawDynamismSlider;
-        case Config.automationParams.dictionary["spread"].index:
+        case Config.automationParams.dictionary["supersaw spread"].index:
           return this._supersawSpreadSlider;
-        case Config.automationParams.dictionary["saw shape"].index:
+        case Config.automationParams.dictionary["supersaw shape"].index:
           return this._supersawShapeSlider;
         case Config.automationParams.dictionary["individual envelope speed"].index:
           return this.envelopeEditor.perEnvelopeSpeedSliders[index];
@@ -54278,11 +54287,16 @@ You should be redirected to the song at:<br /><br />
         this._vibratoSpeedDisplay.textContent = "x" + instrument.vibratoSpeed / 10;
         this._arpeggioSpeedSlider.input.title = "x" + prettyNumber(Config.arpSpeedScale[instrument.arpeggioSpeed]);
         this._arpeggioSpeedDisplay.textContent = "x" + prettyNumber(Config.arpSpeedScale[instrument.arpeggioSpeed]);
-        this._noteFilterSimpleCutSlider.updateValue(instrument.noteFilterSimpleCut);
-        this._noteFilterSimplePeakSlider.updateValue(instrument.noteFilterSimplePeak);
         this._envelopeSpeedSlider.updateValue(instrument.envelopeSpeed);
         this._envelopeSpeedSlider.input.title = "x" + prettyNumber(Config.arpSpeedScale[instrument.envelopeSpeed]);
         this._envelopeSpeedDisplay.textContent = "x" + prettyNumber(Config.arpSpeedScale[instrument.envelopeSpeed]);
+        setSelectedValue2(this._chordSelect, instrument.chord);
+        setSelectedValue2(this._unisonSelect, instrument.unison);
+        this._unisonSignInputBox.value = instrument.unisonSign + "";
+        this._unisonSpreadInputBox.value = instrument.unisonSpread + "";
+        this._unisonVoicesInputBox.value = instrument.unisonVoices + "";
+        this._unisonExpressionInputBox.value = instrument.unisonExpression + "";
+        this._unisonOffsetInputBox.value = instrument.unisonOffset + "";
         if (instrument.type == 9 /* customChipWave */) {
           this._customWaveDrawCanvas.redrawCanvas();
           if (this.prompt instanceof CustomChipPrompt) {
