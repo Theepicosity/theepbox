@@ -585,6 +585,12 @@ export class EffectState {
 
 				let filterChanges: boolean = false;
 
+				const simpleFreqEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter cut"].index, 0, effectIndex, false);
+				const simpleFreqEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter cut"].index, 0, effectIndex, true);
+				const simpleGainEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter peak"].index, 0, effectIndex, false);
+				const simpleGainEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter peak"].index, 0, effectIndex, true);
+				if (simpleFreqEnvelopeStart != simpleFreqEnvelopeEnd || simpleGainEnvelopeStart != simpleGainEnvelopeEnd) filterChanges = true;
+
 				if (synth.isModActive(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
 					startSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
 					endSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
@@ -595,6 +601,10 @@ export class EffectState {
 					endSimpleGain = synth.getModValue(Config.automationParams.dictionary["eq filter peak"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
 					filterChanges = true;
 				}
+				startSimpleFreq *= simpleFreqEnvelopeStart;
+				endSimpleFreq *= simpleFreqEnvelopeEnd;
+				startSimpleGain *= simpleGainEnvelopeStart;
+				endSimpleGain *= simpleGainEnvelopeEnd;
 
 				let startPoint: FilterControlPoint;
 
@@ -630,13 +640,7 @@ export class EffectState {
 			}
 			else {
 				const eqFilterSettings: FilterSettings = (effect.tmpEqFilterStart != null) ? effect.tmpEqFilterStart : effect.eqFilter;
-				//const eqAllFreqsEnvelopeStart: number = envelopeStarts[InstrumentAutomationIndex.eqFilterAllFreqs];
-				//const eqAllFreqsEnvelopeEnd:   number = envelopeEnds[  InstrumentAutomationIndex.eqFilterAllFreqs];
 				for (let i: number = 0; i < eqFilterSettings.controlPointCount; i++) {
-					//const eqFreqEnvelopeStart: number = envelopeStarts[InstrumentAutomationIndex.eqFilterFreq0 + i];
-					//const eqFreqEnvelopeEnd:   number = envelopeEnds[  InstrumentAutomationIndex.eqFilterFreq0 + i];
-					//const eqPeakEnvelopeStart: number = envelopeStarts[InstrumentAutomationIndex.eqFilterGain0 + i];
-					//const eqPeakEnvelopeEnd:   number = envelopeEnds[  InstrumentAutomationIndex.eqFilterGain0 + i];
 					let startPoint: FilterControlPoint = eqFilterSettings.controlPoints[i];
 					let endPoint: FilterControlPoint = (effect.tmpEqFilterEnd != null && effect.tmpEqFilterEnd.controlPoints[i] != null) ? effect.tmpEqFilterEnd.controlPoints[i] : eqFilterSettings.controlPoints[i];
 
@@ -645,8 +649,13 @@ export class EffectState {
 						startPoint = endPoint;
 					}
 
-					startPoint.toCoefficients(Synth.tempFilterStartCoefficients, samplesPerSecond, /*eqAllFreqsEnvelopeStart * eqFreqEnvelopeStart*/ 1.0, /*eqPeakEnvelopeStart*/ 1.0);
-					endPoint.toCoefficients(Synth.tempFilterEndCoefficients, samplesPerSecond, /*eqAllFreqsEnvelopeEnd   * eqFreqEnvelopeEnd*/   1.0, /*eqPeakEnvelopeEnd*/   1.0);
+					const eqFreqEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot x"].index, i, effectIndex, false);
+					const eqFreqEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot x"].index, i, effectIndex, true);
+					const eqGainEnvelopeStart: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot y"].index, i, effectIndex, false);
+					const eqGainEnvelopeEnd: number = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot y"].index, i, effectIndex, true);
+
+					startPoint.toCoefficients(Synth.tempFilterStartCoefficients, samplesPerSecond, eqFreqEnvelopeStart, eqGainEnvelopeStart);
+					endPoint.toCoefficients(Synth.tempFilterEndCoefficients, samplesPerSecond, eqFreqEnvelopeEnd, eqGainEnvelopeEnd);
 					if (this.eqFiltersL.length <= i) this.eqFiltersL[i] = new DynamicBiquadFilter();
 					if (this.eqFiltersR.length <= i) this.eqFiltersR[i] = new DynamicBiquadFilter();
 					this.eqFiltersL[i].loadCoefficientsWithGradient(Synth.tempFilterStartCoefficients, Synth.tempFilterEndCoefficients, 1.0 / roundedSamplesPerTick, startPoint.type == FilterType.lowPass);

@@ -19150,6 +19150,11 @@ li.select2-results__option[role=group] > strong:hover {
           let endSimpleFreq = effect.eqFilterSimpleCut;
           let endSimpleGain = effect.eqFilterSimplePeak;
           let filterChanges = false;
+          const simpleFreqEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter cut"].index, 0, effectIndex, false);
+          const simpleFreqEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter cut"].index, 0, effectIndex, true);
+          const simpleGainEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter peak"].index, 0, effectIndex, false);
+          const simpleGainEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter peak"].index, 0, effectIndex, true);
+          if (simpleFreqEnvelopeStart != simpleFreqEnvelopeEnd || simpleGainEnvelopeStart != simpleGainEnvelopeEnd) filterChanges = true;
           if (synth.isModActive(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
             startSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
             endSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
@@ -19160,6 +19165,10 @@ li.select2-results__option[role=group] > strong:hover {
             endSimpleGain = synth.getModValue(Config.automationParams.dictionary["eq filter peak"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
             filterChanges = true;
           }
+          startSimpleFreq *= simpleFreqEnvelopeStart;
+          endSimpleFreq *= simpleFreqEnvelopeEnd;
+          startSimpleGain *= simpleGainEnvelopeStart;
+          endSimpleGain *= simpleGainEnvelopeEnd;
           let startPoint;
           if (filterChanges) {
             eqFilterSettingsStart.convertLegacySettingsForSynth(startSimpleFreq, startSimpleGain);
@@ -19191,22 +19200,12 @@ li.select2-results__option[role=group] > strong:hover {
             if (startPoint.type != endPoint.type) {
               startPoint = endPoint;
             }
-            startPoint.toCoefficients(
-              Synth.tempFilterStartCoefficients,
-              samplesPerSecond,
-              /*eqAllFreqsEnvelopeStart * eqFreqEnvelopeStart*/
-              1,
-              /*eqPeakEnvelopeStart*/
-              1
-            );
-            endPoint.toCoefficients(
-              Synth.tempFilterEndCoefficients,
-              samplesPerSecond,
-              /*eqAllFreqsEnvelopeEnd   * eqFreqEnvelopeEnd*/
-              1,
-              /*eqPeakEnvelopeEnd*/
-              1
-            );
+            const eqFreqEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot x"].index, i, effectIndex, false);
+            const eqFreqEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot x"].index, i, effectIndex, true);
+            const eqGainEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot y"].index, i, effectIndex, false);
+            const eqGainEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot y"].index, i, effectIndex, true);
+            startPoint.toCoefficients(Synth.tempFilterStartCoefficients, samplesPerSecond, eqFreqEnvelopeStart, eqGainEnvelopeStart);
+            endPoint.toCoefficients(Synth.tempFilterEndCoefficients, samplesPerSecond, eqFreqEnvelopeEnd, eqGainEnvelopeEnd);
             if (this.eqFiltersL.length <= i) this.eqFiltersL[i] = new DynamicBiquadFilter();
             if (this.eqFiltersR.length <= i) this.eqFiltersR[i] = new DynamicBiquadFilter();
             this.eqFiltersL[i].loadCoefficientsWithGradient(Synth.tempFilterStartCoefficients, Synth.tempFilterEndCoefficients, 1 / roundedSamplesPerTick, startPoint.type == 0 /* lowPass */);
