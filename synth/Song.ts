@@ -1,6 +1,6 @@
 // Copyright (c) John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, ChannelType, InstrumentType, EffectType, MDEffectType, Envelope, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, LFOEnvelopeTypes, RandomEnvelopeTypes } from "./SynthConfig";
+import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, ChannelType, InstrumentType, EffectType, MDEffectType, Envelope, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeFade, effectsIncludeUnison, LFOEnvelopeTypes, RandomEnvelopeTypes } from "./SynthConfig";
 import { Preset, EditorConfig } from "../editor/EditorConfig";
 import { Channel } from "./Channel";
 import { Instrument, LegacySettings } from "./Instrument";
@@ -173,11 +173,11 @@ const enum SongTagCode {
     beatCount           = CharCode.a, // added in BeepBox URL version 2
 	bars                = CharCode.b, // added in BeepBox URL version 2
 	songEq              = CharCode.c, // added in BeepBox URL version 2 for vibrato, switched to song eq filter in Slarmoo's Box 1.3
-	fadeInOut           = CharCode.d, // added in BeepBox URL version 3 for transition, switched to fadeInOut in 9
+	fadeInOut           = CharCode.d, // added in BeepBox URL version 3 for transition, switched to fadeInOut in 9, DEPRECATED in theepbox URL version 7
 	loopEnd             = CharCode.e, // added in BeepBox URL version 2
 	noteFilter          = CharCode.f, // added in BeepBox URL version 3
 	barCount            = CharCode.g, // added in BeepBox URL version 3
-	unison              = CharCode.h, // added in BeepBox URL version 2
+	unison              = CharCode.h, // added in BeepBox URL version 2, DEPRECATED in theepbox URL version 7
 	instrumentCount     = CharCode.i, // added in BeepBox URL version 3
 	patternCount        = CharCode.j, // added in BeepBox URL version 3
 	key                 = CharCode.k, // added in BeepBox URL version 2
@@ -838,8 +838,8 @@ export class Song {
                         buffer.push(base64IntToCharCode[(effect.ringModHzOffset - Config.rmHzOffsetMin) >> 6], base64IntToCharCode[(effect.ringModHzOffset - Config.rmHzOffsetMin) & 0x3F]);
                     }
                 }
-                // this is a six bit bitfield
-                buffer.push(base64IntToCharCode[instrument.mdeffects & 63]);
+                // this is an eight bit bitfield
+                buffer.push(base64IntToCharCode[instrument.mdeffects >> 6], base64IntToCharCode[instrument.mdeffects & 0x3F]);
                 if (effectsIncludeTransition(instrument.mdeffects)) {
                     buffer.push(base64IntToCharCode[instrument.transition]);
                 }
@@ -873,11 +873,13 @@ export class Song {
                 // if (effectsIncludeNoteRange(instrument.effects)) {
                 //     buffer.push(base64IntToCharCode[instrument.noteRange]);
                 // }
-
-                if (instrument.type != InstrumentType.drumset) {
-                    buffer.push(SongTagCode.fadeInOut, base64IntToCharCode[instrument.fadeIn], base64IntToCharCode[instrument.fadeOut]);
-                    // Transition info follows transition song tag
+                if (effectsIncludeFade(instrument.mdeffects)) {
+                    buffer.push(base64IntToCharCode[instrument.fadeIn], base64IntToCharCode[instrument.fadeOut]);
                     buffer.push(base64IntToCharCode[+instrument.clicklessTransition]);
+                }
+                if (effectsIncludeUnison(instrument.mdeffects)) {
+                    buffer.push(base64IntToCharCode[instrument.unison]);
+                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 }
 
                 if (instrument.type == InstrumentType.harmonics || instrument.type == InstrumentType.pickedString) {
@@ -906,8 +908,6 @@ export class Song {
                         buffer.push(119, base64IntToCharCode[instrument.chipWave]);
                         buffer.push(base64IntToCharCode[0]);
                     }
-                    buffer.push(104, base64IntToCharCode[instrument.unison]);
-                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
 
                     // Repurposed for chip wave loop controls.
                     buffer.push(SongTagCode.loopControls);
@@ -997,8 +997,6 @@ export class Song {
                         buffer.push(119, base64IntToCharCode[instrument.chipWave]);
                         buffer.push(base64IntToCharCode[0]);
                     }
-                    buffer.push(104, base64IntToCharCode[instrument.unison]);
-                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                     buffer.push(SongTagCode.customChipWave);
                     // Push custom wave values
                     for (let j: number = 0; j < 64; j++) {
@@ -1006,8 +1004,6 @@ export class Song {
                     }
                 } else if (instrument.type == InstrumentType.noise) {
                     buffer.push(SongTagCode.wave, base64IntToCharCode[instrument.chipNoise]);
-                    buffer.push(SongTagCode.unison, base64IntToCharCode[instrument.unison]);
-                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 } else if (instrument.type == InstrumentType.spectrum) {
                     buffer.push(SongTagCode.spectrum);
                     const spectrumBits: BitFieldWriter = new BitFieldWriter();
@@ -1015,8 +1011,6 @@ export class Song {
                         spectrumBits.write(Config.spectrumControlPointBits, instrument.spectrumWave.spectrum[i]);
                     }
                     spectrumBits.encodeBase64(buffer);
-                    buffer.push(SongTagCode.unison, base64IntToCharCode[instrument.unison]);
-                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 } else if (instrument.type == InstrumentType.drumset) {
                     buffer.push(SongTagCode.drumsetEnvelopes);
                     for (let j: number = 0; j < Config.drumCount; j++) {
@@ -1031,16 +1025,10 @@ export class Song {
                         }
                     }
                     spectrumBits.encodeBase64(buffer);
-                    buffer.push(SongTagCode.unison, base64IntToCharCode[instrument.unison]);
-                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 } else if (instrument.type == InstrumentType.harmonics) {
-                    buffer.push(SongTagCode.unison, base64IntToCharCode[instrument.unison]);
-                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 } else if (instrument.type == InstrumentType.pwm) {
                     buffer.push(SongTagCode.pulseWidth, base64IntToCharCode[instrument.pulseWidth]);
                     buffer.push(base64IntToCharCode[instrument.decimalOffset >> 6], base64IntToCharCode[instrument.decimalOffset & 0x3f]);
-                    buffer.push(SongTagCode.unison, base64IntToCharCode[instrument.unison]);
-                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                 } else if (instrument.type == InstrumentType.supersaw) {
                     buffer.push(SongTagCode.supersaw, base64IntToCharCode[instrument.supersawDynamism], base64IntToCharCode[instrument.supersawSpread], base64IntToCharCode[instrument.supersawShape]);
                     buffer.push(SongTagCode.pulseWidth, base64IntToCharCode[instrument.pulseWidth]);
@@ -1049,8 +1037,6 @@ export class Song {
                     if (Config.stringSustainRange > 0x20 || SustainType.length > 2) {
                         throw new Error("Not enough bits to represent sustain value and type in same base64 character.");
                     }
-                    buffer.push(SongTagCode.unison, base64IntToCharCode[instrument.unison]);
-                    if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                     buffer.push(SongTagCode.stringSustain, base64IntToCharCode[instrument.stringSustain | (instrument.stringSustainType << 5)]);
                 } else if (instrument.type == InstrumentType.mod) {
                     // Handled down below. Could be moved, but meh.
@@ -2225,6 +2211,7 @@ export class Song {
                             // Enable transition if it was used.
                             instrument.mdeffects |= 1 << MDEffectType.transition;
                         }
+                        instrument.mdeffects |= 1 << MDEffectType.fade;
                     } else if (beforeSix && fromBeepBox) {
                         for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
                             for (const instrument of this.channels[channelIndex].instruments) {
@@ -2236,6 +2223,7 @@ export class Song {
                                     // Enable transition if it was used.
                                     instrument.mdeffects |= 1 << MDEffectType.transition;
                                 }
+                                instrument.mdeffects |= 1 << MDEffectType.fade;
                             }
                         }
                     } else if ((beforeFour && !fromGoldBox && !fromUltraBox && !fromSlarmoosBox) || fromBeepBox) {
@@ -2248,6 +2236,7 @@ export class Song {
                             // Enable transition if it was used.
                             instrument.mdeffects |= 1 << MDEffectType.transition;
                         }
+                        instrument.mdeffects |= 1 << MDEffectType.fade;
                     } else {
                         const settings = legacySettings[clamp(0, legacySettings.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)])];
                         const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
@@ -2259,7 +2248,6 @@ export class Song {
                         if (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] > 0) {
                             // Set legacy tie over flag, which is only used to port notes in patterns using this instrument as tying.
                             instrument.legacyTieOver = true;
-
                         }
                         instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
 
@@ -2267,13 +2255,17 @@ export class Song {
                             // Enable transition if it was used.
                             instrument.mdeffects |= 1 << MDEffectType.transition;
                         }
+                        instrument.mdeffects |= 1 << MDEffectType.fade;
                     }
-                } else {
+                } else if (!(fromTheepBox && !beforeSeven)) {
                     const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                     instrument.fadeIn = clamp(0, Config.fadeInRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                     instrument.fadeOut = clamp(0, Config.fadeOutTicks.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                    instrument.mdeffects |= 1 << MDEffectType.fade;
                     if (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)
                         instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
+                } else {
+                    //do nothing! this tag code is deprecated for now
                 }
             } break;
             case SongTagCode.songEq: { //deprecated vibrato tag repurposed for songEq
@@ -2439,6 +2431,7 @@ export class Song {
                     instrument.unisonOffset = Config.unisons[instrument.unison].offset;
                     instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                     instrument.unisonSign = Config.unisons[instrument.unison].sign;
+                    instrument.mdeffects |= 1 << MDEffectType.unison;
                 } else if (beforeSix && fromBeepBox) {
                     for (let channelIndex: number = 0; channelIndex < this.getChannelCount(); channelIndex++) {
                         for (const instrument of this.channels[channelIndex].instruments) {
@@ -2455,6 +2448,7 @@ export class Song {
                             instrument.unisonOffset = Config.unisons[instrument.unison].offset;
                             instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                             instrument.unisonSign = Config.unisons[instrument.unison].sign;
+                            instrument.mdeffects |= 1 << MDEffectType.unison;
                         }
                     }
                 } else if (beforeSeven && fromBeepBox) {
@@ -2472,7 +2466,8 @@ export class Song {
                     instrument.unisonOffset = Config.unisons[instrument.unison].offset;
                     instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                     instrument.unisonSign = Config.unisons[instrument.unison].sign;
-                } else {
+                    instrument.mdeffects |= 1 << MDEffectType.unison;
+                } else if (!(fromTheepBox && !beforeSeven)) {
                     const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                     instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                     const unisonLength = (beforeFive || !fromSlarmoosBox) ? 27 : Config.unisons.length; //27 was the old length before I added >2 voice presets
@@ -2512,8 +2507,10 @@ export class Song {
                         instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                         instrument.unisonSign = Config.unisons[instrument.unison].sign;
                     }
+                    instrument.mdeffects |= 1 << MDEffectType.unison;
+                } else {
+                    // do nothing! this song tag code is deprecated for now
                 }
-
             } break;
             case SongTagCode.chord: {
                 if ((beforeNine && fromBeepBox) || ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox))) {
@@ -2704,7 +2701,7 @@ export class Song {
                                 newEffect.ringModHzOffset = clamp(Config.rmHzOffsetMin, Config.rmHzOffsetMax + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             }
                         }
-                        instrument.mdeffects = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        instrument.mdeffects = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                     }
                     else {
                         // i will admit it feels pretty good to describe a feature as "legacy"
@@ -2771,6 +2768,41 @@ export class Song {
                             instrument.vibratoSpeed = 10; // Normal speed
                             instrument.vibratoDelay = Config.vibratos[instrument.vibrato].delayTicks / 2;
                             instrument.vibratoType = Config.vibratos[instrument.vibrato].type;
+                        }
+                    }
+                    if (effectsIncludeFade(instrument.mdeffects)) {
+                        instrument.fadeIn = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        instrument.fadeOut = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                    }
+                    if (effectsIncludeUnison(instrument.mdeffects)) {
+                        instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                        if (instrument.unison == Config.unisons.length) {
+                            instrument.unisonVoices = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+
+                            const unisonSpreadNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                            const unisonSpread: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63)) * 63);
+
+                            const unisonOffsetNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                            const unisonOffset: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63)) * 63);
+
+                            const unisonExpressionNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                            const unisonExpression: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63);
+
+                            const unisonSignNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                            const unisonSign: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63);
+
+                            instrument.unisonSpread = unisonSpread / 1000;
+                            if (unisonSpreadNegative == 0) instrument.unisonSpread *= -1;
+
+                            instrument.unisonOffset = unisonOffset / 1000;
+                            if (unisonOffsetNegative == 0) instrument.unisonOffset *= -1;
+
+                            instrument.unisonExpression = unisonExpression / 1000;
+                            if (unisonExpressionNegative == 0) instrument.unisonExpression *= -1;
+
+                            instrument.unisonSign = unisonSign / 1000;
+                            if (unisonSignNegative == 0) instrument.unisonSign *= -1;
                         }
                     }
                 }

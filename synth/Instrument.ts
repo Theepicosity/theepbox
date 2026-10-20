@@ -1,6 +1,6 @@
 // Copyright (c) John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Dictionary, DictionaryArray, toNameMap, SustainType, EnvelopeType, InstrumentType, EffectType, MDEffectType, Transition, Unison, Chord, Vibrato, Envelope, AutomationParameter, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, LFOEnvelopeTypes } from "./SynthConfig";
+import { Dictionary, DictionaryArray, toNameMap, SustainType, EnvelopeType, InstrumentType, EffectType, MDEffectType, Transition, Unison, Chord, Vibrato, Envelope, AutomationParameter, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeFade, effectsIncludeUnison, LFOEnvelopeTypes } from "./SynthConfig";
 import { FilterSettings } from "./Filter";
 import { EnvelopeSettings } from "./Envelope";
 import { Effect } from "./Effect";
@@ -660,10 +660,19 @@ export class Instrument {
             instrumentObject["vibratoSpeed"] = this.vibratoSpeed;
             instrumentObject["vibratoType"] = this.vibratoType;
         }
-
-        if (this.type != InstrumentType.drumset) {
+        if (effectsIncludeFade(this.mdeffects)) {
             instrumentObject["fadeInSeconds"] = Math.round(10000 * fadeInSettingToSeconds(this.fadeIn)) / 10000;
             instrumentObject["fadeOutTicks"] = fadeOutSettingToTicks(this.fadeOut);
+        }
+        if (effectsIncludeUnison(this.mdeffects)) {
+            instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
+            if (this.unison == Config.unisons.length) {
+                instrumentObject["unisonVoices"] = this.unisonVoices;
+                instrumentObject["unisonSpread"] = this.unisonSpread;
+                instrumentObject["unisonOffset"] = this.unisonOffset;
+                instrumentObject["unisonExpression"] = this.unisonExpression;
+                instrumentObject["unisonSign"] = this.unisonSign;
+            }
         }
 
         if (this.type == InstrumentType.harmonics || this.type == InstrumentType.pickedString) {
@@ -675,37 +684,13 @@ export class Instrument {
 
         if (this.type == InstrumentType.noise) {
             instrumentObject["wave"] = Config.chipNoises[this.chipNoise].name;
-            instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-            if (this.unison == Config.unisons.length) {
-                instrumentObject["unisonVoices"] = this.unisonVoices;
-                instrumentObject["unisonSpread"] = this.unisonSpread;
-                instrumentObject["unisonOffset"] = this.unisonOffset;
-                instrumentObject["unisonExpression"] = this.unisonExpression;
-                instrumentObject["unisonSign"] = this.unisonSign;
-            }
         } else if (this.type == InstrumentType.spectrum) {
             instrumentObject["spectrum"] = [];
             for (let i: number = 0; i < Config.spectrumControlPoints; i++) {
                 instrumentObject["spectrum"][i] = Math.round(100 * this.spectrumWave.spectrum[i] / Config.spectrumMax);
             }
-            instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-            if (this.unison == Config.unisons.length) {
-                instrumentObject["unisonVoices"] = this.unisonVoices;
-                instrumentObject["unisonSpread"] = this.unisonSpread;
-                instrumentObject["unisonOffset"] = this.unisonOffset;
-                instrumentObject["unisonExpression"] = this.unisonExpression;
-                instrumentObject["unisonSign"] = this.unisonSign;
-            }
         } else if (this.type == InstrumentType.drumset) {
             instrumentObject["drums"] = [];
-            instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-            if (this.unison == Config.unisons.length) {
-                instrumentObject["unisonVoices"] = this.unisonVoices;
-                instrumentObject["unisonSpread"] = this.unisonSpread;
-                instrumentObject["unisonOffset"] = this.unisonOffset;
-                instrumentObject["unisonExpression"] = this.unisonExpression;
-                instrumentObject["unisonSign"] = this.unisonSign;
-            }
             for (let j: number = 0; j < Config.drumCount; j++) {
                 const spectrum: number[] = [];
                 for (let i: number = 0; i < Config.spectrumControlPoints; i++) {
@@ -718,16 +703,6 @@ export class Instrument {
             }
         } else if (this.type == InstrumentType.chip) {
             instrumentObject["wave"] = Config.chipWaves[this.chipWave].name;
-            // should this unison pushing code be turned into a function..?
-            instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-            // these don't need to be pushed if custom unisons aren't being used
-            if (this.unison == Config.unisons.length) {
-                instrumentObject["unisonVoices"] = this.unisonVoices;
-                instrumentObject["unisonSpread"] = this.unisonSpread;
-                instrumentObject["unisonOffset"] = this.unisonOffset;
-                instrumentObject["unisonExpression"] = this.unisonExpression;
-                instrumentObject["unisonSign"] = this.unisonSign;
-            }
 
             // advloop addition
             instrumentObject["isUsingAdvancedLoopControls"] = this.isUsingAdvancedLoopControls;
@@ -740,14 +715,6 @@ export class Instrument {
         } else if (this.type == InstrumentType.pwm) {
             instrumentObject["pulseWidth"] = this.pulseWidth;
             instrumentObject["decimalOffset"] = this.decimalOffset;
-            instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-            if (this.unison == Config.unisons.length) {
-                instrumentObject["unisonVoices"] = this.unisonVoices;
-                instrumentObject["unisonSpread"] = this.unisonSpread;
-                instrumentObject["unisonOffset"] = this.unisonOffset;
-                instrumentObject["unisonExpression"] = this.unisonExpression;
-                instrumentObject["unisonSign"] = this.unisonSign;
-            }
         } else if (this.type == InstrumentType.supersaw) {
             instrumentObject["pulseWidth"] = this.pulseWidth;
             instrumentObject["decimalOffset"] = this.decimalOffset;
@@ -755,27 +722,11 @@ export class Instrument {
             instrumentObject["spread"] = Math.round(100 * this.supersawSpread / Config.supersawSpreadMax);
             instrumentObject["shape"] = Math.round(100 * this.supersawShape / Config.supersawShapeMax);
         } else if (this.type == InstrumentType.pickedString) {
-            instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-            if (this.unison == Config.unisons.length) {
-                instrumentObject["unisonVoices"] = this.unisonVoices;
-                instrumentObject["unisonSpread"] = this.unisonSpread;
-                instrumentObject["unisonOffset"] = this.unisonOffset;
-                instrumentObject["unisonExpression"] = this.unisonExpression;
-                instrumentObject["unisonSign"] = this.unisonSign;
-            }
             instrumentObject["stringSustain"] = Math.round(100 * this.stringSustain / (Config.stringSustainRange - 1));
             if (Config.enableAcousticSustain) {
                 instrumentObject["stringSustainType"] = Config.sustainTypeNames[this.stringSustainType];
             }
         } else if (this.type == InstrumentType.harmonics) {
-            instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-            if (this.unison == Config.unisons.length) {
-                instrumentObject["unisonVoices"] = this.unisonVoices;
-                instrumentObject["unisonSpread"] = this.unisonSpread;
-                instrumentObject["unisonOffset"] = this.unisonOffset;
-                instrumentObject["unisonExpression"] = this.unisonExpression;
-                instrumentObject["unisonSign"] = this.unisonSign;
-            }
         } else if (this.type == InstrumentType.fm || this.type == InstrumentType.fm6op) {
             const operatorArray: Object[] = [];
             for (const operator of this.operators) {
@@ -811,14 +762,6 @@ export class Instrument {
             }
         } else if (this.type == InstrumentType.customChipWave) {
             instrumentObject["wave"] = Config.chipWaves[this.chipWave].name;
-            instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-            if (this.unison == Config.unisons.length) {
-                instrumentObject["unisonVoices"] = this.unisonVoices;
-                instrumentObject["unisonSpread"] = this.unisonSpread;
-                instrumentObject["unisonOffset"] = this.unisonOffset;
-                instrumentObject["unisonExpression"] = this.unisonExpression;
-                instrumentObject["unisonSign"] = this.unisonSign;
-            }
             instrumentObject["customChipWave"] = new Float64Array(64);
             instrumentObject["customChipWaveIntegral"] = new Float64Array(65);
             for (let i: number = 0; i < this.customChipWave.length; i++) {
@@ -1384,20 +1327,6 @@ export class Instrument {
                 }
             }
 
-            if (instrumentObject["noteFilterType"] != undefined) {
-                this.noteFilterType = instrumentObject["noteFilterType"];
-            }
-            if (instrumentObject["noteSimpleCut"] != undefined) {
-                this.noteFilterSimpleCut = instrumentObject["noteSimpleCut"];
-            }
-            if (instrumentObject["noteSimplePeak"] != undefined) {
-                this.noteFilterSimplePeak = instrumentObject["noteSimplePeak"];
-            }
-            if (instrumentObject["noteFilter"] != undefined) {
-                this.noteFilter.fromJsonObject(instrumentObject["noteFilter"]);
-            } else {
-                this.noteFilter.reset();
-            }
             for (let i: number = 0; i < Config.filterMorphCount; i++) {
                 if (Array.isArray(instrumentObject["noteSubFilters" + i])) {
                     this.noteSubFilters[i] = new FilterSettings();
@@ -1640,11 +1569,11 @@ export class Instrument {
     }
 
     public getFadeInSeconds(): number {
-        return (this.type == InstrumentType.drumset) ? 0.0 : fadeInSettingToSeconds(this.fadeIn);
+        return !effectsIncludeFade(this.mdeffects) ? 0.0 : fadeInSettingToSeconds(this.fadeIn);
     }
 
     public getFadeOutTicks(): number {
-        return (this.type == InstrumentType.drumset) ? Config.drumsetFadeOutTicks : fadeOutSettingToTicks(this.fadeOut)
+        return !effectsIncludeFade(this.mdeffects) ? 0.0 : fadeOutSettingToTicks(this.fadeOut)
     }
 
     public getChord(): Chord {

@@ -115,6 +115,8 @@ export const enum MDEffectType { // not sure what to call these! i call them "mu
     transition,
     chord,
     noteRange, //placeholder for ultrabox 2.3 update
+    fade,
+    unison,
     length,
 }
 
@@ -1206,9 +1208,9 @@ export class Config {
     public static readonly effectDisplayNames: ReadonlyArray<string> = ["Bitcrusher", "Chorus", "Clipping", "Distortion", "Echo", "Flanger", "Gain", "Granular", "Panning", "Post EQ", "Reverb", "Ring Mod" ];
     public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.bitcrusher, EffectType.chorus, EffectType.clipping, EffectType.distortion, EffectType.echo, EffectType.flanger, EffectType.gain, EffectType.granular, EffectType.panning, EffectType.eqFilter, EffectType.reverb, EffectType.ringModulation];
     public static readonly effectCount: 12;
-    public static readonly mdeffectNames: ReadonlyArray<string> = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
-    public static readonly mdeffectOrder: ReadonlyArray<MDEffectType> = [MDEffectType.transition, MDEffectType.chord, MDEffectType.pitchShift, MDEffectType.detune, MDEffectType.vibrato, MDEffectType.noteRange];
-    public static readonly mdeffectCount: 6;
+    public static readonly mdeffectNames: ReadonlyArray<string> = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range", "fade", "unison"];
+    public static readonly mdeffectOrder: ReadonlyArray<MDEffectType> = [MDEffectType.transition, MDEffectType.chord, MDEffectType.pitchShift, MDEffectType.detune, MDEffectType.vibrato, MDEffectType.noteRange, MDEffectType.fade, MDEffectType.unison];
+    public static readonly mdeffectCount: 8;
     public static readonly noteSizeMax: number = 6;
     public static readonly volumeRange: number = 100;
     // Beepbox's old volume scale used factor -0.5 and was [0~7] had roughly value 6 = 0.125 power. This new value is chosen to have -21 be the same,
@@ -2857,11 +2859,11 @@ export class Config {
             isEnvelope: false,
             associatedInstruments: [InstrumentType.chip, InstrumentType.harmonics, InstrumentType.pickedString, InstrumentType.customChipWave, InstrumentType.pwm, InstrumentType.noise, InstrumentType.spectrum, InstrumentType.drumset],
             associatedEffect: null,
-            associatedMDEffect: null,
+            associatedMDEffect: MDEffectType.unison,
             canBeEnvelope: true,
             canBeModulator: true,
             maxIndex: 0,
-            promptName: "Grain Range"
+            promptName: "Unison"
         },
     ]);
 }
@@ -3164,6 +3166,12 @@ export function effectsIncludeVibrato(effects: number): boolean {
 }
 export function effectsIncludeNoteRange(effects: number): boolean {
     return (effects & (1 << MDEffectType.noteRange)) != 0;
+}
+export function effectsIncludeFade(effects: number): boolean {
+    return (effects & (1 << MDEffectType.fade)) != 0;
+}
+export function effectsIncludeUnison(effects: number): boolean {
+    return (effects & (1 << MDEffectType.unison)) != 0;
 }
 
 export function calculateRingModHertz(sliderHz: number, sliderHzOffset: number = 0): number {

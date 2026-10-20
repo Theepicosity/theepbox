@@ -930,8 +930,8 @@ var beepbox = (() => {
     static effectDisplayNames = ["Bitcrusher", "Chorus", "Clipping", "Distortion", "Echo", "Flanger", "Gain", "Granular", "Panning", "Post EQ", "Reverb", "Ring Mod"];
     static effectOrder = [4 /* bitcrusher */, 1 /* chorus */, 11 /* clipping */, 3 /* distortion */, 6 /* echo */, 10 /* flanger */, 9 /* gain */, 8 /* granular */, 2 /* panning */, 5 /* eqFilter */, 0 /* reverb */, 7 /* ringModulation */];
     static effectCount;
-    static mdeffectNames = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
-    static mdeffectOrder = [3 /* transition */, 4 /* chord */, 0 /* pitchShift */, 1 /* detune */, 2 /* vibrato */, 5 /* noteRange */];
+    static mdeffectNames = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range", "fade", "unison"];
+    static mdeffectOrder = [3 /* transition */, 4 /* chord */, 0 /* pitchShift */, 1 /* detune */, 2 /* vibrato */, 5 /* noteRange */, 6 /* fade */, 7 /* unison */];
     static mdeffectCount;
     static noteSizeMax = 6;
     static volumeRange = 100;
@@ -2583,11 +2583,11 @@ var beepbox = (() => {
         isEnvelope: false,
         associatedInstruments: [0 /* chip */, 5 /* harmonics */, 7 /* pickedString */, 9 /* customChipWave */, 6 /* pwm */, 2 /* noise */, 3 /* spectrum */, 4 /* drumset */],
         associatedEffect: null,
-        associatedMDEffect: null,
+        associatedMDEffect: 7 /* unison */,
         canBeEnvelope: true,
         canBeModulator: true,
         maxIndex: 0,
-        promptName: "Grain Range"
+        promptName: "Unison"
       }
     ]);
   };
@@ -2840,6 +2840,14 @@ var beepbox = (() => {
     return (effects & 1 << 2 /* vibrato */) != 0;
   }
   __name(effectsIncludeVibrato, "effectsIncludeVibrato");
+  function effectsIncludeFade(effects) {
+    return (effects & 1 << 6 /* fade */) != 0;
+  }
+  __name(effectsIncludeFade, "effectsIncludeFade");
+  function effectsIncludeUnison(effects) {
+    return (effects & 1 << 7 /* unison */) != 0;
+  }
+  __name(effectsIncludeUnison, "effectsIncludeUnison");
   function calculateRingModHertz(sliderHz, sliderHzOffset = 0) {
     if (sliderHz == 0) return 0;
     if (sliderHz > 0) sliderHz -= 1 / Config.ringModHzRange;
@@ -13423,9 +13431,19 @@ li.select2-results__option[role=group] > strong:hover {
         instrumentObject["vibratoSpeed"] = this.vibratoSpeed;
         instrumentObject["vibratoType"] = this.vibratoType;
       }
-      if (this.type != 4 /* drumset */) {
+      if (effectsIncludeFade(this.mdeffects)) {
         instrumentObject["fadeInSeconds"] = Math.round(1e4 * fadeInSettingToSeconds(this.fadeIn)) / 1e4;
         instrumentObject["fadeOutTicks"] = fadeOutSettingToTicks(this.fadeOut);
+      }
+      if (effectsIncludeUnison(this.mdeffects)) {
+        instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
+        if (this.unison == Config.unisons.length) {
+          instrumentObject["unisonVoices"] = this.unisonVoices;
+          instrumentObject["unisonSpread"] = this.unisonSpread;
+          instrumentObject["unisonOffset"] = this.unisonOffset;
+          instrumentObject["unisonExpression"] = this.unisonExpression;
+          instrumentObject["unisonSign"] = this.unisonSign;
+        }
       }
       if (this.type == 5 /* harmonics */ || this.type == 7 /* pickedString */) {
         instrumentObject["harmonics"] = [];
@@ -13435,37 +13453,13 @@ li.select2-results__option[role=group] > strong:hover {
       }
       if (this.type == 2 /* noise */) {
         instrumentObject["wave"] = Config.chipNoises[this.chipNoise].name;
-        instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-        if (this.unison == Config.unisons.length) {
-          instrumentObject["unisonVoices"] = this.unisonVoices;
-          instrumentObject["unisonSpread"] = this.unisonSpread;
-          instrumentObject["unisonOffset"] = this.unisonOffset;
-          instrumentObject["unisonExpression"] = this.unisonExpression;
-          instrumentObject["unisonSign"] = this.unisonSign;
-        }
       } else if (this.type == 3 /* spectrum */) {
         instrumentObject["spectrum"] = [];
         for (let i = 0; i < Config.spectrumControlPoints; i++) {
           instrumentObject["spectrum"][i] = Math.round(100 * this.spectrumWave.spectrum[i] / Config.spectrumMax);
         }
-        instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-        if (this.unison == Config.unisons.length) {
-          instrumentObject["unisonVoices"] = this.unisonVoices;
-          instrumentObject["unisonSpread"] = this.unisonSpread;
-          instrumentObject["unisonOffset"] = this.unisonOffset;
-          instrumentObject["unisonExpression"] = this.unisonExpression;
-          instrumentObject["unisonSign"] = this.unisonSign;
-        }
       } else if (this.type == 4 /* drumset */) {
         instrumentObject["drums"] = [];
-        instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-        if (this.unison == Config.unisons.length) {
-          instrumentObject["unisonVoices"] = this.unisonVoices;
-          instrumentObject["unisonSpread"] = this.unisonSpread;
-          instrumentObject["unisonOffset"] = this.unisonOffset;
-          instrumentObject["unisonExpression"] = this.unisonExpression;
-          instrumentObject["unisonSign"] = this.unisonSign;
-        }
         for (let j = 0; j < Config.drumCount; j++) {
           const spectrum = [];
           for (let i = 0; i < Config.spectrumControlPoints; i++) {
@@ -13478,14 +13472,6 @@ li.select2-results__option[role=group] > strong:hover {
         }
       } else if (this.type == 0 /* chip */) {
         instrumentObject["wave"] = Config.chipWaves[this.chipWave].name;
-        instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-        if (this.unison == Config.unisons.length) {
-          instrumentObject["unisonVoices"] = this.unisonVoices;
-          instrumentObject["unisonSpread"] = this.unisonSpread;
-          instrumentObject["unisonOffset"] = this.unisonOffset;
-          instrumentObject["unisonExpression"] = this.unisonExpression;
-          instrumentObject["unisonSign"] = this.unisonSign;
-        }
         instrumentObject["isUsingAdvancedLoopControls"] = this.isUsingAdvancedLoopControls;
         instrumentObject["chipWaveLoopStart"] = this.chipWaveLoopStart;
         instrumentObject["chipWaveLoopEnd"] = this.chipWaveLoopEnd;
@@ -13495,14 +13481,6 @@ li.select2-results__option[role=group] > strong:hover {
       } else if (this.type == 6 /* pwm */) {
         instrumentObject["pulseWidth"] = this.pulseWidth;
         instrumentObject["decimalOffset"] = this.decimalOffset;
-        instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-        if (this.unison == Config.unisons.length) {
-          instrumentObject["unisonVoices"] = this.unisonVoices;
-          instrumentObject["unisonSpread"] = this.unisonSpread;
-          instrumentObject["unisonOffset"] = this.unisonOffset;
-          instrumentObject["unisonExpression"] = this.unisonExpression;
-          instrumentObject["unisonSign"] = this.unisonSign;
-        }
       } else if (this.type == 8 /* supersaw */) {
         instrumentObject["pulseWidth"] = this.pulseWidth;
         instrumentObject["decimalOffset"] = this.decimalOffset;
@@ -13510,27 +13488,11 @@ li.select2-results__option[role=group] > strong:hover {
         instrumentObject["spread"] = Math.round(100 * this.supersawSpread / Config.supersawSpreadMax);
         instrumentObject["shape"] = Math.round(100 * this.supersawShape / Config.supersawShapeMax);
       } else if (this.type == 7 /* pickedString */) {
-        instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-        if (this.unison == Config.unisons.length) {
-          instrumentObject["unisonVoices"] = this.unisonVoices;
-          instrumentObject["unisonSpread"] = this.unisonSpread;
-          instrumentObject["unisonOffset"] = this.unisonOffset;
-          instrumentObject["unisonExpression"] = this.unisonExpression;
-          instrumentObject["unisonSign"] = this.unisonSign;
-        }
         instrumentObject["stringSustain"] = Math.round(100 * this.stringSustain / (Config.stringSustainRange - 1));
         if (Config.enableAcousticSustain) {
           instrumentObject["stringSustainType"] = Config.sustainTypeNames[this.stringSustainType];
         }
       } else if (this.type == 5 /* harmonics */) {
-        instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-        if (this.unison == Config.unisons.length) {
-          instrumentObject["unisonVoices"] = this.unisonVoices;
-          instrumentObject["unisonSpread"] = this.unisonSpread;
-          instrumentObject["unisonOffset"] = this.unisonOffset;
-          instrumentObject["unisonExpression"] = this.unisonExpression;
-          instrumentObject["unisonSign"] = this.unisonSign;
-        }
       } else if (this.type == 1 /* fm */ || this.type == 11 /* fm6op */) {
         const operatorArray = [];
         for (const operator of this.operators) {
@@ -13565,14 +13527,6 @@ li.select2-results__option[role=group] > strong:hover {
         }
       } else if (this.type == 9 /* customChipWave */) {
         instrumentObject["wave"] = Config.chipWaves[this.chipWave].name;
-        instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-        if (this.unison == Config.unisons.length) {
-          instrumentObject["unisonVoices"] = this.unisonVoices;
-          instrumentObject["unisonSpread"] = this.unisonSpread;
-          instrumentObject["unisonOffset"] = this.unisonOffset;
-          instrumentObject["unisonExpression"] = this.unisonExpression;
-          instrumentObject["unisonSign"] = this.unisonSign;
-        }
         instrumentObject["customChipWave"] = new Float64Array(64);
         instrumentObject["customChipWaveIntegral"] = new Float64Array(65);
         for (let i = 0; i < this.customChipWave.length; i++) {
@@ -14035,20 +13989,6 @@ li.select2-results__option[role=group] > strong:hover {
             this.aliases = false;
           }
         }
-        if (instrumentObject["noteFilterType"] != void 0) {
-          this.noteFilterType = instrumentObject["noteFilterType"];
-        }
-        if (instrumentObject["noteSimpleCut"] != void 0) {
-          this.noteFilterSimpleCut = instrumentObject["noteSimpleCut"];
-        }
-        if (instrumentObject["noteSimplePeak"] != void 0) {
-          this.noteFilterSimplePeak = instrumentObject["noteSimplePeak"];
-        }
-        if (instrumentObject["noteFilter"] != void 0) {
-          this.noteFilter.fromJsonObject(instrumentObject["noteFilter"]);
-        } else {
-          this.noteFilter.reset();
-        }
         for (let i = 0; i < Config.filterMorphCount; i++) {
           if (Array.isArray(instrumentObject["noteSubFilters" + i])) {
             this.noteSubFilters[i] = new FilterSettings();
@@ -14266,10 +14206,10 @@ li.select2-results__option[role=group] > strong:hover {
       return effectsIncludeTransition(this.mdeffects) ? Config.transitions[this.transition] : this.type == 10 /* mod */ ? Config.transitions.dictionary["interrupt"] : Config.transitions.dictionary["normal"];
     }
     getFadeInSeconds() {
-      return this.type == 4 /* drumset */ ? 0 : fadeInSettingToSeconds(this.fadeIn);
+      return !effectsIncludeFade(this.mdeffects) ? 0 : fadeInSettingToSeconds(this.fadeIn);
     }
     getFadeOutTicks() {
-      return this.type == 4 /* drumset */ ? Config.drumsetFadeOutTicks : fadeOutSettingToTicks(this.fadeOut);
+      return !effectsIncludeFade(this.mdeffects) ? 0 : fadeOutSettingToTicks(this.fadeOut);
     }
     getChord() {
       return effectsIncludeChord(this.mdeffects) ? Config.chords[this.chord] : Config.chords.dictionary["simultaneous"];
@@ -15073,7 +15013,7 @@ li.select2-results__option[role=group] > strong:hover {
               buffer.push(base64IntToCharCode[effect.ringModHzOffset - Config.rmHzOffsetMin >> 6], base64IntToCharCode[effect.ringModHzOffset - Config.rmHzOffsetMin & 63]);
             }
           }
-          buffer.push(base64IntToCharCode[instrument.mdeffects & 63]);
+          buffer.push(base64IntToCharCode[instrument.mdeffects >> 6], base64IntToCharCode[instrument.mdeffects & 63]);
           if (effectsIncludeTransition(instrument.mdeffects)) {
             buffer.push(base64IntToCharCode[instrument.transition]);
           }
@@ -15102,9 +15042,13 @@ li.select2-results__option[role=group] > strong:hover {
               buffer.push(base64IntToCharCode[instrument.vibratoType]);
             }
           }
-          if (instrument.type != 4 /* drumset */) {
-            buffer.push(100 /* fadeInOut */, base64IntToCharCode[instrument.fadeIn], base64IntToCharCode[instrument.fadeOut]);
+          if (effectsIncludeFade(instrument.mdeffects)) {
+            buffer.push(base64IntToCharCode[instrument.fadeIn], base64IntToCharCode[instrument.fadeOut]);
             buffer.push(base64IntToCharCode[+instrument.clicklessTransition]);
+          }
+          if (effectsIncludeUnison(instrument.mdeffects)) {
+            buffer.push(base64IntToCharCode[instrument.unison]);
+            if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
           }
           if (instrument.type == 5 /* harmonics */ || instrument.type == 7 /* pickedString */) {
             buffer.push(72 /* harmonics */);
@@ -15128,8 +15072,6 @@ li.select2-results__option[role=group] > strong:hover {
               buffer.push(119, base64IntToCharCode[instrument.chipWave]);
               buffer.push(base64IntToCharCode[0]);
             }
-            buffer.push(104, base64IntToCharCode[instrument.unison]);
-            if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
             buffer.push(121 /* loopControls */);
             const encodedLoopMode = clamp(0, 31 + 1, instrument.chipWaveLoopMode) << 1 | (instrument.isUsingAdvancedLoopControls ? 1 : 0);
             buffer.push(base64IntToCharCode[encodedLoopMode]);
@@ -15197,16 +15139,12 @@ li.select2-results__option[role=group] > strong:hover {
               buffer.push(119, base64IntToCharCode[instrument.chipWave]);
               buffer.push(base64IntToCharCode[0]);
             }
-            buffer.push(104, base64IntToCharCode[instrument.unison]);
-            if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
             buffer.push(77 /* customChipWave */);
             for (let j = 0; j < 64; j++) {
               buffer.push(base64IntToCharCode[instrument.customChipWave[j] + 24]);
             }
           } else if (instrument.type == 2 /* noise */) {
             buffer.push(119 /* wave */, base64IntToCharCode[instrument.chipNoise]);
-            buffer.push(104 /* unison */, base64IntToCharCode[instrument.unison]);
-            if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
           } else if (instrument.type == 3 /* spectrum */) {
             buffer.push(83 /* spectrum */);
             const spectrumBits = new BitFieldWriter();
@@ -15214,8 +15152,6 @@ li.select2-results__option[role=group] > strong:hover {
               spectrumBits.write(Config.spectrumControlPointBits, instrument.spectrumWave.spectrum[i3]);
             }
             spectrumBits.encodeBase64(buffer);
-            buffer.push(104 /* unison */, base64IntToCharCode[instrument.unison]);
-            if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
           } else if (instrument.type == 4 /* drumset */) {
             buffer.push(122 /* drumsetEnvelopes */);
             for (let j = 0; j < Config.drumCount; j++) {
@@ -15229,16 +15165,10 @@ li.select2-results__option[role=group] > strong:hover {
               }
             }
             spectrumBits.encodeBase64(buffer);
-            buffer.push(104 /* unison */, base64IntToCharCode[instrument.unison]);
-            if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
           } else if (instrument.type == 5 /* harmonics */) {
-            buffer.push(104 /* unison */, base64IntToCharCode[instrument.unison]);
-            if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
           } else if (instrument.type == 6 /* pwm */) {
             buffer.push(87 /* pulseWidth */, base64IntToCharCode[instrument.pulseWidth]);
             buffer.push(base64IntToCharCode[instrument.decimalOffset >> 6], base64IntToCharCode[instrument.decimalOffset & 63]);
-            buffer.push(104 /* unison */, base64IntToCharCode[instrument.unison]);
-            if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
           } else if (instrument.type == 8 /* supersaw */) {
             buffer.push(120 /* supersaw */, base64IntToCharCode[instrument.supersawDynamism], base64IntToCharCode[instrument.supersawSpread], base64IntToCharCode[instrument.supersawShape]);
             buffer.push(87 /* pulseWidth */, base64IntToCharCode[instrument.pulseWidth]);
@@ -15247,8 +15177,6 @@ li.select2-results__option[role=group] > strong:hover {
             if (Config.stringSustainRange > 32 || 2 /* length */ > 2) {
               throw new Error("Not enough bits to represent sustain value and type in same base64 character.");
             }
-            buffer.push(104 /* unison */, base64IntToCharCode[instrument.unison]);
-            if (instrument.unison == Config.unisons.length) encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
             buffer.push(73 /* stringSustain */, base64IntToCharCode[instrument.stringSustain | instrument.stringSustainType << 5]);
           } else if (instrument.type == 10 /* mod */) {
           } else {
@@ -16275,6 +16203,7 @@ li.select2-results__option[role=group] > strong:hover {
                 if (instrument.transition != Config.transitions.dictionary["normal"].index) {
                   instrument.mdeffects |= 1 << 3 /* transition */;
                 }
+                instrument.mdeffects |= 1 << 6 /* fade */;
               } else if (beforeSix && fromBeepBox) {
                 for (let channelIndex = 0; channelIndex < this.getChannelCount(); channelIndex++) {
                   for (const instrument of this.channels[channelIndex].instruments) {
@@ -16285,6 +16214,7 @@ li.select2-results__option[role=group] > strong:hover {
                     if (instrument.transition != Config.transitions.dictionary["normal"].index) {
                       instrument.mdeffects |= 1 << 3 /* transition */;
                     }
+                    instrument.mdeffects |= 1 << 6 /* fade */;
                   }
                 }
               } else if (beforeFour && !fromGoldBox && !fromUltraBox && !fromSlarmoosBox || fromBeepBox) {
@@ -16296,6 +16226,7 @@ li.select2-results__option[role=group] > strong:hover {
                 if (instrument.transition != Config.transitions.dictionary["normal"].index) {
                   instrument.mdeffects |= 1 << 3 /* transition */;
                 }
+                instrument.mdeffects |= 1 << 6 /* fade */;
               } else {
                 const settings = legacySettings[clamp(0, legacySettings.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)])];
                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
@@ -16309,13 +16240,16 @@ li.select2-results__option[role=group] > strong:hover {
                 if (instrument.transition != Config.transitions.dictionary["normal"].index || instrument.clicklessTransition) {
                   instrument.mdeffects |= 1 << 3 /* transition */;
                 }
+                instrument.mdeffects |= 1 << 6 /* fade */;
               }
-            } else {
+            } else if (!(fromTheepBox && !beforeSeven)) {
               const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
               instrument.fadeIn = clamp(0, Config.fadeInRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
               instrument.fadeOut = clamp(0, Config.fadeOutTicks.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+              instrument.mdeffects |= 1 << 6 /* fade */;
               if (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)
                 instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
+            } else {
             }
           }
           break;
@@ -16468,6 +16402,7 @@ li.select2-results__option[role=group] > strong:hover {
               instrument.unisonOffset = Config.unisons[instrument.unison].offset;
               instrument.unisonExpression = Config.unisons[instrument.unison].expression;
               instrument.unisonSign = Config.unisons[instrument.unison].sign;
+              instrument.mdeffects |= 1 << 7 /* unison */;
             } else if (beforeSix && fromBeepBox) {
               for (let channelIndex = 0; channelIndex < this.getChannelCount(); channelIndex++) {
                 for (const instrument of this.channels[channelIndex].instruments) {
@@ -16483,6 +16418,7 @@ li.select2-results__option[role=group] > strong:hover {
                   instrument.unisonOffset = Config.unisons[instrument.unison].offset;
                   instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                   instrument.unisonSign = Config.unisons[instrument.unison].sign;
+                  instrument.mdeffects |= 1 << 7 /* unison */;
                 }
               }
             } else if (beforeSeven && fromBeepBox) {
@@ -16499,7 +16435,8 @@ li.select2-results__option[role=group] > strong:hover {
               instrument.unisonOffset = Config.unisons[instrument.unison].offset;
               instrument.unisonExpression = Config.unisons[instrument.unison].expression;
               instrument.unisonSign = Config.unisons[instrument.unison].sign;
-            } else {
+              instrument.mdeffects |= 1 << 7 /* unison */;
+            } else if (!(fromTheepBox && !beforeSeven)) {
               const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
               instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
               const unisonLength = beforeFive || !fromSlarmoosBox ? 27 : Config.unisons.length;
@@ -16529,6 +16466,8 @@ li.select2-results__option[role=group] > strong:hover {
                 instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                 instrument.unisonSign = Config.unisons[instrument.unison].sign;
               }
+              instrument.mdeffects |= 1 << 7 /* unison */;
+            } else {
             }
           }
           break;
@@ -16685,7 +16624,7 @@ li.select2-results__option[role=group] > strong:hover {
                     newEffect.ringModHzOffset = clamp(Config.rmHzOffsetMin, Config.rmHzOffsetMax + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                   }
                 }
-                instrument.mdeffects = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                instrument.mdeffects = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
               } else {
                 const legacyEffectTypes = [0 /* reverb */, 1 /* chorus */, 2 /* panning */, 3 /* distortion */, 4 /* bitcrusher */, 5 /* eqFilter */, 6 /* echo */, 0 /* pitchShift */, 1 /* detune */, 2 /* vibrato */, 3 /* transition */, 4 /* chord */, 5 /* noteRange */, 7 /* ringModulation */, 8 /* granular */];
                 let bit = 0;
@@ -16741,6 +16680,33 @@ li.select2-results__option[role=group] > strong:hover {
                   instrument.vibratoSpeed = 10;
                   instrument.vibratoDelay = Config.vibratos[instrument.vibrato].delayTicks / 2;
                   instrument.vibratoType = Config.vibratos[instrument.vibrato].type;
+                }
+              }
+              if (effectsIncludeFade(instrument.mdeffects)) {
+                instrument.fadeIn = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                instrument.fadeOut = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+              }
+              if (effectsIncludeUnison(instrument.mdeffects)) {
+                instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                if (instrument.unison == Config.unisons.length) {
+                  instrument.unisonVoices = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                  const unisonSpreadNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                  const unisonSpread = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63) * 63;
+                  const unisonOffsetNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                  const unisonOffset = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63) * 63;
+                  const unisonExpressionNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                  const unisonExpression = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63;
+                  const unisonSignNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                  const unisonSign = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63;
+                  instrument.unisonSpread = unisonSpread / 1e3;
+                  if (unisonSpreadNegative == 0) instrument.unisonSpread *= -1;
+                  instrument.unisonOffset = unisonOffset / 1e3;
+                  if (unisonOffsetNegative == 0) instrument.unisonOffset *= -1;
+                  instrument.unisonExpression = unisonExpression / 1e3;
+                  if (unisonExpressionNegative == 0) instrument.unisonExpression *= -1;
+                  instrument.unisonSign = unisonSign / 1e3;
+                  if (unisonSignNegative == 0) instrument.unisonSign *= -1;
                 }
               }
             }
@@ -20642,6 +20608,19 @@ li.select2-results__option[role=group] > strong:hover {
     }
     updateWaves(instrument, samplesPerSecond) {
       this.volumeScale = 1;
+      if (effectsIncludeUnison(instrument.mdeffects)) {
+        this.unisonVoices = instrument.unisonVoices;
+        this.unisonSpread = instrument.unisonSpread;
+        this.unisonOffset = instrument.unisonOffset;
+        this.unisonExpression = instrument.unisonExpression;
+        this.unisonSign = instrument.unisonSign;
+      } else {
+        this.unisonVoices = 1;
+        this.unisonSpread = 0;
+        this.unisonOffset = 0;
+        this.unisonExpression = 1.4;
+        this.unisonSign = 1;
+      }
       if (instrument.type == 0 /* chip */) {
         this.waveL = this.aliases ? Config.rawChipWaves[instrument.chipWave].samples : Config.chipWaves[instrument.chipWave].samples;
         this.waveR = this.aliases ? Config.rawChipWaves[instrument.chipWave].samplesR || Config.rawChipWaves[instrument.chipWave].samples : Config.chipWaves[instrument.chipWave].samplesR || Config.chipWaves[instrument.chipWave].samples;
@@ -20652,64 +20631,24 @@ li.select2-results__option[role=group] > strong:hover {
         this.chipWavePlayBackwards = instrument.chipWavePlayBackwards;
         this.chipWaveStartOffset = instrument.chipWaveStartOffset;
         this.stereoChannels = Config.chipWaves[instrument.chipWave].stereoChannels || 0;
-        this.unisonVoices = instrument.unisonVoices;
-        this.unisonSpread = instrument.unisonSpread;
-        this.unisonOffset = instrument.unisonOffset;
-        this.unisonExpression = instrument.unisonExpression;
-        this.unisonSign = instrument.unisonSign;
       } else if (instrument.type == 6 /* pwm */) {
-        this.unisonVoices = instrument.unisonVoices;
-        this.unisonSpread = instrument.unisonSpread;
-        this.unisonOffset = instrument.unisonOffset;
-        this.unisonExpression = instrument.unisonExpression;
-        this.unisonSign = instrument.unisonSign;
       } else if (instrument.type == 9 /* customChipWave */) {
         this.waveL = this.aliases ? instrument.customChipWave : instrument.customChipWaveIntegral;
         this.waveR = this.aliases ? instrument.customChipWave : instrument.customChipWaveIntegral;
         this.volumeScale = 0.05;
-        this.unisonVoices = instrument.unisonVoices;
-        this.unisonSpread = instrument.unisonSpread;
-        this.unisonOffset = instrument.unisonOffset;
-        this.unisonExpression = instrument.unisonExpression;
-        this.unisonSign = instrument.unisonSign;
       } else if (instrument.type == 2 /* noise */) {
         this.waveL = getDrumWave(instrument.chipNoise, inverseRealFourierTransform, scaleElementsByFactor);
-        this.unisonVoices = instrument.unisonVoices;
-        this.unisonSpread = instrument.unisonSpread;
-        this.unisonOffset = instrument.unisonOffset;
-        this.unisonExpression = instrument.unisonExpression;
-        this.unisonSign = instrument.unisonSign;
       } else if (instrument.type == 5 /* harmonics */) {
         this.waveL = this.harmonicsWave.getCustomWave(instrument.harmonicsWave, instrument.type);
-        this.unisonVoices = instrument.unisonVoices;
-        this.unisonSpread = instrument.unisonSpread;
-        this.unisonOffset = instrument.unisonOffset;
-        this.unisonExpression = instrument.unisonExpression;
-        this.unisonSign = instrument.unisonSign;
       } else if (instrument.type == 7 /* pickedString */) {
         this.waveL = this.harmonicsWave.getCustomWave(instrument.harmonicsWave, instrument.type);
-        this.unisonVoices = instrument.unisonVoices;
-        this.unisonSpread = instrument.unisonSpread;
-        this.unisonOffset = instrument.unisonOffset;
-        this.unisonExpression = instrument.unisonExpression;
-        this.unisonSign = instrument.unisonSign;
       } else if (instrument.type == 3 /* spectrum */) {
         this.waveL = this.spectrumWave.getCustomWave(instrument.spectrumWave, 8);
-        this.unisonVoices = instrument.unisonVoices;
-        this.unisonSpread = instrument.unisonSpread;
-        this.unisonOffset = instrument.unisonOffset;
-        this.unisonExpression = instrument.unisonExpression;
-        this.unisonSign = instrument.unisonSign;
       } else if (instrument.type == 4 /* drumset */) {
         for (let i = 0; i < Config.drumCount; i++) {
           this.drumsetSpectrumWaves[i].getCustomWave(instrument.drumsetSpectrumWaves[i], _InstrumentState._drumsetIndexToSpectrumOctave(i));
         }
         this.waveL = null;
-        this.unisonVoices = instrument.unisonVoices;
-        this.unisonSpread = instrument.unisonSpread;
-        this.unisonOffset = instrument.unisonOffset;
-        this.unisonExpression = instrument.unisonExpression;
-        this.unisonSign = instrument.unisonSign;
       } else {
         this.waveL = null;
       }
@@ -52810,6 +52749,15 @@ You should be redirected to the song at:<br /><br />
         { class: "sectionBody" },
         this._vibratoSelectRow,
         this._vibratoDropdownGroup
+      ),
+      div21(
+        { class: "sectionBody" },
+        this._fadeInOutRow
+      ),
+      div21(
+        { class: "sectionBody" },
+        this._unisonSelectRow,
+        this._unisonDropdownGroup
       )
     );
     _customInstrumentSettingsGroup = div21(
@@ -52832,7 +52780,6 @@ You should be redirected to the song at:<br /><br />
         //this._noteFilterRow,
         //this._noteFilterSimpleCutRow,
         //this._noteFilterSimplePeakRow,
-        this._fadeInOutRow,
         this._algorithmSelectRow,
         this._algorithm6OpSelectRow,
         this._phaseModGroup,
@@ -52848,9 +52795,7 @@ You should be redirected to the song at:<br /><br />
         this._pulseWidthRow,
         // this._decimalOffsetRow,
         this._pulseWidthDropdownGroup,
-        this._stringSustainRow,
-        this._unisonSelectRow,
-        this._unisonDropdownGroup
+        this._stringSustainRow
       ),
       div21(
         div21(
@@ -54110,15 +54055,12 @@ You should be redirected to the song at:<br /><br />
           this._chipWaveLoopEndRow.style.display = "none";
           this._chipWaveStartOffsetRow.style.display = "none";
           this._chipWavePlayBackwardsRow.style.display = "none";
-          this._fadeInOutRow.style.display = "none";
           for (let i = 0; i < Config.drumCount; i++) {
             setSelectedValue2(this._drumsetEnvelopeSelects[i], instrument.drumsetEnvelopes[i]);
             this._drumsetSpectrumEditors[i].render();
           }
         } else {
           this._drumsetGroup.style.display = "none";
-          this._fadeInOutRow.style.display = "";
-          this._fadeInOutEditor.render();
         }
         if (instrument.type == 0 /* chip */) {
           this._chipWaveSelectRow.style.display = "";
@@ -54290,18 +54232,13 @@ You should be redirected to the song at:<br /><br />
           this._mdeffectsGroup.append(div21({ class: "sectionBody" }, this._vibratoSelectRow, this._vibratoDropdownGroup));
           if (this._openVibratoDropdown) this._vibratoDropdownGroup.style.display = "";
         }
-        if (instrument.type == 0 /* chip */ || instrument.type == 9 /* customChipWave */ || instrument.type == 5 /* harmonics */ || instrument.type == 7 /* pickedString */ || instrument.type == 3 /* spectrum */ || instrument.type == 6 /* pwm */ || instrument.type == 2 /* noise */ || instrument.type == 4 /* drumset */) {
-          this._unisonSelectRow.style.display = "";
-          setSelectedValue2(this._unisonSelect, instrument.unison);
-          this._unisonVoicesInputBox.value = instrument.unisonVoices + "";
-          this._unisonSpreadInputBox.value = instrument.unisonSpread + "";
-          this._unisonOffsetInputBox.value = instrument.unisonOffset + "";
-          this._unisonExpressionInputBox.value = instrument.unisonExpression + "";
-          this._unisonSignInputBox.value = instrument.unisonSign + "";
-          this._unisonDropdownGroup.style.display = this._openUnisonDropdown ? "" : "none";
-        } else {
-          this._unisonSelectRow.style.display = "none";
-          this._unisonDropdownGroup.style.display = "none";
+        if (effectsIncludeFade(instrument.mdeffects)) {
+          this._mdeffectsGroup.append(div21({ class: "sectionBody" }, this._fadeInOutRow));
+          this._fadeInOutEditor.render();
+        }
+        if (effectsIncludeUnison(instrument.mdeffects)) {
+          this._mdeffectsGroup.append(div21({ class: "sectionBody" }, this._unisonSelectRow, this._unisonDropdownGroup));
+          if (this._openUnisonDropdown) this._unisonDropdownGroup.style.display = "";
         }
         if (this._openEnvelopeDropdown)
           this._envelopeDropdownGroup.style.display = "";

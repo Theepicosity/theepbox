@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 //import {Layout} from "./Layout";
-import { sampleLoadEvents, SampleLoadedEvent, ChannelType, InstrumentType, EffectType, MDEffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, DropdownID } from "../synth/SynthConfig";
+import { sampleLoadEvents, SampleLoadedEvent, ChannelType, InstrumentType, EffectType, MDEffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeFade, effectsIncludeUnison, DropdownID } from "../synth/SynthConfig";
 import { BarScrollBar } from "./BarScrollBar";
 import { BeatsPerBarPrompt } from "./BeatsPerBarPrompt";
 import { Change, ChangeGroup } from "./Change";
@@ -1102,6 +1102,13 @@ export class SongEditor {
             this._vibratoSelectRow,
             this._vibratoDropdownGroup,
         ),
+        div({ class: "sectionBody"},
+            this._fadeInOutRow,
+        ),
+        div({ class: "sectionBody"},
+            this._unisonSelectRow,
+            this._unisonDropdownGroup,
+        )
     );
     private readonly _customInstrumentSettingsGroup: HTMLDivElement = div({ class: "editor-controls" },
         div({ class: "sectionBody"},
@@ -1121,7 +1128,6 @@ export class SongEditor {
             //this._noteFilterRow,
             //this._noteFilterSimpleCutRow,
             //this._noteFilterSimplePeakRow,
-            this._fadeInOutRow,
             this._algorithmSelectRow,
             this._algorithm6OpSelectRow,
             this._phaseModGroup,
@@ -1138,8 +1144,6 @@ export class SongEditor {
             // this._decimalOffsetRow,
             this._pulseWidthDropdownGroup,
             this._stringSustainRow,
-            this._unisonSelectRow,
-            this._unisonDropdownGroup,
         ),
         div(
             div({ class: "sectionHeader"},
@@ -2475,15 +2479,12 @@ export class SongEditor {
                 this._chipWaveStartOffsetRow.style.display = "none";
                 this._chipWavePlayBackwardsRow.style.display = "none";
                 // advloop addition
-                this._fadeInOutRow.style.display = "none";
                 for (let i: number = 0; i < Config.drumCount; i++) {
                     setSelectedValue(this._drumsetEnvelopeSelects[i], instrument.drumsetEnvelopes[i]);
                     this._drumsetSpectrumEditors[i].render();
                 }
             } else {
                 this._drumsetGroup.style.display = "none";
-                this._fadeInOutRow.style.display = "";
-                this._fadeInOutEditor.render();
             }
 
             if (instrument.type == InstrumentType.chip) {
@@ -2681,19 +2682,13 @@ export class SongEditor {
                 this._mdeffectsGroup.append(div({ class: "sectionBody" }, this._vibratoSelectRow, this._vibratoDropdownGroup))
                 if (this._openVibratoDropdown) this._vibratoDropdownGroup.style.display = "";
             }
-
-            if (instrument.type == InstrumentType.chip || instrument.type == InstrumentType.customChipWave || instrument.type == InstrumentType.harmonics || instrument.type == InstrumentType.pickedString || instrument.type == InstrumentType.spectrum || instrument.type == InstrumentType.pwm || instrument.type == InstrumentType.noise || instrument.type == InstrumentType.drumset) {
-                this._unisonSelectRow.style.display = "";
-                setSelectedValue(this._unisonSelect, instrument.unison);
-                this._unisonVoicesInputBox.value = instrument.unisonVoices + "";
-                this._unisonSpreadInputBox.value = instrument.unisonSpread + "";
-                this._unisonOffsetInputBox.value = instrument.unisonOffset + "";
-                this._unisonExpressionInputBox.value = instrument.unisonExpression + "";
-                this._unisonSignInputBox.value = instrument.unisonSign + "";
-                this._unisonDropdownGroup.style.display = (this._openUnisonDropdown ? "" : "none");
-            } else {
-                this._unisonSelectRow.style.display = "none";
-                this._unisonDropdownGroup.style.display = "none";
+            if(effectsIncludeFade(instrument.mdeffects)) {
+                this._mdeffectsGroup.append(div({ class: "sectionBody" }, this._fadeInOutRow))
+                this._fadeInOutEditor.render();
+            }
+            if(effectsIncludeUnison(instrument.mdeffects)) {
+                this._mdeffectsGroup.append(div({ class: "sectionBody" }, this._unisonSelectRow, this._unisonDropdownGroup))
+                if (this._openUnisonDropdown) this._unisonDropdownGroup.style.display = "";
             }
 
             if (this._openEnvelopeDropdown)

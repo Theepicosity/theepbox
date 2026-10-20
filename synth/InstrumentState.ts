@@ -1,6 +1,6 @@
 // Copyright (c) John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { SustainType,  InstrumentType, EffectType, Unison, Chord, Config, getDrumWave, drawNoiseSpectrum, performIntegralOld } from "./SynthConfig";
+import { SustainType,  InstrumentType, EffectType, Unison, Chord, Config, getDrumWave, drawNoiseSpectrum, performIntegralOld, effectsIncludeUnison } from "./SynthConfig";
 import { scaleElementsByFactor, inverseRealFourierTransform} from "./FFT";
 import { Deque } from "./Deque";
 import { warpInfinityToNyquist } from "./filtering";
@@ -581,6 +581,19 @@ export class InstrumentState {
 
     public updateWaves(instrument: Instrument, samplesPerSecond: number): void {
         this.volumeScale = 1.0;
+        if (effectsIncludeUnison(instrument.mdeffects)) {
+            this.unisonVoices = instrument.unisonVoices;
+            this.unisonSpread = instrument.unisonSpread;
+            this.unisonOffset = instrument.unisonOffset;
+            this.unisonExpression = instrument.unisonExpression;
+            this.unisonSign = instrument.unisonSign;
+        } else {
+            this.unisonVoices = 1;
+            this.unisonSpread = 0.0;
+            this.unisonOffset = 0.0;
+            this.unisonExpression = 1.4;
+            this.unisonSign = 1.0;
+        }
         if (instrument.type == InstrumentType.chip) {
             this.waveL = (this.aliases) ? Config.rawChipWaves[instrument.chipWave].samples : Config.chipWaves[instrument.chipWave].samples;
             this.waveR = (this.aliases) ? Config.rawChipWaves[instrument.chipWave].samplesR || Config.rawChipWaves[instrument.chipWave].samples : Config.chipWaves[instrument.chipWave].samplesR || Config.chipWaves[instrument.chipWave].samples;
@@ -593,65 +606,24 @@ export class InstrumentState {
             this.chipWaveStartOffset = instrument.chipWaveStartOffset;
             // advloop addition
             this.stereoChannels = Config.chipWaves[instrument.chipWave].stereoChannels || 0;
-
-            this.unisonVoices = instrument.unisonVoices;
-            this.unisonSpread = instrument.unisonSpread;
-            this.unisonOffset = instrument.unisonOffset;
-            this.unisonExpression = instrument.unisonExpression;
-            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.pwm) {
-            this.unisonVoices = instrument.unisonVoices;
-            this.unisonSpread = instrument.unisonSpread;
-            this.unisonOffset = instrument.unisonOffset;
-            this.unisonExpression = instrument.unisonExpression;
-            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.customChipWave) {
             this.waveL = (this.aliases) ? instrument.customChipWave! : instrument.customChipWaveIntegral!;
             this.waveR = (this.aliases) ? instrument.customChipWave! : instrument.customChipWaveIntegral!;
             this.volumeScale = 0.05;
-            this.unisonVoices = instrument.unisonVoices;
-            this.unisonSpread = instrument.unisonSpread;
-            this.unisonOffset = instrument.unisonOffset;
-            this.unisonExpression = instrument.unisonExpression;
-            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.noise) {
             this.waveL = getDrumWave(instrument.chipNoise, inverseRealFourierTransform, scaleElementsByFactor);
-            this.unisonVoices = instrument.unisonVoices;
-            this.unisonSpread = instrument.unisonSpread;
-            this.unisonOffset = instrument.unisonOffset;
-            this.unisonExpression = instrument.unisonExpression;
-            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.harmonics) {
             this.waveL = this.harmonicsWave.getCustomWave(instrument.harmonicsWave, instrument.type);
-            this.unisonVoices = instrument.unisonVoices;
-            this.unisonSpread = instrument.unisonSpread;
-            this.unisonOffset = instrument.unisonOffset;
-            this.unisonExpression = instrument.unisonExpression;
-            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.pickedString) {
             this.waveL = this.harmonicsWave.getCustomWave(instrument.harmonicsWave, instrument.type);
-            this.unisonVoices = instrument.unisonVoices;
-            this.unisonSpread = instrument.unisonSpread;
-            this.unisonOffset = instrument.unisonOffset;
-            this.unisonExpression = instrument.unisonExpression;
-            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.spectrum) {
             this.waveL = this.spectrumWave.getCustomWave(instrument.spectrumWave, 8);
-            this.unisonVoices = instrument.unisonVoices;
-            this.unisonSpread = instrument.unisonSpread;
-            this.unisonOffset = instrument.unisonOffset;
-            this.unisonExpression = instrument.unisonExpression;
-            this.unisonSign = instrument.unisonSign;
         } else if (instrument.type == InstrumentType.drumset) {
             for (let i: number = 0; i < Config.drumCount; i++) {
                 this.drumsetSpectrumWaves[i].getCustomWave(instrument.drumsetSpectrumWaves[i], InstrumentState._drumsetIndexToSpectrumOctave(i));
             }
             this.waveL = null;
-            this.unisonVoices = instrument.unisonVoices;
-            this.unisonSpread = instrument.unisonSpread;
-            this.unisonOffset = instrument.unisonOffset;
-            this.unisonExpression = instrument.unisonExpression;
-            this.unisonSign = instrument.unisonSign;
         } else {
             this.waveL = null;
         }
