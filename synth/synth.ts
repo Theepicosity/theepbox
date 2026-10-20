@@ -3375,13 +3375,13 @@ export class Synth {
                 // Spread mods
                 let useSpreadStart: number = baseSpreadSlider;
                 let useSpreadEnd: number = baseSpreadSlider;
-                if (this.isModActive(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
-                    useSpreadStart = (this.getModValue(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawSpreadMax;
-                    useSpreadEnd = (this.getModValue(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawSpreadMax;
+                if (this.isModActive(Config.automationParams.dictionary["supersaw spread"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    useSpreadStart = (this.getModValue(Config.automationParams.dictionary["supersaw spread"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawSpreadMax;
+                    useSpreadEnd = (this.getModValue(Config.automationParams.dictionary["supersaw spread"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawSpreadMax;
                 }
 
-                const spreadSliderStart: number = useSpreadStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["spread"].index, 0, null, false);
-                const spreadSliderEnd: number = useSpreadEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["spread"].index, 0, null, true);
+                const spreadSliderStart: number = useSpreadStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw spread"].index, 0, null, false);
+                const spreadSliderEnd: number = useSpreadEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw spread"].index, 0, null, true);
                 // Just use the average detune for the current tick in the below loop.
                 const averageSpreadSlider: number = (spreadSliderStart + spreadSliderEnd) * 0.5;
                 const curvedSpread: number = Math.pow(1.0 - Math.sqrt(Math.max(0.0, 1.0 - averageSpreadSlider)), 1.75);
@@ -3395,9 +3395,9 @@ export class Synth {
                 // Saw shape mods
                 let useShapeStart: number = baseShape * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, false);
                 let useShapeEnd: number = baseShape * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, true);
-                if (this.isModActive(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
-                    useShapeStart = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawShapeMax;
-                    useShapeEnd = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawShapeMax;
+                if (this.isModActive(Config.automationParams.dictionary["supersaw shape"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    useShapeStart = (this.getModValue(Config.automationParams.dictionary["supersaw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawShapeMax;
+                    useShapeEnd = (this.getModValue(Config.automationParams.dictionary["supersaw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawShapeMax;
                 }
 
                 const shapeStart: number = useShapeStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, false);
@@ -3671,8 +3671,7 @@ export class Synth {
 		//   When determining this automatically is difficult (or the input
 		//   samples are expected to vary too much), this is left up to the
 		//   user.
-		const aliases: boolean = (instrumentState.effectsIncludeType(EffectType.distortion) && instrumentState.aliases);
-        // const aliases = false;
+		const aliases: boolean = instrumentState.aliases;
         const stereoChannels: number = instrumentState.stereoChannels;
         let dataL: Float32Array = synth.tempInstrumentSampleBufferL!;
         let dataR: Float32Array = synth.tempInstrumentSampleBufferR!;
@@ -4083,7 +4082,7 @@ export class Synth {
 		tone.initialNoteFilterInputR2 = initialFilterInputR2;
 	}
     private static chipSynth(synth: Synth, bufferIndex: number, roundedSamplesPerTick: number, tone: Tone, instrumentState: InstrumentState): void {
-        const aliases: boolean = (instrumentState.effectsIncludeType(EffectType.eqFilter) && instrumentState.aliases);
+        const aliases: boolean = instrumentState.aliases;
         const stereoChannels: number = instrumentState.stereoChannels;
         let dataL: Float32Array = synth.tempInstrumentSampleBufferL!;
         let dataR: Float32Array = synth.tempInstrumentSampleBufferR!;

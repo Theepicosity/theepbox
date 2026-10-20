@@ -23,7 +23,6 @@ export class Effect {
 	public pan: number = Config.panCenter;
 	public panDelay: number = 0;
 	public panMode: number = 0;
-	public aliases: boolean = false;
 	public distortion: number = 0;
 	public clippingInGain: number = 0;
 	public clippingThreshold: number = 0;
@@ -75,7 +74,6 @@ export class Effect {
 			effectObject["panDelay"] = this.panDelay;
 			effectObject["panMode"] = this.panMode;
 		} else if (this.type == EffectType.distortion) {
-			effectObject["aliases"] = this.aliases;
 			effectObject["distortion"] = this.distortion;
 		} else if (this.type == EffectType.clipping) {
 			effectObject["clippingInGain"] = this.clippingInGain;
@@ -147,7 +145,6 @@ export class Effect {
 			this.panDelay = effectObject["panDelay"];
 			this.panMode = effectObject["panMode"];
 		} else if (this.type == EffectType.distortion) {
-			this.aliases = effectObject["aliases"];
 			this.distortion = effectObject["distortion"];
 		} else if (this.type == EffectType.clipping) {
 			this.clippingInGain = effectObject["clippingInGain"];

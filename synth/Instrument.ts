@@ -1378,9 +1378,7 @@ export class Instrument {
             else {
                 // modbox had no anti-aliasing, so enable it for everything if that mode is selected
                 if (format == "modbox") {
-                    let newEffect: Effect = this.addEffect(EffectType.distortion);
                     this.aliases = true;
-                    newEffect.distortion = 0;
                 } else {
                     this.aliases = false;
                 }

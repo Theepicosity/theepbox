@@ -2625,7 +2625,7 @@ export class Config {
             maxIndex: 0,
             promptName: "Supersaw Dynamism"
         }, {
-            name: "spread",
+            name: "supersaw spread",
 
             displayName: "Spread",
             maxRawVol: Config.supersawSpreadMax,
@@ -2642,7 +2642,7 @@ export class Config {
             maxIndex: 0,
             promptName: "Supersaw Spread"
         }, {
-            name: "saw shape",
+            name: "supersaw shape",
 
             displayName: "Shape",
             maxRawVol: Config.supersawShapeMax,

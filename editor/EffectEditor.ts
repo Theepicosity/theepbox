@@ -71,7 +71,6 @@ export class EffectEditor {
 	public readonly clippingInGainSliders: Slider[] = [];
 	public readonly clippingThresholdSliders: Slider[] = [];
 	public readonly clippingTypeSelects: HTMLSelectElement[] = [];
-	public readonly aliasingBoxes: HTMLInputElement[] = [];
 	public readonly bitcrusherQuantizationSliders: Slider[] = [];
 	public readonly bitcrusherFreqSliders: Slider[] = [];
 	public readonly eqFilterSimpleButtons: HTMLButtonElement[] = [];
@@ -97,7 +96,6 @@ export class EffectEditor {
 		const ringModWaveSelectIndex: number = this.ringModWaveSelects.indexOf(<any>event.target);
 		const panModeSelectIndex: number = this.panModeSelects.indexOf(<any>event.target);
 		const clippingTypeSelectIndex: number = this.clippingTypeSelects.indexOf(<any>event.target);
-		const aliasingBoxIndex: number = this.aliasingBoxes.indexOf(<any>event.target);
 
 		const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
 		if (ringModWaveSelectIndex != -1) {
@@ -109,9 +107,6 @@ export class EffectEditor {
 		} else if (clippingTypeSelectIndex != -1) {
 			let effect: Effect = <Effect>instrument.effects[clippingTypeSelectIndex];
 			this._doc.record(new ChangeClippingType(this._doc, effect, parseInt(this.clippingTypeSelects[clippingTypeSelectIndex].value)));
-		} else if (aliasingBoxIndex != -1) {
-			let effect: Effect = <Effect>instrument.effects[aliasingBoxIndex];
-			this._doc.record(new ChangeAliasing(this._doc, effect, this.aliasingBoxes[aliasingBoxIndex].checked));
 		} else if (this._lastChange != null) {
 			this._doc.record(this._lastChange);
 			this._lastChange = null;
@@ -232,7 +227,6 @@ export class EffectEditor {
 				const clippingInGainSlider: Slider = new Slider(HTML.input({ value: effect.clippingInGain, type: "range", min: 0, max: Config.distortionRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeClippingInGain(this._doc, effect, newValue), false);
 				const clippingThresholdSlider: Slider = new Slider(HTML.input({ value: effect.clippingThreshold, type: "range", min: 0, max: Config.volumeRange / 2 * Config.gainRangeMult, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeClippingThreshold(this._doc, effect, newValue), false);
 				const distortionSlider: Slider = new Slider(HTML.input({ value: effect.distortion, type: "range", min: 0, max: Config.distortionRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeDistortion(this._doc, effect, newValue), false);
-				const aliasingBox: HTMLInputElement = HTML.input({ type: "checkbox", style: "width: 1em; padding: 0; margin-right: 4em;" });
 				const bitcrusherQuantizationSlider: Slider = new Slider(HTML.input({ value: effect.bitcrusherQuantization, type: "range", min: 0, max: Config.bitcrusherQuantizationRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeBitcrusherQuantization(this._doc, effect, newValue), false);
 				const bitcrusherFreqSlider: Slider = new Slider(HTML.input({ value: effect.bitcrusherFreq, type: "range", min: 0, max: Config.bitcrusherFreqRange - 1, step: 1, style: "margin: 0;" }), this._doc, (oldValue: number, newValue: number) => new ChangeBitcrusherFreq(this._doc, effect, newValue), false);
 				const eqFilterSimpleButton: HTMLButtonElement = HTML.button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._switchEQFilterType(true, effect) }, "simple");
@@ -247,7 +241,6 @@ export class EffectEditor {
 				setSelectedValue(clippingTypeSelect, effect.clippingType);
 				panSliderInputBox.value = effect.pan + "";
 				gainSliderInputBox.value = effect.gain + "";
-				aliasingBox.checked = instrument.aliases ? true : false;
 
 				// i've left the grain range and size display commented out for now because i don't really get what the numbers mean ~ theepie
 
@@ -288,7 +281,6 @@ export class EffectEditor {
 				const clippingInGainRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("clippingInGain") }, "In-Gain:"), clippingInGainSlider.container);
 				const clippingThresholdRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("clippingThreshold") }, "Threshold:"), clippingThresholdSlider.container);
 				const clippingTypeRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("clippingType") }, "Type:"), HTML.div({ class: "selectContainer" }, clippingTypeSelect));
-				const aliasingRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("aliasing") }, "Aliasing:"), aliasingBox);
 				const bitcrusherQuantizationRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("bitcrusherQuantization") }, "Bit Crush:"), bitcrusherQuantizationSlider.container);
 				const bitcrusherFreqRow: HTMLDivElement = HTML.div({ class: "selectRow", style: "display: none;" }, HTML.span({ class: "tip", onclick: () => this._openPrompt("bitcrusherFreq") }, "Freq Crush:"), bitcrusherFreqSlider.container);
 				const eqFilterButtonsRow: HTMLElement = HTML.div({ class: "selectRow", style: "display: none; padding-top: 4px; margin-bottom: 0px;" }, HTML.span({ style: "font-size: x-small;", class: "tip", onclick: () => this._openPrompt("filterType") }, "Post EQ Type:"), HTML.div({ class: "instrument-bar" }, eqFilterSimpleButton, eqFilterAdvancedButton));
@@ -330,7 +322,6 @@ export class EffectEditor {
 					panModeRow.style.display = "";
 				} else if (effect.type == EffectType.distortion) {
 					distortionRow.style.display = "";
-					aliasingRow.style.display = "";
 				} else if (effect.type == EffectType.clipping) {
 					clippingTypeRow.style.display = "";
 					clippingInGainRow.style.display = "";
@@ -383,7 +374,6 @@ export class EffectEditor {
 					clippingTypeRow,
 					clippingInGainRow,
 					clippingThresholdRow,
-					aliasingRow,
 					bitcrusherQuantizationRow,
 					bitcrusherFreqRow,
 					eqFilterButtonsRow,
@@ -436,7 +426,6 @@ export class EffectEditor {
 				this.panDelaySliders[effectIndex] = panDelaySlider;
 				this.panModeSelects[effectIndex] = panModeSelect;
 				this.distortionSliders[effectIndex] = distortionSlider;
-				this.aliasingBoxes[effectIndex] = aliasingBox;
 				this.clippingTypeSelects[effectIndex] = clippingTypeSelect;
 				this.clippingInGainSliders[effectIndex] = clippingInGainSlider;
 				this.clippingThresholdSliders[effectIndex] = clippingThresholdSlider;
@@ -498,7 +487,6 @@ export class EffectEditor {
 			setSelectedValue(this.clippingTypeSelects[effectIndex], effect.clippingType);
 			this.panSliderInputBoxes[effectIndex].value = effect.pan + "";
 			this.gainSliderInputBoxes[effectIndex].value = effect.gain + "";
-			this.aliasingBoxes[effectIndex].checked = instrument.aliases ? true : false;
 			this.ringModHzNums[effectIndex].innerHTML = calculateRingModHertz(effect.ringModulationHz / (Config.ringModHzRange - 1)) + " Hz";
 			this.echoDelayNums[effectIndex].innerHTML = (Math.round((effect.echoDelay + 1) * Config.echoDelayStepTicks / (Config.ticksPerPart * Config.partsPerBeat) * 1000) / 1000) + " beat(s)";
 		}

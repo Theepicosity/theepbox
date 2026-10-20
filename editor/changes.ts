@@ -1842,7 +1842,6 @@ export class ChangeRemoveEffects extends Change {
         }
 
         // Remove AA when distortion is turned off.
-        if (instrument.effects[effectIndex]!.type == EffectType.distortion) instrument.aliases = false;
         instrument.effects.splice(effectIndex, 1);
         instrument.effectCount--;
 
@@ -2643,7 +2642,7 @@ export class ChangeClicklessTransition extends Change {
 }
 
 export class ChangeAliasing extends Change {
-    constructor(doc: SongDocument, effect: Effect, newValue: boolean) {
+    constructor(doc: SongDocument, newValue: boolean) {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         const oldValue = instrument.aliases;
