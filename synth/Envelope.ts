@@ -6,6 +6,7 @@ import { clamp } from "./utils";
 export class EnvelopeSettings {
     public target: number = 0;
     public index: number = 0;
+    public effectIndices: number[] = [0];
     public envelope: number = 0;
     //slarmoo's box 1.0
     public pitchEnvelopeStart: number;
@@ -34,6 +35,7 @@ export class EnvelopeSettings {
     reset(): void {
         this.target = 0;
         this.index = 0;
+        this.effectIndex = 0;
         this.envelope = 0;
         this.pitchEnvelopeStart = 0;
         this.pitchEnvelopeEnd = this.isNoiseEnvelope ? Config.drumCount - 1 : Config.maxPitch;

@@ -1883,6 +1883,7 @@ export class SongEditor {
                     if (Config.automationParams[setting].associatedEffect != null) {
                         for (let effectIndex: number = 0; effectIndex < instrument.effects.length; effectIndex++) {
                             for (let index: number = 0; index <= maxIndex; index++) {
+                                if (!this._newShowModSliders[setting][effectIndex]) this._newShowModSliders[setting][effectIndex] = [];
                                 this._newShowModSliders[setting][effectIndex][index] = Boolean(this._showModSliders[setting][effectIndex][index]); // Set to last value
                                 let slider: Slider | null = this.getSliderForModSetting(setting, effectIndex, index); // Check for newer value
                                 if (slider != null) this._newShowModSliders[setting][effectIndex][index] = updateModSlider(this, slider, setting, this._doc.channel, instrumentIndex, index, effectIndex);

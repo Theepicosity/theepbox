@@ -1052,6 +1052,12 @@ export class Song {
                     if (Config.automationParams[instrument.envelopes[envelopeIndex].target].maxIndex > 0) {
                         buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].index]);
                     }
+                    if (Config.automationParams[instrument.envelopes[envelopeIndex].target].associatedEffect != null) {
+                        buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].effectIndices.length]);
+                        for (let j:number = 0; j < instrument.envelopes[envelopeIndex].effectIndices.length; j++) {
+                            buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].effectIndices[j]]);
+                        }
+                    }
                     buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].envelope]);
                     //run pitch envelope handling
                     if (Config.newEnvelopes[instrument.envelopes[envelopeIndex].envelope].name == "pitch") {
@@ -3107,9 +3113,13 @@ export class Song {
                     for (let i: number = 0; i < envelopeCount; i++) {
                         const target: number = clamp(0, Config.automationParams.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                         let index: number = 0;
-                        const maxIndex: number = Config.automationParams[target].maxIndex;
-                        if (maxIndex > 0) {
-                            index = clamp(0, maxIndex, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                        if (Config.automationParams[target].maxIndex > 0) index = clamp(0, Config.automationParams[target].maxIndex, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                        let effectIndices: number[] = [];
+                        if (Config.automationParams[target].associatedEffect != null && (fromTheepBox && !beforeSeven)) {
+                            const effectIndexCount: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                            for (let j: number = 0; j < effectIndexCount; j++) {
+                                effectIndices.push(base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                            }
                         }
                         let aa: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                         if ((beforeTwo && fromGoldBox) || (fromBeepBox)) aa = pregoldToEnvelope[aa];
@@ -3186,7 +3196,7 @@ export class Song {
                             }
                         }
 
-                        instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete);
+                        instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete, effectIndices);
                         if (fromSlarmoosBox && beforeThree && !beforeTwo) {
                             let pitchEnvelopeCompact: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                             instrument.envelopes[i].pitchEnvelopeStart = pitchEnvelopeCompact * 64 + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];

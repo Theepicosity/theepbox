@@ -173,6 +173,7 @@ export class EnvelopeComputer {
         for (let envelopeIndex: number = 0; envelopeIndex <= instrument.envelopeCount; envelopeIndex++) {
             let automationTarget: AutomationParameter;
             let targetIndex: number;
+            let effectIndices: number[];
             let envelope: Envelope;
 
             let inverse: boolean = false;
@@ -193,11 +194,13 @@ export class EnvelopeComputer {
                 // Special case: if no other envelopes used note size, default to applying it to note volume.
                 automationTarget = Config.automationParams.dictionary["pre volume"];
                 targetIndex = 0;
+                effectIndices = [0];
                 envelope = Config.newEnvelopes.dictionary["note size"];
             } else {
                 let envelopeSettings: EnvelopeSettings = instrument.envelopes[envelopeIndex];
                 automationTarget = Config.automationParams[envelopeSettings.target];
                 targetIndex = envelopeSettings.index;
+                effectIndices = envelopeSettings.effectIndices;
                 envelope = Config.newEnvelopes[envelopeSettings.envelope];
                 inverse = instrument.envelopes[envelopeIndex].inverse;
                 isDiscrete = instrument.envelopes[envelopeIndex].discrete;
@@ -268,12 +271,12 @@ export class EnvelopeComputer {
             }
 
             if (!this.envelopeStates[envelopeIndex]) {
-                this.envelopeStates[envelopeIndex] = new AutomationState(automationTarget, targetIndex, [0], [0], [0])
+                this.envelopeStates[envelopeIndex] = new AutomationState(automationTarget, targetIndex, [0], [0], effectIndices)
             }
 
             this.envelopeStates[envelopeIndex].target = automationTarget;
             this.envelopeStates[envelopeIndex].index = targetIndex;
-            //this.envelopeStates[envelopeIndex].effectIndices = [0];
+            this.envelopeStates[envelopeIndex].effectIndices = effectIndices;
 
             this.envelopeStates[envelopeIndex].startValue *= envelopeStart;
             this.envelopeStates[envelopeIndex].endValue *= envelopeEnd;

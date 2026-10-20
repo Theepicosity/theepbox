@@ -12530,6 +12530,7 @@ li.select2-results__option[role=group] > strong:hover {
     }
     target = 0;
     index = 0;
+    effectIndices = [0];
     envelope = 0;
     //slarmoo's box 1.0
     pitchEnvelopeStart;
@@ -12553,6 +12554,7 @@ li.select2-results__option[role=group] > strong:hover {
     reset() {
       this.target = 0;
       this.index = 0;
+      this.effectIndex = 0;
       this.envelope = 0;
       this.pitchEnvelopeStart = 0;
       this.pitchEnvelopeEnd = this.isNoiseEnvelope ? Config.drumCount - 1 : Config.maxPitch;
@@ -14140,11 +14142,11 @@ li.select2-results__option[role=group] > strong:hover {
       for (let i = 0; i < this.effects.length; i++) if (this.effects[i] != null && this.effects[i].type == type) return true;
       return false;
     }
-    addEnvelope(target, index, envelope, newEnvelopes, start = 0, end = -1, inverse = false, perEnvelopeSpeed = -1, perEnvelopeLowerBound = 0, perEnvelopeUpperBound = 1, steps = 2, seed = 2, waveform = 0 /* sine */, discrete = false) {
+    addEnvelope(target, index, envelope, newEnvelopes, start = 0, end = -1, inverse = false, perEnvelopeSpeed = -1, perEnvelopeLowerBound = 0, perEnvelopeUpperBound = 1, steps = 2, seed = 2, waveform = 0 /* sine */, discrete = false, effectIndices = []) {
       end = end != -1 ? end : this.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch;
       perEnvelopeSpeed = perEnvelopeSpeed != -1 ? perEnvelopeSpeed : newEnvelopes ? 1 : Config.envelopes[envelope].speed;
       let makeEmpty = false;
-      if (!this.supportsEnvelopeTarget(target, index)) makeEmpty = true;
+      if (!this.supportsEnvelopeTarget(target, [0], index)) makeEmpty = true;
       if (this.envelopeCount >= Config.maxEnvelopeCount) throw new Error();
       while (this.envelopes.length <= this.envelopeCount) this.envelopes[this.envelopes.length] = new EnvelopeSettings(this.isNoiseInstrument);
       const envelopeSettings = this.envelopes[this.envelopeCount];
@@ -14165,10 +14167,14 @@ li.select2-results__option[role=group] > strong:hover {
       envelopeSettings.seed = seed;
       envelopeSettings.waveform = waveform;
       envelopeSettings.discrete = discrete;
+      envelopeSettings.effectIndices = effectIndices;
       this.envelopeCount++;
     }
-    supportsEnvelopeTarget(target, index) {
+    supportsEnvelopeTarget(target, effectIndices, index) {
       const automationTarget = Config.automationParams[target];
+      if (effectIndices.length == 0) {
+        for (let i = 0; i < this.effects.length; i++) effectIndices.push(i);
+      }
       if (!automationTarget.canBeEnvelope) {
         return false;
       }
@@ -14178,16 +14184,43 @@ li.select2-results__option[role=group] > strong:hover {
       if (automationTarget.associatedInstruments != null && automationTarget.associatedInstruments.indexOf(this.type) == -1) {
         return false;
       }
-      if (automationTarget.associatedEffect != null && !this.effectsIncludeType(automationTarget.associatedEffect) || automationTarget.associatedMDEffect != null && (this.mdeffects & 1 << automationTarget.associatedMDEffect) == 0) {
+      if (automationTarget.associatedMDEffect != null && (this.mdeffects & 1 << automationTarget.associatedMDEffect) == 0) {
         return false;
       }
-      if (automationTarget.isFilter) {
-        let useControlPointCount = this.noteFilter.controlPointCount;
-        if (this.noteFilterType)
-          useControlPointCount = 1;
-        if (index >= useControlPointCount) return false;
+      if (automationTarget.associatedEffect != null) {
+        let hasAssociatedEffect = false;
+        for (let i = 0; i < effectIndices.length; i++) {
+          if (effectIndices[effectIndices[i]] >= this.effects.length) {
+            return false;
+          }
+          if (automationTarget.associatedEffect == this.effects[effectIndices[i]].type) {
+            hasAssociatedEffect = true;
+          }
+        }
+        if (!hasAssociatedEffect) return false;
       }
-      if (automationTarget.name == "operatorFrequency" || automationTarget.name == "operatorAmplitude") {
+      if (automationTarget.isFilter) {
+        let hasValidFilter = false;
+        let largestCount = 0;
+        for (let i = 0; i < effectIndices.length; i++) {
+          if (this.effects[effectIndices[i]].type == 5 /* eqFilter */) {
+            if (!this.effects[effectIndices[i]].eqFilter.eqFilterType) hasValidFilter = true;
+            if (this.effects[effectIndices[i]].eqFilter.controlPointCount > largestCount) largestCount = this.effects[effectIndices[i]].eqFilter.controlPointCount;
+          }
+        }
+        if (index >= largestCount) return false;
+        if (!hasValidFilter) return false;
+      }
+      if (automationTarget.name == "eq filter cut" || automationTarget.name == "eq filter peak") {
+        let hasValidFilter = false;
+        for (let i = 0; i < effectIndices.length; i++) {
+          if (this.effects[effectIndices[i]].type == 5 /* eqFilter */) {
+            if (this.effects[effectIndices[i]].eqFilter.eqFilterType) hasValidFilter = true;
+          }
+        }
+        if (!hasValidFilter) return false;
+      }
+      if (automationTarget.name == "fm operator frequency" || automationTarget.name == "fm operator amplitude") {
         if (index >= 4 + (this.type == 11 /* fm6op */ ? 2 : 0)) return false;
       }
       return true;
@@ -15188,6 +15221,12 @@ li.select2-results__option[role=group] > strong:hover {
             buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].target]);
             if (Config.automationParams[instrument.envelopes[envelopeIndex].target].maxIndex > 0) {
               buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].index]);
+            }
+            if (Config.automationParams[instrument.envelopes[envelopeIndex].target].associatedEffect != null) {
+              buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].effectIndices.length]);
+              for (let j = 0; j < instrument.envelopes[envelopeIndex].effectIndices.length; j++) {
+                buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].effectIndices[j]]);
+              }
             }
             buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].envelope]);
             if (Config.newEnvelopes[instrument.envelopes[envelopeIndex].envelope].name == "pitch") {
@@ -16985,9 +17024,13 @@ li.select2-results__option[role=group] > strong:hover {
               for (let i2 = 0; i2 < envelopeCount; i2++) {
                 const target = clamp(0, Config.automationParams.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                 let index = 0;
-                const maxIndex = Config.automationParams[target].maxIndex;
-                if (maxIndex > 0) {
-                  index = clamp(0, maxIndex, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                if (Config.automationParams[target].maxIndex > 0) index = clamp(0, Config.automationParams[target].maxIndex, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                let effectIndices = [];
+                if (Config.automationParams[target].associatedEffect != null && (fromTheepBox && !beforeSeven)) {
+                  const effectIndexCount = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                  for (let j = 0; j < effectIndexCount; j++) {
+                    effectIndices.push(base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                  }
                 }
                 let aa = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                 if (beforeTwo && fromGoldBox || fromBeepBox) aa = pregoldToEnvelope[aa];
@@ -17062,7 +17105,7 @@ li.select2-results__option[role=group] > strong:hover {
                     }
                   }
                 }
-                instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete);
+                instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete, effectIndices);
                 if (fromSlarmoosBox && beforeThree && !beforeTwo) {
                   let pitchEnvelopeCompact = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                   instrument.envelopes[i2].pitchEnvelopeStart = pitchEnvelopeCompact * 64 + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
@@ -19702,6 +19745,7 @@ li.select2-results__option[role=group] > strong:hover {
       for (let envelopeIndex = 0; envelopeIndex <= instrument.envelopeCount; envelopeIndex++) {
         let automationTarget;
         let targetIndex;
+        let effectIndices;
         let envelope;
         let inverse = false;
         let isDiscrete = false;
@@ -19720,11 +19764,13 @@ li.select2-results__option[role=group] > strong:hover {
           if (usedNoteSize) break;
           automationTarget = Config.automationParams.dictionary["pre volume"];
           targetIndex = 0;
+          effectIndices = [0];
           envelope = Config.newEnvelopes.dictionary["note size"];
         } else {
           let envelopeSettings = instrument.envelopes[envelopeIndex];
           automationTarget = Config.automationParams[envelopeSettings.target];
           targetIndex = envelopeSettings.index;
+          effectIndices = envelopeSettings.effectIndices;
           envelope = Config.newEnvelopes[envelopeSettings.envelope];
           inverse = instrument.envelopes[envelopeIndex].inverse;
           isDiscrete = instrument.envelopes[envelopeIndex].discrete;
@@ -19785,10 +19831,11 @@ li.select2-results__option[role=group] > strong:hover {
           }
         }
         if (!this.envelopeStates[envelopeIndex]) {
-          this.envelopeStates[envelopeIndex] = new AutomationState(automationTarget, targetIndex, [0], [0], [0]);
+          this.envelopeStates[envelopeIndex] = new AutomationState(automationTarget, targetIndex, [0], [0], effectIndices);
         }
         this.envelopeStates[envelopeIndex].target = automationTarget;
         this.envelopeStates[envelopeIndex].index = targetIndex;
+        this.envelopeStates[envelopeIndex].effectIndices = effectIndices;
         this.envelopeStates[envelopeIndex].startValue *= envelopeStart;
         this.envelopeStates[envelopeIndex].endValue *= envelopeEnd;
         this._modifiedEnvelopeIndices[this._modifiedEnvelopeCount++] = envelopeIndex;
@@ -32780,14 +32827,28 @@ li.select2-results__option[role=group] > strong:hover {
     static {
       __name(this, "ChangeSetEnvelopeTarget");
     }
-    constructor(doc, envelopeIndex, target, targetIndex) {
+    constructor(doc, envelopeIndex, target, targetIndex, effectIndices) {
       super();
       const instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
       const oldTarget = instrument.envelopes[envelopeIndex].target;
       const oldIndex = instrument.envelopes[envelopeIndex].index;
-      if (oldTarget != target || oldIndex != targetIndex) {
+      const oldEffectIndices = instrument.envelopes[envelopeIndex].effectIndices;
+      if (oldTarget != target || oldIndex != targetIndex || oldEffectIndices != effectIndices) {
         instrument.envelopes[envelopeIndex].target = target;
         instrument.envelopes[envelopeIndex].index = targetIndex;
+        instrument.envelopes[envelopeIndex].effectIndices = effectIndices;
+        let hasCorrectEffectIndices = false;
+        for (let i = 0; i < effectIndices.length; i++) {
+          if (instrument.effects[effectIndices[i]].type == Config.automationParams[instrument.envelopes[envelopeIndex].target].associatedEffect) hasCorrectEffectIndices = true;
+        }
+        if (!hasCorrectEffectIndices) {
+          for (let i = 0; i < instrument.effects.length; i++) {
+            if (instrument.effects[i].type == Config.automationParams[instrument.envelopes[envelopeIndex].target].associatedEffect) {
+              instrument.envelopes[envelopeIndex].effectIndices = [i];
+              break;
+            }
+          }
+        }
         instrument.preset = instrument.type;
         doc.notifier.changed();
         this._didSomething();
@@ -41006,8 +41067,11 @@ You should be redirected to the song at:<br /><br />
       __name(this, "EnvelopeEditor");
     }
     container = HTML.div({ class: "envelopeEditor" });
-    _rows = [];
+    _targetRows = [];
+    _envelopeRows = [];
     _targetSelects = [];
+    _indexSelects = [];
+    _effectIndexSelects = [];
     _envelopeSelects = [];
     _deleteButtons = [];
     //dropdown stuff
@@ -41057,6 +41121,8 @@ You should be redirected to the song at:<br /><br />
     _lastChange = null;
     _onChange = /* @__PURE__ */ __name((event) => {
       const targetSelectIndex = this._targetSelects.indexOf(event.target);
+      const indexSelectIndex = this._indexSelects.indexOf(event.target);
+      const effectIndexSelectIndex = this._effectIndexSelects.indexOf(event.target);
       const envelopeSelectIndex = this._envelopeSelects.indexOf(event.target);
       const inverterIndex = this._inverters.indexOf(event.target);
       const discreterIndex = this._discreters.indexOf(event.target);
@@ -41075,10 +41141,20 @@ You should be redirected to the song at:<br /><br />
       const LFOStepsBoxIndex = this.LFOStepsBoxes.indexOf(event.target);
       const LFOStepsSliderIndex = this._LFOStepsSliders.indexOf(event.target);
       if (targetSelectIndex != -1) {
-        const combinedValue = parseInt(this._targetSelects[targetSelectIndex].value);
-        const target = combinedValue % Config.automationParams.length;
-        const index = combinedValue / Config.automationParams.length >>> 0;
-        this._doc.record(new ChangeSetEnvelopeTarget(this._doc, targetSelectIndex, target, index));
+        const target = parseInt(this._targetSelects[targetSelectIndex].value);
+        const index = parseInt(this._indexSelects[targetSelectIndex].value);
+        const effectIndex = parseInt(this._effectIndexSelects[targetSelectIndex].value);
+        this._doc.record(new ChangeSetEnvelopeTarget(this._doc, targetSelectIndex, target, index, [effectIndex]));
+      } else if (indexSelectIndex != -1) {
+        const target = parseInt(this._targetSelects[indexSelectIndex].value);
+        const index = parseInt(this._indexSelects[indexSelectIndex].value);
+        const effectIndex = parseInt(this._effectIndexSelects[indexSelectIndex].value);
+        this._doc.record(new ChangeSetEnvelopeTarget(this._doc, indexSelectIndex, target, index, [effectIndex]));
+      } else if (effectIndexSelectIndex != -1) {
+        const target = parseInt(this._targetSelects[effectIndexSelectIndex].value);
+        const index = parseInt(this._indexSelects[effectIndexSelectIndex].value);
+        const effectIndex = parseInt(this._effectIndexSelects[effectIndexSelectIndex].value);
+        this._doc.record(new ChangeSetEnvelopeTarget(this._doc, effectIndexSelectIndex, target, index, [effectIndex]));
       } else if (envelopeSelectIndex != -1) {
         const envelopeIndex = this._envelopeSelects.indexOf(event.target);
         this._doc.record(new ChangeSetEnvelopeType(this._doc, envelopeIndex, this._envelopeSelects[envelopeIndex].selectedIndex));
@@ -41154,24 +41230,17 @@ You should be redirected to the song at:<br /><br />
         this._lastChange = new ChangeRandomEnvelopeSteps(this._doc, parseFloat(this._LFOStepsSliders[LFOStepsSliderIndex].value), LFOStepsSliderIndex);
       }
     }, "_onInput");
-    _makeOption(target, index) {
+    _makeOption(target, effectIndex, index) {
       let displayName = Config.automationParams[target].name;
-      if (Config.automationParams[target].maxIndex > 0) {
-        if (displayName.indexOf("#") != -1) {
-          displayName = displayName.replace("#", String(index + 1));
-        } else {
-          displayName += " " + (index + 1);
-        }
-      }
-      return HTML.option({ value: target + index * Config.automationParams.length }, displayName);
+      if (index != null) displayName = index + 1 + "";
+      else if (effectIndex != null) displayName = effectIndex + 1 + "";
+      return HTML.option({ value: index ? index : effectIndex ? effectIndex : target }, displayName);
     }
-    _updateTargetOptionVisibility(menu, instrument) {
-      for (let optionIndex = 0; optionIndex < menu.childElementCount; optionIndex++) {
-        const option13 = menu.children[optionIndex];
-        const combinedValue = parseInt(option13.value);
-        const target = combinedValue % Config.automationParams.length;
-        const index = combinedValue / Config.automationParams.length >>> 0;
-        option13.hidden = !instrument.supportsEnvelopeTarget(target, index);
+    _updateTargetOptionVisibility(targetSelect, instrument) {
+      for (let optionIndex = 0; optionIndex < targetSelect.childElementCount; optionIndex++) {
+        const targetOption = targetSelect.children[optionIndex];
+        const target = targetOption.value;
+        targetOption.hidden = !instrument.supportsEnvelopeTarget(target, [], 0);
       }
     }
     _pitchToNote(value, isNoise) {
@@ -41325,19 +41394,21 @@ You should be redirected to the song at:<br /><br />
         /*this.convertIndexSpeed(this.perEnvelopeSpeedSliders[envelopeIndex].getValueBeforeProspectiveChange(), "speed")*/
       );
     }
+    _determineMaxIndexForSetting(setting, effectIndex = 0) {
+      return setting.maxIndex + 1;
+    }
     render() {
       const instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-      for (let envelopeIndex = this._rows.length; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
+      for (let envelopeIndex = this._envelopeRows.length; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
         const targetSelect = HTML.select();
+        const indexSelect = HTML.select();
+        const effectIndexSelect = HTML.select();
         for (let target = 0; target < Config.automationParams.length; target++) {
-          const interleaved = Config.automationParams[target].interleave != void 0;
-          for (let index = 0; index < Config.automationParams[target].maxIndex + 1; index++) {
-            targetSelect.appendChild(this._makeOption(target, index));
-            if (interleaved) {
-              targetSelect.appendChild(this._makeOption(target + 1, index));
-            }
-          }
-          if (interleaved) target++;
+          targetSelect.appendChild(this._makeOption(target, null, null));
+        }
+        effectIndexSelect.appendChild(this._makeOption(0, 0, null));
+        for (let index = 0; index < 16; index++) {
+          indexSelect.appendChild(this._makeOption(0, null, index));
         }
         const envelopeSelect = HTML.select({ id: "envelopeSelect" });
         for (let envelope = 0; envelope < Config.newEnvelopes.length; envelope++) {
@@ -41422,21 +41493,30 @@ You should be redirected to the song at:<br /><br />
         extraSettingsDropdown.style.display = "inline";
         const extraSettingsDropdownGroup = HTML.div({ class: "editor-controls", style: "flex-direction:column; align-items:center;" }, extraRandomSettingsGroup, extraLFOSettingsGroup, extraPitchSettingsGroup, perEnvelopeSpeedGroup, lowerBoundWrapper, upperBoundWrapper, checkboxWrapper, copyPasteContainer);
         extraSettingsDropdownGroup.style.display = "none";
-        const row = HTML.div(
+        const envelopeRow = HTML.div(
           { class: "envelope-row" },
           extraSettingsDropdown,
-          HTML.div({ class: "selectContainer", style: "width: 0; flex: 1;" }, targetSelect),
-          HTML.div({ class: "selectContainer", style: "width: 0; flex: 0.85" }, envelopeSelect),
+          HTML.div({ class: "selectContainer", style: "width: 0; flex: 1.7" }, envelopeSelect),
           deleteButton
+        );
+        const targetRow = HTML.div(
+          { class: "envelope-row" },
+          HTML.div({ class: "selectContainer", style: "width: 0; flex: 1;" }, targetSelect),
+          HTML.div({ class: "selectContainer", style: "width: 0; flex: 0.25;" }, effectIndexSelect),
+          HTML.div({ class: "selectContainer", style: "width: 0; flex: 0.25;" }, indexSelect)
         );
         const rowGroupContainer = HTML.div(
           { class: "sectionBody" },
-          row,
+          envelopeRow,
+          targetRow,
           extraSettingsDropdownGroup
         );
         this.container.appendChild(rowGroupContainer);
-        this._rows[envelopeIndex] = row;
+        this._envelopeRows[envelopeIndex] = envelopeRow;
+        this._targetRows[envelopeIndex] = targetRow;
         this._targetSelects[envelopeIndex] = targetSelect;
+        this._effectIndexSelects[envelopeIndex] = effectIndexSelect;
+        this._indexSelects[envelopeIndex] = indexSelect;
         this._envelopeSelects[envelopeIndex] = envelopeSelect;
         this._deleteButtons[envelopeIndex] = deleteButton;
         this.extraSettingsDropdowns[envelopeIndex] = extraSettingsDropdown;
@@ -41473,14 +41553,51 @@ You should be redirected to the song at:<br /><br />
         this._envelopePasteButtons[envelopeIndex] = envelopePasteButton;
       }
       for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
-        this._rows[envelopeIndex].style.display = "";
+        this._envelopeRows[envelopeIndex].style.display = "";
+        this._targetRows[envelopeIndex].style.display = "";
         this._updateTargetOptionVisibility(this._targetSelects[envelopeIndex], instrument);
+        let effectIndexOptionCount = 0;
+        let indexOptionCount = 0;
+        for (let effectIndex = 0; effectIndex < Math.max(this._effectIndexSelects[envelopeIndex].childElementCount, instrument.effects.length); effectIndex++) {
+          if (effectIndex >= this._effectIndexSelects[envelopeIndex].childElementCount) {
+            this._effectIndexSelects[envelopeIndex].appendChild(this._makeOption(0, effectIndex, null));
+          }
+          const effectIndexOption = this._effectIndexSelects[envelopeIndex].children[effectIndex];
+          if (!instrument.supportsEnvelopeTarget(instrument.envelopes[envelopeIndex].target, [effectIndex], null)) {
+            effectIndexOption.hidden = true;
+          } else {
+            effectIndexOption.hidden = false;
+            effectIndexOptionCount++;
+          }
+        }
+        for (let index = 0; index < this._indexSelects[envelopeIndex].childElementCount; index++) {
+          const indexOption = this._indexSelects[envelopeIndex].children[index];
+          if (!instrument.supportsEnvelopeTarget(instrument.envelopes[envelopeIndex].target, instrument.envelopes[envelopeIndex].effectIndices, index)) {
+            indexOption.hidden = true;
+          } else {
+            indexOption.hidden = false;
+            indexOptionCount++;
+          }
+        }
+        if (effectIndexOptionCount <= 1) {
+          this._effectIndexSelects[envelopeIndex].style.display = "none";
+        } else {
+          this._effectIndexSelects[envelopeIndex].style.display = "";
+        }
+        if (indexOptionCount <= 1) {
+          this._indexSelects[envelopeIndex].style.display = "none";
+        } else {
+          this._indexSelects[envelopeIndex].style.display = "";
+        }
       }
       for (let envelopeIndex = instrument.envelopeCount; envelopeIndex < this._renderedEnvelopeCount; envelopeIndex++) {
-        this._rows[envelopeIndex].style.display = "none";
+        this._envelopeRows[envelopeIndex].style.display = "none";
+        this._targetRows[envelopeIndex].style.display = "none";
       }
       for (let envelopeIndex = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
-        this._targetSelects[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].target + instrument.envelopes[envelopeIndex].index * Config.automationParams.length);
+        this._targetSelects[envelopeIndex].value = instrument.envelopes[envelopeIndex].target;
+        this._indexSelects[envelopeIndex].value = instrument.envelopes[envelopeIndex].index;
+        this._effectIndexSelects[envelopeIndex].value = instrument.envelopes[envelopeIndex].effectIndices[0];
         this._envelopeSelects[envelopeIndex].selectedIndex = instrument.envelopes[envelopeIndex].envelope;
         this.pitchStartBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].pitchEnvelopeStart);
         this.pitchEndBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].pitchEnvelopeEnd);
@@ -53547,6 +53664,7 @@ You should be redirected to the song at:<br /><br />
             if (Config.automationParams[setting].associatedEffect != null) {
               for (let effectIndex = 0; effectIndex < instrument.effects.length; effectIndex++) {
                 for (let index = 0; index <= maxIndex; index++) {
+                  if (!this._newShowModSliders[setting][effectIndex]) this._newShowModSliders[setting][effectIndex] = [];
                   this._newShowModSliders[setting][effectIndex][index] = Boolean(this._showModSliders[setting][effectIndex][index]);
                   let slider = this.getSliderForModSetting(setting, effectIndex, index);
                   if (slider != null) this._newShowModSliders[setting][effectIndex][index] = updateModSlider(this, slider, setting, this._doc.channel, instrumentIndex, index, effectIndex);

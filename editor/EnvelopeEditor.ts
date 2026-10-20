@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Config, DropdownID, LFOEnvelopeTypes, RandomEnvelopeTypes } from "../synth/SynthConfig";
+import { Config, DropdownID, AutomationParameter, LFOEnvelopeTypes, RandomEnvelopeTypes } from "../synth/SynthConfig";
 import { Instrument } from "../synth/Instrument";
 import { SongDocument } from "./SongDocument";
 import { ChangeSetEnvelopeTarget, ChangeSetEnvelopeType, ChangeRemoveEnvelope, ChangeEnvelopePitchStart, ChangeEnvelopePitchEnd, ChangeEnvelopeInverse, ChangePerEnvelopeSpeed, ChangeEnvelopeLowerBound, ChangeEnvelopeUpperBound, ChangeRandomEnvelopeSteps, ChangeRandomEnvelopeSeed, PasteEnvelope, ChangeSetEnvelopeWaveform, ChangeDiscreteEnvelope, } from "./changes";
@@ -12,8 +12,11 @@ import { Slider } from "./HTMLWrapper";
 export class EnvelopeEditor {
 	public readonly container: HTMLElement = HTML.div({ class: "envelopeEditor" });
 
-	private readonly _rows: HTMLDivElement[] = [];
+	private readonly _targetRows: HTMLDivElement[] = [];
+	private readonly _envelopeRows: HTMLDivElement[] = [];
 	private readonly _targetSelects: HTMLSelectElement[] = [];
+	private readonly _indexSelects: HTMLSelectElement[] = [];
+	private readonly _effectIndexSelects: HTMLSelectElement[] = [];
 	private readonly _envelopeSelects: HTMLSelectElement[] = [];
 	private readonly _deleteButtons: HTMLButtonElement[] = [];
 	//dropdown stuff
@@ -72,6 +75,8 @@ export class EnvelopeEditor {
 
 	private _onChange = (event: Event): void => {
 		const targetSelectIndex: number = this._targetSelects.indexOf(<any>event.target);
+		const indexSelectIndex: number = this._indexSelects.indexOf(<any>event.target);
+		const effectIndexSelectIndex: number = this._effectIndexSelects.indexOf(<any>event.target);
 		const envelopeSelectIndex: number = this._envelopeSelects.indexOf(<any>event.target);
 		const inverterIndex: number = this._inverters.indexOf(<any>event.target);
 		const discreterIndex: number = this._discreters.indexOf(<any>event.target); 
@@ -90,10 +95,20 @@ export class EnvelopeEditor {
 		const LFOStepsBoxIndex: number = this.LFOStepsBoxes.indexOf(<any>event.target);
 		const LFOStepsSliderIndex: number = this._LFOStepsSliders.indexOf(<any>event.target);
 		if (targetSelectIndex != -1) {
-			const combinedValue: number = parseInt(this._targetSelects[targetSelectIndex].value);
-			const target: number = combinedValue % Config.automationParams.length;
-			const index: number = (combinedValue / Config.automationParams.length) >>> 0;
-			this._doc.record(new ChangeSetEnvelopeTarget(this._doc, targetSelectIndex, target, index));
+			const target: number = parseInt(this._targetSelects[targetSelectIndex].value);
+			const index: number = parseInt(this._indexSelects[targetSelectIndex].value);
+			const effectIndex: number = parseInt(this._effectIndexSelects[targetSelectIndex].value);
+			this._doc.record(new ChangeSetEnvelopeTarget(this._doc, targetSelectIndex, target, index, [effectIndex]));
+		} else if (indexSelectIndex != -1) {
+			const target: number = parseInt(this._targetSelects[indexSelectIndex].value);
+			const index: number = parseInt(this._indexSelects[indexSelectIndex].value);
+			const effectIndex: number = parseInt(this._effectIndexSelects[indexSelectIndex].value);
+			this._doc.record(new ChangeSetEnvelopeTarget(this._doc, indexSelectIndex, target, index, [effectIndex]));
+		} else if (effectIndexSelectIndex != -1) {
+			const target: number = parseInt(this._targetSelects[effectIndexSelectIndex].value);
+			const index: number = parseInt(this._indexSelects[effectIndexSelectIndex].value);
+			const effectIndex: number = parseInt(this._effectIndexSelects[effectIndexSelectIndex].value);
+			this._doc.record(new ChangeSetEnvelopeTarget(this._doc, effectIndexSelectIndex, target, index, [effectIndex]));
 		} else if (envelopeSelectIndex != -1) {
 			const envelopeIndex: number = this._envelopeSelects.indexOf(<any>event.target);
 
@@ -178,25 +193,18 @@ export class EnvelopeEditor {
 		}
 	}
 
-	private _makeOption(target: number, index: number): HTMLOptionElement {
+	private _makeOption(target: number, effectIndex: number | null, index: number | null): HTMLOptionElement {
 		let displayName = Config.automationParams[target].name;
-		if (Config.automationParams[target].maxIndex > 0) {
-			if (displayName.indexOf("#") != -1) {
-				displayName = displayName.replace("#", String(index + 1));
-			} else {
-				displayName += " " + (index + 1);
-			}
-		}
-		return HTML.option({ value: target + index * Config.automationParams.length }, displayName);
+		if (index != null) displayName = index + 1 + "";
+		else if (effectIndex != null) displayName = effectIndex + 1 + "";
+		return HTML.option({ value: (index ? index : (effectIndex ? effectIndex : target)) }, displayName);
 	}
 
-	private _updateTargetOptionVisibility(menu: HTMLSelectElement, instrument: Instrument): void {
-		for (let optionIndex: number = 0; optionIndex < menu.childElementCount; optionIndex++) {
-			const option: HTMLOptionElement = <HTMLOptionElement>menu.children[optionIndex];
-			const combinedValue: number = parseInt(option.value);
-			const target: number = combinedValue % Config.automationParams.length;
-			const index: number = (combinedValue / Config.automationParams.length) >>> 0;
-			option.hidden = !instrument.supportsEnvelopeTarget(target, index);
+	private _updateTargetOptionVisibility(targetSelect: HTMLSelectElement, instrument: Instrument): void {
+		for (let optionIndex: number = 0; optionIndex < targetSelect.childElementCount; optionIndex++) {
+			const targetOption: HTMLOptionElement = <HTMLOptionElement>targetSelect.children[optionIndex];
+			const target: number = targetOption.value;
+			targetOption.hidden = !instrument.supportsEnvelopeTarget(target, [], 0);
 		}
 	}
 
@@ -372,20 +380,23 @@ export class EnvelopeEditor {
 		this._perEnvelopeSpeedDisplays[envelopeIndex].textContent = "Spd: x" + prettyNumber(this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()].envelopes[envelopeIndex].perEnvelopeSpeed  /*this.convertIndexSpeed(this.perEnvelopeSpeedSliders[envelopeIndex].getValueBeforeProspectiveChange(), "speed")*/);
 	}
 
+	private _determineMaxIndexForSetting(setting: AutomationParameter, effectIndex: number = 0): number {
+		return setting.maxIndex + 1;
+	}
+
 	public render(): void {
 		const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
 
-		for (let envelopeIndex: number = this._rows.length; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
+		for (let envelopeIndex: number = this._envelopeRows.length; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
 			const targetSelect: HTMLSelectElement = HTML.select();
+			const indexSelect: HTMLSelectElement = HTML.select();
+			const effectIndexSelect: HTMLSelectElement = HTML.select();
 			for (let target: number = 0; target < Config.automationParams.length; target++) {
-				const interleaved: boolean = (Config.automationParams[target].interleave) != undefined;
-				for (let index: number = 0; index < Config.automationParams[target].maxIndex + 1; index++) {
-					targetSelect.appendChild(this._makeOption(target, index));
-					if (interleaved) {
-						targetSelect.appendChild(this._makeOption(target + 1, index));
-					}
-				}
-				if (interleaved) target++;
+				targetSelect.appendChild(this._makeOption(target, null, null));
+			}
+			effectIndexSelect.appendChild(this._makeOption(0, 0, null));
+			for (let index: number = 0; index < 16; index++) {
+				indexSelect.appendChild(this._makeOption(0, null, index));
 			}
 
 			const envelopeSelect: HTMLSelectElement = HTML.select({ id: "envelopeSelect"});
@@ -520,21 +531,29 @@ export class EnvelopeEditor {
 			extraSettingsDropdownGroup.style.display = "none";
 
 
-			const row: HTMLDivElement = HTML.div({ class: "envelope-row" },
+			const envelopeRow: HTMLDivElement = HTML.div({ class: "envelope-row" },
 				extraSettingsDropdown,
-				HTML.div({ class: "selectContainer", style: "width: 0; flex: 1;" }, targetSelect),
-				HTML.div({ class: "selectContainer", style: "width: 0; flex: 0.85" }, envelopeSelect),
+				HTML.div({ class: "selectContainer", style: "width: 0; flex: 1.7" }, envelopeSelect),
 				deleteButton,
+			);
+			const targetRow: HTMLDivElement = HTML.div({ class: "envelope-row" },
+				HTML.div({ class: "selectContainer", style: "width: 0; flex: 1;" }, targetSelect),
+				HTML.div({ class: "selectContainer", style: "width: 0; flex: 0.25;" }, effectIndexSelect),
+				HTML.div({ class: "selectContainer", style: "width: 0; flex: 0.25;" }, indexSelect),
 			);
 
 			const rowGroupContainer: HTMLDivElement = HTML.div({class: "sectionBody"},
-				row,
+				envelopeRow,
+				targetRow,
 				extraSettingsDropdownGroup
 			);
 
 			this.container.appendChild(rowGroupContainer);
-			this._rows[envelopeIndex] = row;
+			this._envelopeRows[envelopeIndex] = envelopeRow;
+			this._targetRows[envelopeIndex] = targetRow;
 			this._targetSelects[envelopeIndex] = targetSelect;
+			this._effectIndexSelects[envelopeIndex] = effectIndexSelect;
+			this._indexSelects[envelopeIndex] = indexSelect;
 			this._envelopeSelects[envelopeIndex] = envelopeSelect;
 			this._deleteButtons[envelopeIndex] = deleteButton;
 
@@ -579,16 +598,53 @@ export class EnvelopeEditor {
 
 		for (let envelopeIndex: number = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
 			// For ~~newly visible~~ all rows, update target option visibility.
-			this._rows[envelopeIndex].style.display = "";
+			this._envelopeRows[envelopeIndex].style.display = "";
+			this._targetRows[envelopeIndex].style.display = "";
 			this._updateTargetOptionVisibility(this._targetSelects[envelopeIndex], instrument);
+			let effectIndexOptionCount: number = 0;
+			let indexOptionCount: number = 0;
+			for (let effectIndex: number = 0; effectIndex < Math.max(this._effectIndexSelects[envelopeIndex].childElementCount, instrument.effects.length); effectIndex++) {
+				if (effectIndex >= this._effectIndexSelects[envelopeIndex].childElementCount) {
+					this._effectIndexSelects[envelopeIndex].appendChild(this._makeOption(0, effectIndex, null));
+				}
+				const effectIndexOption: HTMLOptionElement = <HTMLOptionElement>this._effectIndexSelects[envelopeIndex].children[effectIndex];
+				if (!instrument.supportsEnvelopeTarget(instrument.envelopes[envelopeIndex].target, [effectIndex], null)) {
+					effectIndexOption.hidden = true;
+				} else {
+					effectIndexOption.hidden = false;
+					effectIndexOptionCount++;
+				}
+			}
+			for (let index: number = 0; index < this._indexSelects[envelopeIndex].childElementCount; index++) {
+				const indexOption: HTMLOptionElement = <HTMLOptionElement>this._indexSelects[envelopeIndex].children[index];
+				if (!instrument.supportsEnvelopeTarget(instrument.envelopes[envelopeIndex].target, instrument.envelopes[envelopeIndex].effectIndices, index)) {
+					indexOption.hidden = true;
+				} else {
+					indexOption.hidden = false;
+					indexOptionCount++;
+				}
+			}
+			if (effectIndexOptionCount <= 1) {
+				this._effectIndexSelects[envelopeIndex].style.display = "none";
+			} else {
+				this._effectIndexSelects[envelopeIndex].style.display = "";
+			}
+			if (indexOptionCount <= 1) {
+				this._indexSelects[envelopeIndex].style.display = "none";
+			} else {
+				this._indexSelects[envelopeIndex].style.display = "";
+			}
 		}
 
 		for (let envelopeIndex: number = instrument.envelopeCount; envelopeIndex < this._renderedEnvelopeCount; envelopeIndex++) {
-			this._rows[envelopeIndex].style.display = "none";
+			this._envelopeRows[envelopeIndex].style.display = "none";
+			this._targetRows[envelopeIndex].style.display = "none";
 		}
 
 		for (let envelopeIndex: number = 0; envelopeIndex < instrument.envelopeCount; envelopeIndex++) {
-			this._targetSelects[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].target + instrument.envelopes[envelopeIndex].index * Config.automationParams.length);
+			this._targetSelects[envelopeIndex].value = instrument.envelopes[envelopeIndex].target;
+			this._indexSelects[envelopeIndex].value = instrument.envelopes[envelopeIndex].index;
+			this._effectIndexSelects[envelopeIndex].value = instrument.envelopes[envelopeIndex].effectIndices[0];
 			this._envelopeSelects[envelopeIndex].selectedIndex = instrument.envelopes[envelopeIndex].envelope;
 			this.pitchStartBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].pitchEnvelopeStart);
 			this.pitchEndBoxes[envelopeIndex].value = String(instrument.envelopes[envelopeIndex].pitchEnvelopeEnd);

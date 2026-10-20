@@ -5778,14 +5778,29 @@ export class ChangeRemoveEnvelope extends Change {
 }
 
 export class ChangeSetEnvelopeTarget extends Change {
-    constructor(doc: SongDocument, envelopeIndex: number, target: number, targetIndex: number) {
+    constructor(doc: SongDocument, envelopeIndex: number, target: number, targetIndex: number, effectIndices: number[]) {
         super();
         const instrument: Instrument = doc.song.channels[doc.channel].instruments[doc.getCurrentInstrument()];
         const oldTarget: number = instrument.envelopes[envelopeIndex].target;
         const oldIndex: number = instrument.envelopes[envelopeIndex].index;
-        if (oldTarget != target || oldIndex != targetIndex) {
+        const oldEffectIndices: number = instrument.envelopes[envelopeIndex].effectIndices;
+        if (oldTarget != target || oldIndex != targetIndex || oldEffectIndices != effectIndices) {
             instrument.envelopes[envelopeIndex].target = target;
             instrument.envelopes[envelopeIndex].index = targetIndex;
+            instrument.envelopes[envelopeIndex].effectIndices = effectIndices;
+            // make sure the effect indices are correct
+            let hasCorrectEffectIndices: boolean = false;
+            for (let i: number = 0; i < effectIndices.length; i++) {
+                if (instrument.effects[effectIndices[i]].type == Config.automationParams[instrument.envelopes[envelopeIndex].target].associatedEffect) hasCorrectEffectIndices = true;
+            }
+            if (!hasCorrectEffectIndices) {
+                for (let i: number = 0; i < instrument.effects.length; i++) {
+                    if (instrument.effects[i].type == Config.automationParams[instrument.envelopes[envelopeIndex].target].associatedEffect) {
+                        instrument.envelopes[envelopeIndex].effectIndices = [i];
+                        break;
+                    }
+                }
+            }
             instrument.preset = instrument.type;
             doc.notifier.changed();
             this._didSomething();
