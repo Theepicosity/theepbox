@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 //import {Layout} from "./Layout";
-import { sampleLoadEvents, SampleLoadedEvent, ChannelType, InstrumentType, EffectType, MDEffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeFade, effectsIncludeUnison, DropdownID } from "../synth/SynthConfig";
+import { sampleLoadEvents, SampleLoadedEvent, ChannelType, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeFade, effectsIncludeUnison, DropdownID } from "../synth/SynthConfig";
 import { BarScrollBar } from "./BarScrollBar";
 import { BeatsPerBarPrompt } from "./BeatsPerBarPrompt";
 import { Change, ChangeGroup } from "./Change";
@@ -850,7 +850,7 @@ export class SongEditor {
     private readonly _chipWaveSelectRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("chipWave") }, "Wave: "), div({ class: "selectContainer" }, this._chipWaveSelect));
     private readonly _chipNoiseSelectRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("chipNoise") }, "Noise: "), div({ class: "selectContainer" }, this._chipNoiseSelect));
     private readonly _visualLoopControlsButton: HTMLButtonElement = button({ style: "margin-left: 0em; padding-left: 0.2em; height: 1.5em; max-width: 12px;", onclick: () => this._openPrompt("visualLoopControls") }, "+");
-    private readonly _aliasingRow: HTMLInputElement = div({ class: "selectRow" }, span({ class: "tip", style: "flex-shrink: 0;", onclick: () => this._openPrompt("aliases") }, "Aliasing: "), this._aliasingBox);
+    private readonly _aliasingRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", style: "flex-shrink: 0;", onclick: () => this._openPrompt("aliases") }, "Aliasing: "), this._aliasingBox);
     private readonly _useChipWaveAdvancedLoopControlsRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", style: "flex-shrink: 0;", onclick: () => this._openPrompt("loopControls") }, "Loop Controls: "), this._useChipWaveAdvancedLoopControlsBox);
     private readonly _chipWaveLoopModeSelectRow = div({ class: "selectRow" }, span({ class: "tip", style: "font-size: x-small;", onclick: () => this._openPrompt("loopMode") }, "Loop Mode: "), div({ class: "selectContainer" }, this._chipWaveLoopModeSelect));
     private readonly _chipWaveLoopStartRow = div({ class: "selectRow" }, span({ class: "tip", style: "font-size: x-small;", onclick: () => this._openPrompt("loopStart") }, "Loop Start: "), this._visualLoopControlsButton, span({ style: "display: flex;" }, this._chipWaveLoopStartStepper));
@@ -2902,32 +2902,13 @@ export class SongEditor {
                         let instrumentIndex: number = instrument.modInstruments[mod][channelIndex];
                         for (let i: number = 0; i < Config.automationParams.length; i++) {
                             const str: string = Config.automationParams[i].name;
-                            let invalidPostEQ: boolean = false;
                             if (instrument.modChannels[mod][channelIndex] == -1) {
-                                if (Config.automationParams[i].forSong
+                                if ((Config.automationParams[i].forSong || str == "none")
                                 && !((Config.automationParams[i].isFilter || str == "song eq filter morph") && this._doc.song.eqFilter.controlPointCount == 0)) {
                                     settingList.push(Config.automationParams[i].name);
                                 }
-                            } else {
-                                for (let effectIndex: number = 0; effectIndex < channel.instruments[instrumentIndex].effects.length; effectIndex++) {
-                                    if (channel.instruments[instrumentIndex].effects[effectIndex].type == EffectType.eqFilter) {
-                                        if ((channel.instruments[instrumentIndex].effects[effectIndex].eqFilterType && (Config.automationParams[i].isFilter || str == "eq filter morph")) || (!channel.instruments[instrumentIndex].effects[effectIndex].eqFilterType && (str == "eq filter cut" || str == "eq filter peak"))) {
-                                            invalidPostEQ = true;
-                                        }
-                                    }
-                                }
-                                if ((((channel.instruments[instrumentIndex].effectsIncludeType(Config.automationParams[i].associatedEffect as EffectType) || Config.automationParams[i].associatedEffect == null)
-                                && ((channel.instruments[instrumentIndex].mdeffects & (1 << (Config.automationParams[i].associatedMDEffect as MDEffectType))) != 0 || Config.automationParams[i].associatedMDEffect == null)
-                                && (Config.automationParams[i].associatedInstruments == null ? true : Config.automationParams[i].associatedInstruments!.includes(channel.instruments[instrumentIndex].type))
-                                && (Config.automationParams[i].forSong == (instrument.modChannels[mod][0] == -1))
-                                && (!Config.automationParams[i].isEnvelope || channel.instruments[instrumentIndex].envelopeCount > 0)
-                                && (!invalidPostEQ)
-                                && !((Config.automationParams[i].isFilter || str == "eq filter morph") && (instrument.modIndices[mod] + 1 > channel.instruments[instrumentIndex].getLargestControlPointCount(false)))
-                                && (Config.automationParams[i].canBeModulator))
-                                || str == "none")
-                                && !settingList.includes(str)) {
-                                    settingList.push(str);
-                                }
+                            } else if (channel.instruments[instrumentIndex].supportsAutomationTarget(i, [], 0, true) && !settingList.includes(str)) {
+                                settingList.push(str);
                             }
                         }
                     }

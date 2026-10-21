@@ -766,8 +766,8 @@ var beepbox = (function (exports) {
     Config.effectNames = ["bitcrusher", "chorus", "clipping", "distortion", "echo", "flanger", "gain", "granular", "panning", "eq filter", "reverb", "ring modulation"];
     Config.effectDisplayNames = ["Bitcrusher", "Chorus", "Clipping", "Distortion", "Echo", "Flanger", "Gain", "Granular", "Panning", "Post EQ", "Reverb", "Ring Mod"];
     Config.effectOrder = [4, 1, 11, 3, 6, 10, 9, 8, 2, 5, 0, 7];
-    Config.mdeffectNames = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range"];
-    Config.mdeffectOrder = [3, 4, 0, 1, 2, 5];
+    Config.mdeffectNames = ["pitch shift", "detune", "vibrato", "transition type", "chord type", "note range", "fade", "unison"];
+    Config.mdeffectOrder = [3, 4, 0, 1, 2, 5, 6, 7];
     Config.noteSizeMax = 6;
     Config.volumeRange = 100;
     Config.volumeLogScale = 0.0714;
@@ -1217,7 +1217,7 @@ var beepbox = (function (exports) {
             displayName: "None",
             maxRawVol: 6,
             newNoteVol: 6,
-            forSong: true,
+            forSong: false,
             convertRealFactor: 0,
             isFilter: false,
             isEnvelope: false,
@@ -2013,7 +2013,7 @@ var beepbox = (function (exports) {
             maxIndex: 0,
             promptName: "Decimal Offset"
         }, {
-            name: "dynamism",
+            name: "supersaw dynamism",
             displayName: "Dynamism",
             maxRawVol: Config.supersawDynamismMax,
             newNoteVol: 0,
@@ -2029,7 +2029,7 @@ var beepbox = (function (exports) {
             maxIndex: 0,
             promptName: "Supersaw Dynamism"
         }, {
-            name: "spread",
+            name: "supersaw spread",
             displayName: "Spread",
             maxRawVol: Config.supersawSpreadMax,
             newNoteVol: 0,
@@ -2045,7 +2045,7 @@ var beepbox = (function (exports) {
             maxIndex: 0,
             promptName: "Supersaw Spread"
         }, {
-            name: "saw shape",
+            name: "supersaw shape",
             displayName: "Shape",
             maxRawVol: Config.supersawShapeMax,
             newNoteVol: 0,
@@ -2239,19 +2239,19 @@ var beepbox = (function (exports) {
         }, {
             name: "unison",
             displayName: "Unison",
-            maxRawVol: 10,
-            newNoteVol: 0,
+            maxRawVol: 12,
+            newNoteVol: 6,
             forSong: false,
             convertRealFactor: 0,
             isFilter: false,
             isEnvelope: false,
             associatedInstruments: [0, 5, 7, 9, 6, 2, 3, 4],
             associatedEffect: null,
-            associatedMDEffect: null,
+            associatedMDEffect: 7,
             canBeEnvelope: true,
             canBeModulator: true,
             maxIndex: 0,
-            promptName: "Grain Range"
+            promptName: "Unison"
         },
     ]);
     function centerWave(wave) {
@@ -2506,6 +2506,12 @@ var beepbox = (function (exports) {
     }
     function effectsIncludeVibrato(effects) {
         return (effects & (1 << 2)) != 0;
+    }
+    function effectsIncludeFade(effects) {
+        return (effects & (1 << 6)) != 0;
+    }
+    function effectsIncludeUnison(effects) {
+        return (effects & (1 << 7)) != 0;
     }
     function calculateRingModHertz(sliderHz, sliderHzOffset = 0) {
         if (sliderHz == 0)
@@ -3634,6 +3640,7 @@ var beepbox = (function (exports) {
             this.isNoiseEnvelope = isNoiseEnvelope;
             this.target = 0;
             this.index = 0;
+            this.effectIndices = [0];
             this.envelope = 0;
             this.perEnvelopeSpeed = Config.envelopes[this.envelope].speed;
             this.perEnvelopeLowerBound = 0;
@@ -3650,6 +3657,7 @@ var beepbox = (function (exports) {
         reset() {
             this.target = 0;
             this.index = 0;
+            this.effectIndices = [0];
             this.envelope = 0;
             this.pitchEnvelopeStart = 0;
             this.pitchEnvelopeEnd = this.isNoiseEnvelope ? Config.drumCount - 1 : Config.maxPitch;
@@ -3828,7 +3836,6 @@ var beepbox = (function (exports) {
             this.pan = Config.panCenter;
             this.panDelay = 0;
             this.panMode = 0;
-            this.aliases = false;
             this.distortion = 0;
             this.clippingInGain = 0;
             this.clippingThreshold = 0;
@@ -3880,7 +3887,6 @@ var beepbox = (function (exports) {
                 effectObject["panMode"] = this.panMode;
             }
             else if (this.type == 3) {
-                effectObject["aliases"] = this.aliases;
                 effectObject["distortion"] = this.distortion;
             }
             else if (this.type == 11) {
@@ -3960,7 +3966,6 @@ var beepbox = (function (exports) {
                 this.panMode = effectObject["panMode"];
             }
             else if (this.type == 3) {
-                this.aliases = effectObject["aliases"];
                 this.distortion = effectObject["distortion"];
             }
             else if (this.type == 11) {
@@ -4548,9 +4553,19 @@ var beepbox = (function (exports) {
                 instrumentObject["vibratoSpeed"] = this.vibratoSpeed;
                 instrumentObject["vibratoType"] = this.vibratoType;
             }
-            if (this.type != 4) {
+            if (effectsIncludeFade(this.mdeffects)) {
                 instrumentObject["fadeInSeconds"] = Math.round(10000 * fadeInSettingToSeconds(this.fadeIn)) / 10000;
                 instrumentObject["fadeOutTicks"] = fadeOutSettingToTicks(this.fadeOut);
+            }
+            if (effectsIncludeUnison(this.mdeffects)) {
+                instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
+                if (this.unison == Config.unisons.length) {
+                    instrumentObject["unisonVoices"] = this.unisonVoices;
+                    instrumentObject["unisonSpread"] = this.unisonSpread;
+                    instrumentObject["unisonOffset"] = this.unisonOffset;
+                    instrumentObject["unisonExpression"] = this.unisonExpression;
+                    instrumentObject["unisonSign"] = this.unisonSign;
+                }
             }
             if (this.type == 5 || this.type == 7) {
                 instrumentObject["harmonics"] = [];
@@ -4560,39 +4575,15 @@ var beepbox = (function (exports) {
             }
             if (this.type == 2) {
                 instrumentObject["wave"] = Config.chipNoises[this.chipNoise].name;
-                instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-                if (this.unison == Config.unisons.length) {
-                    instrumentObject["unisonVoices"] = this.unisonVoices;
-                    instrumentObject["unisonSpread"] = this.unisonSpread;
-                    instrumentObject["unisonOffset"] = this.unisonOffset;
-                    instrumentObject["unisonExpression"] = this.unisonExpression;
-                    instrumentObject["unisonSign"] = this.unisonSign;
-                }
             }
             else if (this.type == 3) {
                 instrumentObject["spectrum"] = [];
                 for (let i = 0; i < Config.spectrumControlPoints; i++) {
                     instrumentObject["spectrum"][i] = Math.round(100 * this.spectrumWave.spectrum[i] / Config.spectrumMax);
                 }
-                instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-                if (this.unison == Config.unisons.length) {
-                    instrumentObject["unisonVoices"] = this.unisonVoices;
-                    instrumentObject["unisonSpread"] = this.unisonSpread;
-                    instrumentObject["unisonOffset"] = this.unisonOffset;
-                    instrumentObject["unisonExpression"] = this.unisonExpression;
-                    instrumentObject["unisonSign"] = this.unisonSign;
-                }
             }
             else if (this.type == 4) {
                 instrumentObject["drums"] = [];
-                instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-                if (this.unison == Config.unisons.length) {
-                    instrumentObject["unisonVoices"] = this.unisonVoices;
-                    instrumentObject["unisonSpread"] = this.unisonSpread;
-                    instrumentObject["unisonOffset"] = this.unisonOffset;
-                    instrumentObject["unisonExpression"] = this.unisonExpression;
-                    instrumentObject["unisonSign"] = this.unisonSign;
-                }
                 for (let j = 0; j < Config.drumCount; j++) {
                     const spectrum = [];
                     for (let i = 0; i < Config.spectrumControlPoints; i++) {
@@ -4606,14 +4597,6 @@ var beepbox = (function (exports) {
             }
             else if (this.type == 0) {
                 instrumentObject["wave"] = Config.chipWaves[this.chipWave].name;
-                instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-                if (this.unison == Config.unisons.length) {
-                    instrumentObject["unisonVoices"] = this.unisonVoices;
-                    instrumentObject["unisonSpread"] = this.unisonSpread;
-                    instrumentObject["unisonOffset"] = this.unisonOffset;
-                    instrumentObject["unisonExpression"] = this.unisonExpression;
-                    instrumentObject["unisonSign"] = this.unisonSign;
-                }
                 instrumentObject["isUsingAdvancedLoopControls"] = this.isUsingAdvancedLoopControls;
                 instrumentObject["chipWaveLoopStart"] = this.chipWaveLoopStart;
                 instrumentObject["chipWaveLoopEnd"] = this.chipWaveLoopEnd;
@@ -4624,14 +4607,6 @@ var beepbox = (function (exports) {
             else if (this.type == 6) {
                 instrumentObject["pulseWidth"] = this.pulseWidth;
                 instrumentObject["decimalOffset"] = this.decimalOffset;
-                instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-                if (this.unison == Config.unisons.length) {
-                    instrumentObject["unisonVoices"] = this.unisonVoices;
-                    instrumentObject["unisonSpread"] = this.unisonSpread;
-                    instrumentObject["unisonOffset"] = this.unisonOffset;
-                    instrumentObject["unisonExpression"] = this.unisonExpression;
-                    instrumentObject["unisonSign"] = this.unisonSign;
-                }
             }
             else if (this.type == 8) {
                 instrumentObject["pulseWidth"] = this.pulseWidth;
@@ -4641,29 +4616,12 @@ var beepbox = (function (exports) {
                 instrumentObject["shape"] = Math.round(100 * this.supersawShape / Config.supersawShapeMax);
             }
             else if (this.type == 7) {
-                instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-                if (this.unison == Config.unisons.length) {
-                    instrumentObject["unisonVoices"] = this.unisonVoices;
-                    instrumentObject["unisonSpread"] = this.unisonSpread;
-                    instrumentObject["unisonOffset"] = this.unisonOffset;
-                    instrumentObject["unisonExpression"] = this.unisonExpression;
-                    instrumentObject["unisonSign"] = this.unisonSign;
-                }
                 instrumentObject["stringSustain"] = Math.round(100 * this.stringSustain / (Config.stringSustainRange - 1));
                 if (Config.enableAcousticSustain) {
                     instrumentObject["stringSustainType"] = Config.sustainTypeNames[this.stringSustainType];
                 }
             }
-            else if (this.type == 5) {
-                instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-                if (this.unison == Config.unisons.length) {
-                    instrumentObject["unisonVoices"] = this.unisonVoices;
-                    instrumentObject["unisonSpread"] = this.unisonSpread;
-                    instrumentObject["unisonOffset"] = this.unisonOffset;
-                    instrumentObject["unisonExpression"] = this.unisonExpression;
-                    instrumentObject["unisonSign"] = this.unisonSign;
-                }
-            }
+            else if (this.type == 5) ;
             else if (this.type == 1 || this.type == 11) {
                 const operatorArray = [];
                 for (const operator of this.operators) {
@@ -4700,14 +4658,6 @@ var beepbox = (function (exports) {
             }
             else if (this.type == 9) {
                 instrumentObject["wave"] = Config.chipWaves[this.chipWave].name;
-                instrumentObject["unison"] = this.unison == Config.unisons.length ? "custom" : Config.unisons[this.unison].name;
-                if (this.unison == Config.unisons.length) {
-                    instrumentObject["unisonVoices"] = this.unisonVoices;
-                    instrumentObject["unisonSpread"] = this.unisonSpread;
-                    instrumentObject["unisonOffset"] = this.unisonOffset;
-                    instrumentObject["unisonExpression"] = this.unisonExpression;
-                    instrumentObject["unisonSign"] = this.unisonSign;
-                }
                 instrumentObject["customChipWave"] = new Float64Array(64);
                 instrumentObject["customChipWaveIntegral"] = new Float64Array(65);
                 for (let i = 0; i < this.customChipWave.length; i++) {
@@ -5224,28 +5174,11 @@ var beepbox = (function (exports) {
                 }
                 else {
                     if (format == "modbox") {
-                        let newEffect = this.addEffect(3);
                         this.aliases = true;
-                        newEffect.distortion = 0;
                     }
                     else {
                         this.aliases = false;
                     }
-                }
-                if (instrumentObject["noteFilterType"] != undefined) {
-                    this.noteFilterType = instrumentObject["noteFilterType"];
-                }
-                if (instrumentObject["noteSimpleCut"] != undefined) {
-                    this.noteFilterSimpleCut = instrumentObject["noteSimpleCut"];
-                }
-                if (instrumentObject["noteSimplePeak"] != undefined) {
-                    this.noteFilterSimplePeak = instrumentObject["noteSimplePeak"];
-                }
-                if (instrumentObject["noteFilter"] != undefined) {
-                    this.noteFilter.fromJsonObject(instrumentObject["noteFilter"]);
-                }
-                else {
-                    this.noteFilter.reset();
                 }
                 for (let i = 0; i < Config.filterMorphCount; i++) {
                     if (Array.isArray(instrumentObject["noteSubFilters" + i])) {
@@ -5413,11 +5346,11 @@ var beepbox = (function (exports) {
                     return true;
             return false;
         }
-        addEnvelope(target, index, envelope, newEnvelopes, start = 0, end = -1, inverse = false, perEnvelopeSpeed = -1, perEnvelopeLowerBound = 0, perEnvelopeUpperBound = 1, steps = 2, seed = 2, waveform = 0, discrete = false) {
+        addEnvelope(target, index, envelope, newEnvelopes, start = 0, end = -1, inverse = false, perEnvelopeSpeed = -1, perEnvelopeLowerBound = 0, perEnvelopeUpperBound = 1, steps = 2, seed = 2, waveform = 0, discrete = false, effectIndices = [0]) {
             end = end != -1 ? end : this.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch;
             perEnvelopeSpeed = perEnvelopeSpeed != -1 ? perEnvelopeSpeed : newEnvelopes ? 1 : Config.envelopes[envelope].speed;
             let makeEmpty = false;
-            if (!this.supportsEnvelopeTarget(target, index))
+            if (!this.supportsAutomationTarget(target, [0], index))
                 makeEmpty = true;
             if (this.envelopeCount >= Config.maxEnvelopeCount)
                 throw new Error();
@@ -5442,31 +5375,115 @@ var beepbox = (function (exports) {
             envelopeSettings.seed = seed;
             envelopeSettings.waveform = waveform;
             envelopeSettings.discrete = discrete;
+            envelopeSettings.effectIndices = effectIndices;
             this.envelopeCount++;
         }
-        supportsEnvelopeTarget(target, index) {
+        getValidEnvelopeIndex(envelopeIndex, index, effectIndices = []) {
+            const maxIndex = this.getMaxAutomationIndex(this.envelopes[envelopeIndex].target, effectIndices);
+            if (index > maxIndex) {
+                return maxIndex;
+            }
+            else
+                return index;
+        }
+        getValidEnvelopeEffectIndices(envelopeIndex, effectIndices) {
+            let validEffectIndices = [];
+            for (let i = 0; i < effectIndices.length; i++) {
+                if (this.effects[effectIndices[i]] && this.effects[effectIndices[i]].type == Config.automationParams[this.envelopes[envelopeIndex].target].associatedEffect) {
+                    validEffectIndices.push(effectIndices[i]);
+                }
+            }
+            if (validEffectIndices.length == 0) {
+                for (let i = 0; i < this.effects.length; i++) {
+                    if (this.effects[i].type == Config.automationParams[this.envelopes[envelopeIndex].target].associatedEffect) {
+                        validEffectIndices = [i];
+                        break;
+                    }
+                }
+            }
+            return validEffectIndices;
+        }
+        getMaxAutomationIndex(target, effectIndices = []) {
             const automationTarget = Config.automationParams[target];
-            if (!automationTarget.canBeEnvelope) {
+            if (automationTarget.isFilter) {
+                if (effectIndices.length == 0) {
+                    for (let i = 0; i < this.effects.length; i++)
+                        effectIndices.push(i);
+                }
+                let largestCount = 0;
+                for (let i = 0; i < effectIndices.length; i++) {
+                    if (this.effects[effectIndices[i]] && this.effects[effectIndices[i]].type == 5 && !this.effects[effectIndices[i]].eqFilterType) {
+                        const count = this.getLargestControlPointCount(false, effectIndices[i]);
+                        if (count > largestCount)
+                            largestCount = count;
+                    }
+                }
+                return largestCount - 1;
+            }
+            else if (automationTarget.isEnvelope) {
+                return this.envelopeCount - 1;
+            }
+            else if ((automationTarget.name == "fm operator frequency") || (automationTarget.name == "fm operator amplitude")) {
+                return 3 + (this.type == 11 ? 2 : 0);
+            }
+            else {
+                return automationTarget.maxIndex;
+            }
+        }
+        supportsAutomationTarget(target, effectIndices, index, forMod = false) {
+            const automationTarget = Config.automationParams[target];
+            if (automationTarget.name == "none") {
+                return true;
+            }
+            if (automationTarget.forSong) {
                 return false;
             }
-            if (index > automationTarget.maxIndex) {
+            else if (!automationTarget.canBeEnvelope && !forMod) {
                 return false;
+            }
+            else if (!automationTarget.canBeModulator && forMod) {
+                return false;
+            }
+            if (effectIndices == null) {
+                effectIndices = [];
+                for (let i = 0; i < this.effects.length; i++)
+                    effectIndices.push(i);
+            }
+            if (index != null && index > this.getMaxAutomationIndex(target, effectIndices)) {
+                return false;
+            }
+            if (target == 29) {
+                console.log(effectIndices);
+                console.log(index);
             }
             if (automationTarget.associatedInstruments != null && automationTarget.associatedInstruments.indexOf(this.type) == -1) {
                 return false;
             }
-            if ((automationTarget.associatedEffect != null && !this.effectsIncludeType(automationTarget.associatedEffect)) || (automationTarget.associatedMDEffect != null && (this.mdeffects & (1 << automationTarget.associatedMDEffect)) == 0)) {
+            if (automationTarget.associatedMDEffect != null && (this.mdeffects & (1 << automationTarget.associatedMDEffect)) == 0) {
                 return false;
             }
-            if (automationTarget.isFilter) {
-                let useControlPointCount = this.noteFilter.controlPointCount;
-                if (this.noteFilterType)
-                    useControlPointCount = 1;
-                if (index >= useControlPointCount)
+            if (automationTarget.associatedEffect != null) {
+                let hasAssociatedEffect = false;
+                for (let i = 0; i < effectIndices.length; i++) {
+                    if (effectIndices[i] >= this.effects.length) {
+                        return false;
+                    }
+                    if (automationTarget.associatedEffect == this.effects[effectIndices[i]].type) {
+                        hasAssociatedEffect = true;
+                    }
+                }
+                if (!hasAssociatedEffect)
                     return false;
             }
-            if ((automationTarget.name == "operatorFrequency") || (automationTarget.name == "operatorAmplitude")) {
-                if (index >= 4 + (this.type == 11 ? 2 : 0))
+            if ((automationTarget.name == "eq filter cut") || (automationTarget.name == "eq filter peak")) {
+                let hasValidFilter = false;
+                for (let i = 0; i < effectIndices.length; i++) {
+                    if (this.effects[effectIndices[i]].type == 5) {
+                        if (this.effects[effectIndices[i]].eqFilterType)
+                            hasValidFilter = true;
+                    }
+                }
+                if (!hasValidFilter)
                     return false;
             }
             return true;
@@ -5475,7 +5492,7 @@ var beepbox = (function (exports) {
             for (let envelopeIndex = 0; envelopeIndex < this.envelopeCount; envelopeIndex++) {
                 const target = this.envelopes[envelopeIndex].target;
                 const index = this.envelopes[envelopeIndex].index;
-                if (!this.supportsEnvelopeTarget(target, index)) {
+                if (!this.supportsAutomationTarget(target, [], index)) {
                     this.envelopes[envelopeIndex].target = Config.automationParams.dictionary["none"].index;
                     this.envelopes[envelopeIndex].index = 0;
                 }
@@ -5486,10 +5503,10 @@ var beepbox = (function (exports) {
                 (this.type == 10 ? Config.transitions.dictionary["interrupt"] : Config.transitions.dictionary["normal"]);
         }
         getFadeInSeconds() {
-            return (this.type == 4) ? 0.0 : fadeInSettingToSeconds(this.fadeIn);
+            return !effectsIncludeFade(this.mdeffects) ? 0.0 : fadeInSettingToSeconds(this.fadeIn);
         }
         getFadeOutTicks() {
-            return (this.type == 4) ? Config.drumsetFadeOutTicks : fadeOutSettingToTicks(this.fadeOut);
+            return !effectsIncludeFade(this.mdeffects) ? 0.0 : fadeOutSettingToTicks(this.fadeOut);
         }
         getChord() {
             return effectsIncludeChord(this.mdeffects) ? Config.chords[this.chord] : Config.chords.dictionary["simultaneous"];
@@ -6267,7 +6284,7 @@ var beepbox = (function (exports) {
                             buffer.push(base64IntToCharCode[(effect.ringModHzOffset - Config.rmHzOffsetMin) >> 6], base64IntToCharCode[(effect.ringModHzOffset - Config.rmHzOffsetMin) & 0x3F]);
                         }
                     }
-                    buffer.push(base64IntToCharCode[instrument.mdeffects & 63]);
+                    buffer.push(base64IntToCharCode[instrument.mdeffects >> 6], base64IntToCharCode[instrument.mdeffects & 0x3F]);
                     if (effectsIncludeTransition(instrument.mdeffects)) {
                         buffer.push(base64IntToCharCode[instrument.transition]);
                     }
@@ -6296,9 +6313,14 @@ var beepbox = (function (exports) {
                             buffer.push(base64IntToCharCode[instrument.vibratoType]);
                         }
                     }
-                    if (instrument.type != 4) {
-                        buffer.push(100, base64IntToCharCode[instrument.fadeIn], base64IntToCharCode[instrument.fadeOut]);
+                    if (effectsIncludeFade(instrument.mdeffects)) {
+                        buffer.push(base64IntToCharCode[instrument.fadeIn], base64IntToCharCode[instrument.fadeOut]);
                         buffer.push(base64IntToCharCode[+instrument.clicklessTransition]);
+                    }
+                    if (effectsIncludeUnison(instrument.mdeffects)) {
+                        buffer.push(base64IntToCharCode[instrument.unison]);
+                        if (instrument.unison == Config.unisons.length)
+                            encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                     }
                     if (instrument.type == 5 || instrument.type == 7) {
                         buffer.push(72);
@@ -6325,9 +6347,6 @@ var beepbox = (function (exports) {
                             buffer.push(119, base64IntToCharCode[instrument.chipWave]);
                             buffer.push(base64IntToCharCode[0]);
                         }
-                        buffer.push(104, base64IntToCharCode[instrument.unison]);
-                        if (instrument.unison == Config.unisons.length)
-                            encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                         buffer.push(121);
                         const encodedLoopMode = ((clamp(0, 31 + 1, instrument.chipWaveLoopMode) << 1)
                             | (instrument.isUsingAdvancedLoopControls ? 1 : 0));
@@ -6403,9 +6422,6 @@ var beepbox = (function (exports) {
                             buffer.push(119, base64IntToCharCode[instrument.chipWave]);
                             buffer.push(base64IntToCharCode[0]);
                         }
-                        buffer.push(104, base64IntToCharCode[instrument.unison]);
-                        if (instrument.unison == Config.unisons.length)
-                            encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                         buffer.push(77);
                         for (let j = 0; j < 64; j++) {
                             buffer.push(base64IntToCharCode[(instrument.customChipWave[j] + 24)]);
@@ -6413,9 +6429,6 @@ var beepbox = (function (exports) {
                     }
                     else if (instrument.type == 2) {
                         buffer.push(119, base64IntToCharCode[instrument.chipNoise]);
-                        buffer.push(104, base64IntToCharCode[instrument.unison]);
-                        if (instrument.unison == Config.unisons.length)
-                            encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                     }
                     else if (instrument.type == 3) {
                         buffer.push(83);
@@ -6424,9 +6437,6 @@ var beepbox = (function (exports) {
                             spectrumBits.write(Config.spectrumControlPointBits, instrument.spectrumWave.spectrum[i]);
                         }
                         spectrumBits.encodeBase64(buffer);
-                        buffer.push(104, base64IntToCharCode[instrument.unison]);
-                        if (instrument.unison == Config.unisons.length)
-                            encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                     }
                     else if (instrument.type == 4) {
                         buffer.push(122);
@@ -6441,21 +6451,11 @@ var beepbox = (function (exports) {
                             }
                         }
                         spectrumBits.encodeBase64(buffer);
-                        buffer.push(104, base64IntToCharCode[instrument.unison]);
-                        if (instrument.unison == Config.unisons.length)
-                            encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                     }
-                    else if (instrument.type == 5) {
-                        buffer.push(104, base64IntToCharCode[instrument.unison]);
-                        if (instrument.unison == Config.unisons.length)
-                            encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
-                    }
+                    else if (instrument.type == 5) ;
                     else if (instrument.type == 6) {
                         buffer.push(87, base64IntToCharCode[instrument.pulseWidth]);
                         buffer.push(base64IntToCharCode[instrument.decimalOffset >> 6], base64IntToCharCode[instrument.decimalOffset & 0x3f]);
-                        buffer.push(104, base64IntToCharCode[instrument.unison]);
-                        if (instrument.unison == Config.unisons.length)
-                            encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                     }
                     else if (instrument.type == 8) {
                         buffer.push(120, base64IntToCharCode[instrument.supersawDynamism], base64IntToCharCode[instrument.supersawSpread], base64IntToCharCode[instrument.supersawShape]);
@@ -6466,9 +6466,6 @@ var beepbox = (function (exports) {
                         if (Config.stringSustainRange > 0x20 || 2 > 2) {
                             throw new Error("Not enough bits to represent sustain value and type in same base64 character.");
                         }
-                        buffer.push(104, base64IntToCharCode[instrument.unison]);
-                        if (instrument.unison == Config.unisons.length)
-                            encodeUnisonSettings(buffer, instrument.unisonVoices, instrument.unisonSpread, instrument.unisonOffset, instrument.unisonExpression, instrument.unisonSign);
                         buffer.push(73, base64IntToCharCode[instrument.stringSustain | (instrument.stringSustainType << 5)]);
                     }
                     else if (instrument.type == 10) ;
@@ -6481,6 +6478,12 @@ var beepbox = (function (exports) {
                         buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].target]);
                         if (Config.automationParams[instrument.envelopes[envelopeIndex].target].maxIndex > 0) {
                             buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].index]);
+                        }
+                        if (Config.automationParams[instrument.envelopes[envelopeIndex].target].associatedEffect != null) {
+                            buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].effectIndices.length]);
+                            for (let j = 0; j < instrument.envelopes[envelopeIndex].effectIndices.length; j++) {
+                                buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].effectIndices[j]]);
+                            }
                         }
                         buffer.push(base64IntToCharCode[instrument.envelopes[envelopeIndex].envelope]);
                         if (Config.newEnvelopes[instrument.envelopes[envelopeIndex].envelope].name == "pitch") {
@@ -7598,6 +7601,7 @@ var beepbox = (function (exports) {
                                     if (instrument.transition != Config.transitions.dictionary["normal"].index) {
                                         instrument.mdeffects |= 1 << 3;
                                     }
+                                    instrument.mdeffects |= 1 << 6;
                                 }
                                 else if (beforeSix && fromBeepBox) {
                                     for (let channelIndex = 0; channelIndex < this.getChannelCount(); channelIndex++) {
@@ -7609,6 +7613,7 @@ var beepbox = (function (exports) {
                                             if (instrument.transition != Config.transitions.dictionary["normal"].index) {
                                                 instrument.mdeffects |= 1 << 3;
                                             }
+                                            instrument.mdeffects |= 1 << 6;
                                         }
                                     }
                                 }
@@ -7621,6 +7626,7 @@ var beepbox = (function (exports) {
                                     if (instrument.transition != Config.transitions.dictionary["normal"].index) {
                                         instrument.mdeffects |= 1 << 3;
                                     }
+                                    instrument.mdeffects |= 1 << 6;
                                 }
                                 else {
                                     const settings = legacySettings[clamp(0, legacySettings.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)])];
@@ -7635,15 +7641,18 @@ var beepbox = (function (exports) {
                                     if (instrument.transition != Config.transitions.dictionary["normal"].index || instrument.clicklessTransition) {
                                         instrument.mdeffects |= 1 << 3;
                                     }
+                                    instrument.mdeffects |= 1 << 6;
                                 }
                             }
-                            else {
+                            else if (!(fromTheepBox && !beforeSeven)) {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                 instrument.fadeIn = clamp(0, Config.fadeInRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 instrument.fadeOut = clamp(0, Config.fadeOutTicks.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                instrument.mdeffects |= 1 << 6;
                                 if (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)
                                     instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
                             }
+                            else ;
                         }
                         break;
                     case 99:
@@ -7807,6 +7816,7 @@ var beepbox = (function (exports) {
                                 instrument.unisonOffset = Config.unisons[instrument.unison].offset;
                                 instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                                 instrument.unisonSign = Config.unisons[instrument.unison].sign;
+                                instrument.mdeffects |= 1 << 7;
                             }
                             else if (beforeSix && fromBeepBox) {
                                 for (let channelIndex = 0; channelIndex < this.getChannelCount(); channelIndex++) {
@@ -7823,6 +7833,7 @@ var beepbox = (function (exports) {
                                         instrument.unisonOffset = Config.unisons[instrument.unison].offset;
                                         instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                                         instrument.unisonSign = Config.unisons[instrument.unison].sign;
+                                        instrument.mdeffects |= 1 << 7;
                                     }
                                 }
                             }
@@ -7840,8 +7851,9 @@ var beepbox = (function (exports) {
                                 instrument.unisonOffset = Config.unisons[instrument.unison].offset;
                                 instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                                 instrument.unisonSign = Config.unisons[instrument.unison].sign;
+                                instrument.mdeffects |= 1 << 7;
                             }
-                            else {
+                            else if (!(fromTheepBox && !beforeSeven)) {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                 instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 const unisonLength = (beforeFive || !fromSlarmoosBox) ? 27 : Config.unisons.length;
@@ -7876,7 +7888,9 @@ var beepbox = (function (exports) {
                                     instrument.unisonExpression = Config.unisons[instrument.unison].expression;
                                     instrument.unisonSign = Config.unisons[instrument.unison].sign;
                                 }
+                                instrument.mdeffects |= 1 << 7;
                             }
+                            else ;
                         }
                         break;
                     case 67:
@@ -8052,7 +8066,7 @@ var beepbox = (function (exports) {
                                             newEffect.ringModHzOffset = clamp(Config.rmHzOffsetMin, Config.rmHzOffsetMax + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         }
                                     }
-                                    instrument.mdeffects = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                    instrument.mdeffects = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                 }
                                 else {
                                     const legacyEffectTypes = [0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 7, 8];
@@ -8116,6 +8130,44 @@ var beepbox = (function (exports) {
                                         instrument.vibratoSpeed = 10;
                                         instrument.vibratoDelay = Config.vibratos[instrument.vibrato].delayTicks / 2;
                                         instrument.vibratoType = Config.vibratos[instrument.vibrato].type;
+                                    }
+                                }
+                                if (effectsIncludeFade(instrument.mdeffects)) {
+                                    instrument.fadeIn = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                    instrument.fadeOut = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                    instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
+                                }
+                                if (effectsIncludeUnison(instrument.mdeffects)) {
+                                    instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                    if (instrument.unison == Config.unisons.length) {
+                                        instrument.unisonVoices = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                        const unisonSpreadNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                        const unisonSpread = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63)) * 63);
+                                        const unisonOffsetNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                        const unisonOffset = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63)) * 63);
+                                        const unisonExpressionNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                        const unisonExpression = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63);
+                                        const unisonSignNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                        const unisonSign = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] + (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] * 63);
+                                        instrument.unisonSpread = unisonSpread / 1000;
+                                        if (unisonSpreadNegative == 0)
+                                            instrument.unisonSpread *= -1;
+                                        instrument.unisonOffset = unisonOffset / 1000;
+                                        if (unisonOffsetNegative == 0)
+                                            instrument.unisonOffset *= -1;
+                                        instrument.unisonExpression = unisonExpression / 1000;
+                                        if (unisonExpressionNegative == 0)
+                                            instrument.unisonExpression *= -1;
+                                        instrument.unisonSign = unisonSign / 1000;
+                                        if (unisonSignNegative == 0)
+                                            instrument.unisonSign *= -1;
+                                    }
+                                    else {
+                                        instrument.unisonVoices = Config.unisons[instrument.unison].voices;
+                                        instrument.unisonSpread = Config.unisons[instrument.unison].spread;
+                                        instrument.unisonOffset = Config.unisons[instrument.unison].offset;
+                                        instrument.unisonExpression = Config.unisons[instrument.unison].expression;
+                                        instrument.unisonSign = Config.unisons[instrument.unison].sign;
                                     }
                                 }
                             }
@@ -8405,9 +8457,14 @@ var beepbox = (function (exports) {
                                 for (let i = 0; i < envelopeCount; i++) {
                                     const target = clamp(0, Config.automationParams.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                     let index = 0;
-                                    const maxIndex = Config.automationParams[target].maxIndex;
-                                    if (maxIndex > 0) {
-                                        index = clamp(0, maxIndex, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                    if (Config.automationParams[target].maxIndex > 0)
+                                        index = clamp(0, Config.automationParams[target].maxIndex, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                    let effectIndices = [];
+                                    if (Config.automationParams[target].associatedEffect != null && (fromTheepBox && !beforeSeven)) {
+                                        const effectIndexCount = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                                        for (let j = 0; j < effectIndexCount; j++) {
+                                            effectIndices.push(base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                                        }
                                     }
                                     let aa = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     if ((beforeTwo && fromGoldBox) || (fromBeepBox))
@@ -8491,7 +8548,7 @@ var beepbox = (function (exports) {
                                             }
                                         }
                                     }
-                                    instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete);
+                                    instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete, effectIndices);
                                     if (fromSlarmoosBox && beforeThree && !beforeTwo) {
                                         let pitchEnvelopeCompact = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         instrument.envelopes[i].pitchEnvelopeStart = pitchEnvelopeCompact * 64 + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
@@ -10654,6 +10711,12 @@ var beepbox = (function (exports) {
                     let endSimpleFreq = effect.eqFilterSimpleCut;
                     let endSimpleGain = effect.eqFilterSimplePeak;
                     let filterChanges = false;
+                    const simpleFreqEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter cut"].index, 0, effectIndex, false);
+                    const simpleFreqEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter cut"].index, 0, effectIndex, true);
+                    const simpleGainEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter peak"].index, 0, effectIndex, false);
+                    const simpleGainEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter peak"].index, 0, effectIndex, true);
+                    if (simpleFreqEnvelopeStart != simpleFreqEnvelopeEnd || simpleGainEnvelopeStart != simpleGainEnvelopeEnd)
+                        filterChanges = true;
                     if (synth.isModActive(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex)) {
                         startSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex, false);
                         endSimpleFreq = synth.getModValue(Config.automationParams.dictionary["eq filter cut"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
@@ -10664,6 +10727,10 @@ var beepbox = (function (exports) {
                         endSimpleGain = synth.getModValue(Config.automationParams.dictionary["eq filter peak"].index, 0, channelIndex, instrumentIndex, effectIndex, true);
                         filterChanges = true;
                     }
+                    startSimpleFreq *= simpleFreqEnvelopeStart;
+                    endSimpleFreq *= simpleFreqEnvelopeEnd;
+                    startSimpleGain *= simpleGainEnvelopeStart;
+                    endSimpleGain *= simpleGainEnvelopeEnd;
                     let startPoint;
                     if (filterChanges) {
                         eqFilterSettingsStart.convertLegacySettingsForSynth(startSimpleFreq, startSimpleGain);
@@ -10701,8 +10768,12 @@ var beepbox = (function (exports) {
                         if (startPoint.type != endPoint.type) {
                             startPoint = endPoint;
                         }
-                        startPoint.toCoefficients(Synth.tempFilterStartCoefficients, samplesPerSecond, 1.0, 1.0);
-                        endPoint.toCoefficients(Synth.tempFilterEndCoefficients, samplesPerSecond, 1.0, 1.0);
+                        const eqFreqEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot x"].index, i, effectIndex, false);
+                        const eqFreqEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot x"].index, i, effectIndex, true);
+                        const eqGainEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot y"].index, i, effectIndex, false);
+                        const eqGainEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["eq filter dot y"].index, i, effectIndex, true);
+                        startPoint.toCoefficients(Synth.tempFilterStartCoefficients, samplesPerSecond, eqFreqEnvelopeStart, eqGainEnvelopeStart);
+                        endPoint.toCoefficients(Synth.tempFilterEndCoefficients, samplesPerSecond, eqFreqEnvelopeEnd, eqGainEnvelopeEnd);
                         if (this.eqFiltersL.length <= i)
                             this.eqFiltersL[i] = new DynamicBiquadFilter();
                         if (this.eqFiltersR.length <= i)
@@ -11347,6 +11418,7 @@ var beepbox = (function (exports) {
             for (let envelopeIndex = 0; envelopeIndex <= instrument.envelopeCount; envelopeIndex++) {
                 let automationTarget;
                 let targetIndex;
+                let effectIndices;
                 let envelope;
                 let inverse = false;
                 let isDiscrete = false;
@@ -11366,12 +11438,14 @@ var beepbox = (function (exports) {
                         break;
                     automationTarget = Config.automationParams.dictionary["pre volume"];
                     targetIndex = 0;
+                    effectIndices = [0];
                     envelope = Config.newEnvelopes.dictionary["note size"];
                 }
                 else {
                     let envelopeSettings = instrument.envelopes[envelopeIndex];
                     automationTarget = Config.automationParams[envelopeSettings.target];
                     targetIndex = envelopeSettings.index;
+                    effectIndices = envelopeSettings.effectIndices;
                     envelope = Config.newEnvelopes[envelopeSettings.envelope];
                     inverse = instrument.envelopes[envelopeIndex].inverse;
                     isDiscrete = instrument.envelopes[envelopeIndex].discrete;
@@ -11435,10 +11509,11 @@ var beepbox = (function (exports) {
                     }
                 }
                 if (!this.envelopeStates[envelopeIndex]) {
-                    this.envelopeStates[envelopeIndex] = new AutomationState(automationTarget, targetIndex, [0], [0], [0]);
+                    this.envelopeStates[envelopeIndex] = new AutomationState(automationTarget, targetIndex, [0], [0], effectIndices);
                 }
                 this.envelopeStates[envelopeIndex].target = automationTarget;
                 this.envelopeStates[envelopeIndex].index = targetIndex;
+                this.envelopeStates[envelopeIndex].effectIndices = effectIndices;
                 this.envelopeStates[envelopeIndex].startValue *= envelopeStart;
                 this.envelopeStates[envelopeIndex].endValue *= envelopeEnd;
                 this._modifiedEnvelopeIndices[this._modifiedEnvelopeCount++] = envelopeIndex;
@@ -12262,6 +12337,20 @@ var beepbox = (function (exports) {
         }
         updateWaves(instrument, samplesPerSecond) {
             this.volumeScale = 1.0;
+            if (effectsIncludeUnison(instrument.mdeffects)) {
+                this.unisonVoices = instrument.unisonVoices;
+                this.unisonSpread = instrument.unisonSpread;
+                this.unisonOffset = instrument.unisonOffset;
+                this.unisonExpression = instrument.unisonExpression;
+                this.unisonSign = instrument.unisonSign;
+            }
+            else {
+                this.unisonVoices = 1;
+                this.unisonSpread = 0.0;
+                this.unisonOffset = 0.0;
+                this.unisonExpression = 1.4;
+                this.unisonSign = 1.0;
+            }
             if (instrument.type == 0) {
                 this.waveL = (this.aliases) ? Config.rawChipWaves[instrument.chipWave].samples : Config.chipWaves[instrument.chipWave].samples;
                 this.waveR = (this.aliases) ? Config.rawChipWaves[instrument.chipWave].samplesR || Config.rawChipWaves[instrument.chipWave].samples : Config.chipWaves[instrument.chipWave].samplesR || Config.chipWaves[instrument.chipWave].samples;
@@ -12272,71 +12361,30 @@ var beepbox = (function (exports) {
                 this.chipWavePlayBackwards = instrument.chipWavePlayBackwards;
                 this.chipWaveStartOffset = instrument.chipWaveStartOffset;
                 this.stereoChannels = Config.chipWaves[instrument.chipWave].stereoChannels || 0;
-                this.unisonVoices = instrument.unisonVoices;
-                this.unisonSpread = instrument.unisonSpread;
-                this.unisonOffset = instrument.unisonOffset;
-                this.unisonExpression = instrument.unisonExpression;
-                this.unisonSign = instrument.unisonSign;
             }
-            else if (instrument.type == 6) {
-                this.unisonVoices = instrument.unisonVoices;
-                this.unisonSpread = instrument.unisonSpread;
-                this.unisonOffset = instrument.unisonOffset;
-                this.unisonExpression = instrument.unisonExpression;
-                this.unisonSign = instrument.unisonSign;
-            }
+            else if (instrument.type == 6) ;
             else if (instrument.type == 9) {
                 this.waveL = (this.aliases) ? instrument.customChipWave : instrument.customChipWaveIntegral;
                 this.waveR = (this.aliases) ? instrument.customChipWave : instrument.customChipWaveIntegral;
                 this.volumeScale = 0.05;
-                this.unisonVoices = instrument.unisonVoices;
-                this.unisonSpread = instrument.unisonSpread;
-                this.unisonOffset = instrument.unisonOffset;
-                this.unisonExpression = instrument.unisonExpression;
-                this.unisonSign = instrument.unisonSign;
             }
             else if (instrument.type == 2) {
                 this.waveL = getDrumWave(instrument.chipNoise, inverseRealFourierTransform, scaleElementsByFactor);
-                this.unisonVoices = instrument.unisonVoices;
-                this.unisonSpread = instrument.unisonSpread;
-                this.unisonOffset = instrument.unisonOffset;
-                this.unisonExpression = instrument.unisonExpression;
-                this.unisonSign = instrument.unisonSign;
             }
             else if (instrument.type == 5) {
                 this.waveL = this.harmonicsWave.getCustomWave(instrument.harmonicsWave, instrument.type);
-                this.unisonVoices = instrument.unisonVoices;
-                this.unisonSpread = instrument.unisonSpread;
-                this.unisonOffset = instrument.unisonOffset;
-                this.unisonExpression = instrument.unisonExpression;
-                this.unisonSign = instrument.unisonSign;
             }
             else if (instrument.type == 7) {
                 this.waveL = this.harmonicsWave.getCustomWave(instrument.harmonicsWave, instrument.type);
-                this.unisonVoices = instrument.unisonVoices;
-                this.unisonSpread = instrument.unisonSpread;
-                this.unisonOffset = instrument.unisonOffset;
-                this.unisonExpression = instrument.unisonExpression;
-                this.unisonSign = instrument.unisonSign;
             }
             else if (instrument.type == 3) {
                 this.waveL = this.spectrumWave.getCustomWave(instrument.spectrumWave, 8);
-                this.unisonVoices = instrument.unisonVoices;
-                this.unisonSpread = instrument.unisonSpread;
-                this.unisonOffset = instrument.unisonOffset;
-                this.unisonExpression = instrument.unisonExpression;
-                this.unisonSign = instrument.unisonSign;
             }
             else if (instrument.type == 4) {
                 for (let i = 0; i < Config.drumCount; i++) {
                     this.drumsetSpectrumWaves[i].getCustomWave(instrument.drumsetSpectrumWaves[i], InstrumentState._drumsetIndexToSpectrumOctave(i));
                 }
                 this.waveL = null;
-                this.unisonVoices = instrument.unisonVoices;
-                this.unisonSpread = instrument.unisonSpread;
-                this.unisonOffset = instrument.unisonOffset;
-                this.unisonExpression = instrument.unisonExpression;
-                this.unisonSign = instrument.unisonSign;
             }
             else {
                 this.waveL = null;
@@ -14931,7 +14979,6 @@ var beepbox = (function (exports) {
                     if (this.isModActive(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0)) {
                         let modFreqStart = clamp(0, Config.automationParams.dictionary["fm operator frequency"].maxRawVol, this.getModValue(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0, false));
                         let modFreqEnd = clamp(0, Config.automationParams.dictionary["fm operator frequency"].maxRawVol, this.getModValue(Config.automationParams.dictionary["fm operator frequency"].index, i, channelIndex, tone.instrumentIndex, 0, true));
-                        console.log(modFreqEnd);
                         if (Number.isInteger(modFreqStart))
                             freqMultStart = Config.operatorFrequencies[modFreqStart].mult;
                         else
@@ -15099,8 +15146,12 @@ var beepbox = (function (exports) {
                     const unisonExpression = instrument.unisonExpression;
                     const voiceCountExpression = (instrument.type == 7) ? 1 : unisonVoices / 2.0;
                     settingsExpressionMult *= unisonExpression * voiceCountExpression;
-                    const unisonEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, null, false);
-                    const unisonEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, null, true);
+                    let unisonEnvelopeStart = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, 0, false);
+                    let unisonEnvelopeEnd = envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["unison"].index, 0, 0, true);
+                    if (this.isModActive(Config.automationParams.dictionary["unison"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                        unisonEnvelopeStart *= this.getModValue(Config.automationParams.dictionary["unison"].index, 0, channelIndex, tone.instrumentIndex, 0, false) / 12.0;
+                        unisonEnvelopeEnd *= this.getModValue(Config.automationParams.dictionary["unison"].index, 0, channelIndex, tone.instrumentIndex, 0, true) / 12.0;
+                    }
                     const unisonStartA = Math.pow(2.0, (unisonOffset + unisonSpread) * unisonEnvelopeStart / 12.0);
                     const unisonEndA = Math.pow(2.0, (unisonOffset + unisonSpread) * unisonEnvelopeEnd / 12.0);
                     tone.phaseDeltas[0] = startFreq * sampleTime * unisonStartA;
@@ -15187,9 +15238,9 @@ var beepbox = (function (exports) {
                     const minFirstVoiceAmplitude = 1.0 / Math.sqrt(Config.supersawVoiceCount);
                     let useDynamismStart = instrument.supersawDynamism / Config.supersawDynamismMax;
                     let useDynamismEnd = instrument.supersawDynamism / Config.supersawDynamismMax;
-                    if (this.isModActive(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
-                        useDynamismStart = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawDynamismMax;
-                        useDynamismEnd = (this.getModValue(Config.automationParams.dictionary["dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawDynamismMax;
+                    if (this.isModActive(Config.automationParams.dictionary["supersaw dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                        useDynamismStart = (this.getModValue(Config.automationParams.dictionary["supersaw dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawDynamismMax;
+                        useDynamismEnd = (this.getModValue(Config.automationParams.dictionary["supersaw dynamism"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawDynamismMax;
                     }
                     const curvedDynamismStart = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["dynamism"].index, 0, null, false)), 0.2);
                     const curvedDynamismEnd = 1.0 - Math.pow(Math.max(0.0, 1.0 - useDynamismEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["dynamism"].index, 0, null, true)), 0.2);
@@ -15244,12 +15295,12 @@ var beepbox = (function (exports) {
                     const baseSpreadSlider = instrument.supersawSpread / Config.supersawSpreadMax;
                     let useSpreadStart = baseSpreadSlider;
                     let useSpreadEnd = baseSpreadSlider;
-                    if (this.isModActive(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
-                        useSpreadStart = (this.getModValue(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawSpreadMax;
-                        useSpreadEnd = (this.getModValue(Config.automationParams.dictionary["spread"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawSpreadMax;
+                    if (this.isModActive(Config.automationParams.dictionary["supersaw spread"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                        useSpreadStart = (this.getModValue(Config.automationParams.dictionary["supersaw spread"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawSpreadMax;
+                        useSpreadEnd = (this.getModValue(Config.automationParams.dictionary["supersaw spread"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawSpreadMax;
                     }
-                    const spreadSliderStart = useSpreadStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["spread"].index, 0, null, false);
-                    const spreadSliderEnd = useSpreadEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["spread"].index, 0, null, true);
+                    const spreadSliderStart = useSpreadStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw spread"].index, 0, null, false);
+                    const spreadSliderEnd = useSpreadEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw spread"].index, 0, null, true);
                     const averageSpreadSlider = (spreadSliderStart + spreadSliderEnd) * 0.5;
                     const curvedSpread = Math.pow(1.0 - Math.sqrt(Math.max(0.0, 1.0 - averageSpreadSlider)), 1.75);
                     for (let i = 0; i < Config.supersawVoiceCount; i++) {
@@ -15259,9 +15310,9 @@ var beepbox = (function (exports) {
                     const baseShape = instrument.supersawShape / Config.supersawShapeMax;
                     let useShapeStart = baseShape * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, false);
                     let useShapeEnd = baseShape * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, true);
-                    if (this.isModActive(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
-                        useShapeStart = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawShapeMax;
-                        useShapeEnd = (this.getModValue(Config.automationParams.dictionary["saw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawShapeMax;
+                    if (this.isModActive(Config.automationParams.dictionary["supersaw shape"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                        useShapeStart = (this.getModValue(Config.automationParams.dictionary["supersaw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, false)) / Config.supersawShapeMax;
+                        useShapeEnd = (this.getModValue(Config.automationParams.dictionary["supersaw shape"].index, 0, channelIndex, tone.instrumentIndex, 0, true)) / Config.supersawShapeMax;
                     }
                     const shapeStart = useShapeStart * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, false);
                     const shapeEnd = useShapeEnd * envelopeComputer.getEnvelopeValue(Config.automationParams.dictionary["supersaw shape"].index, 0, null, true);
@@ -15506,7 +15557,7 @@ var beepbox = (function (exports) {
             return (x % b + b) % b;
         }
         static loopableChipSynth(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState) {
-            const aliases = (instrumentState.effectsIncludeType(3) && instrumentState.aliases);
+            const aliases = instrumentState.aliases;
             const stereoChannels = instrumentState.stereoChannels;
             let dataL = synth.tempInstrumentSampleBufferL;
             let dataR = synth.tempInstrumentSampleBufferR;
@@ -15906,7 +15957,7 @@ var beepbox = (function (exports) {
             tone.initialNoteFilterInputR2 = initialFilterInputR2;
         }
         static chipSynth(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState) {
-            const aliases = (instrumentState.effectsIncludeType(5) && instrumentState.aliases);
+            const aliases = instrumentState.aliases;
             const stereoChannels = instrumentState.stereoChannels;
             let dataL = synth.tempInstrumentSampleBufferL;
             let dataR = synth.tempInstrumentSampleBufferR;

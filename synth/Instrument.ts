@@ -1494,11 +1494,11 @@ export class Instrument {
         return false;
     }
 
-    public addEnvelope(target: number, index: number, envelope: number, newEnvelopes: boolean, start: number = 0, end: number = -1, inverse: boolean = false, perEnvelopeSpeed: number = -1, perEnvelopeLowerBound: number = 0, perEnvelopeUpperBound: number = 1, steps: number = 2, seed: number = 2, waveform: number = LFOEnvelopeTypes.sine, discrete: boolean = false, effectIndices: number[] = []): void {
+    public addEnvelope(target: number, index: number, envelope: number, newEnvelopes: boolean, start: number = 0, end: number = -1, inverse: boolean = false, perEnvelopeSpeed: number = -1, perEnvelopeLowerBound: number = 0, perEnvelopeUpperBound: number = 1, steps: number = 2, seed: number = 2, waveform: number = LFOEnvelopeTypes.sine, discrete: boolean = false, effectIndices: number[] = [0]): void {
         end = end != -1 ? end : this.isNoiseInstrument ? Config.drumCount - 1 : Config.maxPitch; //find default if none is given
         perEnvelopeSpeed = perEnvelopeSpeed != -1 ? perEnvelopeSpeed : newEnvelopes ? 1 : Config.envelopes[envelope].speed; //find default if none is given
         let makeEmpty: boolean = false;
-        if (!this.supportsEnvelopeTarget(target, [0], index)) makeEmpty = true;
+        if (!this.supportsAutomationTarget(target, [0], index)) makeEmpty = true;
         if (this.envelopeCount >= Config.maxEnvelopeCount) throw new Error();
         while (this.envelopes.length <= this.envelopeCount) this.envelopes[this.envelopes.length] = new EnvelopeSettings(this.isNoiseInstrument);
         const envelopeSettings: EnvelopeSettings = this.envelopes[this.envelopeCount];
@@ -1523,15 +1523,76 @@ export class Instrument {
         this.envelopeCount++;
     }
 
-    public supportsEnvelopeTarget(target: number, effectIndices: number[], index: number): boolean {
-        const automationTarget: AutomationParameter = Config.automationParams[target];
-        if (effectIndices.length == 0) {
-            for (let i: number = 0; i < this.effects.length; i++) effectIndices.push(i)
+    public getValidEnvelopeIndex(envelopeIndex: number, index: number, effectIndices: number[] = []): number {
+        const maxIndex = this.getMaxAutomationIndex(this.envelopes[envelopeIndex].target, effectIndices);
+        if (index > maxIndex) {
+            return maxIndex;
         }
-        if (!automationTarget.canBeEnvelope) {
+        else return index;
+    }
+
+    public getValidEnvelopeEffectIndices(envelopeIndex: number, effectIndices: number[]): number[] {
+        //step 1: find the current valid indices
+        let validEffectIndices: number[] = [];
+        for (let i: number = 0; i < effectIndices.length; i++) {
+            if (this.effects[effectIndices[i]] && this.effects[effectIndices[i]].type == Config.automationParams[this.envelopes[envelopeIndex].target].associatedEffect) {
+                validEffectIndices.push(effectIndices[i])
+            }
+        }
+        //step 2: add a valid index if none are found
+        if (validEffectIndices.length == 0) {
+            for (let i: number = 0; i < this.effects.length; i++) {
+                if (this.effects[i].type == Config.automationParams[this.envelopes[envelopeIndex].target].associatedEffect) {
+                    validEffectIndices = [i];
+                    break;
+                }
+            }
+        }
+        return validEffectIndices;
+    }
+
+    public getMaxAutomationIndex(target: number, effectIndices: number[] = []): number {
+        const automationTarget: AutomationParameter = Config.automationParams[target];
+        if (automationTarget.isFilter) {
+            if (effectIndices.length == 0) { // if no effect indices are given, assume it is targeting all available effects
+                for (let i: number = 0; i < this.effects.length; i++) effectIndices.push(i)
+            }
+            let largestCount: number = 0;
+            for (let i: number = 0; i < effectIndices.length; i++) {
+                if (this.effects[effectIndices[i]] && this.effects[effectIndices[i]].type == EffectType.eqFilter && !this.effects[effectIndices[i]].eqFilterType) {
+                    const count: number = this.getLargestControlPointCount(false, effectIndices[i]);
+                    if (count > largestCount) largestCount = count;
+                }
+            }
+            return largestCount - 1;
+        } else if (automationTarget.isEnvelope) {
+            return this.envelopeCount - 1;
+        } else if ((automationTarget.name == "fm operator frequency") || (automationTarget.name == "fm operator amplitude")) {
+            return 3 + (this.type == InstrumentType.fm6op ? 2 : 0);
+        } else {
+            return automationTarget.maxIndex;
+        }
+    }
+
+    public supportsAutomationTarget(target: number, effectIndices: number[] | null, index: number | null, forMod: boolean = false): boolean {
+        const automationTarget: AutomationParameter = Config.automationParams[target];
+        if (automationTarget.name == "none") {
+            return true; // none is always a valid modulator
+        }
+        if (automationTarget.forSong) {
             return false;
         }
-        if (index > automationTarget.maxIndex) {
+        else if (!automationTarget.canBeEnvelope && !forMod) {
+            return false;
+        }
+        else if (!automationTarget.canBeModulator && forMod) {
+            return false;
+        }
+        if (effectIndices == null) { // if no effect indices are given, assume it is targeting all available effects
+            effectIndices = [];
+            for (let i: number = 0; i < this.effects.length; i++) effectIndices.push(i)
+        }
+        if (index != null && index > this.getMaxAutomationIndex(target, effectIndices)) {
             return false;
         }
         if (automationTarget.associatedInstruments != null && automationTarget.associatedInstruments.indexOf(this.type) == -1) {
@@ -1543,7 +1604,7 @@ export class Instrument {
         if (automationTarget.associatedEffect != null) {
             let hasAssociatedEffect: boolean = false;
             for (let i: number = 0; i < effectIndices.length; i++) {
-                if (effectIndices[effectIndices[i]] >= this.effects.length) {
+                if (effectIndices[i] >= this.effects.length) {
                     return false;
                 }
                 if (automationTarget.associatedEffect == this.effects[effectIndices[i]].type) {
@@ -1552,29 +1613,14 @@ export class Instrument {
             }
             if (!hasAssociatedEffect) return false;
         }
-        if (automationTarget.isFilter) {
-            let hasValidFilter: boolean = false;
-            let largestCount: number = 0;
-            for (let i: number = 0; i < effectIndices.length; i++) {
-                if (this.effects[effectIndices[i]].type == EffectType.eqFilter) {
-                    if (!this.effects[effectIndices[i]].eqFilter.eqFilterType) hasValidFilter = true;
-                    if (this.effects[effectIndices[i]].eqFilter.controlPointCount > largestCount) largestCount = this.effects[effectIndices[i]].eqFilter.controlPointCount;
-                }
-            }
-            if (index >= largestCount) return false;
-            if (!hasValidFilter) return false;
-        }
         if ((automationTarget.name == "eq filter cut") || (automationTarget.name == "eq filter peak")) {
             let hasValidFilter: boolean = false;
             for (let i: number = 0; i < effectIndices.length; i++) {
                 if (this.effects[effectIndices[i]].type == EffectType.eqFilter) {
-                    if (this.effects[effectIndices[i]].eqFilter.eqFilterType) hasValidFilter = true;
+                    if (this.effects[effectIndices[i]].eqFilterType) hasValidFilter = true;
                 }
             }
             if (!hasValidFilter) return false;
-        }
-        if ((automationTarget.name == "fm operator frequency") || (automationTarget.name == "fm operator amplitude")) {
-            if (index >= 4 + (this.type == InstrumentType.fm6op ? 2 : 0)) return false;
         }
         return true;
     }
@@ -1583,7 +1629,7 @@ export class Instrument {
         for (let envelopeIndex: number = 0; envelopeIndex < this.envelopeCount; envelopeIndex++) {
             const target: number = this.envelopes[envelopeIndex].target;
             const index: number = this.envelopes[envelopeIndex].index;
-            if (!this.supportsEnvelopeTarget(target, index)) {
+            if (!this.supportsAutomationTarget(target, [], index)) {
                 this.envelopes[envelopeIndex].target = Config.automationParams.dictionary["none"].index;
                 this.envelopes[envelopeIndex].index = 0;
             }

@@ -1765,7 +1765,7 @@ export class Config {
             displayName: "None",
             maxRawVol: 6,
             newNoteVol: 6,
-            forSong: true,
+            forSong: false,
             convertRealFactor: 0,
             isFilter: false,
             isEnvelope: false,

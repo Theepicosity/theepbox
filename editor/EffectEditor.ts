@@ -4,7 +4,7 @@ import { Config, EffectType, calculateRingModHertz } from "../synth/SynthConfig"
 import { Instrument } from "../synth/Instrument";
 import { Effect } from "../synth/Effect";
 import { SongDocument } from "./SongDocument";
-import { ChangeChorus, ChangeReverb, ChangeReverbWetDryMix, ChangeReverbSend, ChangeFlanger, ChangeFlangerSpeed, ChangeFlangerDepth, ChangeFlangerFeedback, ChangeRingModChipWave, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeEchoDelay, ChangeEchoSustain, ChangeEchoPingPong, ChangeGain, ChangePan, ChangePanMode, ChangePanDelay, ChangeDistortion, ChangeClippingType, ChangeClippingInGain, ChangeClippingThreshold, ChangeAliasing, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEQFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeRemoveEffects, ChangeReorderEffects } from "./changes";
+import { ChangeChorus, ChangeReverb, ChangeReverbWetDryMix, ChangeReverbSend, ChangeFlanger, ChangeFlangerSpeed, ChangeFlangerDepth, ChangeFlangerFeedback, ChangeRingModChipWave, ChangeRingMod, ChangeRingModHz, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeEchoDelay, ChangeEchoSustain, ChangeEchoPingPong, ChangeGain, ChangePan, ChangePanMode, ChangePanDelay, ChangeDistortion, ChangeClippingType, ChangeClippingInGain, ChangeClippingThreshold, ChangeBitcrusherQuantization, ChangeBitcrusherFreq, ChangeEQFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeRemoveEffects, ChangeReorderEffects } from "./changes";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { Change } from "./Change";
 import { FilterEditor } from "./FilterEditor";

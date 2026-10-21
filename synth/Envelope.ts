@@ -35,7 +35,7 @@ export class EnvelopeSettings {
     reset(): void {
         this.target = 0;
         this.index = 0;
-        this.effectIndex = 0;
+        this.effectIndices = [0];
         this.envelope = 0;
         this.pitchEnvelopeStart = 0;
         this.pitchEnvelopeEnd = this.isNoiseEnvelope ? Config.drumCount - 1 : Config.maxPitch;

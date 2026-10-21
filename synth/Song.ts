@@ -2779,7 +2779,7 @@ export class Song {
                     if (effectsIncludeFade(instrument.mdeffects)) {
                         instrument.fadeIn = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                         instrument.fadeOut = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                        instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                        instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
                     }
                     if (effectsIncludeUnison(instrument.mdeffects)) {
                         instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
