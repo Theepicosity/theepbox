@@ -1619,7 +1619,7 @@ export class SongEditor {
                 this._toggleRecord();
             }
         });
-        if (this._doc.prefs.autoFollow == 1) this._autoFollowButton.addEventListener("click", this._whenAutoFollowPressed);
+        this._autoFollowButton.addEventListener("click", this._whenAutoFollowPressed);
         this._prevBarButton.addEventListener("click", this._whenPrevBarPressed);
         this._nextBarButton.addEventListener("click", this._whenNextBarPressed);
         this._volumeSlider.input.addEventListener("input", this._setVolumeSlider);
