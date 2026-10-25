@@ -277,7 +277,7 @@ export class HarmonicsEditor {
 
 export class HarmonicsEditorPrompt implements Prompt {
 
-    public readonly harmonicsEditor: HarmonicsEditor = new HarmonicsEditor(this._doc, true);
+    public harmonicsEditor: HarmonicsEditor;
 
     public readonly _playButton: HTMLButtonElement = HTML.button({ style: "width: 55%;", type: "button" });
 
@@ -300,22 +300,25 @@ export class HarmonicsEditorPrompt implements Prompt {
         ]),
     ]);
     private readonly copyPasteContainer: HTMLDivElement = HTML.div({ style: "width: 185px;" }, this.copyButton, this.pasteButton);
-    public readonly container: HTMLDivElement = HTML.div({ class: "prompt noSelection", style: "width: 500px;"},
-        HTML.h2("Edit Harmonics Instrument"),
-                                                         HTML.div({ style: "display: flex; width: 55%; align-self: center; flex-direction: row; align-items: center; justify-content: center;" },
-                                                                  this._playButton,
-                                                         ),
-                                                         HTML.div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: center;"},
-                                                                  this.harmonicsEditor.container,
-                                                         ),
-                                                         HTML.div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" },
-                                                                  this._okayButton,
-                                                                  this.copyPasteContainer,
-                                                         ),
-                                                         this._cancelButton,
-    );
+    public container: HTMLDivElement;
 
     constructor(private _doc: SongDocument, private _songEditor: SongEditor) {
+        this._doc = _doc;
+        this.harmonicsEditor = new HarmonicsEditor(this._doc, true);
+        this.container = HTML.div({ class: "prompt noSelection", style: "width: 500px;"},
+            HTML.h2("Edit Harmonics Instrument"),
+            HTML.div({ style: "display: flex; width: 55%; align-self: center; flex-direction: row; align-items: center; justify-content: center;" },
+                    this._playButton,
+            ),
+            HTML.div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: center;"},
+                    this.harmonicsEditor.container,
+            ),
+            HTML.div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" },
+                    this._okayButton,
+                    this.copyPasteContainer,
+            ),
+            this._cancelButton,
+        );
         this._okayButton.addEventListener("click", this._saveChanges);
         this._cancelButton.addEventListener("click", this._close);
         this.container.addEventListener("keydown", this.whenKeyPressed);

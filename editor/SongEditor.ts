@@ -4080,7 +4080,7 @@ export class SongEditor {
     }
 
     private _parseShortcut = (event: KeyboardEvent, shortcut: Shortcut, needControlForShortcuts: boolean): number => {
-        if (!shortcut) return -1;
+        if (!shortcut || shortcut.keyCode == 0) return -1;
         // check for keyCodes which very across plaforms
         let eventKeyCode: number;
         if (event.keyCode == 173) eventKeyCode = 189;
