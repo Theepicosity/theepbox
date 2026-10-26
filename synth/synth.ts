@@ -14,7 +14,7 @@ import { EnvelopeComputer } from "./EnvelopeComputer";
 import { FilterSettings, FilterControlPoint } from "./Filter";
 import { events } from "../global/Events";
 import { FilterCoefficients, FrequencyResponse, DynamicBiquadFilter } from "./filtering";
-import { clamp, detuneToCents, fittingPowerOfTwo } from "./utils";
+import { clamp, detuneToCents, fittingPowerOfTwo, fadeInSettingToSeconds, fadeOutSettingToTicks } from "./utils";
 
 declare global {
     interface Window {
@@ -1527,7 +1527,11 @@ export class Synth {
 
                             for (let i: number = 0; i < instrumentState.releasedTones.count(); i++) {
                                 const tone: Tone = instrumentState.releasedTones.get(i);
-                                if (tone.ticksSinceReleased >= Math.abs(instrument.getFadeOutTicks())) {
+                                let fadeOutTicks: number = Math.abs(instrument.getFadeOutTicks());
+                                if (this.isModActive(Config.automationParams.dictionary["fade out"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                                    fadeOutTicks = Math.abs(fadeOutSettingToTicks(this.getModValue(Config.automationParams.dictionary["fade out"].index, 0, channelIndex, tone.instrumentIndex, 0, true)));
+                                }
+                                if (tone.ticksSinceReleased >= fadeOutTicks) {
                                     this.freeReleasedTone(instrumentState, i);
                                     i--;
                                     continue;
@@ -2719,15 +2723,20 @@ export class Synth {
             const startTicksSinceReleased: number = tone.ticksSinceReleased;
             const endTicksSinceReleased: number = tone.ticksSinceReleased + 1.0;
             intervalStart = intervalEnd = tone.lastInterval;
-            const fadeOutTicks: number = Math.abs(instrument.getFadeOutTicks());
-            fadeExpressionStart = Synth.noteSizeToVolumeMult((1.0 - startTicksSinceReleased / fadeOutTicks) * Config.noteSizeMax);
-            fadeExpressionEnd = Synth.noteSizeToVolumeMult((1.0 - endTicksSinceReleased / fadeOutTicks) * Config.noteSizeMax);
+            let fadeOutTicksStart: number = Math.abs(instrument.getFadeOutTicks());
+            let fadeOutTicksEnd: number = fadeOutTicksStart;
+            if (this.isModActive(Config.automationParams.dictionary["fade out"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                fadeOutTicksStart = Math.abs(fadeOutSettingToTicks(this.getModValue(Config.automationParams.dictionary["fade out"].index, 0, channelIndex, tone.instrumentIndex, 0, false)));
+                fadeOutTicksEnd = Math.abs(fadeOutSettingToTicks(this.getModValue(Config.automationParams.dictionary["fade out"].index, 0, channelIndex, tone.instrumentIndex, 0, true)));
+            }
+            fadeExpressionStart = Synth.noteSizeToVolumeMult((1.0 - startTicksSinceReleased / fadeOutTicksStart) * Config.noteSizeMax);
+            fadeExpressionEnd = Synth.noteSizeToVolumeMult((1.0 - endTicksSinceReleased / fadeOutTicksEnd) * Config.noteSizeMax);
 
             if (shouldFadeOutFast) {
                 fadeExpressionEnd = 0.0;
             }
 
-            if (tone.ticksSinceReleased + 1 >= fadeOutTicks) toneIsOnLastTick = true;
+            if (tone.ticksSinceReleased + 1 >= fadeOutTicksEnd) toneIsOnLastTick = true;
         } else if (tone.note == null) {
             fadeExpressionStart = fadeExpressionEnd = 1.0;
             tone.lastInterval = 0;
@@ -2764,12 +2773,17 @@ export class Synth {
             tone.lastInterval = intervalEnd;
 
             if ((!transition.isSeamless && !tone.forceContinueAtEnd) || nextNote == null) {
-                const fadeOutTicks: number = -instrument.getFadeOutTicks();
-                if (fadeOutTicks > 0.0) {
+                let fadeOutTicksStart: number = -instrument.getFadeOutTicks();
+                let fadeOutTicksEnd: number = fadeOutTicksStart;
+                if (this.isModActive(Config.automationParams.dictionary["fade out"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                    fadeOutTicksStart = -1 * (fadeOutSettingToTicks(this.getModValue(Config.automationParams.dictionary["fade out"].index, 0, channelIndex, tone.instrumentIndex, 0, false)));
+                    fadeOutTicksEnd = -1 * (fadeOutSettingToTicks(this.getModValue(Config.automationParams.dictionary["fade out"].index, 0, channelIndex, tone.instrumentIndex, 0, true)));
+                }
+                if (fadeOutTicksStart > 0.0 && fadeOutTicksEnd > 0.0) {
                     // If the tone should fade out before the end of the note, do so here.
                     const noteLengthTicks: number = noteEndTick - noteStartTick;
-                    fadeExpressionStart *= Math.min(1.0, (noteLengthTicks - noteTicksPassedTickStart) / fadeOutTicks);
-                    fadeExpressionEnd *= Math.min(1.0, (noteLengthTicks - noteTicksPassedTickEnd) / fadeOutTicks);
+                    fadeExpressionStart *= Math.min(1.0, (noteLengthTicks - noteTicksPassedTickStart) / fadeOutTicksStart);
+                    fadeExpressionEnd *= Math.min(1.0, (noteLengthTicks - noteTicksPassedTickEnd) / fadeOutTicksEnd);
                     if (tickTimeEnd >= noteStartTick + noteLengthTicks) toneIsOnLastTick = true;
                 }
             }
@@ -2931,10 +2945,15 @@ export class Synth {
 
         if ((!transition.isSeamless && !tone.forceContinueAtStart) || tone.prevNote == null) {
             // Fade in the beginning of the note.
-            const fadeInSeconds: number = instrument.getFadeInSeconds();
-            if (fadeInSeconds > 0.0) {
-                fadeExpressionStart *= Math.min(1.0, envelopeComputer.noteSecondsStartUnscaled / fadeInSeconds);
-                fadeExpressionEnd *= Math.min(1.0, envelopeComputer.noteSecondsEndUnscaled / fadeInSeconds);
+            let fadeInSecondsStart: number = instrument.getFadeInSeconds();
+            let fadeInSecondsEnd: number = fadeInSecondsStart;
+            if (this.isModActive(Config.automationParams.dictionary["fade in"].index, 0, channelIndex, tone.instrumentIndex, 0)) {
+                fadeInSecondsStart = fadeInSettingToSeconds(this.getModValue(Config.automationParams.dictionary["fade in"].index, 0, channelIndex, tone.instrumentIndex, 0, false));
+                fadeInSecondsEnd = fadeInSettingToSeconds(this.getModValue(Config.automationParams.dictionary["fade in"].index, 0, channelIndex, tone.instrumentIndex, 0, true));
+            }
+            if (fadeInSecondsStart > 0.0 && fadeInSecondsEnd > 0.0) {
+                fadeExpressionStart *= Math.min(1.0, envelopeComputer.noteSecondsStartUnscaled / fadeInSecondsStart);
+                fadeExpressionEnd *= Math.min(1.0, envelopeComputer.noteSecondsEndUnscaled / fadeInSecondsEnd);
             }
         }
 

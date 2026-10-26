@@ -38,7 +38,7 @@ export function secondsToFadeInSetting(seconds: number): number {
 }
 
 export function fadeOutSettingToTicks(setting: number): number {
-	return Config.fadeOutTicks[setting];
+	return (1 - (setting % 1)) * Config.fadeOutTicks[Math.max(0, Math.floor(setting))] + (setting % 1) * Config.fadeOutTicks[Math.min(Config.fadeOutTicks.length - 1, Math.ceil(setting))]; // Config.fadeOutTicks[setting];
 }
 
 export function ticksToFadeOutSetting(ticks: number): number {

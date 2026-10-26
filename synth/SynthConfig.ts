@@ -1879,6 +1879,23 @@ export class Config {
             maxIndex: 0,
             promptName: "Pre Volume"
         }, {
+            name: "post volume",
+
+            displayName: "Post Volume",
+            maxRawVol: Config.volumeRange,
+            newNoteVol: Math.ceil(Config.volumeRange / 2),
+            forSong: false,
+            convertRealFactor: -Math.ceil(Config.volumeRange / 2),
+            isFilter: false,
+            isEnvelope: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: null,
+            canBeEnvelope: true,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Post Volume"
+        }, {
             name: "gain",
 
             displayName: "Gain",
@@ -2559,23 +2576,6 @@ export class Config {
             maxIndex: 0,
             promptName: "Picked String Sustain"
         }, {
-            name: "post volume",
-
-            displayName: "Post Volume",
-            maxRawVol: Config.volumeRange,
-            newNoteVol: Math.ceil(Config.volumeRange / 2),
-            forSong: false,
-            convertRealFactor: -Math.ceil(Config.volumeRange / 2),
-            isFilter: false,
-            isEnvelope: false,
-            associatedInstruments: null,
-            associatedEffect: null,
-            associatedMDEffect: null,
-            canBeEnvelope: true,
-            canBeModulator: true,
-            maxIndex: 0,
-            promptName: "Post Volume"
-        }, {
             name: "pulse width",
 
             displayName: "Pulse Width",
@@ -2864,6 +2864,40 @@ export class Config {
             canBeModulator: true,
             maxIndex: 0,
             promptName: "Unison"
+        }, {
+            name: "fade in",
+
+            displayName: "Fade In",
+            maxRawVol: Config.fadeInRange - 1,
+            newNoteVol: 0,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            isEnvelope: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: MDEffectType.fade,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Fade In"
+        }, {
+            name: "fade out",
+
+            displayName: "Fade Out",
+            maxRawVol: Config.fadeOutTicks.length - 1,
+            newNoteVol: 4,
+            forSong: false,
+            convertRealFactor: 0,
+            isFilter: false,
+            isEnvelope: false,
+            associatedInstruments: null,
+            associatedEffect: null,
+            associatedMDEffect: MDEffectType.fade,
+            canBeEnvelope: false,
+            canBeModulator: true,
+            maxIndex: 0,
+            promptName: "Fade Out"
         },
     ]);
 }
